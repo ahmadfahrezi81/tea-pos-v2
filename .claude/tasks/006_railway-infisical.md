@@ -1,6 +1,6 @@
 # Task 006 — Railway, branches and Infisical
 
-**Status: in progress 2026-10-20. Built: `staging` branch (default), rulesets `main` (id 25470818, merge commit, checks + docker + release-source) and `staging` (id 25477096, squash, checks + docker), Environment `production` (owner approves, `main` only), `railway.ts`, Railway and release workflows, the checks PR comment, `pr` and `release` skills. Waiting on: the owner's Railway and Infisical clicks, then the first apply.**
+**Status: in progress 2026-10-20. Staging live: PR #6 merged, first apply created `api`, `realtime`, `worker`; a second apply set Wait for CI; `/health` on `api-staging-c60d.up.railway.app` and `realtime-staging-4a79.up.railway.app` answers with the merged commit. GitHub side done (`staging` default, rulesets, Environment `production`, Infisical → GitHub sync of both tokens). Found: Railway manages every variable by default, so Infisical-synced ones must be declared as `preserve()`. Next: the first release PR creates production and tags `2026.10.1`.**
 
 ## The goal
 

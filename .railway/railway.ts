@@ -11,7 +11,8 @@ export default defineRailway((ctx) => {
     const build = { builder: "DOCKERFILE" as const, watchPatterns: ["/api/**", "/Dockerfile"] };
     // A sleeping service drops every WebSocket.
     const deploy = { sleepApplication: false };
-    // Only these are set from here; secrets are left to Infisical, which syncs them into Railway.
+    // Railway manages every variable from this file: an undeclared one is removed on apply.
+    // Secrets Infisical syncs in must be declared too, as preserve(), so their values are kept.
     const env = (gomemlimit: string) => ({
         ENV: prod ? "prod" : "staging",
         LOG_LEVEL: "info",

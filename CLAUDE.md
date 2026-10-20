@@ -52,7 +52,7 @@ supabase/            migrations (owned here, copied from the old repo) and confi
 - **A release is a PR `staging` → `main`,** merged with a **merge commit**, never squash; use the `release` skill. It tags a GitHub Release `YYYY.MM.N`. Neither branch takes a direct push (rulesets in `.github/rulesets/`, applied with `gh api`).
 - **Each CI result gets its own PR comment,** edited in place (`.github/actions/pr-comment`, one `section` per result).
 - **Ask before pushing or opening a PR.** Local commits are fine.
-- **Railway as code** (`.railway/railway.ts`): never change a declared setting in the dashboard (the next apply fails). A release PR that changes it shows production's plan as a comment; merging applies it. Railway drops Wait for CI on a newly created service, so a second apply sets it.
+- **Railway as code** (`.railway/railway.ts`): never change a declared setting in the dashboard (the next apply fails). A release PR that changes it shows production's plan as a comment; merging applies it. Railway drops Wait for CI on a newly created service, so a second apply sets it. **Every variable must be declared in the file**; one Infisical syncs in is declared as `preserve()`, or the next apply removes it.
 - **Settings outside git** (Cloudflare, Infisical, Supabase, dashboard-only Railway settings) are the owner's to click: write down what to click, never assume it was done.
 - **Secrets live in Infisical** (`staging`, `prod`), never in git or the Vite build. The repo is public.
 
