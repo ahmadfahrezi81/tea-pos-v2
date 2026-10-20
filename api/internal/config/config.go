@@ -2,6 +2,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -15,12 +16,18 @@ type Config struct {
 	LogLevel        slog.Level
 	ShutdownTimeout time.Duration
 	RequestTimeout  time.Duration
+	DatabaseURL     string
+	DBMaxConns      int32
 }
 
 func Load() (Config, error) {
 	cfg := Config{
-		Port: getenv("PORT", "8080"),
-		Env:  getenv("ENV", "local"),
+		Port:        getenv("PORT", "8080"),
+		Env:         getenv("ENV", "local"),
+		DatabaseURL: os.Getenv("DATABASE_URL"),
+	}
+	if cfg.DatabaseURL == "" {
+		return Config{}, errors.New("DATABASE_URL is required")
 	}
 
 	if err := cfg.LogLevel.UnmarshalText([]byte(getenv("LOG_LEVEL", "info"))); err != nil {
@@ -34,6 +41,11 @@ func Load() (Config, error) {
 	if cfg.RequestTimeout, err = seconds("REQUEST_TIMEOUT_SECONDS", 10); err != nil {
 		return Config{}, err
 	}
+	n, err := positive("DB_MAX_CONNS", 4)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.DBMaxConns = int32(n)
 	return cfg, nil
 }
 
@@ -44,10 +56,15 @@ func getenv(key, fallback string) string {
 	return fallback
 }
 
-func seconds(key string, fallback int) (time.Duration, error) {
+func positive(key string, fallback int) (int, error) {
 	n, err := strconv.Atoi(getenv(key, strconv.Itoa(fallback)))
 	if err != nil || n <= 0 {
 		return 0, fmt.Errorf("%s: want a positive integer, got %q", key, os.Getenv(key))
 	}
-	return time.Duration(n) * time.Second, nil
+	return n, nil
+}
+
+func seconds(key string, fallback int) (time.Duration, error) {
+	n, err := positive(key, fallback)
+	return time.Duration(n) * time.Second, err
 }
