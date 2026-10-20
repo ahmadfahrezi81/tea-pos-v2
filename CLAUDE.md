@@ -13,11 +13,22 @@ pnpm format            # Prettier, 4 spaces
 supabase migration new <name>   # migrations live only here; never name one by hand
 ```
 
+Go: `cd api && go run ./cmd/api` (reads `.env.example`'s variables from the shell). `pnpm lint` and `pnpm typecheck` cover Go too (`gofmt`, `go vet`, `go build`). Dependencies are added only when they remove real work; today only `klauspost/compress` (gzip).
+
 Node 22 (`.nvmrc`), TypeScript 5 (not 7: `openapi-typescript` needs 5's JavaScript API).
 
 ## Layout
 
 ```
+api/                 Go module: one backend for every app
+  cmd/api            REST API and webhooks
+  cmd/realtime       WebSocket hub
+  cmd/worker         background jobs and schedules
+  internal/config    environment, read once, bad values refuse to start
+  internal/platform  logging and the HTTP server (graceful shutdown)
+  internal/middleware request id, log, recover, gzip, timeout
+  internal/handler   HTTP layer
+Dockerfile           one image, every program under /app/; Railway picks one by start command
 packages/i18n/       translations (en.json, id.json) and t(); a wrong key fails the typecheck
 supabase/            migrations (owned here, copied from the old repo) and config.toml
 .claude/tasks/       one plan per build step
