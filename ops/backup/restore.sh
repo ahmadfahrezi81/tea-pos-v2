@@ -4,6 +4,7 @@
 #   restore.sh latest | restore.sh postgres/2026/10/21/200000
 # Needs R2_* and TARGET_URL: an empty Postgres 17 database, connected as a superuser.
 set -Eeuo pipefail
+# shellcheck source=lib.sh
 source /usr/local/bin/lib.sh
 
 require R2_ACCOUNT_ID R2_BUCKET R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY TARGET_URL

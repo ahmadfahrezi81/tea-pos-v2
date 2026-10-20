@@ -2,6 +2,7 @@
 # Shared by backup.sh and restore.sh. Never echo a variable here: they hold secrets.
 
 # The schemas a restore needs: our tables, and Supabase's logins and file records.
+# shellcheck disable=SC2034 # used by the scripts that source this file
 SCHEMAS=(public auth storage)
 
 log() { # level msg [extra JSON fields, starting with a comma]

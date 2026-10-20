@@ -2,6 +2,7 @@
 # One nightly run: dump production, check the file, count rows, upload both to R2,
 # and report to healthchecks.io, which emails the owner when a night fails or never reports.
 set -Eeuo pipefail
+# shellcheck source=lib.sh
 source /usr/local/bin/lib.sh
 
 require DATABASE_URL R2_ACCOUNT_ID R2_BUCKET R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY HC_PING_URL
