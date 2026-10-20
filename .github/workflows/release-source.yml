@@ -1,0 +1,18 @@
+# Only staging can be released into main, and the title names the version release.yml tags.
+name: release-source
+
+on:
+    pull_request:
+        branches: [main]
+        types: [opened, edited, synchronize, reopened]
+
+jobs:
+    release-source:
+        runs-on: ubuntu-latest
+        steps:
+            - env:
+                  HEAD: ${{ github.head_ref }}
+                  TITLE: ${{ github.event.pull_request.title }}
+              run: |
+                  [ "$HEAD" = "staging" ] || { echo "Only staging can be released into main, not $HEAD."; exit 1; }
+                  [[ "$TITLE" =~ ^release:\ [0-9]{4}\.[0-9]{2}\.[0-9]+$ ]] || { echo "Title must be 'release: YYYY.MM.N', got: $TITLE"; exit 1; }
