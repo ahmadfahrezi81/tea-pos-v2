@@ -1,6 +1,6 @@
 # Task 001 — The GitHub repo
 
-**Status: approved 2026-10-20; the owner chose a public repo.**
+**Status: done 2026-10-20. Public repo `ahmadfahrezi81/tea-pos-v2`, first commit `5d5a4df` on `main` (rewritten once to drop the Co-Authored-By trailer); ruleset `main` active (id 25470818); a direct push to `main` is refused (GH013). Squash only, branches deleted on merge, Dependabot alerts, secret scanning and push protection on. The owner chose a public repo.**
 
 ## The goal
 
