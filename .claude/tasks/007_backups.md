@@ -1,6 +1,6 @@
 # Task 007 — Backups
 
-**Status: built 2026-10-20 (code, uncommitted to `staging` yet), waiting on the owner's clicks. Then: the release that creates `backup` in production, the first night's run, and the test restore.**
+**Status: done 2026-10-20. PR #9, release `2026.10.2` created `backup` in production. First run by hand: 8.7 MB dump, 53 tables counted, uploaded to R2, healthchecks.io up. Test restore into a local Postgres 17 worked after one fix (the dump creates `public` itself); every `public` table matched; only Supabase's sign-in log and tokens differed, as they change during the dump, so the comparison now covers `public` and `auth.users`. The owner skipped the failure-alert test. Open: `backup` lost Wait for CI on creation; the next release that changes `.railway/` restores it.**
 
 ## The goal
 
