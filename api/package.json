@@ -1,0 +1,10 @@
+{
+    "name": "@tea-pos/api",
+    "private": true,
+    "scripts": {
+        "build": "go build ./...",
+        "lint": "test -z \"$(gofmt -l .)\" || (gofmt -l . && exit 1) && go vet ./...",
+        "typecheck": "go build ./...",
+        "test": "go test ./..."
+    }
+}
