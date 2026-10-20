@@ -1,4 +1,4 @@
-import { defineRailway, github, project, service } from "railway/iac";
+import { defineRailway, github, preserve, project, service } from "railway/iac";
 
 // Production runs main, staging runs the staging branch. Change settings here, never in the dashboard.
 export default defineRailway((ctx) => {
@@ -46,7 +46,24 @@ export default defineRailway((ctx) => {
         env: env("100MiB"),
     });
 
+    // Nightly dump of production to R2 at 20:00 UTC (03:00 WIB); runs, uploads, exits. Staging's data is fake.
+    const backup = service("backup", {
+        source: repo,
+        rootDirectory: "ops/backup",
+        build: { builder: "DOCKERFILE" as const, watchPatterns: ["/ops/backup/**"] },
+        deploy: { cronSchedule: "0 20 * * *", restartPolicyType: "NEVER" as const },
+        replicas,
+        env: {
+            R2_BUCKET: "tea-pos-backups",
+            DATABASE_URL: preserve(),
+            R2_ACCOUNT_ID: preserve(),
+            R2_ACCESS_KEY_ID: preserve(),
+            R2_SECRET_ACCESS_KEY: preserve(),
+            HC_PING_URL: preserve(),
+        },
+    });
+
     return project("tea-pos-v2", {
-        resources: [api, realtime, worker],
+        resources: [api, realtime, worker, ...(prod ? [backup] : [])],
     });
 });
