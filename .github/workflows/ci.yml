@@ -35,6 +35,8 @@ jobs:
         steps:
             - uses: actions/checkout@v7
             - run: docker build --build-arg RAILWAY_GIT_COMMIT_SHA=${{ github.sha }} -t tea-pos-api .
+            - run: docker build -t tea-pos-backup ops/backup
+            - run: cd ops/backup && shellcheck --external-sources *.sh
 
     comment:
         if: always() && github.event_name == 'pull_request'
@@ -52,6 +54,6 @@ jobs:
                       | Job | Result |
                       | --- | --- |
                       | `checks` (format, lint, typecheck, tests, build) | ${{ needs.checks.result == 'success' && '✅' || '❌' }} ${{ needs.checks.result }} |
-                      | `docker` (image build) | ${{ needs.docker.result == 'success' && '✅' || '❌' }} ${{ needs.docker.result }} |
+                      | `docker` (images, backup scripts) | ${{ needs.docker.result == 'success' && '✅' || '❌' }} ${{ needs.docker.result }} |
 
                       Commit `${{ github.event.pull_request.head.sha }}` · [run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})

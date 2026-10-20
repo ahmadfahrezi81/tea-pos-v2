@@ -1,6 +1,6 @@
 # Task 006 — Railway, branches and Infisical
 
-**Status: in progress 2026-10-20. Staging live: PR #6 merged, first apply created `api`, `realtime`, `worker`; a second apply set Wait for CI; `/health` on `api-staging-c60d.up.railway.app` and `realtime-staging-4a79.up.railway.app` answers with the merged commit. GitHub side done (`staging` default, rulesets, Environment `production`, Infisical → GitHub sync of both tokens). Found: Railway manages every variable by default, so Infisical-synced ones must be declared as `preserve()`. Next: the first release PR creates production and tags `2026.10.1`.**
+**Status: done 2026-10-20. PRs #6, #7 into `staging`, release #8 into `main`, GitHub Release `2026.10.1`. `/health` answers with the deployed commit on staging (`api-staging-c60d`, `realtime-staging-4a79`) and production (`api-production-f3625`, `realtime-production-887b`). Changed after the plan: `main` stays the default branch (owner, looks normal to visitors), PRs target `staging`, `release-source` blocks anything else; Railway manages every variable, so Infisical-synced ones are declared as `preserve()`. Open: production lost Wait for CI when its services were created; the next release that changes `.railway/` restores it.**
 
 ## The goal
 
@@ -14,7 +14,7 @@ Feature branch → PR into **`staging`** (fast checks, integration tests, fronte
 ## The plan
 
 1. **Branches**
-   - `staging`, cut from `main`, made the repo's **default branch** (new PRs target it)
+   - `staging`, cut from `main`; `main` stays the default branch (changed after the plan, owner's call), PRs target `staging`
    - `.github/rulesets/staging.json`: PR only, `checks` and `docker` required, squash merge, no force push or deletion
    - `main.json`: merge commit only (a squash would give `main` a commit `staging` never had, and the next release would conflict)
    - **`release-source` check** on PRs into `main`: fails unless the PR comes from `staging`; required on `main` (GitHub rules cannot limit the source branch on their own)

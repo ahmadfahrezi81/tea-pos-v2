@@ -29,6 +29,8 @@ api/                 Go module: one backend for every app
   internal/middleware request id, log, recover, gzip, timeout
   internal/handler   HTTP layer
 Dockerfile           one image, every program under /app/; Railway picks one by start command
+ops/backup/          nightly dump of production to R2 (cron service backup) and restore.sh
+docs/runbook.md      restore, run a backup, roll back
 packages/i18n/       translations (en.json, id.json) and t(); a wrong key fails the typecheck
 supabase/            migrations (owned here, copied from the old repo) and config.toml
 .railway/railway.ts  Railway services for production (main) and staging (staging branch)
@@ -48,7 +50,7 @@ supabase/            migrations (owned here, copied from the old repo) and confi
 - **Features are vertical slices:** the Go endpoint and its screen together, one PR.
 - **No Next.js.** Code copied from the old repo drops its Next.js imports on the way in.
 - **Task file first.** Write it, the owner reviews it, then code. Every change, not only big ones.
-- **Every change is a PR into `staging`** (the default branch), squash merged; use the `pr` skill. `staging` deploys to Railway's `staging` environment on the staging database.
+- **Every change is a PR into `staging`** (not the default: `main` is, so set the base; a PR into `main` from anywhere but `staging` fails `release-source`), squash merged; use the `pr` skill. `staging` deploys to Railway's `staging` environment on the staging database.
 - **A release is a PR `staging` → `main`,** merged with a **merge commit**, never squash; use the `release` skill. It tags a GitHub Release `YYYY.MM.N`. Neither branch takes a direct push (rulesets in `.github/rulesets/`, applied with `gh api`).
 - **Each CI result gets its own PR comment,** edited in place (`.github/actions/pr-comment`, one `section` per result).
 - **Ask before pushing or opening a PR.** Local commits are fine.
