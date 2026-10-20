@@ -1,0 +1,1 @@
+ALTER TABLE daily_summary_photos RENAME TO store_daily_summary_photos;
