@@ -33,6 +33,8 @@ BEGIN
     END LOOP;
 END
 $$;
+-- The dump creates public itself; an empty Postgres already has one.
+DROP SCHEMA IF EXISTS public CASCADE;
 CREATE SCHEMA IF NOT EXISTS extensions;
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA extensions;
