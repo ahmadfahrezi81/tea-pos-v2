@@ -1,0 +1,26 @@
+# A merged release PR becomes a tag and a GitHub Release, named by its title and noted by its body.
+name: release
+
+on:
+    push:
+        branches: [main]
+
+permissions:
+    contents: write
+    pull-requests: read
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+        steps:
+            - env:
+                  GH_TOKEN: ${{ github.token }}
+                  REPO: ${{ github.repository }}
+                  SHA: ${{ github.sha }}
+              run: |
+                  pr=$(gh api "repos/${REPO}/commits/${SHA}/pulls" --jq '.[] | select(.base.ref == "main") | .number' | head -1)
+                  [ -n "$pr" ] || { echo "Not a release PR merge; nothing to tag."; exit 0; }
+                  title=$(gh pr view "$pr" --repo "$REPO" --json title --jq .title)
+                  version=${title#release: }
+                  gh pr view "$pr" --repo "$REPO" --json body --jq .body > notes.md
+                  gh release create "$version" --repo "$REPO" --target "$SHA" --title "$version" --notes-file notes.md

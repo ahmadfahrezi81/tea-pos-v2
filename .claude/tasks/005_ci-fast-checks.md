@@ -1,6 +1,6 @@
 # Task 005 — CI fast checks
 
-**Status: planned 2026-10-20, waiting on the owner's review.**
+**Status: done 2026-10-20, PR #5. `checks` and `docker` green on the PR (the Dockerfile's first build); badly formatted Go fails `pnpm lint` (checked locally, same command CI runs); the `main` ruleset now requires both checks.**
 
 ## The goal
 

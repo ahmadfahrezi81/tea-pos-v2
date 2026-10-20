@@ -1,0 +1,22 @@
+# A release PR that changes .railway/ gets production's plan as a comment. Merging approves it.
+name: railway-plan
+
+on:
+    pull_request:
+        branches: [main]
+        paths: [".railway/**"]
+
+permissions:
+    contents: read
+    pull-requests: write
+    id-token: write
+
+jobs:
+    plan:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - uses: railwayapp/config@v1
+              with:
+                  command: plan
+                  railway-token: ${{ secrets.RAILWAY_TOKEN }}
