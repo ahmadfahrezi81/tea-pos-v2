@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+# Go
+/api/bin/
+*.test
+*.out
+
+# Environment: values live in Infisical, only the example is kept
+.env
+.env.*
+!.env.example
+
+# Editors and OS
+.DS_Store
+.vscode/
+.idea/
+*.log
