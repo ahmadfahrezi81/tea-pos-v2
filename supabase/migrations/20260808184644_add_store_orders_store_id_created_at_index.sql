@@ -1,0 +1,47 @@
+-- Task 044, Item 2 — store_orders has no index on store_id at all.
+--
+-- Verified 2026-08-09, production:
+--     orders_pkey                        btree (id)
+--     store_orders_daily_summary_id_idx  btree (daily_summary_id)
+--
+-- That's the lot. So every query filtering tenant_id + store_id + a created_at
+-- range sequential-scans the whole table, filters, sorts, then applies its
+-- LIMIT. The 25-row cap shipped in task 041 saves the serialization of the rows
+-- it drops and nothing else — Postgres still reads and sorts everything first.
+--
+-- Five call sites use that shape:
+--     orders.ts:88-94         listOrders
+--     analytics.ts:150-154    getHourlySales
+--     summaries.ts:53-59      fetchOrdersForDate -> seedTotalsFromOrders
+--     summaries.ts:320-325    createSummary seed
+--     activity-logs.ts:96     getDayActivity  (deleted by Item 1)
+--
+-- Summary-keyed reads — the close recompute, getSummaryUsers,
+-- getSummaryBreakdown — go through daily_summary_id and are already covered.
+--
+-- History: 20260705161933 created this index and 20260705171042 dropped it,
+-- both reached remote. That pair is task 037 fallout — the index supported the
+-- cursor pagination that got reverted, and went out with it. This is a new
+-- forward migration; do not edit or delete either July 5 file.
+--
+-- Named explicitly. The July 5 create used a bare `CREATE INDEX ON` and let
+-- Postgres auto-name it, which is what forced its companion DROP to guess.
+--
+-- store_id leads rather than tenant_id: a store belongs to exactly one tenant,
+-- so store_id is already maximally selective and a leading tenant_id would only
+-- add width. DESC matches the queries' `order("created_at", desc)` intent and is
+-- otherwise cosmetic — Postgres scans a btree backwards efficiently either way.
+
+create index if not exists store_orders_store_id_created_at_idx
+    on store_orders (store_id, created_at desc);
+
+-- Verify with EXPLAIN (ANALYZE, BUFFERS) on the listOrders shape. The evidence
+-- is the plan losing its Sort node and stopping the Seq Scan — not a wall-clock
+-- improvement, which at ~90 rows a day is noise:
+--
+--   explain (analyze, buffers)
+--   select id from store_orders
+--   where tenant_id = '<uuid>' and store_id = '<uuid>'
+--     and created_at >= '<day start utc>' and created_at <= '<day end utc>'
+--   order by created_at desc
+--   limit 25;

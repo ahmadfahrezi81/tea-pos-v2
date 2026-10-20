@@ -1,0 +1,2 @@
+-- Merged into 20260514074127_create_payroll_entries.sql due to identical timestamp.
+-- Both tables are created there in dependency order (periods first, then entries).
