@@ -3,23 +3,23 @@ name: ci
 on:
     push:
     pull_request:
-        branches: [main]
+        branches: [staging, main]
 
 concurrency:
-    group: ci-${{ github.ref }}
+    group: ci-${{ github.event_name }}-${{ github.ref }}
     cancel-in-progress: true
 
 jobs:
     checks:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v5
-            - uses: pnpm/action-setup@v4
-            - uses: actions/setup-node@v5
+            - uses: actions/checkout@v7
+            - uses: pnpm/action-setup@v6
+            - uses: actions/setup-node@v7
               with:
                   node-version-file: .nvmrc
                   cache: pnpm
-            - uses: actions/setup-go@v6
+            - uses: actions/setup-go@v7
               with:
                   go-version-file: api/go.mod
                   cache-dependency-path: api/go.sum
@@ -33,5 +33,25 @@ jobs:
     docker:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v7
             - run: docker build --build-arg RAILWAY_GIT_COMMIT_SHA=${{ github.sha }} -t tea-pos-api .
+
+    comment:
+        if: always() && github.event_name == 'pull_request'
+        needs: [checks, docker]
+        runs-on: ubuntu-latest
+        permissions:
+            pull-requests: write
+        steps:
+            - uses: actions/checkout@v7
+            - uses: ./.github/actions/pr-comment
+              with:
+                  section: checks
+                  body: |
+                      ### Checks
+                      | Job | Result |
+                      | --- | --- |
+                      | `checks` (format, lint, typecheck, tests, build) | ${{ needs.checks.result == 'success' && '✅' || '❌' }} ${{ needs.checks.result }} |
+                      | `docker` (image build) | ${{ needs.docker.result == 'success' && '✅' || '❌' }} ${{ needs.docker.result }} |
+
+                      Commit `${{ github.event.pull_request.head.sha }}` · [run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
