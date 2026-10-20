@@ -1,6 +1,6 @@
 # Task 002 — The domain
 
-**Status: planned 2026-10-20, waiting on the owner.**
+**Status: done 2026-10-20. `lykostech.app` registered on Cloudflare (expires 2027-10-20, auto-renew on, Cloudflare nameservers). Always Use HTTPS and HTTP/3 on. The first purchase failed on Cloudflare's side and was refunded; the second went through.**
 
 ## The goal
 
