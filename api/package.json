@@ -7,8 +7,8 @@
         "typecheck": "go build ./...",
         "test": "go test ./...",
         "test:integration": "go test -tags integration -count=1 ./tests/...",
-        "generate": "go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1 generate",
-        "generate:check": "go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1 diff",
+        "generate": "go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1 generate && go run ./cmd/openapi > openapi.yaml",
+        "generate:check": "go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1 diff && go run ./cmd/openapi | diff -u openapi.yaml - && echo 'generated code up to date'",
         "db:schema": "infisical run --env=staging --path=/app -- bash scripts/db-schema.sh"
     }
 }

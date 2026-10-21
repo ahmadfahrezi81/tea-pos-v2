@@ -30,6 +30,7 @@ jobs:
             - run: pnpm test
             - run: pnpm build
             - run: pnpm --filter @tea-pos/api generate:check
+            - run: pnpm --filter @tea-pos/api-client generate:check
 
     integration:
         if: github.event_name == 'pull_request'
@@ -74,7 +75,7 @@ jobs:
                       ### Checks
                       | Job | Result |
                       | --- | --- |
-                      | `checks` (format, lint, typecheck, tests, build, sqlc up to date) | ${{ needs.checks.result == 'success' && '✅' || '❌' }} ${{ needs.checks.result }} |
+                      | `checks` (format, lint, typecheck, tests, build, generated code up to date) | ${{ needs.checks.result == 'success' && '✅' || '❌' }} ${{ needs.checks.result }} |
                       | `docker` (images, backup scripts) | ${{ needs.docker.result == 'success' && '✅' || '❌' }} ${{ needs.docker.result }} |
                       | `integration` (Go against a throwaway Postgres) | ${{ needs.integration.result == 'success' && '✅' || '❌' }} ${{ needs.integration.result }} |
 

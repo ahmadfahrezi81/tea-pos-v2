@@ -1,6 +1,6 @@
 # Task 008 — Database
 
-**Status: built 2026-10-21, PR open, not merged. Schema dumped from staging (26 tables); `GetTenantBySlug` integration test passes locally against Postgres 17; the API connects to the staging database from the laptop (`database connected`). Found while building: the dump creates `public` itself and sets an empty `search_path`, and the policies call `auth.role()` as well as `auth.uid()`; `testkit` and `stubs.sql` handle all three. Fixtures are two tenants for now (stores join with their slice). Left: apply `.github/rulesets/staging.json` (adds `integration` as required) after this PR's checks run; merge; staging logs `database connected` on all three services; release.**
+**Status: merged 2026-10-21 (PR #12); `integration` required on `staging`. OPEN, blocked on Railway's outage (2026-10-21): the staging apply failed ("Invalid RAILWAY_TOKEN" while Railway's API was down) and builds paused during the outage are not queued. When Railway is back: rerun the staging `railway-apply` run, redeploy `api`, `realtime`, `worker` on staging, check each logs `database connected`, then release. Until the apply runs, `realtime` and `worker` have no `DATABASE_URL`.**
 
 ## The goal
 

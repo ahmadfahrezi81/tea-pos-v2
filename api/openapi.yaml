@@ -1,0 +1,73 @@
+components:
+  schemas:
+    Error:
+      additionalProperties: false
+      properties:
+        code:
+          examples:
+            - day_already_closed
+          type: string
+        details:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        message:
+          examples:
+            - The day is already closed
+          type: string
+        status:
+          examples:
+            - 409
+          format: int64
+          type: integer
+      required:
+        - status
+        - code
+        - message
+      type: object
+    HealthOutputBody:
+      additionalProperties: false
+      properties:
+        commit:
+          examples:
+            - a1b2c3d
+          type: string
+        status:
+          examples:
+            - ok
+          type: string
+        version:
+          examples:
+            - 2026.10.3
+          type: string
+      required:
+        - status
+        - version
+        - commit
+      type: object
+info:
+  title: tea-pos API
+  version: dev
+openapi: 3.1.0
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Service health, version and commit
+      tags:
+        - system
