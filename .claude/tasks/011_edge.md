@@ -1,6 +1,6 @@
 # Task 011 — Pages and the `/api` forwarder
 
-**Status: PR #14 open 2026-10-21. First deploy created both Pages projects; `tea-pos` was taken on `pages.dev`, so the seller project's address is `tea-pos-d8i.pages.dev` (`tea-office` kept its name). Both PR previews serve the placeholder, their `/api/health` answers from staging's API through the forwarder, and Cloudflare offers HTTP/3 (`alt-svc: h3`). Left after merge: the `staging` alias deploy, the custom domains (owner), and the Go secret check once Railway builds again.**
+**Status: done 2026-10-21 except the Go half, which waits on Railway. PR #14 merged. `tea-pos-staging.lykostech.app` and `tea-office-staging.lykostech.app` serve the staging build and their `/api/health` answers from staging's API; `tea-pos.` and `tea-office.lykostech.app` are active and show production's build from the next release. Staging names: added as custom domains in each project (Cloudflare then pointed their CNAMEs at production), and once Active, the CNAMEs edited to `staging.tea-pos-d8i.pages.dev` and `staging.tea-office.pages.dev`. Also added: SPF `v=spf1 -all` and DMARC `p=reject` (the domain sends no email). Open, on Railway: the Go secret check goes live when Railway builds again.**
 
 ## The goal
 
@@ -41,7 +41,7 @@ A **Pages Function** (`functions/api/[[path]].ts`) is a Worker that runs inside 
 **Cloudflare**
 1. An **API token**: Account → Cloudflare Pages: Edit. Put it and the **account id** in Infisical Production `/github` (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`), so GitHub gets them
 2. After the first deploy creates the projects `tea-pos` and `tea-office`: **Custom domains** → `tea-pos.lykostech.app` and `tea-office.lykostech.app` (production)
-3. The two staging addresses: DNS → a `CNAME` `tea-pos-staging` → `staging.tea-pos-d8i.pages.dev`, and `tea-office-staging` → `staging.tea-office.pages.dev`, proxied. I confirm during the build that Pages serves a branch alias on a custom name this way
+3. The two staging addresses: add each as a custom domain in its project; once Active, edit its DNS CNAME to the branch alias (`staging.tea-pos-d8i.pages.dev`, `staging.tea-office.pages.dev`), proxied. Without the custom domain Pages answers 522
 
 **Infisical**
 1. `EDGE_SECRET` in Staging `/app` and Production `/app`: a long random value each (`openssl rand -hex 32`), different per environment. The existing `/app` → Railway `api` syncs carry it
