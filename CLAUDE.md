@@ -50,6 +50,8 @@ api/                 Go module: one backend for every app
 Dockerfile           one image, every program under /app/; Railway picks one by start command
 ops/backup/          nightly dump of production to R2 (cron service backup) and restore.sh
 docs/runbook.md      restore, run a backup, roll back
+apps/seller, backoffice  Pages projects tea-pos and tea-office (placeholders until Step 14); functions/api forwards /api to Railway
+packages/edge/       the /api forwarder: drops /api, adds X-Edge-Secret and X-Client-IP
 packages/api-client/ generated types, the fetch client and React Query hooks for every app
 packages/i18n/       translations (en.json, id.json) and t(); a wrong key fails the typecheck
 supabase/            migrations (owned here, copied from the old repo) and config.toml
@@ -75,6 +77,7 @@ supabase/            migrations (owned here, copied from the old repo) and confi
 - **Each CI result gets its own PR comment,** edited in place (`.github/actions/pr-comment`, one `section` per result).
 - **Ask before pushing or opening a PR.** Local commits are fine.
 - **Railway as code** (`.railway/railway.ts`): never change a declared setting in the dashboard (the next apply fails). A release PR that changes it shows production's plan as a comment; merging applies it. Railway drops Wait for CI on a newly created service, so a second apply sets it. **Every variable must be declared in the file**; one Infisical syncs in is declared as `preserve()`, or the next apply removes it.
+- **Every app reaches the API on its own address** (`/api`, a Pages Function from `packages/edge`): no CORS, and previews behave like production. Go answers 404 to anything without the right `X-Edge-Secret`, except `/health`. `pages.yml` deploys a PR's previews and `staging` against the staging API, `main` against production's (`API_ORIGIN` in each app's `wrangler.toml`).
 - **Settings outside git** (Cloudflare, Infisical, Supabase, dashboard-only Railway settings) are the owner's to click: write down what to click, never assume it was done.
 - **Secrets live in Infisical** (`staging`, `prod`), never in git or the Vite build. The repo is public.
 

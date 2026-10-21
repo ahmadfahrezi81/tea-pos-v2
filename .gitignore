@@ -23,3 +23,7 @@ coverage/
 .vscode/
 .idea/
 *.log
+
+# Cloudflare
+.wrangler/
+.dev.vars

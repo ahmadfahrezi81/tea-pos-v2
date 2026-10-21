@@ -28,8 +28,8 @@ export default defineRailway((ctx) => {
         start: "/app/api",
         healthcheck: "/health",
         replicas,
-        // Infisical syncs DATABASE_URL into api only; realtime and worker reference it.
-        env: { ...env("200MiB", "8"), DATABASE_URL: preserve() },
+        // Infisical syncs DATABASE_URL and EDGE_SECRET into api only; the others reference them.
+        env: { ...env("200MiB", "8"), DATABASE_URL: preserve(), EDGE_SECRET: preserve() },
     });
     const realtime = service("realtime", {
         source: repo,
@@ -38,7 +38,11 @@ export default defineRailway((ctx) => {
         start: "/app/realtime",
         healthcheck: "/health",
         replicas,
-        env: { ...env("100MiB", "2"), DATABASE_URL: api.env.DATABASE_URL },
+        env: {
+            ...env("100MiB", "2"),
+            DATABASE_URL: api.env.DATABASE_URL,
+            EDGE_SECRET: api.env.EDGE_SECRET,
+        },
     });
     const worker = service("worker", {
         source: repo,

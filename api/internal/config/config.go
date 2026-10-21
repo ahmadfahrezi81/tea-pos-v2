@@ -18,6 +18,7 @@ type Config struct {
 	RequestTimeout  time.Duration
 	DatabaseURL     string
 	DBMaxConns      int32
+	EdgeSecret      string
 }
 
 func Load() (Config, error) {
@@ -25,9 +26,13 @@ func Load() (Config, error) {
 		Port:        getenv("PORT", "8080"),
 		Env:         getenv("ENV", "local"),
 		DatabaseURL: os.Getenv("DATABASE_URL"),
+		EdgeSecret:  os.Getenv("EDGE_SECRET"),
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, errors.New("DATABASE_URL is required")
+	}
+	if n := len(cfg.EdgeSecret); n > 0 && n < 32 {
+		return Config{}, fmt.Errorf("EDGE_SECRET: want at least 32 characters (openssl rand -hex 32), got %d", n)
 	}
 
 	if err := cfg.LogLevel.UnmarshalText([]byte(getenv("LOG_LEVEL", "info"))); err != nil {
@@ -47,6 +52,14 @@ func Load() (Config, error) {
 	}
 	cfg.DBMaxConns = int32(n)
 	return cfg, nil
+}
+
+// RequireEdgeSecret is for programs that serve the apps through the forwarder.
+func (c Config) RequireEdgeSecret() error {
+	if c.EdgeSecret == "" {
+		return errors.New("EDGE_SECRET is required")
+	}
+	return nil
 }
 
 func getenv(key, fallback string) string {
