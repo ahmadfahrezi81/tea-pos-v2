@@ -1,6 +1,6 @@
 # Task 011 — Pages and the `/api` forwarder
 
-**Status: built 2026-10-21, uncommitted, waiting on the owner's code review. Locally: the placeholder page serves, and its `/api/health` reached staging's real API through the forwarder (`wrangler pages dev`). Lint, typecheck, format pass. Not yet tried: a real deploy (needs the Cloudflare token), the staging custom names, the Go secret check on Railway (builds paused). Found: locally, `.dev.vars` replaces `wrangler.toml`'s vars, so the forwarder now answers a clear 500 if `API_ORIGIN` or `EDGE_SECRET` is missing; a real deploy is checked to have both.**
+**Status: PR #14 open 2026-10-21. First deploy created both Pages projects; `tea-pos` was taken on `pages.dev`, so the seller project's address is `tea-pos-d8i.pages.dev` (`tea-office` kept its name). Both PR previews serve the placeholder, their `/api/health` answers from staging's API through the forwarder, and Cloudflare offers HTTP/3 (`alt-svc: h3`). Left after merge: the `staging` alias deploy, the custom domains (owner), and the Go secret check once Railway builds again.**
 
 ## The goal
 
@@ -41,7 +41,7 @@ A **Pages Function** (`functions/api/[[path]].ts`) is a Worker that runs inside 
 **Cloudflare**
 1. An **API token**: Account → Cloudflare Pages: Edit. Put it and the **account id** in Infisical Production `/github` (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`), so GitHub gets them
 2. After the first deploy creates the projects `tea-pos` and `tea-office`: **Custom domains** → `tea-pos.lykostech.app` and `tea-office.lykostech.app` (production)
-3. The two staging addresses: DNS → a `CNAME` `tea-pos-staging` → `staging.tea-pos.pages.dev`, and `tea-office-staging` → `staging.tea-office.pages.dev`, proxied. I confirm during the build that Pages serves a branch alias on a custom name this way
+3. The two staging addresses: DNS → a `CNAME` `tea-pos-staging` → `staging.tea-pos-d8i.pages.dev`, and `tea-office-staging` → `staging.tea-office.pages.dev`, proxied. I confirm during the build that Pages serves a branch alias on a custom name this way
 
 **Infisical**
 1. `EDGE_SECRET` in Staging `/app` and Production `/app`: a long random value each (`openssl rand -hex 32`), different per environment. The existing `/app` → Railway `api` syncs carry it
