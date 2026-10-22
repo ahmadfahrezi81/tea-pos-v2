@@ -1,6 +1,6 @@
 # Task 014 — Frontend groundwork
 
-**Status: planned 2026-10-22, waiting on the owner's review (backoffice shell and home screen decided).**
+**Status: approved 2026-10-22, in progress.**
 
 ## The goal
 
@@ -10,11 +10,11 @@ RFC: Build order Step 14; Stack (Framework through Translations); Performance bu
 ## The plan
 
 1. **`packages/config`**: the shared `tsconfig` for apps (React, `jsx`), `vite.base.ts` (React with the React Compiler, Tailwind 4 via `@tailwindcss/vite`, `vite-plugin-pwa`), and the Tailwind theme (`globals.css` from the old seller app, Inter Latin subset only, preloaded)
-2. **`packages/ui`** copied from `../tea-pos/packages/ui`:
-   - `components/*` and `custom/*`, except what belongs to later steps: `FeedbackHistory`, `WeatherDrawer` (need features and services), `chart` (recharts, comes with analytics)
+2. **`packages/ui`, copied on demand:** only what the shell, login and home use now; every later screen brings the components it needs, reviewed as they arrive (an unused file costs the phone nothing, but it is code to maintain)
+   - **One Radix style:** the combined `radix-ui` package, never the single `@radix-ui/react-*` ones
+   - **One icon set:** `lucide-react`. The Fluent emoji stay, as plain SVG files in `packages/ui/emoji/` drawn by one `<Emoji name>` component (`<img>`, cached by the service worker, never in the JavaScript); `@iconify/react` and the hand-bundled `bundled-emoji.ts` go
    - `sonner.tsx` drops `next-themes` (the apps have no dark mode): fixed `theme="light"`
-   - `mapbox-gl`, `@tea-pos/features` and `react-day-picker`'s unused parts leave its dependencies; `utils` imports point at the new `packages/utils`
-3. **`packages/utils`**, only what is still needed: `cn`, `uuid`, `banks`, `navigation` (without Next.js). Gone: `swr` (TanStack Query), `schemas` and `errors` (the contract and `httpx` codes), `server-config/*` and `roleUtils` (Go decides, Step 13), `translations` (already `packages/i18n`), `realtime` (Step 26), `formatCurrency`/`formatDate`/`formatTimeAgo`/`time`/`week` (into `packages/format`), `weatherCode` (comes with the weather screen)
+3. **`packages/utils`:** only `cn` for now; the rest of the old `utils` comes with the screens that need it or is replaced: `swr` (TanStack Query), `schemas` and `errors` (the contract and `httpx` codes), `server-config/*` and `roleUtils` (Go decides, Step 13), `translations` (`packages/i18n`), `realtime` (Step 26), the date and money helpers (`packages/format`)
 4. **`packages/format`**: one function per display style, `Intl` only (no date-fns): `formatDate`, `formatTime`, `formatDateTime`, `formatRelative`, `formatMoney`, all taking the locale; the week helpers from `week.ts`. Unit tests with Vitest, the first frontend tests in the repo
 5. **`packages/shell`** copied, Next.js swapped for TanStack Router:
    - `usePathname`/`useRouter` become `useLocation`/`useNavigate`; `next/image` becomes `<img>`
@@ -31,9 +31,9 @@ RFC: Build order Step 14; Stack (Framework through Translations); Performance bu
    - only the active language loaded (`loadMessages`, already in `packages/i18n`), chosen from the browser until `/me` gives the user's
    - PWA: manifest and icons copied from the old apps, the whole app precached except lazy chunks; `functions/api` stays as is
    - `.env` none: the apps hold no secrets; the API is always `/api`
-8. **Bundle-size check**: `scripts/bundle-size.mjs` (no library): gzips the JavaScript the first screen loads (from Vite's manifest) and fails over the budget, **170 KB per app** (the POS budget; it should sit far under today). Runs in `checks`; the size goes into the PR comment as its own section (`bundle-size`)
+8. **Bundle-size check**: `scripts/bundle-size.mjs` (no library): gzips the JavaScript the first screen loads (from Vite's manifest) and fails over the budget. The budget is set just above what this step measures (likely about 100 KB), so a regression shows at once; each feature step raises it on purpose, visible in the PR comment, up to the POS's 170 KB. Runs in `checks`; the size goes into the PR comment as its own section (`bundle-size`)
 9. **CI:** `pages.yml` builds with `vite build` instead of copying `public/`; `checks` runs the Vitest tests and the bundle check
-10. **`CLAUDE.md`:** the new packages, `pnpm dev` per app (Vite on the staging API through the same forwarder: `wrangler pages dev` proxies `/api`), the bundle budget
+10. **`CLAUDE.md`:** the new packages, `pnpm dev` per app (`wrangler pages dev` runs Vite and the `/api` forwarder against the staging API; `EDGE_SECRET` through `infisical run`), the bundle budget
 
 ## Owner's part
 
@@ -47,7 +47,8 @@ Nothing to click. Review the copied `ui`/`shell` diff if you want: it is mostly 
 
 ## Found while copying (to unify)
 
-(filled during the build)
+- Three icon systems (lucide, Iconify, a hand-bundled emoji file) become lucide plus emoji SVG files
+- Radix imported two ways become one
 
 ## Done when
 
