@@ -12,6 +12,9 @@ concurrency:
 jobs:
     checks:
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            pull-requests: write
         steps:
             - uses: actions/checkout@v7
             - uses: pnpm/action-setup@v6
@@ -29,8 +32,18 @@ jobs:
             - run: pnpm typecheck
             - run: pnpm test
             - run: pnpm build
+            - id: bundle
+              run: |
+                  BUNDLE_REPORT=bundle.md pnpm bundle-size || failed=1
+                  { echo 'report<<EOF'; cat bundle.md; echo; echo 'EOF'; } >> "$GITHUB_OUTPUT"
+                  exit ${failed:-0}
             - run: pnpm --filter @tea-pos/api generate:check
             - run: pnpm --filter @tea-pos/api-client generate:check
+            - if: always() && github.event_name == 'pull_request' && steps.bundle.outputs.report
+              uses: ./.github/actions/pr-comment
+              with:
+                  section: bundle-size
+                  body: ${{ steps.bundle.outputs.report }}
 
     integration:
         if: github.event_name == 'pull_request'
@@ -75,7 +88,7 @@ jobs:
                       ### Checks
                       | Job | Result |
                       | --- | --- |
-                      | `checks` (format, lint, typecheck, tests, build, generated code up to date) | ${{ needs.checks.result == 'success' && '✅' || '❌' }} ${{ needs.checks.result }} |
+                      | `checks` (format, lint, typecheck, tests, build, bundle size, generated code up to date) | ${{ needs.checks.result == 'success' && '✅' || '❌' }} ${{ needs.checks.result }} |
                       | `docker` (images, backup scripts) | ${{ needs.docker.result == 'success' && '✅' || '❌' }} ${{ needs.docker.result }} |
                       | `integration` (Go against a throwaway Postgres) | ${{ needs.integration.result == 'success' && '✅' || '❌' }} ${{ needs.integration.result }} |
 

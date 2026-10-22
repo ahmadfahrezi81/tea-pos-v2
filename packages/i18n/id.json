@@ -463,5 +463,44 @@
         "newClaim": "Klaim Baru",
         "payrollInfo": "Info Penggajian",
         "editPayrollInfo": "Ubah Info Penggajian"
+    },
+    "shell": {
+        "account": "Akun",
+        "add": "Tambah",
+        "edit": "Ubah",
+        "refreshNow": "Muat Ulang Sekarang",
+        "refreshing": "Memuat ulang...",
+        "maintenance": "Sedang Perbaikan",
+        "maintenanceSub": "Kami sedang melakukan pembaruan untuk meningkatkan pengalaman Anda. Kami akan segera kembali.",
+        "update": {
+            "title": "Pembaruan Tersedia",
+            "body": "Versi baru sudah siap. Muat ulang untuk memakainya.",
+            "infoTitle": "Yang Anda dapat",
+            "infoBody": "Perbaikan dan peningkatan terbaru. Memuat ulang hanya sebentar dan pekerjaan Anda tetap aman."
+        },
+        "inactivity": {
+            "title": "Perlu Dimuat Ulang",
+            "body": "Anda sudah lama tidak aktif — muat ulang agar data tetap terbaru.",
+            "infoTitle": "Kenapa muncul",
+            "infoBody": "Aplikasi sudah lama tidak dipakai, jadi data di layar mungkin sudah tidak sama dengan server."
+        }
+    },
+    "signIn": {
+        "google": "Lanjutkan dengan Google",
+        "signingIn": "Sedang masuk...",
+        "sellerTitle": "Selamat datang kembali",
+        "sellerSub": "Siap berjualan? Ayo masuk.",
+        "backofficeTitle": "Backoffice",
+        "backofficeSub": "Khusus admin.",
+        "comingSoon": "Fitur masuk hadir di pembaruan berikutnya."
+    },
+    "status": {
+        "title": "Status",
+        "api": "API",
+        "version": "Versi",
+        "commit": "Commit",
+        "app": "Aplikasi",
+        "ok": "Terhubung",
+        "down": "Tidak terjangkau"
     }
 }

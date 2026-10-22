@@ -15,6 +15,8 @@ supabase migration new <name>   # migrations live only here; never name one by h
 
 Go, against the staging database: `cd api && infisical run --env=staging --path=/app -- go run ./cmd/api` (needs `infisical login` once).
 
+Apps, against the staging API: `infisical run --env=staging --path=/app -- pnpm --filter @tea-pos/seller dev` (or `backoffice`). Vite proxies `/api` to staging the way the Pages forwarder does, adding `EDGE_SECRET`. `pnpm bundle-size` (after `pnpm build`) checks each app's first screen against its budget in `scripts/bundle-size.mjs`; a step that needs more raises it on purpose, up to the POS's 170 KB.
+
 Database:
 
 ```bash
@@ -50,10 +52,16 @@ api/                 Go module: one backend for every app
 Dockerfile           one image, every program under /app/; Railway picks one by start command
 ops/backup/          nightly dump of production to R2 (cron service backup) and restore.sh
 docs/runbook.md      restore, run a backup, roll back
-apps/seller, backoffice  Pages projects tea-pos and tea-office (placeholders until Step 14); functions/api forwards /api to Railway
+apps/seller, backoffice  Vite apps, Pages projects tea-pos and tea-office. app.config.ts: everything that differs
+                     per app (name, brand colour, sign-in words, languages). src/routes: TanStack Router file
+                     routes (routeTree.gen.ts generated). functions/api forwards /api to Railway
+packages/config/     the shared Vite setup (React Compiler, Tailwind, PWA, routes) and tsconfig for apps
+packages/ui/         components and the theme (styles/globals.css, incl. the 480px phone-width column) for every app
+packages/shell/      the mobile shell, sign-in, boot and update screens, startApp: what every app is built from
+packages/format/     dates and money for display, Intl only, in the store's time zone
 packages/edge/       the /api forwarder: drops /api, adds X-Edge-Secret and X-Client-IP
-packages/api-client/ generated types, the fetch client and React Query hooks for every app
-packages/i18n/       translations (en.json, id.json) and t(); a wrong key fails the typecheck
+packages/api-client/ generated types, the fetch client, React Query hooks, the query cache saved per user (query.ts)
+packages/i18n/       translations (en.json, id.json), t() and useT(); only the active language loads; a wrong key fails the typecheck
 supabase/            migrations (owned here, copied from the old repo) and config.toml
 .railway/railway.ts  Railway services for production (main) and staging (staging branch)
 .github/             CI, Railway plan and apply, releases, rulesets, the pr-comment action
@@ -71,6 +79,8 @@ supabase/            migrations (owned here, copied from the old repo) and confi
 - **One step at a time, in build order.** Later steps assume earlier ones exist.
 - **Features are vertical slices:** the Go endpoint and its screen together, one PR.
 - **No Next.js.** Code copied from the old repo drops its Next.js imports on the way in.
+- **One component library for every app** (`packages/ui`, `packages/shell`). Copy a component from the old repo when a screen first needs it, not before. Where the old apps do the same job two ways, keep one and tell the owner. Every dependency earns its place; heavy ones load lazily.
+- **Route data for the shell lives on the route:** `staticData: { shell: { titleKey, parent, ... } }` (`packages/shell/routes.ts`).
 - **Task file first.** Write it, the owner reviews it, then code. Every change, not only big ones.
 - **Every change is a PR into `staging`** (not the default: `main` is, so set the base; a PR into `main` from anywhere but `staging` fails `release-source`), squash merged; use the `pr` skill. `staging` deploys to Railway's `staging` environment on the staging database.
 - **A release is a PR `staging` → `main`,** merged with a **merge commit**, never squash; use the `release` skill. It tags a GitHub Release `YYYY.MM.N`. Neither branch takes a direct push (rulesets in `.github/rulesets/`, applied with `gh api`).

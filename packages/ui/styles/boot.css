@@ -1,0 +1,58 @@
+/* The splash: inlined into index.html's head (packages/config/vite.ts), so it is
+   styled from the first frame, before any CSS file or JavaScript arrives. The
+   shell's BootScreen (maintenance, auth error) shares the look. */
+.boot {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    text-align: center;
+    background: #fff;
+    transition: opacity 200ms ease;
+}
+
+.boot[data-leaving] {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.boot-logo {
+    display: block;
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 2rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
+.boot-track {
+    position: relative;
+    width: 16rem;
+    height: 1rem;
+    overflow: hidden;
+    border-radius: 9999px;
+    background-color: #e5e7eb;
+}
+
+/* transform, not left: it runs on the compositor, so it keeps moving while the
+   phone is busy parsing JavaScript. */
+@keyframes boot-bar {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(100%);
+    }
+}
+
+.boot-bar {
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background-color: var(--accent-primary);
+    animation: boot-bar 1.5s ease-in-out infinite;
+}

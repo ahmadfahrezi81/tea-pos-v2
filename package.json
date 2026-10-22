@@ -12,11 +12,13 @@
         "typecheck": "turbo run typecheck",
         "test": "turbo run test",
         "format": "prettier --write .",
-        "format:check": "prettier --check ."
+        "format:check": "prettier --check .",
+        "bundle-size": "node scripts/bundle-size.mjs"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
         "eslint": "10.13.0",
+        "eslint-plugin-react-hooks": "7.1.1",
         "prettier": "3.9.10",
         "railway": "3.16.0",
         "turbo": "2.11.9",

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en" translate="no" class="notranslate">
+    <head>
+        <meta charset="utf-8" />
+        <!-- viewport-fit=cover: the shell pads the notch itself. resizes-content: the Android keyboard shrinks the page, so footer buttons stay reachable. -->
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+        />
+        <!-- The app ships its own translations; browser auto-translate breaks React's DOM. -->
+        <meta name="google" content="notranslate" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="%APP_SHORT_NAME%" />
+        <link rel="icon" href="/icons/icon-192x192.png" />
+        <link rel="apple-touch-icon" href="/icons/icon-512x512.png" />
+        <title>%APP_NAME%</title>
+    </head>
+    <body>
+        <div id="root"></div>
+        <script type="module" src="/src/main.tsx"></script>
+    </body>
+</html>

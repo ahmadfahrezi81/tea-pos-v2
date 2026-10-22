@@ -1,6 +1,6 @@
 # Cloudflare Pages project for seller. Preview and staging builds use the staging API; production uses production's.
 name = "tea-pos"
-pages_build_output_dir = "public"
+pages_build_output_dir = "dist"
 compatibility_date = "2026-10-01"
 
 [vars]
