@@ -9,6 +9,8 @@ import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
+import { pickLocale } from "@tea-pos/i18n/pick";
+
 import type { AppConfig } from "./app";
 
 // The shell's header colour (slate-100): the status bar and the install splash match it.
@@ -23,8 +25,8 @@ const contract = createHash("sha256")
 const FIRST_SCREEN = [/src\/routes\/_shell\.tsx/, /src\/routes\/_shell\/index\.tsx/];
 
 // Everything the first screen needs is requested with the main JavaScript, not after
-// it runs: its route code, the offered languages, and the font.
-function preloadFirstScreen(app: AppConfig): Plugin {
+// it runs: its route code and the font. The language is preloaded by pickLanguage below.
+function preloadFirstScreen(): Plugin {
     return {
         name: "tea-pos:preload-first-screen",
         transformIndexHtml: {
@@ -49,9 +51,7 @@ function preloadFirstScreen(app: AppConfig): Plugin {
                         continue;
                     }
                     const id = file.facadeModuleId ?? "";
-                    const route = FIRST_SCREEN.some((pattern) => pattern.test(id));
-                    const language = app.locales.some((l) => id.endsWith(`/i18n/${l}.json`));
-                    if (route || language) {
+                    if (FIRST_SCREEN.some((pattern) => pattern.test(id))) {
                         tags.push({
                             tag: "link",
                             attrs: { rel: "modulepreload", href: `/${file.fileName}` },
@@ -60,6 +60,33 @@ function preloadFirstScreen(app: AppConfig): Plugin {
                     }
                 }
                 return tags;
+            },
+        },
+    };
+}
+
+// Picks the language before any JavaScript loads (the same pickLocale the app uses)
+// and preloads only that file; startApp reads the choice from <html data-locale>.
+function pickLanguage(app: AppConfig): Plugin {
+    return {
+        name: "tea-pos:pick-language",
+        transformIndexHtml: {
+            order: "post",
+            handler(_html, ctx) {
+                const files: Record<string, string> = {};
+                for (const file of Object.values(ctx.bundle ?? {})) {
+                    const id = file.type === "chunk" ? (file.facadeModuleId ?? "") : "";
+                    for (const locale of app.locales) {
+                        if (id.endsWith(`/i18n/${locale}.json`))
+                            files[locale] = `/${file.fileName}`;
+                    }
+                }
+                const script =
+                    `(function(){var l=(${String(pickLocale).replace(/\s+/g, " ")})(${JSON.stringify(app.locales)});` +
+                    `var r=document.documentElement;r.dataset.locale=l;r.lang=l;` +
+                    `var f=${JSON.stringify(files)}[l];if(f){var p=document.createElement("link");` +
+                    `p.rel="modulepreload";p.href=f;document.head.appendChild(p)}})()`;
+                return [{ tag: "script", children: script, injectTo: "head" }];
             },
         },
     };
@@ -142,7 +169,8 @@ export function appConfig(app: AppConfig) {
             react(),
             babel({ presets: [reactCompilerPreset()] }),
             tailwindcss(),
-            preloadFirstScreen(app),
+            preloadFirstScreen(),
+            pickLanguage(app),
             inlineCss(),
             appHtml(app),
             VitePWA({
