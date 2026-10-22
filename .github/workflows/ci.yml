@@ -35,7 +35,7 @@ jobs:
             - id: bundle
               run: |
                   BUNDLE_REPORT=bundle.md pnpm bundle-size || failed=1
-                  { echo 'report<<EOF'; cat bundle.md; echo 'EOF'; } >> "$GITHUB_OUTPUT"
+                  { echo 'report<<EOF'; cat bundle.md; echo; echo 'EOF'; } >> "$GITHUB_OUTPUT"
                   exit ${failed:-0}
             - run: pnpm --filter @tea-pos/api generate:check
             - run: pnpm --filter @tea-pos/api-client generate:check
