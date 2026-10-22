@@ -28,9 +28,8 @@ RFC: Build order Step 12; Auth and realtime; Testing (the permission test, the e
    - **role**: a role the route does not allow → 403 `not_allowed`
    - **rate limit**: sign-in routes, per caller IP (`X-Client-IP`), in memory: 10 a minute → 429 `too_many_requests`
 6. **The permission test**: reads every route from `openapi.yaml`; each must declare its access (public, signed in, or roles), or the test fails. For each protected route: no session → 401, wrong role → 403, another tenant → 403
-7. **Test-key sign-in, staging only**: a request with `X-Test-Key` and `X-Test-User` (a test user's email) is that user, already signed in; covered by integration tests now, used by Step 15's end-to-end tests. Compiled in only with the Go build tag `testkey`, which only staging's Railway build sets (a build variable in `railway.ts`); production's binary does not contain the code. The key lives in Infisical Staging `/app` and GitHub
-8. **The apps**: the sign-in button goes to `/api/auth/google`; `/login?error=` shows the reason; any 401 from the API sends the app to `/login` (one place, in `packages/api-client`). Logout UI comes with the account screen (Step 27)
-9. **`CLAUDE.md`**: how a route declares access; the test key
+7. **The apps**: the sign-in button goes to `/api/auth/google`; `/login?error=` shows the reason; any 401 from the API sends the app to `/login` (one place, in `packages/api-client`). Logout UI comes with the account screen (Step 27)
+8. **`CLAUDE.md`**: how a route declares access
 
 ## Owner's part
 
@@ -39,23 +38,22 @@ RFC: Build order Step 12; Auth and realtime; Testing (the permission test, the e
 - `https://tea-pos.lykostech.app/api/auth/callback`, `https://tea-office.lykostech.app/api/auth/callback` (production project)
 - previews and the laptop, staging project only: `https://*.tea-pos-d8i.pages.dev/api/auth/callback`, `https://*.tea-office.pages.dev/api/auth/callback`, `http://localhost:5173/api/auth/callback`, `http://localhost:5174/api/auth/callback`
 
-**Infisical**, Staging and Production `/app`: `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (Project Settings → API). Staging `/app` and Production `/github`: `TEST_KEY` (`openssl rand -hex 32`), staging only.
+**Infisical**, Staging and Production `/app`: `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (Project Settings → API).
 
 The Google Cloud Console does not change.
 
 ## Decided in review
 
 - **Sessions last 30 days in both apps,** renewed while used
-- **Test users:** CI's tests make their own users in throwaway databases, so nothing is needed on staging now. The fake staging users that the test-key sign-in names (a seller, an admin, someone in another tenant, in a test tenant) are made in Step 15, when the end-to-end tests that use them arrive. The owner's own staging account stays for testing by hand
+- **The test-key sign-in moves to Step 15** (owner's call): it exists only for the staging end-to-end tests, needs a staging-only Railway build setting and a staging secret, and comes with the fake staging users those tests sign in as. The permission test stays here: it runs in CI on throwaway databases and is what catches a route left open
 
 ## Done when
 
 - On the laptop (local Go on the staging database, the app on `localhost`): Google sign-in works in both apps; a backoffice sign-in by a `USER` is refused with a clear message
 - The permission test passes over every route, and fails when a route forgets to declare its access
 - Integration tests: callback creates a session; a revoked session gets 401; the rate limit gives 429
-- The production build contains no test-key code (checked in CI: the binary built without the tag has no `X-Test-Key` string)
 - After Steps 8, 11 and 9: the same on the staging addresses
 
 ## Not in this task
 
-`/me` and the per-user saved cache (Step 13), the logout screen (Step 27), WebSocket sign-in (Step 26), "log out everywhere" in the UI.
+The test-key sign-in and the fake staging users (Step 15), `/me` and the per-user saved cache (Step 13), the logout screen (Step 27), WebSocket sign-in (Step 26), "log out everywhere" in the UI.
