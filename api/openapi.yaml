@@ -52,6 +52,100 @@ info:
   version: dev
 openapi: 3.1.0
 paths:
+  /auth/callback:
+    get:
+      operationId: finishSignIn
+      parameters:
+        - description: From Supabase after Google sign-in
+          explode: false
+          in: query
+          name: code
+          schema:
+            description: From Supabase after Google sign-in
+            type: string
+        - explode: false
+          in: query
+          name: error
+          schema:
+            type: string
+        - description: Set by /auth/google
+          in: cookie
+          name: tea_pkce
+          schema:
+            description: Set by /auth/google
+            type: string
+        - in: header
+          name: User-Agent
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Found
+          headers:
+            Location:
+              schema:
+                type: string
+            Set-Cookie:
+              schema:
+                type: string
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Finish Google sign-in and set the session cookie
+      tags:
+        - auth
+      x-access:
+        public: true
+        rateLimited: true
+  /auth/google:
+    get:
+      operationId: startSignIn
+      responses:
+        "302":
+          description: Found
+          headers:
+            Location:
+              schema:
+                type: string
+            Set-Cookie:
+              schema:
+                type: string
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Start Google sign-in
+      tags:
+        - auth
+      x-access:
+        public: true
+        rateLimited: true
+  /auth/logout:
+    post:
+      operationId: signOut
+      responses:
+        "204":
+          description: No Content
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Sign out of this app on this phone
+      tags:
+        - auth
+      x-access:
+        signedIn: true
   /health:
     get:
       operationId: getHealth
@@ -71,3 +165,5 @@ paths:
       summary: Service health, version and commit
       tags:
         - system
+      x-access:
+        public: true

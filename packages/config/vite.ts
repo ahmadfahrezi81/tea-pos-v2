@@ -208,14 +208,18 @@ export function appConfig(app: AppConfig) {
         ],
         // The bundle-size check reads which files the first screen loads.
         build: { manifest: true },
-        // Local dev reaches the staging API the way the Pages forwarder does.
+        // Local dev reaches the API the way the Pages forwarder does (API_ORIGIN=http://localhost:8080 for a local Go).
         server: {
             proxy: {
                 "/api": {
                     target: process.env.API_ORIGIN ?? "https://api-staging-c60d.up.railway.app",
                     changeOrigin: true,
                     rewrite: (path) => path.replace(/^\/api/, ""),
-                    headers: { "X-Edge-Secret": process.env.EDGE_SECRET ?? "" },
+                    headers: { "X-Edge-Secret": process.env.EDGE_SECRET ?? "", "X-App": app.id },
+                    configure: (proxy) =>
+                        proxy.on("proxyReq", (req, incoming) =>
+                            req.setHeader("X-App-Origin", `http://${incoming.headers.host}`),
+                        ),
                 },
             },
         },

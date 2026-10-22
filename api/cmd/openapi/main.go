@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	spec, err := handler.NewAPI(http.NewServeMux()).OpenAPI().YAML()
+	spec, err := handler.NewAPI(http.NewServeMux(), handler.Deps{}).OpenAPI().YAML()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

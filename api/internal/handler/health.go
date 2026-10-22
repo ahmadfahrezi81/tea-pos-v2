@@ -7,19 +7,20 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/version"
 )
 
 // Health touches no dependency, so a database blip never makes Railway restart a healthy service.
 func registerHealth(api huma.API) {
-	huma.Register(api, huma.Operation{
+	route(api, huma.Operation{
 		OperationID: "getHealth",
 		Method:      http.MethodGet,
 		Path:        "/health",
 		Summary:     "Service health, version and commit",
 		Tags:        []string{"system"},
-	}, func(context.Context, *struct{}) (*contract.HealthOutput, error) {
+	}, auth.Public, func(context.Context, *struct{}) (*contract.HealthOutput, error) {
 		out := &contract.HealthOutput{}
 		out.Body.Status = "ok"
 		out.Body.Version = version.Version

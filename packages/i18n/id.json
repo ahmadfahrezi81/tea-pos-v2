@@ -492,7 +492,12 @@
         "sellerSub": "Siap berjualan? Ayo masuk.",
         "backofficeTitle": "Backoffice",
         "backofficeSub": "Khusus admin.",
-        "comingSoon": "Fitur masuk hadir di pembaruan berikutnya."
+        "errors": {
+            "signInFailed": "Gagal masuk. Silakan coba lagi.",
+            "notAllowed": "Akun ini tidak bisa memakai aplikasi ini. Tanyakan ke manajer jika ini keliru.",
+            "accountInactive": "Akun ini tidak aktif. Tanyakan ke manajer.",
+            "tooManyRequests": "Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi."
+        }
     },
     "status": {
         "title": "Status",

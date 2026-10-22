@@ -492,7 +492,12 @@
         "sellerSub": "Ready to sell? Let's get you in.",
         "backofficeTitle": "Backoffice",
         "backofficeSub": "Admin access only.",
-        "comingSoon": "Sign-in arrives in the next update."
+        "errors": {
+            "signInFailed": "Sign-in did not finish. Please try again.",
+            "notAllowed": "This account cannot use this app. Ask your manager if this is wrong.",
+            "accountInactive": "This account is not active. Ask your manager.",
+            "tooManyRequests": "Too many attempts. Wait a minute and try again."
+        }
     },
     "status": {
         "title": "Status",
