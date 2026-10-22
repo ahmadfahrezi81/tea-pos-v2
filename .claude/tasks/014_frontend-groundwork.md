@@ -1,6 +1,6 @@
 # Task 014 — Frontend groundwork
 
-**Status: planned 2026-10-22, waiting on the owner's review.**
+**Status: planned 2026-10-22, waiting on the owner's review (backoffice shell and home screen decided).**
 
 ## The goal
 
@@ -39,10 +39,15 @@ RFC: Build order Step 14; Stack (Framework through Translations); Performance bu
 
 Nothing to click. Review the copied `ui`/`shell` diff if you want: it is mostly the old code with imports changed.
 
-## Open questions
+## Decided in review
 
-- **Backoffice on the mobile shell too?** Today both apps use `MobileShell` (`MobileLayoutClient`); I keep that, and `components/sidebar` stays in `ui` unused. Strike out if backoffice should look different
-- **The home screen content:** I show the API status and version only (a real home needs `/me`). Fine?
+- **Backoffice uses the mobile shell too,** like today
+- **One component library for every app.** `packages/ui` and `packages/shell` are the shared base for seller, backoffice and any later app. Anything the two old apps do differently for the same job (two versions of a component, a pattern written twice) is listed below and brought to the owner, not silently picked
+- **Home screen:** API status and version until `/me` (Step 13)
+
+## Found while copying (to unify)
+
+(filled during the build)
 
 ## Done when
 
