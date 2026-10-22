@@ -4,7 +4,8 @@
     "type": "module",
     "exports": {
         ".": "./index.ts",
-        "./react": "./react.tsx"
+        "./react": "./react.tsx",
+        "./pick": "./pick.ts"
     },
     "scripts": {
         "lint": "eslint .",

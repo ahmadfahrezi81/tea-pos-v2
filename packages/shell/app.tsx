@@ -6,8 +6,9 @@ import {
     PersistQueryClientProvider,
 } from "@tea-pos/api-client/query";
 import type { AppConfig } from "@tea-pos/config/app";
-import { loadMessages } from "@tea-pos/i18n";
-import { I18nProvider, pickLocale } from "@tea-pos/i18n/react";
+import { loadMessages, type Locale } from "@tea-pos/i18n";
+import { pickLocale } from "@tea-pos/i18n/pick";
+import { I18nProvider } from "@tea-pos/i18n/react";
 import { createRouter, RouterProvider, type AnyRoute } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
@@ -39,9 +40,10 @@ export async function startApp(router: ReturnType<typeof createAppRouter>, app: 
         offRendered();
         if (!router.state.matches.some((m) => m.staticData.holdsSplash)) hideSplash();
     });
-    const locale = pickLocale(app.locales);
+    // index.html already picked it, to preload that file; the same rule as pickLocale.
+    const locale =
+        (document.documentElement.dataset.locale as Locale | undefined) ?? pickLocale(app.locales);
     const messages = await loadMessages(locale);
-    document.documentElement.lang = locale;
 
     createRoot(document.getElementById("root")!).render(
         <StrictMode>
