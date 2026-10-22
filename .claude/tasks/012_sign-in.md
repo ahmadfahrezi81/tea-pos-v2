@@ -1,6 +1,6 @@
 # Task 012 — Sign-in
 
-**Status: planned 2026-10-22, waiting on the owner's review. Built ahead on a branch while Railway is down; the PR merges only after Steps 8, 11 and 9.**
+**Status: approved 2026-10-22, in progress on `feat/sign-in`. Built ahead while Railway is down; the PR merges only after Steps 8, 11 and 9.**
 
 ## The goal
 

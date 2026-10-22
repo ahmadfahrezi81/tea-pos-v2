@@ -1,6 +1,6 @@
 # Task 014b — Startup trims for slow phones
 
-**Status: built 2026-10-22, waiting on the PR. Verified on a production preview: with Indonesian saved only `id.json` loads (and the screen is Indonesian), otherwise only `en.json`; the service-worker helper loads after the first screen. Item 3 dropped (below). First screen 123.6 KB gzip.**
+**Status: done 2026-10-22, PR #17. The owner's trace on the preview (incognito, 20× CPU, Slow 4G, reopen): splash at about 0.35 s, app ready at about 1.5 s, 760 ms of scripting. Only the picked language loads. Item 3 dropped (below).**
 
 ## The goal
 
