@@ -463,5 +463,44 @@
         "newClaim": "New Claim",
         "payrollInfo": "Payroll Info",
         "editPayrollInfo": "Edit Payroll Info"
+    },
+    "shell": {
+        "account": "Account",
+        "add": "Add",
+        "edit": "Edit",
+        "refreshNow": "Refresh Now",
+        "refreshing": "Refreshing...",
+        "maintenance": "Under Maintenance",
+        "maintenanceSub": "We're making some updates to improve your experience. We'll be back shortly.",
+        "update": {
+            "title": "Update Available",
+            "body": "A new version is ready. Refresh to load it.",
+            "infoTitle": "What you get",
+            "infoBody": "The latest improvements and fixes. Refreshing takes a moment and keeps your work."
+        },
+        "inactivity": {
+            "title": "Refresh Required",
+            "body": "You've been inactive — refresh to avoid stale data.",
+            "infoTitle": "Why this appears",
+            "infoBody": "The app has been idle for a while, so what's on screen may no longer match the server."
+        }
+    },
+    "signIn": {
+        "google": "Continue with Google",
+        "signingIn": "Signing you in...",
+        "sellerTitle": "Welcome back",
+        "sellerSub": "Ready to sell? Let's get you in.",
+        "backofficeTitle": "Backoffice",
+        "backofficeSub": "Admin access only.",
+        "comingSoon": "Sign-in arrives in the next update."
+    },
+    "status": {
+        "title": "Status",
+        "api": "API",
+        "version": "Version",
+        "commit": "Commit",
+        "app": "App",
+        "ok": "Connected",
+        "down": "Unreachable"
     }
 }

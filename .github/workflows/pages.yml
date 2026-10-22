@@ -5,10 +5,24 @@ name: pages
 on:
     push:
         branches: [staging, main]
-        paths: ["apps/**", "packages/edge/**", ".github/workflows/pages.yml"]
+        paths:
+            [
+                "apps/**",
+                "packages/**",
+                "api/openapi.yaml",
+                "pnpm-lock.yaml",
+                ".github/workflows/pages.yml",
+            ]
     pull_request:
         branches: [staging]
-        paths: ["apps/**", "packages/edge/**", ".github/workflows/pages.yml"]
+        paths:
+            [
+                "apps/**",
+                "packages/**",
+                "api/openapi.yaml",
+                "pnpm-lock.yaml",
+                ".github/workflows/pages.yml",
+            ]
 
 concurrency:
     group: pages-${{ github.ref }}
@@ -33,6 +47,7 @@ jobs:
             CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
             WRANGLER: npx -y wrangler@4.151.3
             BRANCH: ${{ github.head_ref || github.ref_name }}
+            APP_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
             PAGES_ENV: ${{ github.ref_name == 'main' && 'production' || 'preview' }}
             EDGE_SECRET: ${{ github.ref_name == 'main' && secrets.EDGE_SECRET_PRODUCTION || secrets.EDGE_SECRET_STAGING }}
         defaults:
@@ -40,9 +55,13 @@ jobs:
                 working-directory: apps/${{ matrix.app }}
         steps:
             - uses: actions/checkout@v7
+            - uses: pnpm/action-setup@v6
             - uses: actions/setup-node@v7
               with:
                   node-version-file: .nvmrc
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm --filter @tea-pos/${{ matrix.app }} build
             - name: Project exists
               run: $WRANGLER pages project create ${{ matrix.project }} --production-branch main 2>/dev/null || true
             - name: Secret

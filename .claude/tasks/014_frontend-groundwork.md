@@ -1,6 +1,6 @@
 # Task 014 — Frontend groundwork
 
-**Status: approved 2026-10-22, in progress.**
+**Status: built 2026-10-22, PR open; waiting on CI and the owner's benchmark on the Pages preview (20× CPU, Slow 4G). Verified locally on production builds: both apps build, lint (with the React Compiler rules), typecheck; format tests pass; home on the staging API through `/api`; sign-in in Indonesian loads only `id.json`; the splash lifts on both paths. First screen 123.7 KB gzip, budget 130 KB. Left for staging: the PWA offline open and the update sheet after a deploy.**
 
 ## The goal
 
@@ -35,9 +35,29 @@ RFC: Build order Step 14; Stack (Framework through Translations); Performance bu
 9. **CI:** `pages.yml` builds with `vite build` instead of copying `public/`; `checks` runs the Vitest tests and the bundle check
 10. **`CLAUDE.md`:** the new packages, `pnpm dev` per app (`wrangler pages dev` runs Vite and the `/api` forwarder against the staging API; `EDGE_SECRET` through `infisical run`), the bundle budget
 
+## Changed while building
+
+- **No `packages/utils` at all:** `cn` was only used by `ActionButton` to join two class names, and it pulled in `tailwind-merge` (7 KB on the sign-in screen). Plain string joining now; `cn` comes back with the first component that really merges classes
+- **The week and pay-period helpers stay out of `packages/format`:** they compute pay periods, which Go owns (principle 1); they move to Go with Steps 20 and 23
+- **The router replaced three hand-written pieces of the old shell:** scroll memory per history entry (the old `useScrollRestoration`), back that survives a reload (`useCanGoBack`, replacing the push counter and its reload bug), and the route table (each route carries `staticData.shell`; no per-app `resolveRoute`). The Android back-button hold (a workaround for Next.js) is gone; check it on a slow phone in staging
+- **Pull to refresh and the idle sheet** call TanStack Query themselves (`refetchQueries`, `invalidateQueries`), so apps pass no refresh function
+- **`WhatsNew` is not copied yet:** it has nothing to show until Step 16b, so it comes then
+- **Local dev uses Vite's proxy, not `wrangler pages dev`:** the same `/api` rewrite and `X-Edge-Secret` as the Pages forwarder, with less to install
+- **One config file per app, `apps/<app>/app.config.ts`:** name, brand colour, sign-in logo and words, languages. Vite fills `index.html` and the manifest from it, and the brand colour is set before the first paint; the routes and `index.html` are now identical in both apps
+- **Second sanity pass:** the update and idle sheet lives in the shell (it no longer pops up on the sign-in screen); the account button hides until an app passes `onAccount`; the saved cache is dropped when the API's shapes change (a hash of `api/openapi.yaml`), not on every deploy, so a phone keeps its data across most releases; the header colour is one constant for the status bar and the install splash
+- **Review pass:** the service worker now registers on every screen, sign-in included (`AppUpdateProvider` at the app root), and right away: the plugin's default waits for the page's load event, which has already passed when the app draws, so it never registered. `@tea-pos/config` is a dev dependency of the shell (types only)
+- **Bottom-up pass:** one `Locale` type (format takes it from i18n); the shell layout route moved into the shell (`ShellLayout`), so each app's route is one line; back and close buttons get labels for screen readers and are one piece of code, not three; the loading bar no longer waits on a request that was dropped before it answered; React 19's `<Context value>` style throughout
+- **Splash and startup (owner found the blink, then a broken-looking handover):** the old app's `launch.html` had no counterpart. Now index.html carries a plain-HTML splash with its styles inline (`packages/ui/styles/boot.css`), on screen before any CSS file or JavaScript. React never touches it: it fades out once (`shell/splash.ts`), when the shell is ready or, for a screen without the shell (sign-in), on first draw. Handing it over to a React copy showed a blank frame and a re-drawn logo, so that was dropped. The bar animates with `transform`, so it keeps moving while the phone parses JavaScript
+- **First paint needs only the HTML:** the stylesheet is inlined into index.html (a `<link>` blocked the first paint, splash included, for a round trip on slow 4G) and the splash logo is inlined (about 3 KB) so it never paints late. index.html is 9.8 KB gzip and precached
+- **No startup waterfall:** index.html preloads the first screen's route code, the offered languages and the font, so they download with the main JavaScript instead of after it runs. The bundle-size check counts exactly what index.html loads, so the first screen is defined once (`packages/config/vite.ts`)
+- **The benchmark (RFC, Performance budgets):** 20× CPU slowdown on Slow 4G, first visit and reopen, on a production build. The owner tests previews, never the dev server
+- **Phone width in every browser (owner's ask):** the app is a centred 480px column with a grey surround on a laptop or tablet; phones are narrower, so the installed app is unchanged. `contain: layout` on body keeps sheets and overlays inside the column. One variable, `--app-max-width` in globals.css
+- **Copied code's comments condensed** to one or two lines each (owner's review)
+- **Budget 130 KB**, not 100: React, the router and TanStack Query are about 110 KB of it; the shell, home screen, service worker helper and one language the rest
+
 ## Owner's part
 
-Nothing to click. Review the copied `ui`/`shell` diff if you want: it is mostly the old code with imports changed.
+Nothing to click. The code review before the PR, and after merging, the PWA checks on the staging addresses (install, open offline, the update sheet after the next deploy).
 
 ## Decided in review
 
@@ -47,8 +67,14 @@ Nothing to click. Review the copied `ui`/`shell` diff if you want: it is mostly 
 
 ## Found while copying (to unify)
 
-- Three icon systems (lucide, Iconify, a hand-bundled emoji file) become lucide plus emoji SVG files
-- Radix imported two ways become one
+- Three icon systems (lucide, Iconify, a hand-bundled emoji file) become lucide plus emoji SVG files: `<Emoji name>` in `packages/ui`
+- Radix imported two ways become one (when the first Radix component is copied)
+- **Two `globals.css` that had drifted:** backoffice's lacked the card, popover, primary and other theme colours its own components use. Now one theme in `packages/ui/styles/globals.css`; each app sets only its brand colour (seller blue, backoffice orange)
+- **Two sign-in forms** (seller with the Lemoni logo, backoffice without): one `SignInScreen` in the shell, each app passes its words and logo
+- **The boot loader, maintenance and auth-error screens** were written out three times in each app's layout: one `BootScreen`
+- **Backoffice had no translations** (hard-coded English, and the shell took a do-nothing `t`). Both apps now use `packages/i18n`; backoffice offers English only (`locales: ["en"]`, owner's call), and adding Indonesian later is one line
+- **The update and idle sheets had English-only text** in the shared shell: now translated
+- **Later:** seller's store picker and backoffice's store filter do the same job differently; decided when Step 18 brings them
 
 ## Done when
 

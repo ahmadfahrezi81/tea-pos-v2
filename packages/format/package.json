@@ -1,0 +1,19 @@
+{
+    "name": "@tea-pos/format",
+    "private": true,
+    "type": "module",
+    "exports": {
+        ".": "./index.ts"
+    },
+    "scripts": {
+        "lint": "eslint .",
+        "typecheck": "tsc -p .",
+        "test": "vitest run"
+    },
+    "dependencies": {
+        "@tea-pos/i18n": "workspace:*"
+    },
+    "devDependencies": {
+        "vitest": "5.0.5"
+    }
+}

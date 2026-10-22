@@ -1,0 +1,279 @@
+/* The theme every app shares. The brand colour comes from each app's app.config.ts. */
+@import "tailwindcss";
+
+/* Tailwind scans the app by default; the shared packages hold classes too. */
+@source "../**/*.tsx";
+@source "../../shell/**/*.tsx";
+
+/* Inter, Latin only: one variable file for every weight. */
+@font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url("../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2")
+        format("woff2-variations");
+    unicode-range:
+        U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+        U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+body {
+    font-family:
+        "Inter",
+        system-ui,
+        -apple-system,
+        sans-serif;
+}
+
+/* Phone width everywhere: on a laptop or tablet the app is a centred phone-sized
+   column. Layout containment makes body the box for fixed elements too (sheets,
+   overlays, portals), so they stay inside the column. Phones are narrower, so
+   nothing changes there. */
+:root {
+    --app-max-width: 480px;
+}
+
+html {
+    background-color: #e5e7eb;
+}
+
+body {
+    max-width: var(--app-max-width);
+    margin-inline: auto;
+    contain: layout;
+}
+
+@media (min-width: 481px) {
+    body {
+        box-shadow: 0 0 24px rgb(0 0 0 / 0.08);
+    }
+}
+
+@theme inline {
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-brand: var(--accent-primary);
+}
+
+:root {
+    --radius: 0.625rem;
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    /* --accent-primary, the brand colour, comes from each app's app.config.ts. */
+}
+
+/* orange-600: seller's fast-order mode. */
+[data-fast-order="true"] {
+    --accent-primary: oklch(0.646 0.222 41.116);
+}
+
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+
+    /* Native feel: no long-press highlight, no iOS link preview, no Android tap flash. */
+    html {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Explicit, because older iOS Safari blocked typing and pasting under user-select: none. */
+    input,
+    textarea,
+    [contenteditable="true"] {
+        -webkit-user-select: text;
+        user-select: text;
+        -webkit-touch-callout: default;
+    }
+}
+
+/* iOS form normalization */
+select,
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: transparent;
+    font: inherit;
+    color: inherit;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+    text-align: left;
+    padding: 0;
+    margin: 0;
+}
+
+/* `none`, not `contain`: iOS still rubber-banded the whole page under contain,
+   fighting the shell's own pull to refresh. The scroll area inside scrolls normally. */
+html,
+body {
+    overscroll-behavior: none;
+}
+
+/* Otherwise every tap waits to see if it is a double-tap zoom, which reads as lag. */
+button,
+a,
+[role="button"] {
+    touch-action: manipulation;
+}
+
+/* Skeletons: a sweeping highlight, not an opacity pulse. A dozen bars fading in
+   unison read as a fault, and a fade is nearly invisible on a phone outdoors.
+   --skeleton-delay staggers rows. */
+@keyframes skeleton-sweep {
+    from {
+        background-position: 200% 0;
+    }
+    to {
+        background-position: -200% 0;
+    }
+}
+
+.skeleton {
+    background-color: var(--skeleton-base, #e8eaed);
+    background-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--skeleton-sheen, rgba(255, 255, 255, 0.85)) 50%,
+        transparent 100%
+    );
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: skeleton-sweep 1.6s ease-in-out infinite;
+    animation-delay: var(--skeleton-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton {
+        animation: none;
+    }
+}
+
+/* ActionButton: the component writes data-busy in the tap's own tick and this
+   sheet draws the spinner, so it never waits for a React commit. Sizes in em
+   because the same button is a 36px icon and a full-width bar. */
+@keyframes action-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.action-spinner {
+    width: 1.125em;
+    height: 1.125em;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 9999px;
+    opacity: 0;
+}
+
+/* Over the label, not in the flow, so the button never changes width. */
+.action-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+[data-busy="true"] .action-spinner {
+    opacity: 1;
+    animation: action-spin 0.7s linear infinite;
+}
+
+/* The wrapper inherits the button's layout, so wrapping the label changes nothing. */
+.action-label,
+.action-swap {
+    display: inherit;
+    align-items: inherit;
+    justify-content: inherit;
+    gap: inherit;
+}
+
+[data-busy="true"] .action-label {
+    opacity: 0;
+}
+
+/* Spinner beside a busy label: both labels are rendered, CSS picks one. */
+.action-inline,
+.action-busy-label {
+    display: none;
+}
+
+[data-busy="true"] .action-inline {
+    display: inline-block;
+    opacity: 1;
+}
+
+[data-busy="true"] .action-busy-label {
+    display: inline;
+    opacity: 1;
+}
+
+[data-busy="true"] .action-swap {
+    display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    @keyframes action-fade {
+        0%,
+        100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.3;
+        }
+    }
+
+    [data-busy="true"] .action-spinner {
+        animation: action-fade 1.2s ease-in-out infinite;
+    }
+}

@@ -1,0 +1,29 @@
+{
+    "name": "@tea-pos/config",
+    "private": true,
+    "type": "module",
+    "exports": {
+        "./app": "./app.ts",
+        "./vite": "./vite.ts",
+        "./tsconfig.app.json": "./tsconfig.app.json"
+    },
+    "scripts": {
+        "lint": "eslint .",
+        "typecheck": "tsc -p ."
+    },
+    "dependencies": {
+        "@babel/core": "8.0.7",
+        "@rolldown/plugin-babel": "0.2.4",
+        "@tailwindcss/vite": "4.3.3",
+        "@tanstack/router-plugin": "1.168.47",
+        "@tea-pos/i18n": "workspace:*",
+        "@vitejs/plugin-react": "6.1.2",
+        "babel-plugin-react-compiler": "1.0.0",
+        "tailwindcss": "4.3.3",
+        "vite-plugin-pwa": "2.0.0"
+    },
+    "devDependencies": {
+        "@types/node": "22.20.5",
+        "vite": "8.3.5"
+    }
+}

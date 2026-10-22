@@ -1,0 +1,26 @@
+{
+    "name": "@tea-pos/ui",
+    "private": true,
+    "type": "module",
+    "exports": {
+        "./ActionButton": "./ActionButton.tsx",
+        "./Emoji": "./Emoji.tsx",
+        "./dot-grid": "./styles/dot-grid.ts",
+        "./globals.css": "./styles/globals.css"
+    },
+    "scripts": {
+        "lint": "eslint .",
+        "typecheck": "tsc -p ."
+    },
+    "peerDependencies": {
+        "react": "^19"
+    },
+    "dependencies": {
+        "@fontsource-variable/inter": "5.3.0"
+    },
+    "devDependencies": {
+        "@types/react": "19.3.0",
+        "react": "19.3.1",
+        "vite": "8.3.5"
+    }
+}

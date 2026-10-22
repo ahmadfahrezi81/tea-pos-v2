@@ -1,0 +1,41 @@
+{
+    "name": "@tea-pos/shell",
+    "private": true,
+    "type": "module",
+    "exports": {
+        "./*": "./*.tsx",
+        "./routes": "./routes.ts",
+        "./navProgress": "./navProgress.ts",
+        "./refreshGate": "./refreshGate.ts",
+        "./useHasPainted": "./useHasPainted.ts",
+        "./trackFirstLoads": "./trackFirstLoads.ts",
+        "./version": "./version.ts"
+    },
+    "scripts": {
+        "lint": "eslint .",
+        "typecheck": "tsc -p ."
+    },
+    "peerDependencies": {
+        "@tanstack/react-query": "^5",
+        "@tanstack/react-router": "^1",
+        "react": "^19",
+        "react-dom": "^19"
+    },
+    "devDependencies": {
+        "@tanstack/react-query": "5.104.5",
+        "@tanstack/react-router": "1.170.45",
+        "@tea-pos/config": "workspace:*",
+        "@types/react": "19.3.0",
+        "@types/react-dom": "19.3.0",
+        "react": "19.3.1",
+        "react-dom": "19.3.1",
+        "vite": "8.3.5",
+        "vite-plugin-pwa": "2.0.0"
+    },
+    "dependencies": {
+        "@tea-pos/api-client": "workspace:*",
+        "@tea-pos/i18n": "workspace:*",
+        "@tea-pos/ui": "workspace:*",
+        "lucide-react": "1.61.0"
+    }
+}
