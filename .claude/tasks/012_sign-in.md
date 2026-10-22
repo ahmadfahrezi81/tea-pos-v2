@@ -7,6 +7,12 @@
 "Continue with Google" signs a user into seller or backoffice through the Go API, with a session Go owns and a cookie no JavaScript can read. Every API route then knows who is calling, for which tenant, in which role, and refuses everyone else.
 RFC: Build order Step 12; Auth and realtime; Testing (the permission test, the error table).
 
+## Why this replaces v1's approach
+
+- **v1's API checks nobody:** `proxy.ts` runs only on page addresses, and every `/api` route takes the user, role and tenant from plain, JavaScript-readable cookies (`x-user-info`, `x-tenant-id`), then queries with the service role. Anyone can write those cookies. Not fixed in the old app (owner's call, 2026-10-22: v2 replaces it within weeks)
+- **v2 checks every API request** against Go's own session table; role and tenant come from the database, never from the browser. The permission test fails any route left open
+- **Faster:** most requests need no network call to check the caller (a one-minute in-memory cache); the cookie is 32 bytes instead of a few KB of Supabase tokens on every request; no hourly token refresh to fail on bad signal; a phone can be logged out by deleting its session
+
 ## How signing in works
 
 1. The app's button goes to `/api/auth/google`. Go makes a PKCE pair, keeps the verifier in a short-lived cookie (10 minutes, `HttpOnly`, path `/api/auth`) and redirects to Supabase's `/auth/v1/authorize?provider=google` with the challenge and `redirect_to` = the app's own `/api/auth/callback`
