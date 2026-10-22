@@ -39,7 +39,9 @@ jobs:
                   exit ${failed:-0}
             - run: pnpm --filter @tea-pos/api generate:check
             - run: pnpm --filter @tea-pos/api-client generate:check
-            - if: always() && github.event_name == 'pull_request' && steps.bundle.outputs.report
+            # Fails only on vulnerabilities our code actually calls.
+            - run: cd api && go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+            - if: always() && github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]' && steps.bundle.outputs.report
               uses: ./.github/actions/pr-comment
               with:
                   section: bundle-size
@@ -74,7 +76,7 @@ jobs:
             - run: cd ops/backup && shellcheck --external-sources *.sh
 
     comment:
-        if: always() && github.event_name == 'pull_request'
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
         needs: [checks, docker, integration]
         runs-on: ubuntu-latest
         permissions:
@@ -88,7 +90,7 @@ jobs:
                       ### Checks
                       | Job | Result |
                       | --- | --- |
-                      | `checks` (format, lint, typecheck, tests, build, bundle size, generated code up to date) | ${{ needs.checks.result == 'success' && '✅' || '❌' }} ${{ needs.checks.result }} |
+                      | `checks` (format, lint, typecheck, tests, build, bundle size, generated code up to date, govulncheck) | ${{ needs.checks.result == 'success' && '✅' || '❌' }} ${{ needs.checks.result }} |
                       | `docker` (images, backup scripts) | ${{ needs.docker.result == 'success' && '✅' || '❌' }} ${{ needs.docker.result }} |
                       | `integration` (Go against a throwaway Postgres) | ${{ needs.integration.result == 'success' && '✅' || '❌' }} ${{ needs.integration.result }} |
 

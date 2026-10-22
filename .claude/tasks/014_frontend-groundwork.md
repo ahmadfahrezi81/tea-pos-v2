@@ -1,6 +1,6 @@
 # Task 014 — Frontend groundwork
 
-**Status: built 2026-10-22, PR open; waiting on CI and the owner's benchmark on the Pages preview (20× CPU, Slow 4G). Verified locally on production builds: both apps build, lint (with the React Compiler rules), typecheck; format tests pass; home on the staging API through `/api`; sign-in in Indonesian loads only `id.json`; the splash lifts on both paths. First screen 123.7 KB gzip, budget 130 KB. Left for staging: the PWA offline open and the update sheet after a deploy.**
+**Status: done 2026-10-22, PR #15. CI green; the owner tested the Pages preview at 20× CPU on Slow 4G (fast; the splash fix came from that test) and installed the staging build on an iPhone (fast). Slow Android phones are checked at the pilot. First screen 123.7 KB gzip, budget 130 KB.**
 
 ## The goal
 
