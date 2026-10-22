@@ -28,7 +28,7 @@ RFC: Build order Step 12; Auth and realtime; Testing (the permission test, the e
    - **role**: a role the route does not allow → 403 `not_allowed`
    - **rate limit**: sign-in routes, per caller IP (`X-Client-IP`), in memory: 10 a minute → 429 `too_many_requests`
 6. **The permission test**: reads every route from `openapi.yaml`; each must declare its access (public, signed in, or roles), or the test fails. For each protected route: no session → 401, wrong role → 403, another tenant → 403
-7. **Test-key sign-in, staging only**: a request with `X-Test-Key` and `X-Test-User` (for example `seller@test`) is that test user. Compiled in only with the Go build tag `testkey`, which only staging's Railway build sets (a build variable in `railway.ts`); production's binary does not contain the code. The key lives in Infisical Staging `/app` and GitHub
+7. **Test-key sign-in, staging only**: a request with `X-Test-Key` and `X-Test-User` (a test user's email) is that user, already signed in; covered by integration tests now, used by Step 15's end-to-end tests. Compiled in only with the Go build tag `testkey`, which only staging's Railway build sets (a build variable in `railway.ts`); production's binary does not contain the code. The key lives in Infisical Staging `/app` and GitHub
 8. **The apps**: the sign-in button goes to `/api/auth/google`; `/login?error=` shows the reason; any 401 from the API sends the app to `/login` (one place, in `packages/api-client`). Logout UI comes with the account screen (Step 27)
 9. **`CLAUDE.md`**: how a route declares access; the test key
 
@@ -43,10 +43,10 @@ RFC: Build order Step 12; Auth and realtime; Testing (the permission test, the e
 
 The Google Cloud Console does not change.
 
-## Open questions
+## Decided in review
 
-- **Session length:** 30 days, renewed while used (a phone that opens the app at least monthly never signs in again). Shorter for backoffice?
-- **Test users:** the permission test needs a test tenant and users in the staging database (a seller, an admin, someone in another tenant). Made by a migration-free seed script run once by hand, or left to Step 15? I suggest the seed now, since the test-key path needs them
+- **Sessions last 30 days in both apps,** renewed while used
+- **Test users:** CI's tests make their own users in throwaway databases, so nothing is needed on staging now. The fake staging users that the test-key sign-in names (a seller, an admin, someone in another tenant, in a test tenant) are made in Step 15, when the end-to-end tests that use them arrive. The owner's own staging account stays for testing by hand
 
 ## Done when
 
