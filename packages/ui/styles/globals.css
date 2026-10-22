@@ -40,6 +40,8 @@ html {
 
 body {
     max-width: var(--app-max-width);
+    /* Full height even while empty: fixed elements fill body, so an empty body squashed the splash. */
+    min-height: 100svh;
     margin-inline: auto;
     contain: layout;
 }
