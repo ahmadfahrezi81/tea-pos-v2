@@ -40,6 +40,9 @@
                     },
                     {
                         "context": "integration"
+                    },
+                    {
+                        "context": "dependency-review"
                     }
                 ]
             }

@@ -64,7 +64,7 @@ packages/api-client/ generated types, the fetch client, React Query hooks, the q
 packages/i18n/       translations (en.json, id.json), t() and useT(); only the active language loads; a wrong key fails the typecheck
 supabase/            migrations (owned here, copied from the old repo) and config.toml
 .railway/railway.ts  Railway services for production (main) and staging (staging branch)
-.github/             CI, Railway plan and apply, releases, rulesets, the pr-comment action
+.github/             CI, Railway plan and apply, releases, rulesets, the pr-comment action, Dependabot, security.yml
 .claude/tasks/       one plan per build step
 ```
 
@@ -84,6 +84,7 @@ supabase/            migrations (owned here, copied from the old repo) and confi
 - **Task file first.** Write it, the owner reviews it, then code. Every change, not only big ones.
 - **Every change is a PR into `staging`** (not the default: `main` is, so set the base; a PR into `main` from anywhere but `staging` fails `release-source`), squash merged; use the `pr` skill. `staging` deploys to Railway's `staging` environment on the staging database.
 - **A release is a PR `staging` → `main`,** merged with a **merge commit**, never squash; use the `release` skill. It tags a GitHub Release `YYYY.MM.N`. Neither branch takes a direct push (rulesets in `.github/rulesets/`, applied with `gh api`).
+- **Security:** Dependabot opens one grouped PR a week per ecosystem into `staging`; review and squash-merge it like any other (it gets no Pages preview or PR comments: no secrets). `govulncheck` in `checks` fails on a vulnerability our Go code calls: bump the module, or Go itself (`api/go.mod` and the Dockerfile together). `dependency-review` blocks a PR adding a high-severity package. CodeQL runs from GitHub's default setup.
 - **Each CI result gets its own PR comment,** edited in place (`.github/actions/pr-comment`, one `section` per result).
 - **Ask before pushing or opening a PR.** Local commits are fine.
 - **Railway as code** (`.railway/railway.ts`): never change a declared setting in the dashboard (the next apply fails). A release PR that changes it shows production's plan as a comment; merging applies it. Railway drops Wait for CI on a newly created service, so a second apply sets it. **Every variable must be declared in the file**; one Infisical syncs in is declared as `preserve()`, or the next apply removes it.

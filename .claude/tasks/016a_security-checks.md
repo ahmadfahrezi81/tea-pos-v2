@@ -1,6 +1,6 @@
 # Task 016a — Security checks
 
-**Status: planned 2026-10-22, waiting on the owner's review.**
+**Status: built 2026-10-22, waiting on the PR. Verified locally: `govulncheck` clean after Go 1.27.3 and `x/text` v0.41.0; Go builds and vets; lint and typecheck pass. The Docker build runs in CI (Docker is off on the laptop). The `dependency-review` required check is applied to the `staging` ruleset once it has passed on this PR.**
 
 ## The goal
 
