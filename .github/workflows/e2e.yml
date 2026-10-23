@@ -1,38 +1,50 @@
-# API end-to-end tests against the deployed staging, through each app's /api forwarder.
-# After Railway deploys staging: started by its deployment, not the push, because Railway's
-# Wait for CI waits for every check on a push and would wait for this one forever.
-# On a release PR: staging already runs exactly its head; a red result blocks the merge.
+# API end-to-end tests against staging, through each app's /api forwarder: on every release PR
+# (staging holds exactly its code; a red result blocks the merge), and by hand from the Actions tab.
+# Not after each merge: Railway's Wait for CI would wait for this run while it waits for Railway.
 name: e2e
 
 on:
-    deployment_status:
     pull_request:
         branches: [main]
+    workflow_dispatch:
 
 permissions:
     contents: read
 
+concurrency:
+    group: e2e-staging
+    cancel-in-progress: false
+
 jobs:
     e2e:
-        if: >-
-            github.event_name == 'pull_request' ||
-            (github.event.deployment_status.state == 'success' &&
-             github.event.deployment.environment == 'tea-pos-v2 / staging')
         runs-on: ubuntu-latest
-        concurrency:
-            group: e2e-staging
-            cancel-in-progress: false
         permissions:
             contents: read
             pull-requests: write
         env:
             TEST_LOGIN_KEY: ${{ secrets.TEST_LOGIN_KEY }}
-            # After a deploy, every app must run the deployed commit.
-            E2E_COMMIT: ${{ github.event.deployment.sha }}
+            HEALTH: https://tea-office-staging.lykostech.app/api/health
         steps:
             - uses: actions/checkout@v7
               with:
-                  ref: ${{ github.event.deployment.sha || github.sha }}
+                  ref: ${{ github.event.pull_request.head.sha || 'staging' }}
+                  fetch-depth: 0
+            # Staging must run this code: the newest commit that changed the API (Railway's watch
+            # paths), or one after it. A release opened right after a merge waits for the deploy.
+            - name: Wait for staging's API
+              run: |
+                  want=$(git log -1 --format=%H -- api Dockerfile)
+                  for _ in $(seq 60); do
+                      got=$(curl -fsS "$HEALTH" | jq -r .commit || true)
+                      if [ -n "$got" ] && git merge-base --is-ancestor "$want" "$got" 2>/dev/null; then
+                          echo "E2E_COMMIT=$got" >> "$GITHUB_ENV"
+                          echo "staging runs $got (wanted $want or later)"
+                          exit 0
+                      fi
+                      sleep 15
+                  done
+                  echo "staging still runs ${got:-nothing} after 15 minutes, wanted $want"
+                  exit 1
             - uses: actions/setup-go@v7
               with:
                   go-version-file: api/go.mod
@@ -45,22 +57,67 @@ jobs:
               run: |
                   set -o pipefail
                   cd api && go test -tags e2e -count=1 -v ./tests/e2e/ 2>&1 | tee ../e2e.log
-            - if: always() && github.event_name == 'pull_request'
+            # One row per test, for the PR comment and the run's summary page.
+            - if: always()
               id: report
               run: |
+                  table=$(awk '/^--- (PASS|FAIL|SKIP)/ { icon = $2 == "PASS:" ? "✅" : $2 == "FAIL:" ? "❌" : "⏭️"; print "| " icon " | `" $3 "` | " $4 " |" }' e2e.log | tr -d '()')
+                  [ -n "$table" ] || table="| ❌ | no tests ran (see the run) | |"
                   {
-                      echo "report<<EOF"
-                      grep -E '^(--- FAIL|ok|FAIL)' e2e.log || echo "no result"
-                      echo "EOF"
-                  } >> "$GITHUB_OUTPUT"
+                      echo "### API end-to-end tests on staging"
+                      echo "${{ steps.run.outcome == 'success' && '✅ pass' || '❌ fail' }} · staging at \`${E2E_COMMIT:-?}\` · [run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                      echo
+                      echo "| | Test | Time |"
+                      echo "| --- | --- | --- |"
+                      echo "$table"
+                  } > e2e.md
+                  cat e2e.md >> "$GITHUB_STEP_SUMMARY"
+                  { echo "body<<EOF"; cat e2e.md; echo "EOF"; } >> "$GITHUB_OUTPUT"
             - if: always() && github.event_name == 'pull_request'
               uses: ./.github/actions/pr-comment
               with:
                   section: e2e
-                  body: |
-                      ### API end-to-end tests on staging
-                      ${{ steps.run.outcome == 'success' && '✅ pass' || '❌ fail' }}
-                      ```
-                      ${{ steps.report.outputs.report }}
-                      ```
-                      [run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+                  body: ${{ steps.report.outputs.body }}
+
+    # How fast the release is on staging, for the Benchmark log: information, never blocking.
+    # A shared runner varies between runs, so its numbers are a series of their own.
+    benchmark:
+        needs: e2e
+        runs-on: ubuntu-latest
+        continue-on-error: true
+        permissions:
+            contents: read
+            pull-requests: write
+        env:
+            TEST_LOGIN_KEY: ${{ secrets.TEST_LOGIN_KEY }}
+            CHROME_PATH: /usr/bin/google-chrome
+            BENCH_PROFILE: ${{ runner.temp }}/bench-profile
+            BENCH_REPORT: bench.md
+            BENCH_DEVICE: CI runner
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  ref: ${{ github.event.pull_request.head.sha || 'staging' }}
+            - uses: pnpm/action-setup@v6
+            - uses: actions/setup-node@v7
+              with:
+                  node-version-file: .nvmrc
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm bench --test-user admin@test-a.test https://tea-office-staging.lykostech.app
+            - if: always()
+              id: report
+              run: |
+                  {
+                      echo "### Benchmark: backoffice on staging"
+                      echo "Information only, never blocks the release. CI runner numbers are their own series. [run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                      echo
+                      cat bench.md 2>/dev/null || echo "❌ the benchmark did not finish (see the run)"
+                  } > comment.md
+                  cat comment.md >> "$GITHUB_STEP_SUMMARY"
+                  { echo "body<<EOF"; cat comment.md; echo "EOF"; } >> "$GITHUB_OUTPUT"
+            - if: always() && github.event_name == 'pull_request'
+              uses: ./.github/actions/pr-comment
+              with:
+                  section: benchmark
+                  body: ${{ steps.report.outputs.body }}

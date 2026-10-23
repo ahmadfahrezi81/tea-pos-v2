@@ -1,12 +1,13 @@
+# A change is tested once, at its PR, against exactly what will merge (staging requires the
+# PR to be up to date). Merges only deploy; the release PR adds e2e. Task: 015b_ci-review.md
 name: ci
 
 on:
-    push:
     pull_request:
         branches: [staging, main]
 
 concurrency:
-    group: ci-${{ github.event_name }}-${{ github.ref }}
+    group: ci-${{ github.ref }}
     cancel-in-progress: true
 
 # Jobs that need more ask for it themselves.
@@ -45,14 +46,13 @@ jobs:
             - run: pnpm --filter @tea-pos/api-client generate:check
             # Fails only on vulnerabilities our code actually calls.
             - run: cd api && go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
-            - if: always() && github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]' && steps.bundle.outputs.report
+            - if: always() && github.event.pull_request.user.login != 'dependabot[bot]' && steps.bundle.outputs.report
               uses: ./.github/actions/pr-comment
               with:
                   section: bundle-size
                   body: ${{ steps.bundle.outputs.report }}
 
     integration:
-        if: github.event_name == 'pull_request'
         runs-on: ubuntu-latest
         services:
             postgres:
@@ -86,7 +86,7 @@ jobs:
             - run: cd ops/backup && shellcheck --external-sources *.sh
 
     comment:
-        if: always() && github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
+        if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
         needs: [checks, docker, integration]
         runs-on: ubuntu-latest
         permissions:

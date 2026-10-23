@@ -8,6 +8,9 @@ inputs:
     body:
         description: Markdown body
         required: true
+    pr:
+        description: The PR number, when the event is not a PR (e.g. a merged release on main)
+        required: false
 
 runs:
     using: composite
@@ -17,7 +20,7 @@ runs:
               GH_TOKEN: ${{ github.token }}
               SECTION: ${{ inputs.section }}
               BODY: ${{ inputs.body }}
-              PR: ${{ github.event.pull_request.number }}
+              PR: ${{ inputs.pr || github.event.pull_request.number }}
               REPO: ${{ github.repository }}
           run: |
               marker="<!-- pr-comment:${SECTION} -->"
