@@ -3,11 +3,13 @@
 export interface Env {
     API_ORIGIN: string;
     EDGE_SECRET: string;
+    /** Which app this Pages project is: "seller" or "backoffice". */
+    APP: string;
 }
 
 export async function forward(request: Request, env: Env): Promise<Response> {
-    if (!env.API_ORIGIN || !env.EDGE_SECRET) {
-        return new Response("API_ORIGIN or EDGE_SECRET is not set", { status: 500 });
+    if (!env.API_ORIGIN || !env.EDGE_SECRET || !env.APP) {
+        return new Response("API_ORIGIN, EDGE_SECRET or APP is not set", { status: 500 });
     }
     const url = new URL(request.url);
     // Only the path is set, so no path (e.g. //other.host) can change where it goes.
@@ -19,6 +21,9 @@ export async function forward(request: Request, env: Env): Promise<Response> {
     const headers = new Headers(request.headers);
     headers.set("X-Edge-Secret", env.EDGE_SECRET);
     headers.set("X-Client-IP", request.headers.get("CF-Connecting-IP") ?? "");
+    // Which app is calling, and the address the user sees (a preview's own), for sign-in redirects.
+    headers.set("X-App", env.APP);
+    headers.set("X-App-Origin", url.origin);
     headers.delete("Host");
 
     return fetch(target, {

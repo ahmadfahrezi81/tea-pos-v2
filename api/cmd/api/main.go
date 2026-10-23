@@ -3,16 +3,19 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/config"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/handler"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/middleware"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/platform"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
 )
 
 func main() {
@@ -21,7 +24,7 @@ func main() {
 		slog.Error("config", "err", err)
 		os.Exit(1)
 	}
-	if err := cfg.RequireEdgeSecret(); err != nil {
+	if err := errors.Join(cfg.RequireEdgeSecret(), cfg.RequireSupabase()); err != nil {
 		slog.Error("config", "err", err)
 		os.Exit(1)
 	}
@@ -37,8 +40,13 @@ func main() {
 	}
 	defer db.Close()
 
+	q := store.New(db)
 	mux := http.NewServeMux()
-	handler.NewAPI(mux)
+	handler.NewAPI(mux, handler.Deps{
+		Queries:  q,
+		Sessions: auth.NewSessions(q),
+		Supabase: auth.NewSupabase(cfg.SupabaseURL, cfg.SupabaseKey),
+	})
 
 	if err := platform.Serve(ctx, ":"+cfg.Port, middleware.Standard(mux, cfg.RequestTimeout, cfg.EdgeSecret), cfg.ShutdownTimeout); err != nil {
 		slog.Error("server", "err", err)

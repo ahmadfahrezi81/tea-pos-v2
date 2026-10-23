@@ -1,6 +1,7 @@
 import { defineApp } from "@tea-pos/config/app";
 
 export default defineApp({
+    id: "backoffice",
     name: "Tea POS Backoffice",
     shortName: "Backoffice",
     description: "Admin backoffice for Tea POS",

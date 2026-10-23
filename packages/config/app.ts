@@ -2,6 +2,8 @@ import type { Locale, MessageKey } from "@tea-pos/i18n";
 
 /** Everything that makes one app differ from another, in one file per app (`app.config.ts`). */
 export interface AppConfig {
+    /** Which app this is, as the API knows it. */
+    id: "seller" | "backoffice";
     /** Home-screen and window title. */
     name: string;
     shortName: string;

@@ -19,6 +19,9 @@ type Config struct {
 	DatabaseURL     string
 	DBMaxConns      int32
 	EdgeSecret      string
+	// Supabase does the Google exchange at sign-in; nothing else.
+	SupabaseURL string
+	SupabaseKey string
 }
 
 func Load() (Config, error) {
@@ -27,6 +30,8 @@ func Load() (Config, error) {
 		Env:         getenv("ENV", "local"),
 		DatabaseURL: os.Getenv("DATABASE_URL"),
 		EdgeSecret:  os.Getenv("EDGE_SECRET"),
+		SupabaseURL: os.Getenv("SUPABASE_URL"),
+		SupabaseKey: os.Getenv("SUPABASE_PUBLISHABLE_KEY"),
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, errors.New("DATABASE_URL is required")
@@ -62,6 +67,14 @@ func Load() (Config, error) {
 func (c Config) RequireEdgeSecret() error {
 	if c.EdgeSecret == "" {
 		return errors.New("EDGE_SECRET is required")
+	}
+	return nil
+}
+
+// RequireSupabase is for the API, which signs users in.
+func (c Config) RequireSupabase() error {
+	if c.SupabaseURL == "" || c.SupabaseKey == "" {
+		return errors.New("SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY are required")
 	}
 	return nil
 }

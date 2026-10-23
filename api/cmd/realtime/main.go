@@ -38,7 +38,7 @@ func main() {
 	defer db.Close()
 
 	mux := http.NewServeMux()
-	handler.NewAPI(mux)
+	handler.NewHealth(mux)
 
 	if err := platform.Serve(ctx, ":"+cfg.Port, middleware.Standard(mux, cfg.RequestTimeout, cfg.EdgeSecret), cfg.ShutdownTimeout); err != nil {
 		slog.Error("server", "err", err)

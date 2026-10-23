@@ -27,7 +27,8 @@ BEGIN
     END LOOP;
 END $$`
 
-// DB gives the test its own throwaway database: stubs, the schema dump and the base fixtures.
+// DB gives the test its own throwaway database: stubs, the schema dump, the migrations
+// newer than the dump (db/pending.sql) and the base fixtures.
 // TEST_DATABASE_URL points at a Postgres 17 server the tests may create databases on.
 func DB(t *testing.T) *pgxpool.Pool {
 	t.Helper()
@@ -85,7 +86,7 @@ func load(t *testing.T, ctx context.Context, cc *pgx.ConnConfig) {
 	if _, err := conn.Exec(ctx, "DROP SCHEMA public CASCADE"); err != nil {
 		t.Fatalf("drop public: %v", err)
 	}
-	for _, f := range []string{"db/stubs.sql", "db/schema.sql", "tests/fixtures/base.sql"} {
+	for _, f := range []string{"db/stubs.sql", "db/schema.sql", "db/pending.sql", "tests/fixtures/base.sql"} {
 		sql, err := os.ReadFile(filepath.Join(apiDir(), f))
 		if err != nil {
 			t.Fatalf("read %s: %v", f, err)
