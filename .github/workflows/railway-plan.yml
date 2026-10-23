@@ -14,6 +14,7 @@ permissions:
 jobs:
     plan:
         runs-on: ubuntu-latest
+        timeout-minutes: 10
         steps:
             - uses: actions/checkout@v7
             - uses: railwayapp/config@v1

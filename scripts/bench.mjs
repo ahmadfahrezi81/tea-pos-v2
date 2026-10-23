@@ -1,5 +1,5 @@
 // The RFC's benchmark, the same way every time, as a signed-in user opening home:
-// 20× CPU, Slow 4G, cache disabled, 5 reopens and 5 first visits, medians, and a row
+// 20× CPU, Slow 4G, cache disabled, 3 reopens and 3 first visits, medians, and a row
 // for the RFC's Benchmark log. Task: .claude/tasks/014c_bench-script.md
 //
 //   pnpm bench --sign-in <url>    once per app: sign in with Google in the window that opens
@@ -9,15 +9,17 @@
 // On staging, a test user instead of Google (TEST_LOGIN_KEY from Infisical staging /app):
 //   infisical run --env=staging --path=/app -- pnpm bench --test-user admin@test-a.test <url>
 //
-// Options: --runs N (5), --reopen-only, --first-only, --chrome-start S (4.0).
+// Options: --runs N (3), --reopen-only, --first-only, --chrome-start S (4.0).
+// BENCH_REPORT=file also writes the results as Markdown (the release PR's comment);
+// BENCH_DEVICE names the machine in the log row (default "pnpm bench").
 import { spawn } from "node:child_process";
-import { rmSync } from "node:fs";
+import { rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import puppeteer, { PredefinedNetworkConditions } from "puppeteer-core";
 
 // Its own Chrome profile: the session cookie lives here, as on a phone. Never in the repo.
-const PROFILE = join(homedir(), ".tea-pos-bench");
+const PROFILE = process.env.BENCH_PROFILE ?? join(homedir(), ".tea-pos-bench");
 const CHROME =
     process.env.CHROME_PATH ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 // The M11's open (5.5 s) minus our part (~1.5 s): Android starting Chrome. Added to the
@@ -36,17 +38,20 @@ if (!url) {
     process.exit(1);
 }
 const origin = new URL(url).origin;
-const runs = Number(option("--runs", 5));
+const runs = Number(option("--runs", 3));
 const chromeStart = Number(option("--chrome-start", CHROME_START_DEFAULT));
 
-// The real keychain, not Puppeteer's stand-in: the sign-in Chrome saved the cookie with it.
+const mac = process.platform === "darwin";
 const launch = (headless) =>
     puppeteer.launch({
         executablePath: CHROME,
         userDataDir: PROFILE,
         headless,
         defaultViewport: { width: 412, height: 915 },
-        ignoreDefaultArgs: ["--use-mock-keychain", "--password-store=basic"],
+        // On a Mac, the real keychain, not Puppeteer's stand-in: the sign-in Chrome saved the cookie with it.
+        ignoreDefaultArgs: mac ? ["--use-mock-keychain", "--password-store=basic"] : [],
+        // GitHub's Ubuntu runners block Chrome's sandbox.
+        args: mac ? [] : ["--no-sandbox"],
     });
 
 // A plain Chrome, not one a script drives: Google refuses to sign in to the latter.
@@ -226,7 +231,8 @@ const rows = {
     "/me": (m) => `${s(m.meStart)} → ${s(m.meEnd)}`,
     "main JS loaded": (m) => s(m.mainJs),
     "long tasks": (m) => msOf(m.longTasks),
-    [`on a Galaxy M11 ≈ ${chromeStart.toFixed(1)} s Chrome start +`]: (m) =>
+    // A slow phone also waits for Android to start Chrome: imagine it with this row.
+    [`slow phone ≈ app ready + ${chromeStart.toFixed(1)} s (Galaxy M11)`]: (m) =>
         m.ready == null ? "–" : `${(chromeStart + m.ready / 1000).toFixed(2)} s`,
 };
 const table = {};
@@ -240,13 +246,36 @@ console.table(table);
 
 const when = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Jakarta" }).slice(0, 16);
 const app = new URL(origin).hostname.split(".")[0];
-console.log("\nBenchmark log rows:");
-for (const [visit, m] of [
+const device = process.env.BENCH_DEVICE ?? "pnpm bench";
+const logRows = [
     ["Reopen", results.reopen],
     ["First visit", results.first],
-]) {
-    if (!m) continue;
-    console.log(
-        `| ${when} WIB | \`${commit}\` (${app}) | pnpm bench | ${visit} | ${s(m.splash)} | ${s(m.ready)} | ${msOf(m.longTasks)} long tasks | median of ${runs}; /me ${s(m.meStart)} → ${s(m.meEnd)} |`,
+]
+    .filter(([, m]) => m)
+    .map(
+        ([visit, m]) =>
+            `| ${when} WIB | \`${commit}\` (${app}) | ${device} | ${visit} | ${s(m.splash)} | ${s(m.ready)} | ${msOf(m.longTasks)} long tasks | median of ${runs}; /me ${s(m.meStart)} → ${s(m.meEnd)}; slow phone ≈ ${m.ready == null ? "–" : `${(chromeStart + m.ready / 1000).toFixed(2)} s`} |`,
     );
+console.log("\nBenchmark log rows:");
+for (const row of logRows) console.log(row);
+
+if (process.env.BENCH_REPORT) {
+    const columns = Object.keys(Object.values(table)[0]);
+    const md = [
+        `**${app}** at \`${commit}\`: 20× CPU, Slow 4G, cache disabled, median of ${runs}`,
+        "",
+        `| | ${columns.join(" | ")} |`,
+        `| --- | ${columns.map(() => "---").join(" | ")} |`,
+        ...Object.entries(table).map(
+            ([label, cells]) => `| ${label} | ${Object.values(cells).join(" | ")} |`,
+        ),
+        "",
+        "<details><summary>Benchmark log rows</summary>",
+        "",
+        "```",
+        ...logRows,
+        "```",
+        "</details>",
+    ];
+    writeFileSync(process.env.BENCH_REPORT, md.join("\n") + "\n");
 }

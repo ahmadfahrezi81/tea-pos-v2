@@ -1,0 +1,61 @@
+name: Report
+description: Writes or updates one CI comment on a PR, in the shared template (.github/scripts/report.mjs).
+
+inputs:
+    section:
+        description: Key for this comment, e.g. deploy-staging
+        required: true
+    pr:
+        description: The PR number; defaults to the event's PR
+        required: false
+    title:
+        description: The comment's heading, e.g. "Deploy to staging"
+        required: false
+    commit:
+        description: The commit it is about
+        required: false
+    steps:
+        description: Steps to list, "id=Name,id=Name"; with reset, starts the comment over
+        required: false
+    reset:
+        description: Set to true to start the comment over (a new deploy)
+        required: false
+    step:
+        description: The step to update
+        required: false
+    state:
+        description: success, failure, running, waiting or skipped
+        required: false
+    detail:
+        description: The step's short detail, in its row
+        required: false
+    body:
+        description: Markdown shown under the table (for the step, or the whole comment without steps)
+        required: false
+    overall:
+        description: Forces the comment's status, for comments without steps
+        required: false
+    done-text:
+        description: The status words when done, instead of "Done"
+        required: false
+
+runs:
+    using: composite
+    steps:
+        - shell: bash
+          env:
+              GH_TOKEN: ${{ github.token }}
+              REPORT_SECTION: ${{ inputs.section }}
+              REPORT_PR: ${{ inputs.pr || github.event.pull_request.number }}
+              REPORT_TITLE: ${{ inputs.title }}
+              REPORT_COMMIT: ${{ inputs.commit }}
+              REPORT_STEPS: ${{ inputs.steps }}
+              REPORT_RESET: ${{ inputs.reset }}
+              REPORT_STEP: ${{ inputs.step }}
+              REPORT_STATE: ${{ inputs.state }}
+              REPORT_DETAIL: ${{ inputs.detail }}
+              REPORT_BODY: ${{ inputs.body }}
+              REPORT_OVERALL: ${{ inputs.overall }}
+              REPORT_DONE_TEXT: ${{ inputs.done-text }}
+              REPORT_RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          run: node "${{ github.action_path }}/../../scripts/report.mjs"

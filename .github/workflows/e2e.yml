@@ -1,66 +1,136 @@
-# API end-to-end tests against the deployed staging, through each app's /api forwarder.
-# After Railway deploys staging: started by its deployment, not the push, because Railway's
-# Wait for CI waits for every check on a push and would wait for this one forever.
-# On a release PR: staging already runs exactly its head; a red result blocks the merge.
+# The release PR's e2e check: staging's deploy already ran the suite on exactly this code
+# (deploy.yml sets the commit status "e2e on staging"), so this reads that result and only runs
+# the suite itself when there is none. By hand (Actions → e2e → Run workflow) it always runs.
+# Beside it, the benchmark: information for the Benchmark log, never blocking.
 name: e2e
 
 on:
-    deployment_status:
     pull_request:
         branches: [main]
+    workflow_dispatch:
 
 permissions:
     contents: read
 
+concurrency:
+    group: e2e-staging
+    cancel-in-progress: false
+
 jobs:
     e2e:
-        if: >-
-            github.event_name == 'pull_request' ||
-            (github.event.deployment_status.state == 'success' &&
-             github.event.deployment.environment == 'tea-pos-v2 / staging')
         runs-on: ubuntu-latest
-        concurrency:
-            group: e2e-staging
-            cancel-in-progress: false
+        timeout-minutes: 30
+        permissions:
+            contents: read
+            pull-requests: write
+            statuses: read
+        env:
+            TEST_LOGIN_KEY: ${{ secrets.TEST_LOGIN_KEY }}
+            GH_TOKEN: ${{ github.token }}
+            SHA: ${{ github.event.pull_request.head.sha || '' }}
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  ref: ${{ github.event.pull_request.head.sha || 'staging' }}
+            # Staging's deploy of this commit: waits while it runs (up to 20 minutes).
+            - id: staging
+              if: github.event_name == 'pull_request'
+              run: |
+                  for _ in $(seq 80); do
+                      read -r state url desc < <(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/statuses" \
+                          --jq 'map(select(.context == "e2e on staging"))[0] // {} | "\(.state // "none") \(.target_url // "-") \(.description // "")"')
+                      case "$state" in
+                          success | failure | error)
+                              echo "state=$state" >> "$GITHUB_OUTPUT"
+                              echo "detail=$desc, [in staging's deploy]($url)" >> "$GITHUB_OUTPUT"
+                              exit 0 ;;
+                      esac
+                      sleep 15
+                  done
+                  echo "state=none" >> "$GITHUB_OUTPUT"
+            - if: steps.staging.outputs.state == 'none' || github.event_name != 'pull_request'
+              uses: actions/setup-go@v7
+              with:
+                  go-version-file: api/go.mod
+                  cache-dependency-path: api/go.sum
+            # The fake test users, idempotent; only test- tenants.
+            - if: steps.staging.outputs.state == 'none' || github.event_name != 'pull_request'
+              env:
+                  DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+              run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f api/tests/e2e/seed.sql
+            - id: run
+              if: steps.staging.outputs.state == 'none' || github.event_name != 'pull_request'
+              run: |
+                  set -o pipefail
+                  cd api && go test -tags e2e -count=1 -v ./tests/e2e/ 2>&1 | tee ../e2e.log
+            - if: always()
+              id: report
+              run: |
+                  if [ -n "${{ steps.staging.outputs.state }}" ] && [ "${{ steps.staging.outputs.state }}" != none ]; then
+                      if [ "${{ steps.staging.outputs.state }}" = success ]; then state=success; else state=failure; fi
+                      echo "state=$state" >> "$GITHUB_OUTPUT"
+                      echo "body=From staging's deploy of this commit: ${{ steps.staging.outputs.detail }}." >> "$GITHUB_OUTPUT"
+                  else
+                      if [ "${{ steps.run.outcome }}" = success ]; then state=success; else state=failure; fi
+                      echo "state=$state" >> "$GITHUB_OUTPUT"
+                      {
+                          echo "body<<EOF"
+                          echo "Staging had no result for this commit, so the suite ran here."
+                          echo
+                          echo "| | Test | Time |"
+                          echo "| --- | --- | --- |"
+                          awk '/^--- (PASS|FAIL|SKIP)/ { icon = $2 == "PASS:" ? "✅" : $2 == "FAIL:" ? "❌" : "➖"; print "| " icon " | `" $3 "` | " $4 " |" }' e2e.log 2>/dev/null | tr -d '()'
+                          echo EOF
+                      } >> "$GITHUB_OUTPUT"
+                  fi
+            - if: always() && github.event_name == 'pull_request'
+              uses: ./.github/actions/report
+              with:
+                  section: e2e
+                  title: End-to-end tests on staging
+                  commit: ${{ github.event.pull_request.head.sha }}
+                  overall: ${{ steps.report.outputs.state }}
+                  done-text: ${{ steps.report.outputs.state == 'success' && 'Passed' || 'Failed' }}
+                  body: ${{ steps.report.outputs.body }}
+            - if: steps.report.outputs.state != 'success'
+              run: exit 1
+
+    benchmark:
+        needs: e2e
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        continue-on-error: true
         permissions:
             contents: read
             pull-requests: write
         env:
             TEST_LOGIN_KEY: ${{ secrets.TEST_LOGIN_KEY }}
-            # After a deploy, every app must run the deployed commit.
-            E2E_COMMIT: ${{ github.event.deployment.sha }}
+            CHROME_PATH: /usr/bin/google-chrome
+            BENCH_REPORT: bench.md
+            BENCH_DEVICE: CI runner
         steps:
             - uses: actions/checkout@v7
               with:
-                  ref: ${{ github.event.deployment.sha || github.sha }}
-            - uses: actions/setup-go@v7
+                  ref: ${{ github.event.pull_request.head.sha || 'staging' }}
+            - uses: pnpm/action-setup@v6
+            - uses: actions/setup-node@v7
               with:
-                  go-version-file: api/go.mod
-                  cache-dependency-path: api/go.sum
-            # The fake test users, idempotent; only test- tenants.
+                  node-version-file: .nvmrc
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile
+            # runner.temp is only allowed inside steps, not in the job's env.
             - env:
-                  DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
-              run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f api/tests/e2e/seed.sql
-            - id: run
+                  BENCH_PROFILE: ${{ runner.temp }}/bench-profile
+              id: bench
               run: |
-                  set -o pipefail
-                  cd api && go test -tags e2e -count=1 -v ./tests/e2e/ 2>&1 | tee ../e2e.log
+                  pnpm bench --test-user admin@test-a.test https://tea-office-staging.lykostech.app
+                  { echo "body<<EOF"; echo "CI runner numbers are a series of their own in the RFC's Benchmark log."; echo; cat bench.md; echo EOF; } >> "$GITHUB_OUTPUT"
             - if: always() && github.event_name == 'pull_request'
-              id: report
-              run: |
-                  {
-                      echo "report<<EOF"
-                      grep -E '^(--- FAIL|ok|FAIL)' e2e.log || echo "no result"
-                      echo "EOF"
-                  } >> "$GITHUB_OUTPUT"
-            - if: always() && github.event_name == 'pull_request'
-              uses: ./.github/actions/pr-comment
+              uses: ./.github/actions/report
               with:
-                  section: e2e
-                  body: |
-                      ### API end-to-end tests on staging
-                      ${{ steps.run.outcome == 'success' && '✅ pass' || '❌ fail' }}
-                      ```
-                      ${{ steps.report.outputs.report }}
-                      ```
-                      [run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+                  section: benchmark
+                  title: "Benchmark: backoffice on staging"
+                  commit: ${{ github.event.pull_request.head.sha }}
+                  overall: ${{ job.status == 'success' && 'success' || 'failure' }}
+                  done-text: Information only, never blocks the release
+                  body: ${{ steps.bench.outputs.body }}

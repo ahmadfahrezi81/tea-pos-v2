@@ -1,12 +1,13 @@
+# A change is tested once, at its PR, against exactly what will merge (staging requires the
+# PR to be up to date). Merges only deploy; the release PR adds e2e. Task: 015b_ci-review.md
 name: ci
 
 on:
-    push:
     pull_request:
         branches: [staging, main]
 
 concurrency:
-    group: ci-${{ github.event_name }}-${{ github.ref }}
+    group: ci-${{ github.ref }}
     cancel-in-progress: true
 
 # Jobs that need more ask for it themselves.
@@ -16,6 +17,7 @@ permissions:
 jobs:
     checks:
         runs-on: ubuntu-latest
+        timeout-minutes: 15
         permissions:
             contents: read
             pull-requests: write
@@ -40,20 +42,26 @@ jobs:
               run: |
                   BUNDLE_REPORT=bundle.md pnpm bundle-size || failed=1
                   { echo 'report<<EOF'; cat bundle.md; echo; echo 'EOF'; } >> "$GITHUB_OUTPUT"
-                  exit ${failed:-0}
+                  exit "${failed:-0}"
             - run: pnpm --filter @tea-pos/api generate:check
             - run: pnpm --filter @tea-pos/api-client generate:check
+            # A broken workflow file otherwise only shows up after the push; shellcheck reads its scripts.
+            - run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 .github/workflows/*.yml
             # Fails only on vulnerabilities our code actually calls.
             - run: cd api && go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
-            - if: always() && github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]' && steps.bundle.outputs.report
-              uses: ./.github/actions/pr-comment
+            - if: always() && github.event.pull_request.user.login != 'dependabot[bot]' && steps.bundle.outputs.report
+              uses: ./.github/actions/report
               with:
                   section: bundle-size
+                  title: Bundle size
+                  commit: ${{ github.event.pull_request.head.sha }}
+                  overall: ${{ steps.bundle.outcome == 'success' && 'success' || 'failure' }}
+                  done-text: ${{ steps.bundle.outcome == 'success' && 'Within budget' || 'Over budget' }}
                   body: ${{ steps.bundle.outputs.report }}
 
     integration:
-        if: github.event_name == 'pull_request'
         runs-on: ubuntu-latest
+        timeout-minutes: 10
         services:
             postgres:
                 image: postgres:17
@@ -75,6 +83,7 @@ jobs:
 
     docker:
         runs-on: ubuntu-latest
+        timeout-minutes: 15
         steps:
             - uses: actions/checkout@v7
             - run: docker build --build-arg RAILWAY_GIT_COMMIT_SHA=${{ github.sha }} -t tea-pos-api .
@@ -83,25 +92,27 @@ jobs:
                   id=$(docker create tea-pos-api) && docker cp "$id:/app/api" /tmp/api && docker rm "$id" >/dev/null
                   if LC_ALL=C grep -a -q "/auth/test" /tmp/api; then echo "the production image contains the test sign-in"; exit 1; fi
             - run: docker build -t tea-pos-backup ops/backup
-            - run: cd ops/backup && shellcheck --external-sources *.sh
+            - run: cd ops/backup && shellcheck --external-sources ./*.sh
 
     comment:
-        if: always() && github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
+        if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
         needs: [checks, docker, integration]
         runs-on: ubuntu-latest
+        timeout-minutes: 5
         permissions:
             pull-requests: write
         steps:
             - uses: actions/checkout@v7
-            - uses: ./.github/actions/pr-comment
+            - uses: ./.github/actions/report
               with:
                   section: checks
+                  title: Checks
+                  commit: ${{ github.event.pull_request.head.sha }}
+                  overall: ${{ contains(needs.*.result, 'failure') && 'failure' || 'success' }}
+                  done-text: ${{ contains(needs.*.result, 'failure') && 'Failed' || 'All passed' }}
                   body: |
-                      ### Checks
-                      | Job | Result |
-                      | --- | --- |
-                      | `checks` (format, lint, typecheck, tests, build, bundle size, generated code up to date, govulncheck) | ${{ needs.checks.result == 'success' && '✅' || '❌' }} ${{ needs.checks.result }} |
-                      | `docker` (images, backup scripts) | ${{ needs.docker.result == 'success' && '✅' || '❌' }} ${{ needs.docker.result }} |
-                      | `integration` (Go against a throwaway Postgres) | ${{ needs.integration.result == 'success' && '✅' || '❌' }} ${{ needs.integration.result }} |
-
-                      Commit `${{ github.event.pull_request.head.sha }}` · [run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+                      | | Job | What it checks |
+                      | --- | --- | --- |
+                      | ${{ needs.checks.result == 'success' && '✅' || '❌' }} | `checks` | format, lint, typecheck, tests, build, bundle size, generated code, workflows, govulncheck |
+                      | ${{ needs.integration.result == 'success' && '✅' || '❌' }} | `integration` | Go against a throwaway Postgres, with and without the test sign-in |
+                      | ${{ needs.docker.result == 'success' && '✅' || '❌' }} | `docker` | the images, no test sign-in in production's, the backup scripts |
