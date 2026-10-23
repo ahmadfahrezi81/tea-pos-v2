@@ -10,7 +10,9 @@ export async function forward(request: Request, env: Env): Promise<Response> {
         return new Response("API_ORIGIN or EDGE_SECRET is not set", { status: 500 });
     }
     const url = new URL(request.url);
-    const target = new URL(url.pathname.replace(/^\/api/, "") || "/", env.API_ORIGIN);
+    // Only the path is set, so no path (e.g. //other.host) can change where it goes.
+    const target = new URL(env.API_ORIGIN);
+    target.pathname = url.pathname.replace(/^\/api/, "") || "/";
     target.search = url.search;
 
     // set() replaces anything a client sent under these names.
