@@ -7,6 +7,10 @@
     },
     "scripts": {
         "lint": "eslint .",
-        "typecheck": "tsc -p ."
+        "typecheck": "tsc -p .",
+        "test": "vitest run"
+    },
+    "devDependencies": {
+        "vitest": "5.0.5"
     }
 }

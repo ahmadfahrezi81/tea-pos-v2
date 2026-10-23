@@ -1,6 +1,6 @@
 # Task 008 — Database
 
-**Status: merged 2026-10-21 (PR #12); `integration` required on `staging`. OPEN, blocked on Railway's outage (2026-10-21): the staging apply failed ("Invalid RAILWAY_TOKEN" while Railway's API was down) and builds paused during the outage are not queued. When Railway is back: rerun the staging `railway-apply` run, redeploy `api`, `realtime`, `worker` on staging, check each logs `database connected`, then release. Until the apply runs, `realtime` and `worker` have no `DATABASE_URL`.**
+**Status: done 2026-10-23. Merged 2026-10-21 (PR #12); `integration` required on `staging`. Railway's outage held the staging apply until 2026-10-23 (PR #19 declared the Supabase variables it would otherwise have deleted); staging `api`, `realtime`, `worker` now log `database connected` with pools of 8, 2 and 4, and `db:schema` dumps a `schema.sql` identical to the one in git. Production connects with the next release.**
 
 ## The goal
 
