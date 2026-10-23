@@ -37,29 +37,22 @@
         }
     },
     "home": {
-        "gate": {
-            "notOpen": "Toko belum dibuka",
-            "notOpenSub": "Buka toko untuk mulai menerima pesanan hari ini.",
-            "openStore": "Buka Toko",
-            "closed": "Toko sudah tutup",
-            "closedSub": "Sesi hari ini telah berakhir."
+        "title": "Beranda",
+        "signOut": "Keluar",
+        "signingOut": "Sedang keluar…",
+        "noTenant": "Akun Anda belum terdaftar di usaha mana pun. Minta pemilik untuk menambahkan Anda.",
+        "noStores": "Belum ada toko",
+        "default": "Utama",
+        "roles": {
+            "USER": "Penjual",
+            "ADMIN": "Admin",
+            "DRIVER": "Sopir",
+            "SUPPLIER": "Pemasok"
         },
-        "greeting": {
-            "morning": "Selamat Pagi",
-            "afternoon": "Selamat Siang",
-            "evening": "Selamat Malam"
-        },
-        "takeover": {
-            "takenBy": "Sesi sudah diambil alih oleh",
-            "askCode": "Minta kode 2 digit dari penjual saat ini untuk mengambil alih.",
-            "takeOver": "Ambil Alih"
-        },
-        "selectStore": "Pilih Toko",
-        "selectStoreDesc": "Pilih toko untuk dikelola",
-        "hideInactiveStores": "Sembunyikan toko demo dan tidak aktif",
-        "storeInactive": "NONAKTIF",
-        "weatherDesc": "Prakiraan cuaca per jam",
-        "weatherNoData": "Tidak ada data cuaca"
+        "storeStatus": {
+            "inactive": "Tidak aktif",
+            "fake": "Demo"
+        }
     },
     "analytics": {
         "details": "Detail",

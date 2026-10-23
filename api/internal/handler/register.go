@@ -31,6 +31,7 @@ func NewAPI(mux *http.ServeMux, d Deps) huma.API {
 	api.UseMiddleware(auth.Middleware(d.Sessions, d.Queries, d.Limiter))
 	registerHealth(api)
 	registerAuth(api, d)
+	registerMe(api, d)
 	return api
 }
 

@@ -29,6 +29,7 @@ const (
 	InactiveA = "00000000-0000-0000-0003-00000000000a"
 	DriverA   = "00000000-0000-0000-0004-00000000000a"
 	SellerB   = "00000000-0000-0000-0001-00000000000b"
+	NoTenant  = "00000000-0000-0000-0005-000000000000"
 )
 
 // API is the real API, middleware chain included, on a test server.
