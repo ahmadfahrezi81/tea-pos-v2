@@ -53,6 +53,7 @@ api/                 Go module: one backend for every app
 Dockerfile           one image, every program under /app/; Railway picks one by start command
 ops/backup/          nightly dump of production to R2 (cron service backup) and restore.sh
 docs/runbook.md      restore, run a backup, roll back
+docs/benchmark.js    the benchmark as one DevTools Snippet (RFC: Performance)
 apps/seller, backoffice  Vite apps, Pages projects tea-pos and tea-office. app.config.ts: everything that differs
                      per app (name, brand colour, sign-in words, languages). src/routes: TanStack Router file
                      routes (routeTree.gen.ts generated). functions/api forwards /api to Railway

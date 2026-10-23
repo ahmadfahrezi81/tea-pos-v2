@@ -25,3 +25,7 @@ RFC: Build order Step 14b; Performance budgets (What shortens the boot, Ways to 
 ## Not in this task
 
 Preact (its own trial on a branch, if wanted). The Go half of Step 16b.
+
+## Follow-up, 2026-10-23: the benchmark in one snippet
+
+Reading numbers off the trace was slow and LCP often caught the splash. `docs/benchmark.js` is one DevTools Snippet (`!bench`) that prints splash, LCP, app ready (`tea-pos:ready`, set by `hideSplash`), `/me` start and answer, main script arrival, long tasks and reopen or first visit. The RFC's benchmark section links it, with the 2026-10-23 baseline: ready 1.63 s on a reopen.
