@@ -36,12 +36,14 @@ const origin = new URL(url).origin;
 const runs = Number(option("--runs", 5));
 const chromeStart = Number(option("--chrome-start", CHROME_START_DEFAULT));
 
+// The real keychain, not Puppeteer's stand-in: the sign-in Chrome saved the cookie with it.
 const launch = (headless) =>
     puppeteer.launch({
         executablePath: CHROME,
         userDataDir: PROFILE,
         headless,
         defaultViewport: { width: 412, height: 915 },
+        ignoreDefaultArgs: ["--use-mock-keychain", "--password-store=basic"],
     });
 
 // A plain Chrome, not one a script drives: Google refuses to sign in to the latter.
