@@ -50,9 +50,13 @@ jobs:
             # Fails only on vulnerabilities our code actually calls.
             - run: cd api && go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
             - if: always() && github.event.pull_request.user.login != 'dependabot[bot]' && steps.bundle.outputs.report
-              uses: ./.github/actions/pr-comment
+              uses: ./.github/actions/report
               with:
                   section: bundle-size
+                  title: Bundle size
+                  commit: ${{ github.event.pull_request.head.sha }}
+                  overall: ${{ steps.bundle.outcome == 'success' && 'success' || 'failure' }}
+                  done-text: ${{ steps.bundle.outcome == 'success' && 'Within budget' || 'Over budget' }}
                   body: ${{ steps.bundle.outputs.report }}
 
     integration:
@@ -99,15 +103,16 @@ jobs:
             pull-requests: write
         steps:
             - uses: actions/checkout@v7
-            - uses: ./.github/actions/pr-comment
+            - uses: ./.github/actions/report
               with:
                   section: checks
+                  title: Checks
+                  commit: ${{ github.event.pull_request.head.sha }}
+                  overall: ${{ contains(needs.*.result, 'failure') && 'failure' || 'success' }}
+                  done-text: ${{ contains(needs.*.result, 'failure') && 'Failed' || 'All passed' }}
                   body: |
-                      ### Checks
-                      | Job | Result |
-                      | --- | --- |
-                      | `checks` (format, lint, typecheck, tests, build, bundle size, generated code up to date, govulncheck) | ${{ needs.checks.result == 'success' && '✅' || '❌' }} ${{ needs.checks.result }} |
-                      | `docker` (images, backup scripts) | ${{ needs.docker.result == 'success' && '✅' || '❌' }} ${{ needs.docker.result }} |
-                      | `integration` (Go against a throwaway Postgres) | ${{ needs.integration.result == 'success' && '✅' || '❌' }} ${{ needs.integration.result }} |
-
-                      Commit `${{ github.event.pull_request.head.sha }}` · [run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+                      | | Job | What it checks |
+                      | --- | --- | --- |
+                      | ${{ needs.checks.result == 'success' && '✅' || '❌' }} | `checks` | format, lint, typecheck, tests, build, bundle size, generated code, workflows, govulncheck |
+                      | ${{ needs.integration.result == 'success' && '✅' || '❌' }} | `integration` | Go against a throwaway Postgres, with and without the test sign-in |
+                      | ${{ needs.docker.result == 'success' && '✅' || '❌' }} | `docker` | the images, no test sign-in in production's, the backup scripts |

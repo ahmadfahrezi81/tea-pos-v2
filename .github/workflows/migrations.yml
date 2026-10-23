@@ -1,12 +1,8 @@
-# The only way a migration reaches a database: a PR into staging shows what would run,
-# its merge pushes to staging, a release pushes to production after the owner approves.
-# Railway's Wait for CI holds each API deploy until its migration is in.
+# A PR into staging shows which migrations its merge would run. The migrations themselves run in
+# deploy.yml, before the API: on the merge into staging, and on a release after the owner approves.
 name: migrations
 
 on:
-    push:
-        branches: [staging, main]
-        paths: ["supabase/migrations/**"]
     pull_request:
         branches: [staging]
         paths: ["supabase/migrations/**"]
@@ -33,47 +29,19 @@ jobs:
               run: |
                   out=$(supabase db push --dry-run --db-url "$DATABASE_URL" 2>&1)
                   echo "$out"
-                  { echo "report<<EOF"; echo "$out"; echo "EOF"; } >> "$GITHUB_OUTPUT"
-            - uses: ./.github/actions/pr-comment
+                  # Only the migration names; the CLI's update notice and progress lines are noise here.
+                  # shellcheck disable=SC2016 # the backticks are Markdown, not a command
+                  list=$(grep -oE '[0-9]{14}_[a-z0-9_]+\.sql' <<< "$out" | sed 's/^/- `/; s/$/`/' || true)
+                  {
+                      echo "body<<EOF"
+                      if [ -n "$list" ]; then echo "Merging runs these on the staging database, before its API deploys:"; echo; echo "$list"; else echo "None to run: the staging database is up to date."; fi
+                      echo EOF
+                  } >> "$GITHUB_OUTPUT"
+            - uses: ./.github/actions/report
               with:
                   section: migrations
-                  body: |
-                      ### Migrations
-                      What merging runs on the staging database:
-                      ```
-                      ${{ steps.plan.outputs.report }}
-                      ```
-
-    staging:
-        if: github.event_name == 'push' && github.ref_name == 'staging'
-        runs-on: ubuntu-latest
-        timeout-minutes: 10
-        concurrency:
-            group: migrations-staging
-            cancel-in-progress: false
-        steps:
-            - uses: actions/checkout@v7
-            - uses: supabase/setup-cli@v1
-              with:
-                  version: 2.121.0
-            - env:
-                  DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
-              run: supabase db push --db-url "$DATABASE_URL"
-
-    production:
-        if: github.event_name == 'push' && github.ref_name == 'main'
-        runs-on: ubuntu-latest
-        timeout-minutes: 10
-        # Waits for the owner's Approve; PRODUCTION_DATABASE_URL exists only in this environment.
-        environment: production
-        concurrency:
-            group: migrations-production
-            cancel-in-progress: false
-        steps:
-            - uses: actions/checkout@v7
-            - uses: supabase/setup-cli@v1
-              with:
-                  version: 2.121.0
-            - env:
-                  DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
-              run: supabase db push --db-url "$DATABASE_URL"
+                  title: Migrations
+                  commit: ${{ github.event.pull_request.head.sha }}
+                  overall: success
+                  done-text: Dry run on staging
+                  body: ${{ steps.plan.outputs.body }}

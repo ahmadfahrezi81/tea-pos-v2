@@ -30,7 +30,8 @@ gh pr create --base main --head staging --title "release: YYYY.MM.N" --body "...
 ## Merging
 
 - **Merge commit, never squash** (`gh pr merge <n> --merge`): a squash gives `main` a commit `staging` never had, and the next release conflicts
-- If there are migrations, the owner approves the production migration job in GitHub; the API deploys after it
-- After deploy: production `/health` shows the merge commit
+- The release PR gets a live **Deploy to production** comment (`deploy.yml`): Railway config → migrations → API → apps → production check
+- If there are migrations, the comment says it is waiting for the owner's Approve (link to the run); the API deploys after it
+- Done when that comment is ✅ (production runs the merge commit; both apps and a signed-out `/me` answer)
 - `release.yml` then tags the merge commit `YYYY.MM.N` and creates the GitHub Release with this PR's body as notes; check it exists (`gh release view`)
 - The notes are written for three readers: this PR (you, before merging), the GitHub Release (history), and later the in-app What's new, which shows only the **For users** lines in English and Indonesian (Step 16)

@@ -1,14 +1,18 @@
 import { defineRailway, github, preserve, project, service } from "railway/iac";
 
-// Production runs main, staging runs the staging branch. Change settings here, never in the dashboard.
+// Production runs releases from main, staging runs merges into staging (deploy.yml). Change settings here, never in the dashboard.
 export default defineRailway((ctx) => {
     const prod = ctx.isEnvironment("production");
+    // Railway never deploys by itself: deploy.yml deploys each commit in order (migrations, the
+    // API, then the apps) through scripts/railway-deploy.mjs. Railway can only express "no auto
+    // deploy" as a trigger on a branch nobody pushes, so that is what this names. No branch at all
+    // would mean the default branch, main.
     const repo = github("ahmadfahrezi81/tea-pos-v2", {
-        branch: prod ? "main" : "staging",
-        checkSuites: true,
+        branch: "railway-manual",
+        checkSuites: false,
     });
     const replicas = { "asia-southeast1-eqsg3a": 1 };
-    const build = { builder: "DOCKERFILE" as const, watchPatterns: ["/api/**", "/Dockerfile"] };
+    const build = { builder: "DOCKERFILE" as const };
     // A sleeping service drops every WebSocket.
     const deploy = { sleepApplication: false };
     // Railway manages every variable from this file: an undeclared one is removed on apply.
@@ -65,7 +69,7 @@ export default defineRailway((ctx) => {
     const backup = service("backup", {
         source: repo,
         rootDirectory: "ops/backup",
-        build: { builder: "DOCKERFILE" as const, watchPatterns: ["/ops/backup/**"] },
+        build: { builder: "DOCKERFILE" as const },
         deploy: { cronSchedule: "0 20 * * *", restartPolicyType: "NEVER" as const },
         replicas,
         env: {

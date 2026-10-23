@@ -1,6 +1,6 @@
 # Each app is a Cloudflare Pages project; its /api Function forwards to Railway.
-# A PR gets previews and staging gets its alias, both on the staging API. Production is deployed
-# by production.yml (called with production: true), only after production's API is up.
+# A PR gets previews on the staging API. Staging's alias and production are deployed by
+# deploy.yml, which calls this after the API they call is up.
 name: pages
 
 on:
@@ -12,16 +12,6 @@ on:
             sha:
                 type: string
                 default: ""
-    push:
-        branches: [staging]
-        paths:
-            [
-                "apps/**",
-                "packages/**",
-                "api/openapi.yaml",
-                "pnpm-lock.yaml",
-                ".github/workflows/pages.yml",
-            ]
     pull_request:
         branches: [staging]
         paths:
@@ -40,7 +30,7 @@ concurrency:
 jobs:
     deploy:
         # Forks and Dependabot get no secrets, so no preview.
-        if: inputs.production || github.event_name == 'push' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')
+        if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')
         runs-on: ubuntu-latest
         timeout-minutes: 15
         permissions:
@@ -85,9 +75,11 @@ jobs:
                   $WRANGLER pages deploy --project-name ${{ matrix.project }} --branch "$BRANCH" | tee out.txt
                   echo "url=$(grep -o 'https://[^ ]*pages.dev' out.txt | tail -1)" >> "$GITHUB_OUTPUT"
             - if: github.event_name == 'pull_request'
-              uses: ./.github/actions/pr-comment
+              uses: ./.github/actions/report
               with:
                   section: preview-${{ matrix.app }}
-                  body: |
-                      ### Preview: ${{ matrix.app }}
-                      ${{ steps.deploy.outputs.url }} (API: staging)
+                  title: "Preview: ${{ matrix.app }}"
+                  commit: ${{ github.event.pull_request.head.sha }}
+                  overall: success
+                  done-text: Ready
+                  body: "${{ steps.deploy.outputs.url }} (on the staging API)"

@@ -1,78 +1,87 @@
-# Task 015b — CI strategy: test each change once
+# Task 015b — CI strategy: test each change once, deploy in order, show it on the PR
 
-**Status: built 2026-10-24 (items 1-9), not committed: the owner reviews the code first. Checked: the e2e wait rule against today's staging; the benchmark's Markdown report against staging with the test admin (`BENCH_PROFILE` keeps CI's profile separate from the owner's); the e2e results table from sample output; the production check against production (all five rows green) and against a wrong commit (red, `ok=false`). Found on the last pass: the production check stopped before its comment if an app was down (a failed `curl`/`jq` under GitHub's stop-on-error); now a down app is a ❌ row, checked with both apps unreachable. The benchmark's slow-phone row is labelled "slow phone ≈ app ready + 4.0 s (Galaxy M11)" and is in the log row too. Found on the PR: `runner.temp` in the benchmark job's `env` made `e2e.yml` invalid (that context is only allowed in steps); fixed, and `checks` now runs actionlint over the workflows, which catches it. Added before merging (owner: "anything necessary"): actionlint runs with shellcheck over the workflows' scripts (its notes fixed: the production check uses real if/else); every job has a timeout (5-40 minutes, each above its own waits; GitHub's default is 6 hours). Changed while building: the production check waits up to 30 minutes, since with a migration the API deploys only after the owner's approval. Still to do after merge: apply both rulesets, the RFC's CI/CD section.**
-
+**Status: built 2026-10-24, not committed: the owner reviews the code first. Part 1 is on PR #31; part 2 (option C) is in the working tree on the same branch. Proven on staging, one piece at a time: Railway's API deploys a service at an exact commit (`scripts/railway-deploy.mjs`, the `worker` live in 32-42 s); the shared comment template renders and edits one comment from start to a failure (a fake GitHub API); the plan step's change detection on this PR's own diff (config changed, no API, no apps, no migrations); actionlint with shellcheck over every workflow. **Found while building:** in Railway's config, leaving a service's branch out means the default branch, `main`, not "no auto deploy": staging's `worker` briefly had a trigger on `main` (reverted at once; nothing was pushed to `main` meanwhile). Railway can only express "no auto deploy" as a trigger on a branch nobody pushes, so every service now names `railway-manual`; staging's `worker` already runs that way. The first real run of `deploy.yml` is this PR's merge into staging (config, then e2e; no API or apps change); the API and apps steps first run on the next PR that changes them. Still to do after merge: apply both rulesets, the RFC's CI/CD section.**
 
 
 ## The goal
 
-**Test each change once, at its PR, against exactly what will merge; test the whole system once per release.** Today each change is tested two or three times. The CI's layers are all in place (Steps 5-15), so its shape is fixed now, before feature work multiplies the waste.
+**Test each change once, at its PR, against exactly what will merge. Deploy in the RFC's order (migrations → API → apps), and show every step on the PR that caused it.** The CI's layers are all in place (Steps 5-15); its shape is fixed now, before feature work builds on it.
 RFC: CI/CD (Testing by level), Testing.
 
-## What ran (2026-10-20 to 2026-10-23: 206 runs, about 30 PRs)
+## What we found (2026-10-24)
 
-| Runs | What | Verdict |
-| --- | --- | --- |
-| 60 | `ci` on push: about 26 on PR branches, about 34 after merges into `staging`/`main` | The branch ones duplicate the PR's run; the merge ones re-test what the PR just tested |
-| 39 | `ci` on PRs | The one that counts |
-| 9 | `e2e` on Railway's deployment reports (7 skipped, 2 identical) | Noise: Railway reports a deploy 6-10 times, "success" twice; GitHub cannot start on one report only |
-| about 75 | `security`, `pages`, `release-source`, `railway-*`, `migrations`, CodeQL, Dependabot | Fine: seconds each, or only when their files change |
+1. **About a third of all runs were repeats** (206 runs, about 30 PRs): `ci` ran on the branch push and again on the PR (about 26), and again after each merge (about 34)
+2. **Railway's Wait for CI waits for every GitHub Actions run on a commit, and a failed one skips the deploy** (Railway's docs). So any push-started job that waits for Railway deadlocks with it: e2e after a merge, and the production check of part 1, which would have held every release for 30 minutes and then failed it
+3. **Railway's GitHub deployment reports** (what a non-push trigger would listen to) fire 6-10 times per deploy, staging and production alike, "success" twice: skipped rows and duplicate runs. GitHub cannot listen to one environment's success only
+4. **Production's apps deploy on the merge, in parallel with the API.** With a migration the API waits for the owner's approval, so new apps can call an API that is not there yet
+5. **After a merge nothing shows on the PR;** the deploy is somewhere in the Actions tab
 
-No single bug: about 7 runs per PR, a third of them repeats.
+## Part 1, built (PR #31)
 
-## The strategy
+- `ci` on PRs only; `staging` requires a PR to be up to date, so its checks ran on exactly what merges
+- `e2e` on release PRs (waiting for staging to run the release's API), with a results table; the benchmark beside it (3 runs, median, slow-phone row, never blocking); `pnpm bench` 3 runs by default
+- actionlint with shellcheck in `checks`; a timeout on every job
+- A real run on GitHub (throwaway PR #32, closed): e2e passed in 39 s, the benchmark in 1 min 8 s
 
-| When | What runs |
+## Part 2: option C, one deploy workflow per environment
+
+**Railway stops deploying by itself; `deploy.yml` tells it what to deploy, in order.** Railway's API has `serviceInstanceDeployV2(commitSha, environmentId, serviceId)`; the project tokens can call it.
+
+| When | `deploy.yml` runs, in order |
 | --- | --- |
-| **Push to a PR** | `ci` (checks, integration, docker), dependency review, CodeQL; previews if the apps changed; the migrations dry run if migrations changed |
-| **Merge into `staging`** | No tests again. Deploys only: Railway (API), Pages (apps), and migrations or Railway config when they changed |
-| **Release PR** | `ci` once, `release-source`, the Railway plan, **`e2e` against `staging`**, and **the benchmark** (information, never blocking) |
-| **Release merge** | Deploys only (migrations after approval, Railway, Pages) and the tag, then **a production check** once production runs it |
-| **Any time** | `e2e` by hand (Actions → e2e → Run workflow) |
+| **Merge into `staging`** | migrations → API services at this commit, wait for `/health` → apps → **e2e** |
+| **Release merge into `main`** | migrations (**the owner's Approve**) → API services at this commit, `backup` too → apps → **the production check** |
 
-**Two settings make "once" safe:**
-1. **`staging` requires a PR to be up to date before it merges** (`strict_required_status_checks_policy: true`), so the PR's checks ran on exactly what lands. When another PR merged first, GitHub shows **Update branch**: one click, then the checks run again on the new base
-2. **`e2e` at the release, not after every merge.** The RFC already gates releases on it. A staging breakage then shows at the release PR (or a manual run), not minutes after the merge. In exchange: no deadlock with Railway's Wait for CI and no report noise
+| When | What else runs |
+| --- | --- |
+| **Push to a PR** | `ci`, dependency review, CodeQL, previews if the apps changed, the migrations dry run if migrations changed (unchanged) |
+| **Release PR** | `ci`, `release-source`, the Railway plan, the benchmark, and **`e2e`: the result of staging's last deploy of exactly this code**, not a new run (it runs again only if that result is missing or stale) |
 
-## The plan
+**What this changes from part 1:** e2e moves back to right after each staging deploy (one run, no noise, a step of the same workflow), so a breakage shows minutes after the merge; the release PR reads that result. The production check and the apps move into the release's deploy, after the API. `pages.yml` keeps only previews; `migrations.yml` keeps only the PR dry run; `release.yml` only tags.
 
-1. **`ci.yml`:** on `pull_request` only (into `staging` and `main`). No `push` trigger: Railway's Wait for CI then waits only for what still runs on a merge (migrations, Pages), so the API also deploys sooner
-2. **`e2e.yml`:** on release PRs and `workflow_dispatch`; no `deployment_status`. Before the suite it waits for `staging` to run the release's code: `/health` must show the newest commit that changed the API (`git log -1 -- api Dockerfile`, Railway's watch paths) or a later one, checked every 15 s for up to 15 minutes, so a release opened right after a merge does not test the old API
-3. **`.github/rulesets/staging.json`:** strict on, applied with `gh api`. **`main.json`:** `e2e` required (already in the file), applied too
-4. **RFC, CI/CD:** "Testing by level" and the flow diagram replaced by the table above; the RFC's "fast checks on every branch push" (Step 5) becomes "on every PR"
-5. **`CLAUDE.md`:** the table in one line per row
+**Seeing it, on the PR (owner's question):**
+1. **A live comment on the merged PR**, edited as each step finishes: "Deploy to staging · `abc1234`" with migrations, API, apps, e2e as ✅ / ⏳ / ⏸ / ❌, ending with the e2e table, or the failed step and a link. The release PR gets "Deploy to production" the same way, from "waiting for your Approve" to the production check. GitHub notifies the PR's author of each update (the phone app too)
+2. **One job per step** (migrations → api → apps → e2e), so the run page draws them as boxes filling in live
+3. **A ✅ / ❌ check on the merge commit**, beside it on the branch and in the PR's commit list
 
-## Added in review (2026-10-24)
+**What the comments say** (each edited in place, newest state first):
 
-**Each one runs once, at one moment, for one question; none repeats another:**
+| | Deploy to staging (on the merged PR) | Deploy to production (on the release PR) |
+| --- | --- | --- |
+| **Header** | commit, total time so far, overall ✅ / ⏳ / ❌ | the version (`2026.10.N`, linked to its GitHub Release), commit, total time |
+| **Migrations** | which ran, by file name, or "none" | "⏸ waiting for your Approve" with a link to the approval page, then which ran |
+| **API** | each service at the commit, with its time and a link to its Railway deployment; "not changed" when the merge touched no API | the same, `backup` included |
+| **Apps** | both, with their addresses | both, with `tea-pos.` and `tea-office.lykostech.app` |
+| **Then** | the e2e table (every test, ✅ / ❌, time) | the production check table |
+| **On failure** | the failed step's last 20 log lines, folded, and the run link | the same, plus the rollback line: the previous release's commit and the one command that redeploys it (runbook) |
 
-| | When | Against | Question it answers |
-| --- | --- | --- | --- |
-| PR checks | each PR push | the PR's code, in CI | Is this change correct? |
-| `e2e` | the release PR | `staging` | Does the whole system work together, with test users? |
-| Benchmark | the release PR, after `e2e` | `staging` | Did this release make the app slower? |
-| Production check | after the release merge | production | Is production running this release, and answering? |
+**Suggestion, strike out if not wanted:** the release PR's benchmark comment also shows the previous release's numbers beside today's (read from the previous release PR's comment), e.g. "app ready 0.82 s (last release 0.80 s, +3%)", so a slowdown stands out without opening the log.
 
-The production check looks like a repeat of `e2e` but asks something else, on purpose: `e2e` cannot run there (production has no test sign-in and no test users, and nothing writes to production's data). So it only reads what anyone can: the commit `/health` reports and a signed-out `/me`.
+**The rule this gives: everything about a change shows on its PR.** Checks before the merge, the deploy and e2e after it. The Actions tab is for digging into a failure.
 
-6. **`e2e` results as a table:** every test, pass or fail, with its time (from `go test -v`), as the release PR's `e2e` comment and the run's own summary page (so a run by hand shows it too)
-7. **The benchmark in CI** (`e2e.yml`, a second job after `e2e`, `continue-on-error`): `pnpm bench --test-user admin@test-a.test` against staging's backoffice, **3 runs, median**, on GitHub's Chrome. It posts a `benchmark` comment with the table and a ready Benchmark log row (Device "CI runner"). **Never required:** a shared runner varies between runs, so its rows are their own series in the log, for spotting a jump from one release to the next, not a pass or fail. `pnpm bench` writes the Markdown when `BENCH_REPORT` is set; on Linux it starts Chrome with `--no-sandbox` (the runner's image blocks Chrome's sandbox)
-8. **`pnpm bench` runs 3 times by default**, not 5 (`--runs` still changes it)
-9. **The production check** (`release.yml`, a job after the tag): waits up to 15 minutes until production's `/health` shows the release's merge commit, then checks both apps' `/api/health` and that a signed-out `/api/me` answers `not_signed_in` (the API, sessions and forwarder all up). The result goes on the merged release PR as a `production` comment and on the run's summary. A failure is red on the release run and in the comment; nothing is rolled back by itself (the runbook covers that)
+## The plan (part 2)
+
+1. **`railway.ts`:** each service's repo stays connected but no branch triggers a deploy, and Wait for CI is off (`checkSuites: false`). **First proven on staging's `worker` alone** that a service with no branch still deploys by `serviceInstanceDeployV2`; if Railway needs a branch for that, the fallback is to keep the branch and turn its auto deploy off in the way Railway supports, written down before going on
+2. **`scripts/railway-deploy.sh`:** deploys the given services at a commit through the API and waits until each deployment is `SUCCESS` (or fails with its status), so the workflow and a person by hand use the same steps
+3. **`deploy.yml`:** on push to `staging` and `main`; jobs `migrate` → `api` → `apps` (calls `pages.yml`) → `e2e` (staging) or `check` (production); `concurrency` per environment, never cancelling a deploy halfway. Its live comment through `.github/actions/pr-comment`, on the PR the commit came from
+4. **The release PR's `e2e` check** reads the staging deploy's e2e result for the PR's head commit (a commit status the staging `e2e` job sets); every merge deploys (an apps-only one skips the API step), so the result exists; only if it is missing (a deploy still running, or one that failed before e2e) does it wait or run the suite itself
+5. **Remove** `production.yml`, the main push from `pages.yml` and `migrations.yml`, the production check from `release.yml`
+6. **`docs/runbook.md`:** deploying by hand (`scripts/railway-deploy.sh`) and rolling back (deploy the previous commit the same way)
+7. **RFC and `CLAUDE.md`:** the two tables above, and the rule
 
 ## Owner's part
 
-None (the rulesets are applied by command, with your OK).
+None expected: Railway settings change through `railway.ts`. If Railway needs a dashboard switch for "no auto deploy", I'll write the exact clicks.
 
 ## Done when
 
-- A push to a PR branch starts one `ci`
-- A merge into `staging` starts no `ci` and no `e2e`; the API deploys without waiting for tests
-- A PR behind `staging` cannot merge until updated
-- The release PR's `e2e` waits for the right API commit, then passes, and is required
-- `e2e` runs from the Actions tab by hand (after the next release: GitHub only shows the button for workflows on `main`)
-- The release PR shows the `e2e` table and the benchmark table; the benchmark never blocks the merge
-- After the merge, the release PR gets a `production` comment with the running commit, green
+- A merge into `staging` shows a live "Deploy to staging" comment on its PR, ending ✅ with the e2e table, and no other run starts
+- An apps-only merge says "API: not changed" and still runs e2e against the running API
+- A failing step's comment shows its last log lines without opening the run
+- A deliberately failing e2e shows ❌ at that step on the PR and on the commit
+- A release shows "Deploy to production" on the release PR: waiting for the Approve, then API, apps, the production check, ✅
+- Railway never deploys by itself (a push with Railway's own deploy would show two deployments of one commit)
+- The release PR's `e2e` check passes from staging's result without running the suite again
 
 ## Not in this task
 

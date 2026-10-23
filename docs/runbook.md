@@ -27,9 +27,20 @@ docker rm -f restore-db && docker network rm restore-net
 
 Railway → `production` → `backup` → **Run now**. A redeploy does not run it.
 
-## Roll back a deploy
+## How a deploy runs
 
-- **Backend:** Railway → the service → Deployments → the previous one → **Redeploy**
-- **Frontend:** Cloudflare Pages → the project → Deployments → the previous one → **Rollback**
+`.github/workflows/deploy.yml`, on every merge into `staging` and every release into `main`, in order: Railway config (if changed) → migrations (production: your Approve on the run) → the API services at that exact commit → the apps → staging: e2e / production: a read-only check. Each step shows live in a comment on the PR the commit came from, with links. Railway never deploys by itself (`railway.ts`).
+
+## Deploy or roll back by hand
+
+**Backend**, at any commit (the previous release's commit to roll back: `git log --first-parent main`):
+
+```bash
+infisical run --env=prod --path=/github -- sh -c 'RAILWAY_TOKEN=$RAILWAY_TOKEN node scripts/railway-deploy.mjs <commit> api realtime worker'
+```
+
+For staging, use `$RAILWAY_TOKEN_STAGING` instead. It prints each service's Railway link and waits until each is live.
+
+**Frontend:** Cloudflare Pages → the project → Deployments → the previous one → **Rollback**
 
 Migrations only add, so older code runs against the newer schema.
