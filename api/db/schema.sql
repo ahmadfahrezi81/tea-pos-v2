@@ -1,3 +1,4 @@
+-- migrations through: 20261022165043
 --
 -- PostgreSQL database dump
 --
@@ -296,6 +297,24 @@ CREATE TABLE public.payroll_user_info (
     bank_account_holder text,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: sessions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.sessions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    token_hash bytea NOT NULL,
+    user_id uuid NOT NULL,
+    app text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_seen_at timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    ip text,
+    user_agent text,
+    CONSTRAINT sessions_app_check CHECK ((app = ANY (ARRAY['seller'::text, 'backoffice'::text])))
 );
 
 
@@ -879,6 +898,22 @@ ALTER TABLE ONLY public.payroll_claims
 
 
 --
+-- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sessions
+    ADD CONSTRAINT sessions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sessions sessions_token_hash_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sessions
+    ADD CONSTRAINT sessions_token_hash_key UNIQUE (token_hash);
+
+
+--
 -- Name: store_sessions store_sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1167,6 +1202,13 @@ CREATE UNIQUE INDEX payroll_claims_weekly_unique ON public.payroll_claims USING 
 --
 
 CREATE INDEX payroll_commissions_payout_id_idx ON public.payroll_commissions USING btree (payout_id) WHERE (payout_id IS NOT NULL);
+
+
+--
+-- Name: sessions_user_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX sessions_user_id_idx ON public.sessions USING btree (user_id);
 
 
 --
@@ -1683,6 +1725,14 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: sessions sessions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sessions
+    ADD CONSTRAINT sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: store_orders store_orders_daily_summary_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2030,6 +2080,12 @@ CREATE POLICY "profiles: read own" ON public.users FOR SELECT USING ((id = auth.
 
 CREATE POLICY "profiles: update own" ON public.users FOR UPDATE USING ((id = auth.uid()));
 
+
+--
+-- Name: sessions; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.sessions ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: store_daily_summaries; Type: ROW SECURITY; Schema: public; Owner: -

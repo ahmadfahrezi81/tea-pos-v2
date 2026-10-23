@@ -113,6 +113,18 @@ type PayrollUserInfo struct {
 	UpdatedAt          pgtype.Timestamptz
 }
 
+type Session struct {
+	ID         pgtype.UUID
+	TokenHash  []byte
+	UserID     pgtype.UUID
+	App        string
+	CreatedAt  pgtype.Timestamptz
+	LastSeenAt pgtype.Timestamptz
+	ExpiresAt  pgtype.Timestamptz
+	Ip         pgtype.Text
+	UserAgent  pgtype.Text
+}
+
 type Store struct {
 	ID        pgtype.UUID
 	Name      string

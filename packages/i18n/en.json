@@ -37,29 +37,22 @@
         }
     },
     "home": {
-        "gate": {
-            "notOpen": "Store not open yet",
-            "notOpenSub": "Open the store to start taking orders today.",
-            "openStore": "Open Store",
-            "closed": "Store is closed",
-            "closedSub": "Today's session has ended."
+        "title": "Home",
+        "signOut": "Sign out",
+        "signingOut": "Signing out…",
+        "noTenant": "Your account isn't part of a business yet. Ask the owner to add you.",
+        "noStores": "No stores yet",
+        "default": "Default",
+        "roles": {
+            "USER": "Seller",
+            "ADMIN": "Admin",
+            "DRIVER": "Driver",
+            "SUPPLIER": "Supplier"
         },
-        "greeting": {
-            "morning": "Good Morning",
-            "afternoon": "Good Afternoon",
-            "evening": "Good Evening"
-        },
-        "takeover": {
-            "takenBy": "Session already taken by",
-            "askCode": "Ask the current seller for their 2-digit code to take over.",
-            "takeOver": "Take Over"
-        },
-        "selectStore": "Select Store",
-        "selectStoreDesc": "Select a store to manage",
-        "hideInactiveStores": "Hide demo and inactive stores",
-        "storeInactive": "INACTIVE",
-        "weatherDesc": "Hourly weather forecast",
-        "weatherNoData": "No weather data available"
+        "storeStatus": {
+            "inactive": "Inactive",
+            "fake": "Demo"
+        }
     },
     "analytics": {
         "details": "Details",
@@ -492,7 +485,12 @@
         "sellerSub": "Ready to sell? Let's get you in.",
         "backofficeTitle": "Backoffice",
         "backofficeSub": "Admin access only.",
-        "comingSoon": "Sign-in arrives in the next update."
+        "errors": {
+            "signInFailed": "Sign-in did not finish. Please try again.",
+            "notAllowed": "This account cannot use this app. Ask your manager if this is wrong.",
+            "accountInactive": "This account is not active. Ask your manager.",
+            "tooManyRequests": "Too many attempts. Wait a minute and try again."
+        }
     },
     "status": {
         "title": "Status",

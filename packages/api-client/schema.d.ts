@@ -4,6 +4,57 @@
  */
 
 export interface paths {
+    "/auth/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Finish Google sign-in and set the session cookie */
+        get: operations["finishSignIn"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/google": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Start Google sign-in */
+        get: operations["startSignIn"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign out of this app on this phone */
+        post: operations["signOut"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -13,6 +64,23 @@ export interface paths {
         };
         /** Service health, version and commit */
         get: operations["getHealth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The signed-in user, their tenants and stores */
+        get: operations["getMe"];
         put?: never;
         post?: never;
         delete?: never;
@@ -45,6 +113,48 @@ export interface components {
             /** @example 2026.10.3 */
             version: string;
         };
+        Me: {
+            /** @description Empty when the user belongs to no tenant */
+            tenants: components["schemas"]["MeTenant"][];
+            user: components["schemas"]["MeUser"];
+        };
+        MeStore: {
+            /** @example 22:00 */
+            closeTime: string;
+            /** Format: uuid */
+            id: string;
+            /** @description The store this user's app opens on */
+            isDefault: boolean;
+            name: string;
+            /** @example 08:00 */
+            openTime: string;
+            /** @example active */
+            status: string;
+        };
+        MeTenant: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @example bi_weekly */
+            payFrequency: string;
+            slug: string;
+            /** @description Seller: the stores the user is assigned to. Backoffice: every store of the tenant */
+            stores: components["schemas"]["MeStore"][];
+        };
+        MeUser: {
+            avatarUrl?: string;
+            email: string;
+            fullName: string;
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description The profile's language; the app keeps a copy
+             * @example id
+             */
+            language: string;
+            /** @example USER */
+            role: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -54,6 +164,101 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    finishSignIn: {
+        parameters: {
+            query?: {
+                /** @description From Supabase after Google sign-in */
+                code?: string;
+                error?: string;
+            };
+            header?: {
+                "User-Agent"?: string;
+            };
+            path?: never;
+            cookie?: {
+                /** @description Set by /auth/google */
+                tea_pkce?: string;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Found */
+            302: {
+                headers: {
+                    Location?: string;
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    startSignIn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Found */
+            302: {
+                headers: {
+                    Location?: string;
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    signOut: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     getHealth: {
         parameters: {
             query?: never;
@@ -70,6 +275,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
                 };
             };
             /** @description Error */

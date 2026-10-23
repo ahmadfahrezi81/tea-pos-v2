@@ -75,3 +75,27 @@ export function useAppUpdate(): AppUpdate {
     if (!update) throw new Error("AppUpdateProvider is missing");
     return update;
 }
+
+const AUTO_APPLIED_KEY = "tea-pos:update-applied-at";
+let autoApplied = false;
+
+/**
+ * For screens outside the shell (sign-in), where there is no sheet and no cart to
+ * lose: a waiting build is applied at once. At most once a minute, so a worker that
+ * fails to take over cannot reload the page in a loop.
+ */
+export function useApplyUpdateNow() {
+    const { available, apply } = useAppUpdate();
+    useEffect(() => {
+        if (!available || autoApplied) return;
+        autoApplied = true;
+        try {
+            const last = Number(sessionStorage.getItem(AUTO_APPLIED_KEY));
+            if (Date.now() - last < CHECK_THROTTLE_MS) return;
+            sessionStorage.setItem(AUTO_APPLIED_KEY, String(Date.now()));
+        } catch {
+            // No sessionStorage: apply anyway; the worker check is throttled too.
+        }
+        void apply();
+    }, [available, apply]);
+}

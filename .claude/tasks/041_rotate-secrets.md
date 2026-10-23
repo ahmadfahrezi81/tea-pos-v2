@@ -1,6 +1,7 @@
 # Task 041 — Rotate secrets after Railway's incident
 
-**Status: Part 1 done 2026-10-22. Production and staging database passwords reset (both new URLs connect; Infisical `/app` and `/backup` updated); R2 `tea-pos-backup` token rolled (new secret lists the bucket); production checks clean: only Supabase's own and the dashboard connected, no new `auth.users` since 2026-10-20 (Postgres logs do not record logins on this plan, so they prove nothing either way); GitHub security log shows only the owner's address and GitHub itself; the owner also turned on two-factor and a passkey. Part 2 in progress 2026-10-23: GitHub reconnected in Railway; the four project tokens made again (both reach their environment; Infisical's Railway connection and `/github` updated); new `EDGE_SECRET` per environment and a new healthchecks.io ping URL, same in Infisical, Railway and GitHub. Staging's apply refused to delete `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (synced for Step 12 ahead of its PR), so `railway.ts` declares them now. Production redeploys with the next release (its code predates the incident, which Railway cannot redeploy).**
+**Status: done 2026-10-23. Part 1 on 2026-10-22 (database passwords, R2 token, production and GitHub checks clean). Part 2 on 2026-10-23: GitHub reconnected in Railway; the four project tokens made again (no account token existed); new `EDGE_SECRET`s and healthchecks.io ping URL, the same in Infisical, Railway and GitHub; staging redeployed through PR #19, production through release 2026.10.3; every service logs `database connected`; the backup ran by hand and uploaded. Rail Canvas is not rotated: it is shut down instead (RFC Step 42).**
+
 
 ## Why
 

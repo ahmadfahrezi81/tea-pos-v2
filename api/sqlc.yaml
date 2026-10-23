@@ -1,7 +1,7 @@
 version: "2"
 sql:
     - engine: postgresql
-      schema: [db/stubs.sql, db/schema.sql]
+      schema: [db/stubs.sql, db/schema.sql, db/pending.sql]
       queries: db/queries
       gen:
           go:

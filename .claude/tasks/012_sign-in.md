@@ -1,6 +1,6 @@
 # Task 012 — Sign-in
 
-**Status: planned 2026-10-22, waiting on the owner's review. Built ahead on a branch while Railway is down; the PR merges only after Steps 8, 11 and 9.**
+**Status: built 2026-10-23, reviewed by the owner; PR #18, rebased 2026-10-23 onto `staging` after Steps 8, 11 and 9 (the edge test now covers `X-App` and `X-App-Origin`). Verified locally: 9 integration tests pass on Postgres 17 (sign-in through a fake Supabase, refusals, rate limit, sessions, roles, tenants, app check, renewal, revocation, the permission test), and two deliberate breakages each made them fail; lint, typecheck, build, bundle check (123.8 KB) and both generate checks pass; govulncheck clean. Tried with real Google on 2026-10-23 (the owner's Supabase redirect URLs and Infisical keys in place): local Go on a throwaway Postgres holding a copy of the owner's staging user, the apps on localhost against it. Seller signs in and stores a 30-day session; backoffice refuses a `USER` with the right message. Added from that test: every refused sign-in logs its reason. Its migration is the first through Step 9's workflow; production gets it with the next release, after the owner's approval. Production sign-in still needs the owner's clicks below (Supabase redirect URLs, Infisical keys).**
 
 ## The goal
 
@@ -35,7 +35,8 @@ RFC: Build order Step 12; Auth and realtime; Testing (the permission test, the e
    - **rate limit**: sign-in routes, per caller IP (`X-Client-IP`), in memory: 10 a minute → 429 `too_many_requests`
 6. **The permission test**: reads every route from `openapi.yaml`; each must declare its access (public, signed in, or roles), or the test fails. For each protected route: no session → 401, wrong role → 403, another tenant → 403
 7. **The apps**: the sign-in button goes to `/api/auth/google`; `/login?error=` shows the reason; any 401 from the API sends the app to `/login` (one place, in `packages/api-client`). Logout UI comes with the account screen (Step 27)
-8. **`CLAUDE.md`**: how a route declares access
+8. **`.railway/railway.ts`**: `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` declared on `api` as `preserve()`, or the next apply would remove what Infisical syncs in
+9. **`CLAUDE.md`**: how a route declares access
 
 ## Owner's part
 
@@ -58,7 +59,7 @@ The Google Cloud Console does not change.
 - On the laptop (local Go on the staging database, the app on `localhost`): Google sign-in works in both apps; a backoffice sign-in by a `USER` is refused with a clear message
 - The permission test passes over every route, and fails when a route forgets to declare its access
 - Integration tests: callback creates a session; a revoked session gets 401; the rate limit gives 429
-- After Steps 8, 11 and 9: the same on the staging addresses
+- After Steps 8, 11 and 9, on the staging addresses with two real accounts: the seller account into `tea-pos-staging`, the admin account into `tea-office-staging`, and each refused by the other app's rules where they apply
 
 ## Not in this task
 

@@ -1,0 +1,76 @@
+# The only way a migration reaches a database: a PR into staging shows what would run,
+# its merge pushes to staging, a release pushes to production after the owner approves.
+# Railway's Wait for CI holds each API deploy until its migration is in.
+name: migrations
+
+on:
+    push:
+        branches: [staging, main]
+        paths: ["supabase/migrations/**"]
+    pull_request:
+        branches: [staging]
+        paths: ["supabase/migrations/**"]
+
+permissions:
+    contents: read
+
+jobs:
+    dry-run:
+        if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            pull-requests: write
+        steps:
+            - uses: actions/checkout@v7
+            - uses: supabase/setup-cli@v1
+              with:
+                  version: 2.121.0
+            - id: plan
+              env:
+                  DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+              run: |
+                  out=$(supabase db push --dry-run --db-url "$DATABASE_URL" 2>&1)
+                  echo "$out"
+                  { echo "report<<EOF"; echo "$out"; echo "EOF"; } >> "$GITHUB_OUTPUT"
+            - uses: ./.github/actions/pr-comment
+              with:
+                  section: migrations
+                  body: |
+                      ### Migrations
+                      What merging runs on the staging database:
+                      ```
+                      ${{ steps.plan.outputs.report }}
+                      ```
+
+    staging:
+        if: github.event_name == 'push' && github.ref_name == 'staging'
+        runs-on: ubuntu-latest
+        concurrency:
+            group: migrations-staging
+            cancel-in-progress: false
+        steps:
+            - uses: actions/checkout@v7
+            - uses: supabase/setup-cli@v1
+              with:
+                  version: 2.121.0
+            - env:
+                  DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+              run: supabase db push --db-url "$DATABASE_URL"
+
+    production:
+        if: github.event_name == 'push' && github.ref_name == 'main'
+        runs-on: ubuntu-latest
+        # Waits for the owner's Approve; PRODUCTION_DATABASE_URL exists only in this environment.
+        environment: production
+        concurrency:
+            group: migrations-production
+            cancel-in-progress: false
+        steps:
+            - uses: actions/checkout@v7
+            - uses: supabase/setup-cli@v1
+              with:
+                  version: 2.121.0
+            - env:
+                  DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+              run: supabase db push --db-url "$DATABASE_URL"

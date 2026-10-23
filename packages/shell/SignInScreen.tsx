@@ -1,20 +1,30 @@
 import type { MessageKey } from "@tea-pos/i18n";
 import { useT } from "@tea-pos/i18n/react";
 import { ActionButton } from "@tea-pos/ui/ActionButton";
-import { useState } from "react";
 
 import { useApp } from "./AppContext";
+import { useApplyUpdateNow } from "./AppUpdate";
+
+// The codes the API sends back on /login?error=; anything else reads as a plain failure.
+const ERRORS: Record<string, MessageKey> = {
+    sign_in_failed: "signIn.errors.signInFailed",
+    not_allowed: "signIn.errors.notAllowed",
+    account_inactive: "signIn.errors.accountInactive",
+    too_many_requests: "signIn.errors.tooManyRequests",
+};
 
 /** The sign-in screen for every app; words and logo come from the app's config. */
 export function SignInScreen() {
     const t = useT();
     const { logo, titleKey, subtitleKey } = useApp().signIn;
-    const [error, setError] = useState<MessageKey | null>(null);
+    // Signed-out users stay here, outside the shell's update sheet.
+    useApplyUpdateNow();
+    const reason = new URLSearchParams(window.location.search).get("error");
+    const error = reason ? (ERRORS[reason] ?? "signIn.errors.signInFailed") : null;
 
-    // Step 12 sends this to Go's Google sign-in; on success the button keeps spinning through the redirect.
-    const signIn = async () => {
-        setError("signIn.comingSoon");
-        return false;
+    // Go runs the Google sign-in and comes back to "/" signed in; the button spins through the redirect.
+    const signIn = () => {
+        window.location.assign("/api/auth/google");
     };
 
     return (

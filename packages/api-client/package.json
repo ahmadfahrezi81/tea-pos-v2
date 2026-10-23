@@ -4,7 +4,8 @@
     "type": "module",
     "exports": {
         ".": "./index.ts",
-        "./query": "./query.ts"
+        "./query": "./query.ts",
+        "./me": "./me.ts"
     },
     "scripts": {
         "generate": "openapi-typescript ../../api/openapi.yaml -o schema.d.ts",
@@ -13,7 +14,8 @@
         "typecheck": "tsc -p ."
     },
     "peerDependencies": {
-        "@tanstack/react-query": "^5"
+        "@tanstack/react-query": "^5",
+        "react": "^19"
     },
     "dependencies": {
         "@tanstack/query-async-storage-persister": "5.104.5",
@@ -24,6 +26,7 @@
     },
     "devDependencies": {
         "@tanstack/react-query": "5.104.5",
-        "openapi-typescript": "7.13.0"
+        "openapi-typescript": "7.13.0",
+        "react": "19.3.1"
     }
 }

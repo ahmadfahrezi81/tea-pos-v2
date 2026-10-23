@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { forward } from "./index";
 
-const env = { API_ORIGIN: "https://api.example", EDGE_SECRET: "secret" };
+const env = { API_ORIGIN: "https://api.example", EDGE_SECRET: "secret", APP: "seller" };
 
 function sent(path: string, headers: Record<string, string> = {}) {
     const fetch = vi.fn(async () => new Response("ok"));
@@ -30,12 +30,14 @@ describe("forward", () => {
         },
     );
 
-    it("sets the secret and replaces a client's own", async () => {
+    it("sets the secret, app and origin, replacing a client's own", async () => {
         const { headers } = await sent("/api/me", {
             "X-Edge-Secret": "forged",
             "CF-Connecting-IP": "203.0.113.7",
         });
         expect(headers.get("X-Edge-Secret")).toBe("secret");
         expect(headers.get("X-Client-IP")).toBe("203.0.113.7");
+        expect(headers.get("X-App")).toBe("seller");
+        expect(headers.get("X-App-Origin")).toBe("https://app.example");
     });
 });

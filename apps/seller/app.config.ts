@@ -1,6 +1,7 @@
 import { defineApp } from "@tea-pos/config/app";
 
 export default defineApp({
+    id: "seller",
     name: "Tea POS",
     shortName: "Tea POS",
     description: "Point of Sale System",
