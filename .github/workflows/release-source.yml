@@ -6,6 +6,10 @@ on:
         branches: [main]
         types: [opened, edited, synchronize, reopened]
 
+# Jobs that need more ask for it themselves.
+permissions:
+    contents: read
+
 jobs:
     release-source:
         runs-on: ubuntu-latest

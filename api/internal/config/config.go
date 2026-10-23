@@ -50,6 +50,10 @@ func Load() (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+	// Supabase's pooler allows far fewer; a bigger number is a typo.
+	if n > 100 {
+		return Config{}, fmt.Errorf("DB_MAX_CONNS: want at most 100, got %d", n)
+	}
 	cfg.DBMaxConns = int32(n)
 	return cfg, nil
 }
