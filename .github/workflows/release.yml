@@ -15,76 +15,15 @@ jobs:
         permissions:
             contents: write
             pull-requests: read
-        outputs:
-            pr: ${{ steps.tag.outputs.pr }}
         steps:
-            - id: tag
-              env:
+            - env:
                   GH_TOKEN: ${{ github.token }}
                   REPO: ${{ github.repository }}
                   SHA: ${{ github.sha }}
               run: |
                   pr=$(gh api "repos/${REPO}/commits/${SHA}/pulls" --jq '.[] | select(.base.ref == "main") | .number' | head -1)
                   [ -n "$pr" ] || { echo "Not a release PR merge; nothing to tag."; exit 0; }
-                  echo "pr=$pr" >> "$GITHUB_OUTPUT"
                   title=$(gh pr view "$pr" --repo "$REPO" --json title --jq .title)
                   version=${title#release: }
                   gh pr view "$pr" --repo "$REPO" --json body --jq .body > notes.md
                   gh release create "$version" --repo "$REPO" --target "$SHA" --title "$version" --notes-file notes.md
-
-    # Production cannot run e2e (no test sign-in, no test users, no writes), so this only reads
-    # what anyone can: is production running this release, and are the API, sessions and
-    # forwarder answering? A failure is red here and on the release PR; nothing rolls back by itself.
-    production-check:
-        needs: release
-        if: needs.release.outputs.pr != ''
-        runs-on: ubuntu-latest
-        timeout-minutes: 40
-        permissions:
-            contents: read
-            pull-requests: write
-        steps:
-            - uses: actions/checkout@v7
-            - id: check
-              env:
-                  SHA: ${{ github.sha }}
-              run: |
-                  api=https://tea-office.lykostech.app/api
-                  # Up to 30 minutes: with a migration, the API deploys only after the owner approves it.
-                  for _ in $(seq 120); do
-                      got=$(curl -fsS "$api/health" | jq -r .commit || true)
-                      [ "$got" = "$SHA" ] && break
-                      sleep 15
-                  done
-                  rows=""
-                  ok=true
-                  row() { rows+="| $1 | $2 | $3 |"$'\n'; [ "$1" = "✅" ] || ok=false; }
-                  check() { if [ "$2" = "$3" ]; then row ✅ "$1" "$4"; else row ❌ "$1" "$5"; fi; }
-                  check "API runs the release" "$got" "$SHA" "\`${SHA:0:7}\`" "${got:+still \`${got:0:7}\`}${got:-no answer} after 30 minutes"
-                  for app in tea-pos tea-office; do
-                      # "|| true": a down app must become a ❌ row, not stop the step before the comment.
-                      code=$(curl -s -o /dev/null -w '%{http_code}' "https://$app.lykostech.app/api/health" || true)
-                      check "$app /api/health" "$code" 200 "$code" "$code"
-                      me=$(curl -s "https://$app.lykostech.app/api/me" | jq -r .code 2>/dev/null || true)
-                      check "$app /api/me signed out" "$me" not_signed_in "$me" "${me:-no answer}"
-                  done
-                  {
-                      echo "### Production check"
-                      if $ok; then echo "✅ production runs this release"; else echo "❌ production is not right: see below and docs/runbook.md"; fi
-                      echo
-                      echo "| | Check | Result |"
-                      echo "| --- | --- | --- |"
-                      printf '%s' "$rows"
-                      echo
-                      echo "[run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-                  } > check.md
-                  cat check.md >> "$GITHUB_STEP_SUMMARY"
-                  { echo "body<<EOF"; cat check.md; echo "EOF"; } >> "$GITHUB_OUTPUT"
-                  echo "ok=$ok" >> "$GITHUB_OUTPUT"
-            - uses: ./.github/actions/pr-comment
-              with:
-                  section: production
-                  pr: ${{ needs.release.outputs.pr }}
-                  body: ${{ steps.check.outputs.body }}
-            - if: steps.check.outputs.ok != 'true'
-              run: exit 1

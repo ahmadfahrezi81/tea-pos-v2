@@ -1,0 +1,114 @@
+# After Railway has deployed a release to production: the apps go out, then a check of what
+# anyone can read. Started by Railway's deployment, not the push: Railway's Wait for CI waits
+# for every run on a push, so a push-started job waiting for Railway would wait on itself.
+# Order, as the RFC says: migrations (approved) → API → apps. Task: 015b_ci-review.md
+name: production
+
+on:
+    deployment_status:
+
+permissions:
+    contents: read
+
+# Railway reports "success" more than once; the second run sees the first one's result and stops.
+concurrency:
+    group: production-${{ github.event.deployment.sha }}
+    cancel-in-progress: false
+
+jobs:
+    plan:
+        if: github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'tea-pos-v2 / production'
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        permissions:
+            contents: read
+            pull-requests: read
+        outputs:
+            pr: ${{ steps.find.outputs.pr }}
+            done: ${{ steps.find.outputs.done }}
+        steps:
+            - id: find
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  REPO: ${{ github.repository }}
+                  SHA: ${{ github.event.deployment.sha }}
+              run: |
+                  pr=$(gh api "repos/${REPO}/commits/${SHA}/pulls" --jq '.[] | select(.base.ref == "main") | .number' | head -1 || true)
+                  echo "pr=$pr" >> "$GITHUB_OUTPUT"
+                  done=false
+                  if [ -n "$pr" ] && gh api "repos/${REPO}/issues/${pr}/comments" --paginate \
+                      --jq '.[].body | select(startswith("<!-- pr-comment:production -->"))' | grep -q "✅ production runs this release (\`${SHA:0:7}\`)"; then
+                      done=true
+                  fi
+                  echo "done=$done" >> "$GITHUB_OUTPUT"
+                  echo "release PR #${pr:-none}, already checked: $done"
+
+    apps:
+        needs: plan
+        if: needs.plan.outputs.done != 'true'
+        permissions:
+            contents: read
+            pull-requests: write
+        uses: ./.github/workflows/pages.yml
+        with:
+            production: true
+            sha: ${{ github.event.deployment.sha }}
+        secrets: inherit
+
+    # Production cannot run e2e (no test sign-in, no test users, no writes), so this only reads
+    # what anyone can. A failure is red here and on the release PR; nothing rolls back by itself.
+    check:
+        needs: [plan, apps]
+        if: always() && needs.plan.result == 'success' && needs.plan.outputs.done != 'true'
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        permissions:
+            contents: read
+            pull-requests: write
+        steps:
+            - uses: actions/checkout@v7
+            - id: check
+              env:
+                  SHA: ${{ github.event.deployment.sha }}
+                  APPS: ${{ needs.apps.result }}
+              run: |
+                  # Railway reports success as the new API starts; give the switch a minute.
+                  for _ in $(seq 12); do
+                      got=$(curl -fsS https://tea-office.lykostech.app/api/health | jq -r .commit || true)
+                      [ "$got" = "$SHA" ] && break
+                      sleep 5
+                  done
+                  rows=""
+                  ok=true
+                  row() { rows+="| $1 | $2 | $3 |"$'\n'; [ "$1" = "✅" ] || ok=false; }
+                  check() { if [ "$2" = "$3" ]; then row ✅ "$1" "$4"; else row ❌ "$1" "$5"; fi; }
+                  check "API runs the release" "$got" "$SHA" "\`${SHA:0:7}\`" "${got:+\`${got:0:7}\`}${got:-no answer}"
+                  check "Apps deployed after the API" "$APPS" success "both" "$APPS"
+                  for app in tea-pos tea-office; do
+                      # "|| true": a down app must become a ❌ row, not stop the step before the comment.
+                      code=$(curl -s -o /dev/null -w '%{http_code}' "https://$app.lykostech.app/api/health" || true)
+                      check "$app /api/health" "$code" 200 "$code" "$code"
+                      me=$(curl -s "https://$app.lykostech.app/api/me" | jq -r .code 2>/dev/null || true)
+                      check "$app /api/me signed out" "$me" not_signed_in "$me" "${me:-no answer}"
+                  done
+                  {
+                      echo "### Production check"
+                      if $ok; then echo "✅ production runs this release (\`${SHA:0:7}\`)"; else echo "❌ production is not right: see below and docs/runbook.md"; fi
+                      echo
+                      echo "| | Check | Result |"
+                      echo "| --- | --- | --- |"
+                      printf '%s' "$rows"
+                      echo
+                      echo "[run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                  } > check.md
+                  cat check.md >> "$GITHUB_STEP_SUMMARY"
+                  { echo "body<<EOF"; cat check.md; echo "EOF"; } >> "$GITHUB_OUTPUT"
+                  echo "ok=$ok" >> "$GITHUB_OUTPUT"
+            - if: needs.plan.outputs.pr != ''
+              uses: ./.github/actions/pr-comment
+              with:
+                  section: production
+                  pr: ${{ needs.plan.outputs.pr }}
+                  body: ${{ steps.check.outputs.body }}
+            - if: steps.check.outputs.ok != 'true'
+              run: exit 1
