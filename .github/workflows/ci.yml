@@ -9,6 +9,10 @@ concurrency:
     group: ci-${{ github.event_name }}-${{ github.ref }}
     cancel-in-progress: true
 
+# Jobs that need more ask for it themselves.
+permissions:
+    contents: read
+
 jobs:
     checks:
         runs-on: ubuntu-latest

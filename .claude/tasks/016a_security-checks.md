@@ -36,6 +36,14 @@ GitHub, the repo's **Settings → Advanced Security** (the "Code security" page)
 - A PR adding a known-vulnerable package fails `dependency-review`
 - CodeQL shows a first completed scan under the Security tab
 
+## Follow-up, 2026-10-23: CodeQL's first look at the whole diff
+
+The release PR 2026.10.3 was CodeQL's first run over everything since 2026.10.2; it failed on two alerts in code from Steps 8 and 5:
+- `go/incorrect-integer-conversion` (high), `internal/config`: `DB_MAX_CONNS` went from `int` to `int32` unchecked. It is our own setting, so not reachable from outside, but a huge value would wrap. Fix: refuse more than 100 at start
+- `actions/missing-workflow-permissions` (medium), `ci.yml`: `integration` and `docker` ran with the default token. Fix: `permissions: contents: read` at the top of `ci.yml` and `release-source.yml` (the others already have it); jobs that need more keep their own block
+
+Done when: CodeQL is green on the release PR.
+
 ## Not in this task
 
 Monitoring and versions (Step 16b). Railway-side image scanning. A Go upgrade beyond the 1.27 patch line.
