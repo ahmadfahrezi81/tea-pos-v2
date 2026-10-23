@@ -17,6 +17,7 @@ jobs:
     production:
         if: github.ref_name == 'main'
         runs-on: ubuntu-latest
+        timeout-minutes: 10
         steps:
             - uses: actions/checkout@v7
             - uses: railwayapp/config@v1
@@ -28,6 +29,7 @@ jobs:
     staging:
         if: github.ref_name == 'staging'
         runs-on: ubuntu-latest
+        timeout-minutes: 10
         concurrency: railway-staging
         env:
             RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}

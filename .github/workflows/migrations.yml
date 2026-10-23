@@ -18,6 +18,7 @@ jobs:
     dry-run:
         if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
         runs-on: ubuntu-latest
+        timeout-minutes: 10
         permissions:
             contents: read
             pull-requests: write
@@ -46,6 +47,7 @@ jobs:
     staging:
         if: github.event_name == 'push' && github.ref_name == 'staging'
         runs-on: ubuntu-latest
+        timeout-minutes: 10
         concurrency:
             group: migrations-staging
             cancel-in-progress: false
@@ -61,6 +63,7 @@ jobs:
     production:
         if: github.event_name == 'push' && github.ref_name == 'main'
         runs-on: ubuntu-latest
+        timeout-minutes: 10
         # Waits for the owner's Approve; PRODUCTION_DATABASE_URL exists only in this environment.
         environment: production
         concurrency:

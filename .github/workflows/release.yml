@@ -11,6 +11,7 @@ permissions:
 jobs:
     release:
         runs-on: ubuntu-latest
+        timeout-minutes: 5
         permissions:
             contents: write
             pull-requests: read
@@ -38,6 +39,7 @@ jobs:
         needs: release
         if: needs.release.outputs.pr != ''
         runs-on: ubuntu-latest
+        timeout-minutes: 40
         permissions:
             contents: read
             pull-requests: write
@@ -57,17 +59,18 @@ jobs:
                   rows=""
                   ok=true
                   row() { rows+="| $1 | $2 | $3 |"$'\n'; [ "$1" = "✅" ] || ok=false; }
-                  [ "$got" = "$SHA" ] && row ✅ "API runs the release" "\`${SHA:0:7}\`" || row ❌ "API runs the release" "still \`${got:0:7}\` after 30 minutes"
+                  check() { if [ "$2" = "$3" ]; then row ✅ "$1" "$4"; else row ❌ "$1" "$5"; fi; }
+                  check "API runs the release" "$got" "$SHA" "\`${SHA:0:7}\`" "${got:+still \`${got:0:7}\`}${got:-no answer} after 30 minutes"
                   for app in tea-pos tea-office; do
                       # "|| true": a down app must become a ❌ row, not stop the step before the comment.
                       code=$(curl -s -o /dev/null -w '%{http_code}' "https://$app.lykostech.app/api/health" || true)
-                      [ "$code" = 200 ] && row ✅ "$app /api/health" "$code" || row ❌ "$app /api/health" "$code"
+                      check "$app /api/health" "$code" 200 "$code" "$code"
                       me=$(curl -s "https://$app.lykostech.app/api/me" | jq -r .code 2>/dev/null || true)
-                      [ "$me" = not_signed_in ] && row ✅ "$app /api/me signed out" "$me" || row ❌ "$app /api/me signed out" "$me"
+                      check "$app /api/me signed out" "$me" not_signed_in "$me" "${me:-no answer}"
                   done
                   {
                       echo "### Production check"
-                      $ok && echo "✅ production runs this release" || echo "❌ production is not right: see below and docs/runbook.md"
+                      if $ok; then echo "✅ production runs this release"; else echo "❌ production is not right: see below and docs/runbook.md"; fi
                       echo
                       echo "| | Check | Result |"
                       echo "| --- | --- | --- |"
