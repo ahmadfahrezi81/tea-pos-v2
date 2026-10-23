@@ -20,6 +20,8 @@ type Deps struct {
 	Supabase auth.Supabase
 	// Limiter for sign-in routes; NewAPI makes one when nil.
 	Limiter *auth.Limiter
+	// TestLoginKey turns on /auth/test, in a binary built with -tags testlogin (staging only).
+	TestLoginKey string
 }
 
 // NewAPI mounts the contract on mux. The spec and docs pages stay off until admins can sign in.
@@ -32,6 +34,7 @@ func NewAPI(mux *http.ServeMux, d Deps) huma.API {
 	registerHealth(api)
 	registerAuth(api, d)
 	registerMe(api, d)
+	registerTestLogin(api, d)
 	return api
 }
 

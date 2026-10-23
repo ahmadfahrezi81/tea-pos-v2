@@ -40,6 +40,9 @@
                     },
                     {
                         "context": "release-source"
+                    },
+                    {
+                        "context": "e2e"
                     }
                 ]
             }

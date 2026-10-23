@@ -1,0 +1,66 @@
+# API end-to-end tests against the deployed staging, through each app's /api forwarder.
+# After Railway deploys staging: started by its deployment, not the push, because Railway's
+# Wait for CI waits for every check on a push and would wait for this one forever.
+# On a release PR: staging already runs exactly its head; a red result blocks the merge.
+name: e2e
+
+on:
+    deployment_status:
+    pull_request:
+        branches: [main]
+
+permissions:
+    contents: read
+
+jobs:
+    e2e:
+        if: >-
+            github.event_name == 'pull_request' ||
+            (github.event.deployment_status.state == 'success' &&
+             github.event.deployment.environment == 'tea-pos-v2 / staging')
+        runs-on: ubuntu-latest
+        concurrency:
+            group: e2e-staging
+            cancel-in-progress: false
+        permissions:
+            contents: read
+            pull-requests: write
+        env:
+            TEST_LOGIN_KEY: ${{ secrets.TEST_LOGIN_KEY }}
+            # After a deploy, every app must run the deployed commit.
+            E2E_COMMIT: ${{ github.event.deployment.sha }}
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  ref: ${{ github.event.deployment.sha || github.sha }}
+            - uses: actions/setup-go@v7
+              with:
+                  go-version-file: api/go.mod
+                  cache-dependency-path: api/go.sum
+            # The fake test users, idempotent; only test- tenants.
+            - env:
+                  DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+              run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f api/tests/e2e/seed.sql
+            - id: run
+              run: |
+                  set -o pipefail
+                  cd api && go test -tags e2e -count=1 -v ./tests/e2e/ 2>&1 | tee ../e2e.log
+            - if: always() && github.event_name == 'pull_request'
+              id: report
+              run: |
+                  {
+                      echo "report<<EOF"
+                      grep -E '^(--- FAIL|ok|FAIL)' e2e.log || echo "no result"
+                      echo "EOF"
+                  } >> "$GITHUB_OUTPUT"
+            - if: always() && github.event_name == 'pull_request'
+              uses: ./.github/actions/pr-comment
+              with:
+                  section: e2e
+                  body: |
+                      ### API end-to-end tests on staging
+                      ${{ steps.run.outcome == 'success' && '✅ pass' || '❌ fail' }}
+                      ```
+                      ${{ steps.report.outputs.report }}
+                      ```
+                      [run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})

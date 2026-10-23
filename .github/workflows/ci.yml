@@ -70,12 +70,18 @@ jobs:
                   go-version-file: api/go.mod
                   cache-dependency-path: api/go.sum
             - run: cd api && go test -tags integration -count=1 ./tests/...
+            # Again as staging builds it, with the test sign-in compiled in.
+            - run: cd api && go test -tags integration,testlogin -count=1 -run 'TestTestSignIn|TestPermission' ./tests/...
 
     docker:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v7
             - run: docker build --build-arg RAILWAY_GIT_COMMIT_SHA=${{ github.sha }} -t tea-pos-api .
+            # Production's image is built without tags: the test sign-in must not be in it.
+            - run: |
+                  id=$(docker create tea-pos-api) && docker cp "$id:/app/api" /tmp/api && docker rm "$id" >/dev/null
+                  if LC_ALL=C grep -a -q "/auth/test" /tmp/api; then echo "the production image contains the test sign-in"; exit 1; fi
             - run: docker build -t tea-pos-backup ops/backup
             - run: cd ops/backup && shellcheck --external-sources *.sh
 
