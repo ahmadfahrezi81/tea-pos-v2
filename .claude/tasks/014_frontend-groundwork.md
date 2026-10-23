@@ -85,6 +85,14 @@ Nothing to click. The code review before the PR, and after merging, the PWA chec
 - `pnpm lint`, `pnpm typecheck`, the Vitest tests and the bundle check pass in CI; the PR shows the bundle-size comment
 - No `next` import anywhere (`grep -r "from \"next" apps packages` is empty)
 
+## Follow-up, 2026-10-23: updates reach the sign-in screen
+
+**Found by the owner:** backoffice's `/login` kept showing the old build ("sign-in comes in the next update") until a hard reload. The update sheet lives in `MobileShell`, and `/login` is outside the shell, so a waiting build was never offered there; in "ask first" mode a normal reload does not swap it in either. A signed-out user would stay on an old build until every tab closed.
+
+**Fix:** `useApplyUpdateNow()` in `packages/shell/AppUpdate.tsx`, used by `SignInScreen`: outside the shell there is no cart to lose, so a waiting build is applied at once (one reload). At most once a minute, so a worker that fails to take over cannot loop. Inside the shell nothing changes: the sheet still asks.
+
+**Checked locally** (`vite preview`, two builds): on `/login` with build A, build B deployed, one normal reload: the page reloads itself into B, then stays.
+
 ## Not in this task
 
 Sign-in itself and the logout that clears the cache (Step 12), `/me`, tenants and permissions (Step 13), PostHog and `X-App-Version` (Step 16b), What's new content (Step 16b), real screens (Step 18 on), realtime (Step 26), Leaflet and recharts (their screens).
