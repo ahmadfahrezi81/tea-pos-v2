@@ -37,8 +37,8 @@ for (const app of APPS) {
     rows.push(`| ${app} | ${kb.toFixed(1)} KB | ${BUDGET_KB} KB | ${over ? "❌ over" : "✅"} |`);
 }
 
+// The heading comes from the PR comment's template (.github/actions/report).
 const report = [
-    "### Bundle size",
     "JavaScript the first screen loads, gzip.",
     "",
     "| App | Size | Budget | |",
