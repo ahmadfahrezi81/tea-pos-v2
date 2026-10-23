@@ -43,9 +43,10 @@ func main() {
 	q := store.New(db)
 	mux := http.NewServeMux()
 	handler.NewAPI(mux, handler.Deps{
-		Queries:  q,
-		Sessions: auth.NewSessions(q),
-		Supabase: auth.NewSupabase(cfg.SupabaseURL, cfg.SupabaseKey),
+		Queries:      q,
+		Sessions:     auth.NewSessions(q),
+		Supabase:     auth.NewSupabase(cfg.SupabaseURL, cfg.SupabaseKey),
+		TestLoginKey: cfg.TestLoginKey,
 	})
 
 	if err := platform.Serve(ctx, ":"+cfg.Port, middleware.Standard(mux, cfg.RequestTimeout, cfg.EdgeSecret), cfg.ShutdownTimeout); err != nil {

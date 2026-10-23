@@ -1,0 +1,452 @@
+# Deploys each merge into staging and each release into main, in the RFC's order: Railway config →
+# migrations (production: the owner's Approve) → the API at this exact commit → the apps →
+# staging: e2e / production: a read-only check. Railway never deploys by itself (railway.ts), so
+# nothing races and nothing waits on this run. Every step shows live on the PR the commit came
+# from, in one comment. Task: .claude/tasks/015b_ci-review.md
+name: deploy
+
+on:
+    push:
+        branches: [staging, main]
+
+permissions:
+    contents: read
+
+# One deploy per environment at a time; never cancelled halfway.
+concurrency:
+    group: deploy-${{ github.ref_name }}
+    cancel-in-progress: false
+
+jobs:
+    plan:
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        permissions:
+            contents: read
+            pull-requests: write
+        outputs:
+            env: ${{ steps.plan.outputs.env }}
+            pr: ${{ steps.plan.outputs.pr }}
+            config: ${{ steps.plan.outputs.config }}
+            migrations: ${{ steps.plan.outputs.migrations }}
+            services: ${{ steps.plan.outputs.services }}
+            apps: ${{ steps.plan.outputs.apps }}
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  fetch-depth: 2
+            - id: plan
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  if [ "$GITHUB_REF_NAME" = main ]; then env=production; else env=staging; fi
+                  # The PR this commit came from: a squash into staging, or the release into main.
+                  pr=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq ".[] | select(.base.ref == \"$GITHUB_REF_NAME\") | .number" | head -1 || true)
+                  # What this merge changed: against the branch's previous commit (first parent).
+                  changed=$(git diff --name-only HEAD^1 HEAD)
+                  has() { if grep -qE "$1" <<< "$changed"; then echo true; else echo false; fi; }
+                  services=""
+                  [ "$(has '^(api/|Dockerfile$)')" = true ] && services="api realtime worker"
+                  [ "$env" = production ] && [ "$(has '^ops/backup/')" = true ] && services="$services backup"
+                  {
+                      echo "env=$env"
+                      echo "pr=$pr"
+                      echo "config=$(has '^\.railway/')"
+                      echo "migrations=$(has '^supabase/migrations/')"
+                      echo "services=$(echo "$services" | xargs)"
+                      echo "apps=$(has '^(apps/|packages/|api/openapi\.yaml$|pnpm-lock\.yaml$)')"
+                  } | tee -a "$GITHUB_OUTPUT"
+            - uses: ./.github/actions/report
+              with:
+                  section: deploy-${{ steps.plan.outputs.env }}
+                  pr: ${{ steps.plan.outputs.pr }}
+                  reset: "true"
+                  title: Deploy to ${{ steps.plan.outputs.env }}
+                  commit: ${{ github.sha }}
+                  steps: config=Railway config,migrate=Migrations,api=API,apps=Apps,${{ steps.plan.outputs.env == 'production' && 'check=Production check' || 'e2e=End-to-end tests' }}
+                  done-text: ${{ steps.plan.outputs.env == 'production' && 'Production runs this release' || 'Staging runs this commit' }}
+            # Steps with nothing to do say so at once.
+            - if: steps.plan.outputs.config != 'true'
+              uses: ./.github/actions/report
+              with:
+                  {
+                      section: "deploy-${{ steps.plan.outputs.env }}",
+                      pr: "${{ steps.plan.outputs.pr }}",
+                      step: config,
+                      state: skipped,
+                      detail: not changed,
+                  }
+            - if: steps.plan.outputs.migrations != 'true'
+              uses: ./.github/actions/report
+              with:
+                  {
+                      section: "deploy-${{ steps.plan.outputs.env }}",
+                      pr: "${{ steps.plan.outputs.pr }}",
+                      step: migrate,
+                      state: skipped,
+                      detail: none to run,
+                  }
+            - if: steps.plan.outputs.migrations == 'true' && steps.plan.outputs.env == 'production'
+              uses: ./.github/actions/report
+              with:
+                  section: deploy-production
+                  pr: ${{ steps.plan.outputs.pr }}
+                  step: migrate
+                  state: waiting
+                  detail: "**waiting for your Approve:** [review the deployment](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            - if: steps.plan.outputs.services == ''
+              uses: ./.github/actions/report
+              with:
+                  {
+                      section: "deploy-${{ steps.plan.outputs.env }}",
+                      pr: "${{ steps.plan.outputs.pr }}",
+                      step: api,
+                      state: skipped,
+                      detail: not changed,
+                  }
+            - if: steps.plan.outputs.apps != 'true'
+              uses: ./.github/actions/report
+              with:
+                  {
+                      section: "deploy-${{ steps.plan.outputs.env }}",
+                      pr: "${{ steps.plan.outputs.pr }}",
+                      step: apps,
+                      state: skipped,
+                      detail: not changed,
+                  }
+
+    config:
+        needs: plan
+        if: needs.plan.outputs.config == 'true'
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        permissions:
+            contents: read
+            actions: read
+            pull-requests: write
+        steps:
+            - uses: actions/checkout@v7
+            - uses: ./.github/actions/report
+              with:
+                  {
+                      section: "deploy-${{ needs.plan.outputs.env }}",
+                      pr: "${{ needs.plan.outputs.pr }}",
+                      step: config,
+                      state: running,
+                      detail: applying,
+                  }
+            # Production applies exactly the plan pinned to the release PR; staging plans and applies.
+            - if: needs.plan.outputs.env == 'production'
+              uses: railwayapp/config@v1
+              with:
+                  command: apply
+                  railway-token: ${{ secrets.RAILWAY_TOKEN }}
+                  confirm-destructive: false
+            - if: needs.plan.outputs.env == 'staging'
+              uses: pnpm/action-setup@v6
+            - if: needs.plan.outputs.env == 'staging'
+              uses: actions/setup-node@v7
+              with:
+                  node-version-file: .nvmrc
+                  cache: pnpm
+            - if: needs.plan.outputs.env == 'staging'
+              env:
+                  RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
+              run: |
+                  pnpm install --frozen-lockfile
+                  npm install -g @railway/cli@5.68.0
+                  railway config plan --environment staging
+                  railway config apply --environment staging --yes
+            - if: always()
+              uses: ./.github/actions/report
+              with:
+                  section: deploy-${{ needs.plan.outputs.env }}
+                  pr: ${{ needs.plan.outputs.pr }}
+                  step: config
+                  state: ${{ job.status == 'success' && 'success' || 'failure' }}
+                  detail: ${{ job.status == 'success' && 'applied' || 'failed, see the run' }}
+
+    migrate:
+        needs: [plan, config]
+        if: always() && needs.plan.result == 'success' && needs.plan.outputs.migrations == 'true' && needs.config.result != 'failure'
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        # Production waits here for the owner's Approve; PRODUCTION_DATABASE_URL exists only there.
+        environment: ${{ needs.plan.outputs.env == 'production' && 'production' || null }}
+        permissions:
+            contents: read
+            pull-requests: write
+        steps:
+            - uses: actions/checkout@v7
+            - uses: ./.github/actions/report
+              with:
+                  {
+                      section: "deploy-${{ needs.plan.outputs.env }}",
+                      pr: "${{ needs.plan.outputs.pr }}",
+                      step: migrate,
+                      state: running,
+                      detail: applying,
+                  }
+            - uses: supabase/setup-cli@v1
+              with:
+                  version: 2.121.0
+            - id: push
+              env:
+                  DATABASE_URL: ${{ needs.plan.outputs.env == 'production' && secrets.PRODUCTION_DATABASE_URL || secrets.STAGING_DATABASE_URL }}
+              run: |
+                  set -o pipefail
+                  supabase db push --db-url "$DATABASE_URL" 2>&1 | tee push.log
+            - if: always()
+              id: result
+              run: |
+                  ran=$(grep -oE 'Applying migration [^ ]+' push.log 2>/dev/null | sed 's/Applying migration //; s/\.\.\.$//' | paste -sd, - | sed 's/,/, /g')
+                  echo "detail=${ran:-none to run}" >> "$GITHUB_OUTPUT"
+                  { echo "log<<EOF"; echo '<details><summary>Migrations: last log lines</summary>'; echo; echo '```'; tail -20 push.log 2>/dev/null; echo '```'; echo '</details>'; echo EOF; } >> "$GITHUB_OUTPUT"
+            - if: always()
+              uses: ./.github/actions/report
+              with:
+                  section: deploy-${{ needs.plan.outputs.env }}
+                  pr: ${{ needs.plan.outputs.pr }}
+                  step: migrate
+                  state: ${{ steps.push.outcome == 'success' && 'success' || 'failure' }}
+                  detail: ${{ steps.result.outputs.detail }}
+                  body: ${{ steps.push.outcome != 'success' && steps.result.outputs.log || '' }}
+
+    api:
+        needs: [plan, config, migrate]
+        if: always() && needs.plan.result == 'success' && needs.plan.outputs.services != '' && needs.config.result != 'failure' && needs.migrate.result != 'failure' && needs.migrate.result != 'cancelled'
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        permissions:
+            contents: read
+            pull-requests: write
+        steps:
+            - uses: actions/checkout@v7
+            - uses: ./.github/actions/report
+              with:
+                  {
+                      section: "deploy-${{ needs.plan.outputs.env }}",
+                      pr: "${{ needs.plan.outputs.pr }}",
+                      step: api,
+                      state: running,
+                      detail: "deploying ${{ needs.plan.outputs.services }}",
+                  }
+            - id: deploy
+              env:
+                  RAILWAY_TOKEN: ${{ needs.plan.outputs.env == 'production' && secrets.RAILWAY_TOKEN || secrets.RAILWAY_TOKEN_STAGING }}
+                  DEPLOY_REPORT: deploy.jsonl
+                  SERVICES: ${{ needs.plan.outputs.services }}
+              run: |
+                  set -o pipefail
+                  # shellcheck disable=SC2086 # one argument per service
+                  node scripts/railway-deploy.mjs "$GITHUB_SHA" $SERVICES 2>&1 | tee deploy.log
+            # Railway says SUCCESS as the new API starts; the switch takes a moment more.
+            - id: health
+              if: steps.deploy.outcome == 'success'
+              env:
+                  HEALTH: ${{ needs.plan.outputs.env == 'production' && 'https://api-production-f3625.up.railway.app/health' || 'https://api-staging-c60d.up.railway.app/health' }}
+              run: |
+                  for _ in $(seq 24); do
+                      [ "$(curl -fsS "$HEALTH" | jq -r .commit || true)" = "$GITHUB_SHA" ] && exit 0
+                      sleep 5
+                  done
+                  echo "the API does not report $GITHUB_SHA after 2 minutes" | tee -a deploy.log
+                  exit 1
+            - if: always()
+              id: result
+              run: |
+                  detail=$(jq -r 'select(.name) | "[\(.name)](\(.url)) \(if .status == "SUCCESS" then "\(.seconds) s" else .status end)"' deploy.jsonl 2>/dev/null | paste -sd, - | sed 's/,/ · /g')
+                  echo "detail=${detail:-did not start, see the run}" >> "$GITHUB_OUTPUT"
+                  { echo "log<<EOF"; echo '<details><summary>API: last log lines</summary>'; echo; echo '```'; tail -20 deploy.log 2>/dev/null; echo '```'; echo '</details>'; echo EOF; } >> "$GITHUB_OUTPUT"
+            - if: always()
+              uses: ./.github/actions/report
+              with:
+                  section: deploy-${{ needs.plan.outputs.env }}
+                  pr: ${{ needs.plan.outputs.pr }}
+                  step: api
+                  state: ${{ job.status == 'success' && 'success' || 'failure' }}
+                  detail: ${{ steps.result.outputs.detail }}
+                  body: ${{ job.status != 'success' && steps.result.outputs.log || '' }}
+            - if: success() && needs.plan.outputs.apps == 'true'
+              uses: ./.github/actions/report
+              with:
+                  {
+                      section: "deploy-${{ needs.plan.outputs.env }}",
+                      pr: "${{ needs.plan.outputs.pr }}",
+                      step: apps,
+                      state: running,
+                      detail: deploying seller and backoffice,
+                  }
+
+    # The apps go out only after the API they call (production's previews and staging alias alike).
+    apps:
+        needs: [plan, config, migrate, api]
+        if: always() && needs.plan.result == 'success' && needs.plan.outputs.apps == 'true' && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+        permissions:
+            contents: read
+            pull-requests: write
+        uses: ./.github/workflows/pages.yml
+        with:
+            production: ${{ needs.plan.outputs.env == 'production' }}
+            sha: ${{ github.sha }}
+        secrets: inherit
+
+    # Staging: the whole system, with the test users. Its result is a commit status, so the
+    # release PR reads it instead of running the suite again.
+    e2e:
+        needs: [plan, config, migrate, api, apps]
+        if: always() && needs.plan.result == 'success' && needs.plan.outputs.env == 'staging' && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        permissions:
+            contents: read
+            pull-requests: write
+            statuses: write
+        env:
+            TEST_LOGIN_KEY: ${{ secrets.TEST_LOGIN_KEY }}
+            GH_TOKEN: ${{ github.token }}
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+            - if: needs.plan.outputs.apps == 'true'
+              uses: ./.github/actions/report
+              with:
+                  {
+                      section: deploy-staging,
+                      pr: "${{ needs.plan.outputs.pr }}",
+                      step: apps,
+                      state: success,
+                      detail: "[seller](https://tea-pos-staging.lykostech.app) · [backoffice](https://tea-office-staging.lykostech.app)",
+                  }
+            - uses: ./.github/actions/report
+              with:
+                  {
+                      section: deploy-staging,
+                      pr: "${{ needs.plan.outputs.pr }}",
+                      step: e2e,
+                      state: running,
+                      detail: running,
+                  }
+            - run: gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f state=pending -f context="e2e on staging" -f description="running after the deploy" -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --silent
+            - uses: actions/setup-go@v7
+              with:
+                  go-version-file: api/go.mod
+                  cache-dependency-path: api/go.sum
+            # The fake test users, idempotent; only test- tenants.
+            - env:
+                  DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+              run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f api/tests/e2e/seed.sql
+            - id: run
+              run: |
+                  set -o pipefail
+                  # The API runs the newest commit that changed it: this one, or an earlier one when
+                  # this merge changed only the apps or docs (the API was not redeployed).
+                  E2E_COMMIT=$(git log -1 --format=%H -- api Dockerfile)
+                  export E2E_COMMIT
+                  cd api && go test -tags e2e -count=1 -v ./tests/e2e/ 2>&1 | tee ../e2e.log
+            - if: always()
+              id: table
+              run: |
+                  passed=$(grep -c '^--- PASS' e2e.log 2>/dev/null || true)
+                  failed=$(grep -c '^--- FAIL' e2e.log 2>/dev/null || true)
+                  echo "detail=${passed:-0} passed${failed:+, $failed failed}" | sed 's/, 0 failed//' >> "$GITHUB_OUTPUT"
+                  {
+                      echo "body<<EOF"
+                      echo "| | Test | Time |"
+                      echo "| --- | --- | --- |"
+                      awk '/^--- (PASS|FAIL|SKIP)/ { icon = $2 == "PASS:" ? "✅" : $2 == "FAIL:" ? "❌" : "➖"; print "| " icon " | `" $3 "` | " $4 " |" }' e2e.log 2>/dev/null | tr -d '()'
+                      if [ "${{ steps.run.outcome }}" != success ]; then echo; echo '<details><summary>e2e: last log lines</summary>'; echo; echo '```'; tail -20 e2e.log 2>/dev/null; echo '```'; echo '</details>'; fi
+                      echo EOF
+                  } >> "$GITHUB_OUTPUT"
+            - if: always()
+              run: |
+                  if [ "${{ steps.run.outcome }}" = success ]; then state=success; else state=failure; fi
+                  gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f state="$state" -f context="e2e on staging" -f description="${{ steps.table.outputs.detail }}" -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --silent
+            - if: always()
+              uses: ./.github/actions/report
+              with:
+                  section: deploy-staging
+                  pr: ${{ needs.plan.outputs.pr }}
+                  step: e2e
+                  state: ${{ steps.run.outcome == 'success' && 'success' || 'failure' }}
+                  detail: ${{ steps.table.outputs.detail }}
+                  body: ${{ steps.table.outputs.body }}
+
+    # Production cannot run e2e (no test sign-in, no test users, no writes): this reads only what
+    # anyone can. A failure is red here and on the release PR; nothing rolls back by itself.
+    check:
+        needs: [plan, config, migrate, api, apps]
+        if: always() && needs.plan.result == 'success' && needs.plan.outputs.env == 'production' && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        permissions:
+            contents: read
+            pull-requests: write
+        steps:
+            - uses: actions/checkout@v7
+            - if: needs.plan.outputs.apps == 'true'
+              uses: ./.github/actions/report
+              with:
+                  {
+                      section: deploy-production,
+                      pr: "${{ needs.plan.outputs.pr }}",
+                      step: apps,
+                      state: success,
+                      detail: "[tea-pos](https://tea-pos.lykostech.app) · [tea-office](https://tea-office.lykostech.app)",
+                  }
+            - id: check
+              run: |
+                  got=$(curl -fsS https://api-production-f3625.up.railway.app/health | jq -r .commit || true)
+                  rows=""
+                  ok=true
+                  row() { rows+="| $1 | $2 | $3 |"$'\n'; [ "$1" = "✅" ] || ok=false; }
+                  check() { if [ "$2" = "$3" ]; then row ✅ "$1" "$4"; else row ❌ "$1" "$5"; fi; }
+                  check "API runs the release" "$got" "$GITHUB_SHA" "\`${GITHUB_SHA:0:7}\`" "${got:+\`${got:0:7}\`}${got:-no answer}"
+                  for app in tea-pos tea-office; do
+                      # "|| true": a down app must become a ❌ row, not stop the step before the comment.
+                      code=$(curl -s -o /dev/null -w '%{http_code}' "https://$app.lykostech.app/api/health" || true)
+                      check "$app /api/health" "$code" 200 "$code" "$code"
+                      me=$(curl -s "https://$app.lykostech.app/api/me" | jq -r .code 2>/dev/null || true)
+                      check "$app /api/me signed out" "$me" not_signed_in "$me" "${me:-no answer}"
+                  done
+                  if $ok; then echo "detail=all answer" >> "$GITHUB_OUTPUT"; else echo "detail=see below and docs/runbook.md" >> "$GITHUB_OUTPUT"; fi
+                  { echo "body<<EOF"; echo "| | Check | Result |"; echo "| --- | --- | --- |"; printf '%s' "$rows"; echo EOF; } >> "$GITHUB_OUTPUT"
+                  echo "ok=$ok" >> "$GITHUB_OUTPUT"
+            - uses: ./.github/actions/report
+              with:
+                  section: deploy-production
+                  pr: ${{ needs.plan.outputs.pr }}
+                  step: check
+                  state: ${{ steps.check.outputs.ok == 'true' && 'success' || 'failure' }}
+                  detail: ${{ steps.check.outputs.detail }}
+                  body: ${{ steps.check.outputs.body }}
+            - if: steps.check.outputs.ok != 'true'
+              run: exit 1
+
+    # A step that never ran because an earlier one failed says so, instead of waiting forever.
+    finish:
+        needs: [plan, config, migrate, api, apps, e2e, check]
+        if: always() && needs.plan.result == 'success' && contains(needs.*.result, 'failure')
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        permissions:
+            contents: read
+            pull-requests: write
+        steps:
+            - uses: actions/checkout@v7
+            - if: needs.apps.result == 'failure'
+              uses: ./.github/actions/report
+              with:
+                  {
+                      section: "deploy-${{ needs.plan.outputs.env }}",
+                      pr: "${{ needs.plan.outputs.pr }}",
+                      step: apps,
+                      state: failure,
+                      detail: "failed: [see the run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})",
+                  }
+            - uses: ./.github/actions/report
+              with:
+                  section: deploy-${{ needs.plan.outputs.env }}
+                  pr: ${{ needs.plan.outputs.pr }}
+                  body: "The steps still marked ⏸ did not run, because an earlier one failed. Fix it in a new PR; the next merge deploys again.${{ needs.plan.outputs.env == 'production' && ' To roll back, deploy the previous release: docs/runbook.md.' || '' }}"

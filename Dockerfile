@@ -9,7 +9,9 @@ RUN go mod download
 COPY api/ ./
 ARG RAILWAY_GIT_COMMIT_SHA=unknown
 ARG APP_VERSION=dev
-RUN CGO_ENABLED=0 go build -trimpath \
+# Staging sets "testlogin" (railway.ts); production sets nothing, so its binary has no test sign-in.
+ARG GO_BUILD_TAGS=
+RUN CGO_ENABLED=0 go build -trimpath -tags "${GO_BUILD_TAGS}" \
     -ldflags="-s -w -X github.com/ahmadfahrezi81/tea-pos-v2/api/internal/version.Version=${APP_VERSION} -X github.com/ahmadfahrezi81/tea-pos-v2/api/internal/version.Commit=${RAILWAY_GIT_COMMIT_SHA}" \
     -o /out/ ./cmd/...
 

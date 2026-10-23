@@ -22,22 +22,34 @@ type Config struct {
 	// Supabase does the Google exchange at sign-in; nothing else.
 	SupabaseURL string
 	SupabaseKey string
+	// TestLoginKey switches on the staging test sign-in, in a binary built with -tags testlogin.
+	TestLoginKey string
 }
 
 func Load() (Config, error) {
 	cfg := Config{
-		Port:        getenv("PORT", "8080"),
-		Env:         getenv("ENV", "local"),
-		DatabaseURL: os.Getenv("DATABASE_URL"),
-		EdgeSecret:  os.Getenv("EDGE_SECRET"),
-		SupabaseURL: os.Getenv("SUPABASE_URL"),
-		SupabaseKey: os.Getenv("SUPABASE_PUBLISHABLE_KEY"),
+		Port:         getenv("PORT", "8080"),
+		Env:          getenv("ENV", "local"),
+		DatabaseURL:  os.Getenv("DATABASE_URL"),
+		EdgeSecret:   os.Getenv("EDGE_SECRET"),
+		SupabaseURL:  os.Getenv("SUPABASE_URL"),
+		SupabaseKey:  os.Getenv("SUPABASE_PUBLISHABLE_KEY"),
+		TestLoginKey: os.Getenv("TEST_LOGIN_KEY"),
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, errors.New("DATABASE_URL is required")
 	}
 	if n := len(cfg.EdgeSecret); n > 0 && n < 32 {
 		return Config{}, fmt.Errorf("EDGE_SECRET: want at least 32 characters (openssl rand -hex 32), got %d", n)
+	}
+
+	if cfg.TestLoginKey != "" {
+		if cfg.Env == "prod" {
+			return Config{}, errors.New("TEST_LOGIN_KEY must never be set in production")
+		}
+		if len(cfg.TestLoginKey) < 32 {
+			return Config{}, errors.New("TEST_LOGIN_KEY: want at least 32 characters (openssl rand -hex 32)")
+		}
 	}
 
 	if err := cfg.LogLevel.UnmarshalText([]byte(getenv("LOG_LEVEL", "info"))); err != nil {

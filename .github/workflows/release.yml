@@ -6,12 +6,15 @@ on:
         branches: [main]
 
 permissions:
-    contents: write
-    pull-requests: read
+    contents: read
 
 jobs:
     release:
         runs-on: ubuntu-latest
+        timeout-minutes: 5
+        permissions:
+            contents: write
+            pull-requests: read
         steps:
             - env:
                   GH_TOKEN: ${{ github.token }}

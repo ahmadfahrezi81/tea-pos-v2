@@ -1,18 +1,17 @@
 # Each app is a Cloudflare Pages project; its /api Function forwards to Railway.
-# A PR gets previews and staging gets its alias, both on the staging API; main deploys production.
+# A PR gets previews on the staging API. Staging's alias and production are deployed by
+# deploy.yml, which calls this after the API they call is up.
 name: pages
 
 on:
-    push:
-        branches: [staging, main]
-        paths:
-            [
-                "apps/**",
-                "packages/**",
-                "api/openapi.yaml",
-                "pnpm-lock.yaml",
-                ".github/workflows/pages.yml",
-            ]
+    workflow_call:
+        inputs:
+            production:
+                type: boolean
+                default: false
+            sha:
+                type: string
+                default: ""
     pull_request:
         branches: [staging]
         paths:
@@ -25,14 +24,15 @@ on:
             ]
 
 concurrency:
-    group: pages-${{ github.ref }}
-    cancel-in-progress: true
+    group: pages-${{ inputs.production && 'production' || github.ref }}
+    cancel-in-progress: ${{ !inputs.production }}
 
 jobs:
     deploy:
         # Forks and Dependabot get no secrets, so no preview.
-        if: github.event_name == 'push' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')
+        if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')
         runs-on: ubuntu-latest
+        timeout-minutes: 15
         permissions:
             contents: read
             pull-requests: write
@@ -47,15 +47,17 @@ jobs:
             CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
             CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
             WRANGLER: npx -y wrangler@4.151.3
-            BRANCH: ${{ github.head_ref || github.ref_name }}
-            APP_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
-            PAGES_ENV: ${{ github.ref_name == 'main' && 'production' || 'preview' }}
-            EDGE_SECRET: ${{ github.ref_name == 'main' && secrets.EDGE_SECRET_PRODUCTION || secrets.EDGE_SECRET_STAGING }}
+            BRANCH: ${{ inputs.production && 'main' || github.head_ref || github.ref_name }}
+            APP_COMMIT: ${{ inputs.sha || github.event.pull_request.head.sha || github.sha }}
+            PAGES_ENV: ${{ inputs.production && 'production' || 'preview' }}
+            EDGE_SECRET: ${{ inputs.production && secrets.EDGE_SECRET_PRODUCTION || secrets.EDGE_SECRET_STAGING }}
         defaults:
             run:
                 working-directory: apps/${{ matrix.app }}
         steps:
             - uses: actions/checkout@v7
+              with:
+                  ref: ${{ inputs.sha || '' }}
             - uses: pnpm/action-setup@v6
             - uses: actions/setup-node@v7
               with:
@@ -73,9 +75,11 @@ jobs:
                   $WRANGLER pages deploy --project-name ${{ matrix.project }} --branch "$BRANCH" | tee out.txt
                   echo "url=$(grep -o 'https://[^ ]*pages.dev' out.txt | tail -1)" >> "$GITHUB_OUTPUT"
             - if: github.event_name == 'pull_request'
-              uses: ./.github/actions/pr-comment
+              uses: ./.github/actions/report
               with:
                   section: preview-${{ matrix.app }}
-                  body: |
-                      ### Preview: ${{ matrix.app }}
-                      ${{ steps.deploy.outputs.url }} (API: staging)
+                  title: "Preview: ${{ matrix.app }}"
+                  commit: ${{ github.event.pull_request.head.sha }}
+                  overall: success
+                  done-text: Ready
+                  body: "${{ steps.deploy.outputs.url }} (on the staging API)"

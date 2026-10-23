@@ -20,7 +20,11 @@ import (
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
 )
 
-const EdgeSecret = "test-edge-secret-test-edge-secret-0"
+const (
+	EdgeSecret = "test-edge-secret-test-edge-secret-0"
+	// TestLoginKey switches on /auth/test when the tests are built with -tags testlogin.
+	TestLoginKey = "test-login-key-test-login-key-test-00"
+)
 
 // Fixture user ids (tests/fixtures/base.sql).
 const (
@@ -46,10 +50,11 @@ func NewAPI(t *testing.T, pool *pgxpool.Pool, supabaseURL string) *API {
 	sessions := auth.NewSessions(q)
 	mux := http.NewServeMux()
 	api := handler.NewAPI(mux, handler.Deps{
-		Queries:  q,
-		Sessions: sessions,
-		Supabase: auth.NewSupabase(supabaseURL, "test-publishable-key"),
-		Limiter:  auth.NewLimiter(10, time.Minute),
+		Queries:      q,
+		Sessions:     sessions,
+		Supabase:     auth.NewSupabase(supabaseURL, "test-publishable-key"),
+		Limiter:      auth.NewLimiter(10, time.Minute),
+		TestLoginKey: TestLoginKey,
 	})
 	srv := httptest.NewServer(middleware.Standard(mux, 5*time.Second, EdgeSecret))
 	t.Cleanup(srv.Close)
