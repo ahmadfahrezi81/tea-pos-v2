@@ -121,18 +121,38 @@ async function unthrottle(page) {
 }
 
 // Loads (or reloads) under throttling and waits for the app to say it is ready, then for the quiet after.
-async function measure(page, load) {
+// What the page showed when a load never finished, for the log.
+const describe = (page) =>
+    page
+        .evaluate(() => ({
+            path: location.pathname,
+            state: document.readyState,
+            splash: !!document.getElementById("splash"),
+            worker: !!navigator.serviceWorker?.controller,
+        }))
+        .catch((e) => ({ error: String(e) }));
+
+// Loads (or reloads) under throttling and waits for the app to say it is ready, then for the quiet after.
+// A load that never finishes (a shared runner sometimes stalls one) is tried once more, then fails.
+async function measure(page, load, attempt = 1) {
     await throttle(page);
     await load();
-    const signedOut = await page
+    const outcome = await page
         .waitForFunction(
             () =>
                 location.pathname === "/login" ||
                 performance.getEntriesByName("tea-pos:ready").length > 0,
-            { timeout: 120_000, polling: 500 },
+            { timeout: 60_000, polling: 500 },
         )
-        .then(() => page.evaluate(() => location.pathname === "/login"));
-    if (signedOut) {
+        .then(() => page.evaluate(() => (location.pathname === "/login" ? "signed out" : "ready")))
+        .catch(() => "stalled");
+    if (outcome === "stalled") {
+        console.error(`load ${attempt} stalled after 60 s:`, JSON.stringify(await describe(page)));
+        await unthrottle(page);
+        if (attempt === 2) throw new Error("two loads in a row never became ready");
+        return measure(page, load, 2);
+    }
+    if (outcome === "signed out") {
         console.error(`Not signed in on ${origin}. Run: pnpm bench --sign-in ${origin}`);
         process.exit(1);
     }
@@ -190,7 +210,14 @@ if (testUser) {
 }
 
 // Warm up once unthrottled, so the service worker and the saved cache exist for the reopens.
+// The cache is written a moment after the app is ready, so wait for both.
 await page.goto(url, { waitUntil: "networkidle0" });
+await page
+    .waitForFunction(() => performance.getEntriesByName("tea-pos:ready").length > 0, {
+        timeout: 30_000,
+    })
+    .catch(() => {});
+await new Promise((r) => setTimeout(r, 2000));
 
 if (!flag("--first-only")) {
     const list = [];
