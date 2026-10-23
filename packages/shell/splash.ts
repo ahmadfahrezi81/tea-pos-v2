@@ -6,6 +6,8 @@ export function hideSplash() {
     const splash = document.getElementById("splash");
     if (!splash || splash.dataset.leaving !== undefined) return;
     splash.dataset.leaving = "";
+    // The moment the app is usable, labelled on the Performance panel's Timings track.
+    performance.mark("tea-pos:ready");
     // A timer, not transitionend: there is no transition under reduced motion.
     setTimeout(() => splash.remove(), FADE_MS);
 }

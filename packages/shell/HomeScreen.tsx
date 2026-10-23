@@ -9,6 +9,10 @@ import { StatusScreen } from "./StatusScreen";
 
 type Tenant = Me["tenants"][number];
 
+// Google serves any size by URL; ask for 96 px, sharp at 48 px on a 2× screen.
+const avatar = (url: string) =>
+    url.includes("googleusercontent.com") ? url.replace(/=s\d+(-c)?$/, "") + "=s96-c" : url;
+
 /** Who is signed in, their business and stores; the status card stays below until real screens arrive. */
 export function HomeScreen() {
     const t = useT();
@@ -22,7 +26,7 @@ export function HomeScreen() {
             <div className="rounded-2xl bg-white p-4 flex items-center gap-3">
                 {user.avatarUrl ? (
                     <img
-                        src={user.avatarUrl}
+                        src={avatar(user.avatarUrl)}
                         alt=""
                         width={48}
                         height={48}
