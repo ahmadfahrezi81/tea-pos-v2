@@ -91,7 +91,6 @@ jobs:
         env:
             TEST_LOGIN_KEY: ${{ secrets.TEST_LOGIN_KEY }}
             CHROME_PATH: /usr/bin/google-chrome
-            BENCH_PROFILE: ${{ runner.temp }}/bench-profile
             BENCH_REPORT: bench.md
             BENCH_DEVICE: CI runner
         steps:
@@ -104,7 +103,10 @@ jobs:
                   node-version-file: .nvmrc
                   cache: pnpm
             - run: pnpm install --frozen-lockfile
-            - run: pnpm bench --test-user admin@test-a.test https://tea-office-staging.lykostech.app
+            # runner.temp is only allowed inside steps, not in the job's env.
+            - env:
+                  BENCH_PROFILE: ${{ runner.temp }}/bench-profile
+              run: pnpm bench --test-user admin@test-a.test https://tea-office-staging.lykostech.app
             - if: always()
               id: report
               run: |

@@ -44,6 +44,8 @@ jobs:
                   exit ${failed:-0}
             - run: pnpm --filter @tea-pos/api generate:check
             - run: pnpm --filter @tea-pos/api-client generate:check
+            # A broken workflow file otherwise only shows up after the push.
+            - run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 -shellcheck= .github/workflows/*.yml
             # Fails only on vulnerabilities our code actually calls.
             - run: cd api && go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
             - if: always() && github.event.pull_request.user.login != 'dependabot[bot]' && steps.bundle.outputs.report
