@@ -9,9 +9,16 @@ concurrency:
     group: ci-${{ github.event_name }}-${{ github.ref }}
     cancel-in-progress: true
 
+# Jobs that need more ask for it themselves.
+permissions:
+    contents: read
+
 jobs:
     checks:
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            pull-requests: write
         steps:
             - uses: actions/checkout@v7
             - uses: pnpm/action-setup@v6
@@ -29,6 +36,40 @@ jobs:
             - run: pnpm typecheck
             - run: pnpm test
             - run: pnpm build
+            - id: bundle
+              run: |
+                  BUNDLE_REPORT=bundle.md pnpm bundle-size || failed=1
+                  { echo 'report<<EOF'; cat bundle.md; echo; echo 'EOF'; } >> "$GITHUB_OUTPUT"
+                  exit ${failed:-0}
+            - run: pnpm --filter @tea-pos/api generate:check
+            - run: pnpm --filter @tea-pos/api-client generate:check
+            # Fails only on vulnerabilities our code actually calls.
+            - run: cd api && go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+            - if: always() && github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]' && steps.bundle.outputs.report
+              uses: ./.github/actions/pr-comment
+              with:
+                  section: bundle-size
+                  body: ${{ steps.bundle.outputs.report }}
+
+    integration:
+        if: github.event_name == 'pull_request'
+        runs-on: ubuntu-latest
+        services:
+            postgres:
+                image: postgres:17
+                env:
+                    POSTGRES_PASSWORD: postgres
+                ports: ["5432:5432"]
+                options: --health-cmd pg_isready --health-interval 2s --health-timeout 5s --health-retries 15
+        env:
+            TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+        steps:
+            - uses: actions/checkout@v7
+            - uses: actions/setup-go@v7
+              with:
+                  go-version-file: api/go.mod
+                  cache-dependency-path: api/go.sum
+            - run: cd api && go test -tags integration -count=1 ./tests/...
 
     docker:
         runs-on: ubuntu-latest
@@ -39,8 +80,8 @@ jobs:
             - run: cd ops/backup && shellcheck --external-sources *.sh
 
     comment:
-        if: always() && github.event_name == 'pull_request'
-        needs: [checks, docker]
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
+        needs: [checks, docker, integration]
         runs-on: ubuntu-latest
         permissions:
             pull-requests: write
@@ -53,7 +94,8 @@ jobs:
                       ### Checks
                       | Job | Result |
                       | --- | --- |
-                      | `checks` (format, lint, typecheck, tests, build) | ${{ needs.checks.result == 'success' && '✅' || '❌' }} ${{ needs.checks.result }} |
+                      | `checks` (format, lint, typecheck, tests, build, bundle size, generated code up to date, govulncheck) | ${{ needs.checks.result == 'success' && '✅' || '❌' }} ${{ needs.checks.result }} |
                       | `docker` (images, backup scripts) | ${{ needs.docker.result == 'success' && '✅' || '❌' }} ${{ needs.docker.result }} |
+                      | `integration` (Go against a throwaway Postgres) | ${{ needs.integration.result == 'success' && '✅' || '❌' }} ${{ needs.integration.result }} |
 
                       Commit `${{ github.event.pull_request.head.sha }}` · [run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})

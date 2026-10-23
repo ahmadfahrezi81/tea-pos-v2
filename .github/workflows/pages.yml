@@ -1,0 +1,81 @@
+# Each app is a Cloudflare Pages project; its /api Function forwards to Railway.
+# A PR gets previews and staging gets its alias, both on the staging API; main deploys production.
+name: pages
+
+on:
+    push:
+        branches: [staging, main]
+        paths:
+            [
+                "apps/**",
+                "packages/**",
+                "api/openapi.yaml",
+                "pnpm-lock.yaml",
+                ".github/workflows/pages.yml",
+            ]
+    pull_request:
+        branches: [staging]
+        paths:
+            [
+                "apps/**",
+                "packages/**",
+                "api/openapi.yaml",
+                "pnpm-lock.yaml",
+                ".github/workflows/pages.yml",
+            ]
+
+concurrency:
+    group: pages-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    deploy:
+        # Forks and Dependabot get no secrets, so no preview.
+        if: github.event_name == 'push' || (github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]')
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            pull-requests: write
+        strategy:
+            matrix:
+                include:
+                    - app: seller
+                      project: tea-pos
+                    - app: backoffice
+                      project: tea-office
+        env:
+            CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+            CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+            WRANGLER: npx -y wrangler@4.151.3
+            BRANCH: ${{ github.head_ref || github.ref_name }}
+            APP_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+            PAGES_ENV: ${{ github.ref_name == 'main' && 'production' || 'preview' }}
+            EDGE_SECRET: ${{ github.ref_name == 'main' && secrets.EDGE_SECRET_PRODUCTION || secrets.EDGE_SECRET_STAGING }}
+        defaults:
+            run:
+                working-directory: apps/${{ matrix.app }}
+        steps:
+            - uses: actions/checkout@v7
+            - uses: pnpm/action-setup@v6
+            - uses: actions/setup-node@v7
+              with:
+                  node-version-file: .nvmrc
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm --filter @tea-pos/${{ matrix.app }} build
+            - name: Project exists
+              run: $WRANGLER pages project create ${{ matrix.project }} --production-branch main 2>/dev/null || true
+            - name: Secret
+              run: printf '%s' "$EDGE_SECRET" | $WRANGLER pages secret put EDGE_SECRET --project-name ${{ matrix.project }} --env "$PAGES_ENV"
+            - name: Deploy
+              id: deploy
+              run: |
+                  $WRANGLER pages deploy --project-name ${{ matrix.project }} --branch "$BRANCH" | tee out.txt
+                  echo "url=$(grep -o 'https://[^ ]*pages.dev' out.txt | tail -1)" >> "$GITHUB_OUTPUT"
+            - if: github.event_name == 'pull_request'
+              uses: ./.github/actions/pr-comment
+              with:
+                  section: preview-${{ matrix.app }}
+                  body: |
+                      ### Preview: ${{ matrix.app }}
+                      ${{ steps.deploy.outputs.url }} (API: staging)

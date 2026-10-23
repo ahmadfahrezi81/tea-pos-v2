@@ -1,0 +1,4 @@
+{
+    "extends": "../../packages/config/tsconfig.app.json",
+    "include": ["src", "app.config.ts", "vite.config.ts", "functions"]
+}

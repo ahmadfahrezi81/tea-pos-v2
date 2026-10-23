@@ -13,10 +13,12 @@ export default defineRailway((ctx) => {
     const deploy = { sleepApplication: false };
     // Railway manages every variable from this file: an undeclared one is removed on apply.
     // Secrets Infisical syncs in must be declared too, as preserve(), so their values are kept.
-    const env = (gomemlimit: string) => ({
+    const env = (gomemlimit: string, dbMaxConns: string) => ({
         ENV: prod ? "prod" : "staging",
         LOG_LEVEL: "info",
         GOMEMLIMIT: gomemlimit,
+        // Fixed pools: Supabase allows 60 connections and its own services hold about 25.
+        DB_MAX_CONNS: dbMaxConns,
     });
 
     const api = service("api", {
@@ -26,7 +28,14 @@ export default defineRailway((ctx) => {
         start: "/app/api",
         healthcheck: "/health",
         replicas,
-        env: env("200MiB"),
+        // Infisical syncs these into api only; the others reference what they need.
+        env: {
+            ...env("200MiB", "8"),
+            DATABASE_URL: preserve(),
+            EDGE_SECRET: preserve(),
+            SUPABASE_URL: preserve(),
+            SUPABASE_PUBLISHABLE_KEY: preserve(),
+        },
     });
     const realtime = service("realtime", {
         source: repo,
@@ -35,7 +44,11 @@ export default defineRailway((ctx) => {
         start: "/app/realtime",
         healthcheck: "/health",
         replicas,
-        env: env("100MiB"),
+        env: {
+            ...env("100MiB", "2"),
+            DATABASE_URL: api.env.DATABASE_URL,
+            EDGE_SECRET: api.env.EDGE_SECRET,
+        },
     });
     const worker = service("worker", {
         source: repo,
@@ -43,7 +56,7 @@ export default defineRailway((ctx) => {
         deploy,
         start: "/app/worker",
         replicas,
-        env: env("100MiB"),
+        env: { ...env("100MiB", "4"), DATABASE_URL: api.env.DATABASE_URL },
     });
 
     // Nightly dump of production to R2 at 20:00 UTC (03:00 WIB); runs, uploads, exits. Staging's data is fake.

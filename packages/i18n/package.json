@@ -3,10 +3,19 @@
     "private": true,
     "type": "module",
     "exports": {
-        ".": "./index.ts"
+        ".": "./index.ts",
+        "./react": "./react.tsx",
+        "./pick": "./pick.ts"
     },
     "scripts": {
         "lint": "eslint .",
         "typecheck": "tsc -p ."
+    },
+    "peerDependencies": {
+        "react": "^19"
+    },
+    "devDependencies": {
+        "@types/react": "19.3.0",
+        "react": "19.3.1"
     }
 }

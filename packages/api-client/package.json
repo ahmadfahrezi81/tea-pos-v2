@@ -1,0 +1,29 @@
+{
+    "name": "@tea-pos/api-client",
+    "private": true,
+    "type": "module",
+    "exports": {
+        ".": "./index.ts",
+        "./query": "./query.ts"
+    },
+    "scripts": {
+        "generate": "openapi-typescript ../../api/openapi.yaml -o schema.d.ts",
+        "generate:check": "openapi-typescript ../../api/openapi.yaml -o schema.d.ts --check",
+        "lint": "eslint .",
+        "typecheck": "tsc -p ."
+    },
+    "peerDependencies": {
+        "@tanstack/react-query": "^5"
+    },
+    "dependencies": {
+        "@tanstack/query-async-storage-persister": "5.104.5",
+        "@tanstack/react-query-persist-client": "5.104.5",
+        "idb-keyval": "6.3.0",
+        "openapi-fetch": "0.17.0",
+        "openapi-react-query": "0.5.4"
+    },
+    "devDependencies": {
+        "@tanstack/react-query": "5.104.5",
+        "openapi-typescript": "7.13.0"
+    }
+}

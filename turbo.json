@@ -1,9 +1,11 @@
 {
     "$schema": "https://turbo.build/schema.json",
+    "globalDependencies": ["api/openapi.yaml"],
     "tasks": {
         "build": {
             "dependsOn": ["^build"],
-            "outputs": ["dist/**"]
+            "outputs": ["dist/**"],
+            "env": ["APP_COMMIT"]
         },
         "lint": {},
         "typecheck": {},

@@ -24,6 +24,13 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
+	db, err := platform.OpenDB(ctx, cfg.DatabaseURL, cfg.DBMaxConns)
+	if err != nil {
+		slog.Error("database", "err", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
 	slog.Info("started", "version", version.Version, "commit", version.Commit)
 	<-ctx.Done()
 	slog.Info("stopped")

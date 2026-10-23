@@ -10,15 +10,16 @@ Backups: one per night at 03:00 WIB, in the private R2 bucket `tea-pos-backups`,
 
 ```bash
 docker build -t tea-pos-backup ops/backup
-docker run -d --name restore-db -e POSTGRES_PASSWORD=restore -p 55432:5432 postgres:17
-docker run --rm --network host \
-    -e R2_ACCOUNT_ID -e R2_BUCKET=tea-pos-backups -e R2_ACCESS_KEY_ID -e R2_SECRET_ACCESS_KEY \
-    -e TARGET_URL=postgresql://postgres:restore@localhost:55432/postgres \
+docker network create restore-net
+docker run -d --rm --name restore-db --network restore-net -e POSTGRES_PASSWORD=restore postgres:17
+infisical run --env=prod --path=/backup -- docker run --rm --network restore-net \
+    -e R2_ACCOUNT_ID -e R2_ACCESS_KEY_ID -e R2_SECRET_ACCESS_KEY -e R2_BUCKET=tea-pos-backups \
+    -e TARGET_URL=postgresql://postgres:restore@restore-db:5432/postgres \
     tea-pos-backup restore.sh latest
-docker rm -f restore-db
+docker rm -f restore-db && docker network rm restore-net
 ```
 
-The R2 values come from Infisical (Production, `/backup`). `restore.sh latest` takes the newest dump; pass a key without `.dump` for an older one. It ends by comparing row counts with the backup's and fails loudly if they differ.
+`infisical run` passes the R2 keys from Infisical (Production, `/backup`) without printing them; it needs `infisical login` once, and `.infisical.yaml` links the repo to the project. `restore.sh latest` takes the newest dump; pass a key without `.dump` for an older one. It ends by comparing row counts (every `public` table and `auth.users`) with the backup's and fails loudly if they differ. Tested 2026-10-20: restores cleanly into Postgres 17.
 
 **Into production, after losing data:** stop first. Restoring overwrites what is there. Decide with the owner which night to restore, restore it locally as above, check the data, then restore only the tables that need it.
 

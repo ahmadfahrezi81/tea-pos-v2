@@ -1,6 +1,6 @@
 # One image, every program under /app/. Each Railway service picks one by its start command.
 
-FROM golang:1.27-alpine AS build
+FROM golang:1.27.3-alpine AS build
 WORKDIR /src
 
 COPY api/go.mod api/go.sum ./

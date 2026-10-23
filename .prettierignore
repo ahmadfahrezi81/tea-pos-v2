@@ -1,3 +1,6 @@
 pnpm-lock.yaml
 supabase/migrations/
 .claude/
+api/openapi.yaml
+packages/api-client/schema.d.ts
+**/routeTree.gen.ts

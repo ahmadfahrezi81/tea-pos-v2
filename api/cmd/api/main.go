@@ -21,15 +21,26 @@ func main() {
 		slog.Error("config", "err", err)
 		os.Exit(1)
 	}
+	if err := cfg.RequireEdgeSecret(); err != nil {
+		slog.Error("config", "err", err)
+		os.Exit(1)
+	}
 	platform.SetupLog("api", cfg.Env, cfg.LogLevel)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /health", handler.Health)
+	db, err := platform.OpenDB(ctx, cfg.DatabaseURL, cfg.DBMaxConns)
+	if err != nil {
+		slog.Error("database", "err", err)
+		os.Exit(1)
+	}
+	defer db.Close()
 
-	if err := platform.Serve(ctx, ":"+cfg.Port, middleware.Standard(mux, cfg.RequestTimeout), cfg.ShutdownTimeout); err != nil {
+	mux := http.NewServeMux()
+	handler.NewAPI(mux)
+
+	if err := platform.Serve(ctx, ":"+cfg.Port, middleware.Standard(mux, cfg.RequestTimeout, cfg.EdgeSecret), cfg.ShutdownTimeout); err != nil {
 		slog.Error("server", "err", err)
 		os.Exit(1)
 	}

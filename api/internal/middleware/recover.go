@@ -4,6 +4,8 @@ import (
 	"log/slog"
 	"net/http"
 	"runtime/debug"
+
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/httpx"
 )
 
 // Recover turns a panic into a logged 500. ErrAbortHandler is a deliberate abort, so it passes through.
@@ -18,7 +20,7 @@ func Recover(next http.Handler) http.Handler {
 				panic(p)
 			}
 			slog.ErrorContext(r.Context(), "panic", "panic", p, "stack", string(debug.Stack()))
-			http.Error(w, `{"error":"internal"}`, http.StatusInternalServerError)
+			httpx.Write(w, httpx.New(http.StatusInternalServerError, "internal", "Something went wrong"))
 		}()
 		next.ServeHTTP(w, r)
 	})
