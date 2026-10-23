@@ -15,7 +15,7 @@ supabase migration new <name>   # migrations live only here; never name one by h
 
 Go, against the staging database: `cd api && infisical run --env=staging --path=/app -- go run ./cmd/api` (needs `infisical login` once).
 
-Apps, against the staging API: `infisical run --env=staging --path=/app -- pnpm --filter @tea-pos/seller dev` (or `backoffice`); add `API_ORIGIN=http://localhost:8080` to use a local Go instead. Vite proxies `/api` to staging the way the Pages forwarder does, adding `EDGE_SECRET`. `pnpm bundle-size` (after `pnpm build`) checks each app's first screen against its budget in `scripts/bundle-size.mjs`; a step that needs more raises it on purpose, up to the POS's 170 KB.
+Apps, against the staging API: `infisical run --env=staging --path=/app -- pnpm --filter @tea-pos/seller dev` (or `backoffice`); add `API_ORIGIN=http://localhost:8080` to use a local Go instead. Vite proxies `/api` to staging the way the Pages forwarder does, adding `EDGE_SECRET`. `pnpm bundle-size` (after `pnpm build`) checks each app's first screen against its budget in `scripts/bundle-size.mjs`; a step that needs more raises it on purpose, up to the POS's 170 KB. `pnpm bench <url>` runs the RFC's benchmark (20× CPU, Slow 4G, signed in, medians of 5 reopens and 5 first visits); `pnpm bench --sign-in <url>` once per app first.
 
 Database:
 
@@ -53,6 +53,7 @@ api/                 Go module: one backend for every app
 Dockerfile           one image, every program under /app/; Railway picks one by start command
 ops/backup/          nightly dump of production to R2 (cron service backup) and restore.sh
 docs/runbook.md      restore, run a backup, roll back
+docs/benchmark.js    the benchmark read by hand in DevTools; `pnpm bench <url>` (scripts/bench.mjs) runs it the same way every time
 apps/seller, backoffice  Vite apps, Pages projects tea-pos and tea-office. app.config.ts: everything that differs
                      per app (name, brand colour, sign-in words, languages). src/routes: TanStack Router file
                      routes (routeTree.gen.ts generated). functions/api forwards /api to Railway
