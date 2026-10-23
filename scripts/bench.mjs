@@ -6,6 +6,9 @@
 //   pnpm bench <url>              the benchmark
 //   pnpm bench --sign-out <url>   end that session and delete the profile
 //
+// On staging, a test user instead of Google (TEST_LOGIN_KEY from Infisical staging /app):
+//   infisical run --env=staging --path=/app -- pnpm bench --test-user admin@test-a.test <url>
+//
 // Options: --runs N (5), --reopen-only, --first-only, --chrome-start S (4.0).
 import { spawn } from "node:child_process";
 import { rmSync } from "node:fs";
@@ -152,6 +155,34 @@ const browser = await launch(true);
 const [page] = await browser.pages();
 const cdp = await page.createCDPSession();
 const results = {};
+
+const testUser = option("--test-user");
+if (testUser) {
+    if (!process.env.TEST_LOGIN_KEY) {
+        console.error(
+            "--test-user needs TEST_LOGIN_KEY: run it under infisical run --env=staging --path=/app",
+        );
+        process.exit(1);
+    }
+    // The staging test sign-in sets the same session cookie Google would.
+    await page.goto(`${origin}/login`);
+    const status = await page.evaluate(
+        (email, key) =>
+            fetch("/api/auth/test", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-Test-Key": key },
+                body: JSON.stringify({ email }),
+            }).then((r) => r.status),
+        testUser,
+        process.env.TEST_LOGIN_KEY,
+    );
+    if (status !== 204) {
+        console.error(
+            `Test sign-in as ${testUser} failed (${status}); staging only, test- tenants only.`,
+        );
+        process.exit(1);
+    }
+}
 
 // Warm up once unthrottled, so the service worker and the saved cache exist for the reopens.
 await page.goto(url, { waitUntil: "networkidle0" });

@@ -20,3 +20,12 @@ type AuthCallbackInput struct {
 type LogoutOutput struct {
 	SetCookie []http.Cookie `header:"Set-Cookie"`
 }
+
+// TestSignInInput is the staging-only test sign-in (built with -tags testlogin).
+type TestSignInInput struct {
+	Key       string `header:"X-Test-Key"`
+	UserAgent string `header:"User-Agent"`
+	Body      struct {
+		Email string `json:"email" format:"email" example:"admin@test-a.test"`
+	}
+}

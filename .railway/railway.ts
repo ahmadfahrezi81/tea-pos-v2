@@ -35,6 +35,8 @@ export default defineRailway((ctx) => {
             EDGE_SECRET: preserve(),
             SUPABASE_URL: preserve(),
             SUPABASE_PUBLISHABLE_KEY: preserve(),
+            // Staging only: the test sign-in for end-to-end tests, compiled in by the build tag.
+            ...(prod ? {} : { GO_BUILD_TAGS: "testlogin", TEST_LOGIN_KEY: preserve() }),
         },
     });
     const realtime = service("realtime", {
