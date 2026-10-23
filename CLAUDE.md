@@ -27,7 +27,7 @@ TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres?sslmode=d
   pnpm --filter @tea-pos/api test:integration   # needs a local Postgres 17 (OrbStack)
 ```
 
-**Migrations change the databases; `api/db/schema.sql` describes them.** The migrations cannot build a database from scratch (the base tables predate them), so tests load the dump plus `api/db/stubs.sql` (Supabase's `auth` and roles). Integration tests: `api/tests/integration/`, build tag `integration`, one throwaway database per test via `testkit.DB(t)`. `pnpm lint` and `pnpm typecheck` cover Go too (`gofmt`, `go vet`, `go build`). Dependencies are added only when they remove real work; today `klauspost/compress` (gzip), `jackc/pgx` (Postgres) and `danielgtaylor/huma` (the contract).
+**Migrations reach the databases only through CI** (`.github/workflows/migrations.yml`): a PR into `staging` comments what would run, its merge pushes to staging, a release pushes to production after the owner approves; never `supabase db push` by hand. Never edit a migration that has run (fix it with a new one), and write backfills so running twice is harmless. **Migrations change the databases; `api/db/schema.sql` describes them.** The migrations cannot build a database from scratch (the base tables predate them), so tests load the dump plus `api/db/stubs.sql` (Supabase's `auth` and roles). Integration tests: `api/tests/integration/`, build tag `integration`, one throwaway database per test via `testkit.DB(t)`. `pnpm lint` and `pnpm typecheck` cover Go too (`gofmt`, `go vet`, `go build`). Dependencies are added only when they remove real work; today `klauspost/compress` (gzip), `jackc/pgx` (Postgres) and `danielgtaylor/huma` (the contract).
 
 **The contract:** request and response shapes are Go structs in `api/internal/contract/`, registered with Huma in `internal/handler/`. `api/openapi.yaml` and `packages/api-client/schema.d.ts` are generated from them, never edited; CI fails if either is out of date. Every error is `{"status", "code", "message"}` from `internal/httpx`: `code` is stable and the apps translate it.
 
@@ -64,7 +64,7 @@ packages/api-client/ generated types, the fetch client, React Query hooks, the q
 packages/i18n/       translations (en.json, id.json), t() and useT(); only the active language loads; a wrong key fails the typecheck
 supabase/            migrations (owned here, copied from the old repo) and config.toml
 .railway/railway.ts  Railway services for production (main) and staging (staging branch)
-.github/             CI, Railway plan and apply, releases, rulesets, the pr-comment action, Dependabot, security.yml
+.github/             CI, Railway plan and apply, migrations, releases, rulesets, the pr-comment action, Dependabot, security.yml
 .claude/tasks/       one plan per build step
 ```
 
