@@ -72,6 +72,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The signed-in user, their tenants and stores */
+        get: operations["getMe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -95,6 +112,48 @@ export interface components {
             status: string;
             /** @example 2026.10.3 */
             version: string;
+        };
+        Me: {
+            /** @description Empty when the user belongs to no tenant */
+            tenants: components["schemas"]["MeTenant"][];
+            user: components["schemas"]["MeUser"];
+        };
+        MeStore: {
+            /** @example 22:00 */
+            closeTime: string;
+            /** Format: uuid */
+            id: string;
+            /** @description The store this user's app opens on */
+            isDefault: boolean;
+            name: string;
+            /** @example 08:00 */
+            openTime: string;
+            /** @example active */
+            status: string;
+        };
+        MeTenant: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @example bi_weekly */
+            payFrequency: string;
+            slug: string;
+            /** @description Seller: the stores the user is assigned to. Backoffice: every store of the tenant */
+            stores: components["schemas"]["MeStore"][];
+        };
+        MeUser: {
+            avatarUrl?: string;
+            email: string;
+            fullName: string;
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description The profile's language; the app keeps a copy
+             * @example id
+             */
+            language: string;
+            /** @example USER */
+            role: string;
         };
     };
     responses: never;
@@ -216,6 +275,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
                 };
             };
             /** @description Error */

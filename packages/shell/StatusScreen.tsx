@@ -3,7 +3,7 @@ import { useT } from "@tea-pos/i18n/react";
 
 import { APP_COMMIT } from "./version";
 
-/** The home screen until `/me` exists (Step 13): is the API reachable, and which build is running. */
+/** Is the API reachable, and which build is running; shown under home for now. */
 export function StatusScreen() {
     const t = useT();
     const health = $api.useQuery("get", "/health");

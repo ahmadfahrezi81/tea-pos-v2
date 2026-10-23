@@ -141,6 +141,12 @@ function appHtml(app: AppConfig): Plugin {
                 .replace('<div id="root"></div>', `<div id="root"></div>${splash(logo)}`),
             tags: [
                 {
+                    tag: "script",
+                    // /me starts with the page, not after the JavaScript: one round trip less (useMe takes it).
+                    children: `if(location.pathname!=="/login")window.__me=fetch("/api/me").catch(function(){return null})`,
+                    injectTo: "head-prepend",
+                },
+                {
                     tag: "meta",
                     attrs: { name: "theme-color", content: SHELL_COLOR },
                     injectTo: "head",

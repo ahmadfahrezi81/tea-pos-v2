@@ -15,6 +15,7 @@ import { createRoot } from "react-dom/client";
 
 import { AppContext } from "./AppContext";
 import { AppUpdateProvider } from "./AppUpdate";
+import { savedUser } from "./session";
 import { hideSplash } from "./splash";
 import { trackFirstLoads } from "./trackFirstLoads";
 import { API_CONTRACT } from "./version";
@@ -52,7 +53,7 @@ export async function startApp(router: ReturnType<typeof createAppRouter>, app: 
                     <PersistQueryClientProvider
                         client={queryClient}
                         persistOptions={{
-                            persister: createPersister(cacheKey()),
+                            persister: createPersister(cacheKey(savedUser())),
                             maxAge: CACHE_MAX_AGE,
                             // Saved data survives deploys until the API's shapes change.
                             buster: API_CONTRACT,

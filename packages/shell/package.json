@@ -9,7 +9,8 @@
         "./refreshGate": "./refreshGate.ts",
         "./useHasPainted": "./useHasPainted.ts",
         "./trackFirstLoads": "./trackFirstLoads.ts",
-        "./version": "./version.ts"
+        "./version": "./version.ts",
+        "./session": "./session.ts"
     },
     "scripts": {
         "lint": "eslint .",
