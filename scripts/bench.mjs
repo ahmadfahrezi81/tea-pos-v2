@@ -7,6 +7,7 @@
 //   pnpm bench --sign-out <url>   end that session and delete the profile
 //
 // Options: --runs N (5), --reopen-only, --first-only, --chrome-start S (4.0).
+import { spawn } from "node:child_process";
 import { rmSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -43,12 +44,17 @@ const launch = (headless) =>
         defaultViewport: { width: 412, height: 915 },
     });
 
+// A plain Chrome, not one a script drives: Google refuses to sign in to the latter.
 if (flag("--sign-in")) {
-    const browser = await launch(false);
-    const [page] = await browser.pages();
-    await page.goto(`${origin}/login`);
-    console.log("Sign in with Google in the window, then close it.");
-    await new Promise((done) => browser.on("disconnected", done));
+    console.log("Sign in with Google in the window, wait for home, then quit that Chrome (Cmd+Q).");
+    const chrome = spawn(
+        CHROME,
+        [`--user-data-dir=${PROFILE}`, "--no-first-run", `${origin}/login`],
+        {
+            stdio: "ignore",
+        },
+    );
+    await new Promise((done) => chrome.on("exit", done));
     process.exit(0);
 }
 
