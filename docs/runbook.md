@@ -39,7 +39,7 @@ Railway → `production` → `backup` → **Run now**. A redeploy does not run i
 infisical run --env=prod --path=/github -- sh -c 'RAILWAY_TOKEN=$RAILWAY_TOKEN node scripts/railway-deploy.mjs <commit> api realtime worker'
 ```
 
-For staging, use `$RAILWAY_TOKEN_STAGING` instead. It prints each service's Railway link and waits until each is live.
+For staging, use `$RAILWAY_TOKEN_STAGING` instead. It prints each service's Railway link and waits until each is live. Rehearsed on staging 2026-10-24: back one API commit in 1 min 37 s (`/health` showed the old commit), forward again in 42 s.
 
 **Frontend:** Cloudflare Pages → the project → Deployments → the previous one → **Rollback**
 

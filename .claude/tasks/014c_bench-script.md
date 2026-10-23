@@ -45,3 +45,8 @@ Run `pnpm bench --sign-in` once and sign in with Google on staging (seller and b
 ## Not in this task
 
 Driving Chrome on the M11 itself over USB (`adb`), which would measure the real phone the same way and replace the 4.0 s estimate: a follow-up once this works. Running it in CI (shared runners are too noisy, and it would need a session stored as a secret).
+
+## Follow-up, 2026-10-24: a stalled load is tried once more
+
+On release PR #34 the benchmark failed once on GitHub's runner: one reload never became ready within 2 minutes (the re-run passed; the same code ran fine locally). Now a load that is not ready within 60 s is logged with what the page showed (path, load state, splash, service worker) and tried once more; two stalls in a row fail the run with "two loads in a row never became ready". Checked by pointing it at a page that is never ready (both attempts logged, then the error) and at staging's backoffice (unchanged numbers). Also: the warm-up now waits until the app is ready and 2 s more, so the saved copy exists before the first reopen; a single-run check had shown one 3.14 s reopen against 0.5-0.8 s otherwise.
+
