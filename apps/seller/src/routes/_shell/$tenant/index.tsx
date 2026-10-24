@@ -1,9 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { HomeScreen } from "@tea-pos/shell/HomeScreen";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
+// The seller opens on its POS tab, as the old app.
 export const Route = createFileRoute("/_shell/$tenant/")({
-    staticData: {
-        shell: { titleKey: "home.title", parent: null, refreshable: true, titleAccessory: true },
+    beforeLoad: ({ params }) => {
+        throw redirect({ to: "/$tenant/pos", params, replace: true });
     },
-    component: HomeScreen,
 });

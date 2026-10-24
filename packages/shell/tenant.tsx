@@ -9,7 +9,7 @@ type Store = Tenant["stores"][number];
 
 interface TenantState {
     tenant: Tenant;
-    /** The stores the picker offers (inactive ones hidden in backoffice when asked). */
+    /** The stores the picker offers (demo and inactive hidden in backoffice when asked). */
     stores: Store[];
     /** The chosen store; null is All stores (backoffice only). */
     store: Store | null;
@@ -74,10 +74,13 @@ export function TenantProvider({ me, children }: { me: Me | undefined; children:
     if (!tenant) return <TenantContext value={null}>{children}</TenantContext>;
 
     const open = tenant.stores.filter((s) => s.status === "active");
-    const stores = hideInactive ? open : tenant.stores;
     let store: Store | null =
         tenant.stores.find((s) => s.id === saved && (mode === "all" || s.status === "active")) ??
         null;
+    // Hidden: demo and inactive stores, except the one chosen (as the old apps).
+    const stores = hideInactive
+        ? tenant.stores.filter((s) => s.status === "active" || s.id === store?.id)
+        : tenant.stores;
     if (!store && mode === "one") {
         store = open.find((s) => s.isDefault) ?? open[0] ?? tenant.stores[0] ?? null;
     }

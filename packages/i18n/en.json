@@ -465,7 +465,9 @@
         "newClaim": "New Claim",
         "payrollInfo": "Payroll Info",
         "editPayrollInfo": "Edit Payroll Info",
-        "moreNew": "More •"
+        "moreNew": "More •",
+        "pay": "Pay",
+        "supply": "Supply"
     },
     "shell": {
         "account": "Account",
@@ -487,10 +489,14 @@
             "infoTitle": "Why this appears",
             "infoBody": "The app has been idle for a while, so what's on screen may no longer match the server."
         },
-        "allStores": "All stores",
-        "pickStore": "Choose a store",
+        "allStores": "All Stores",
+        "pickStore": "Select Store",
         "hideInactiveStores": "Hide inactive stores",
-        "tenantNotFound": "This business isn't one of yours."
+        "tenantNotFound": "This business isn't one of yours.",
+        "comingSoon": "{name} is coming soon",
+        "inDevelopment": "This feature is still in development",
+        "demo": "DEMO",
+        "inactive": "INACTIVE"
     },
     "signIn": {
         "google": "Continue with Google",

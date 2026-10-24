@@ -12,6 +12,7 @@
         "./AreaChart": "./chart/AreaChart.tsx",
         "./BarChart": "./chart/BarChart.tsx",
         "./Sheet": "./Sheet.tsx",
+        "./ComingSoon": "./ComingSoon.tsx",
         "./dot-grid": "./styles/dot-grid.ts",
         "./globals.css": "./styles/globals.css"
     },

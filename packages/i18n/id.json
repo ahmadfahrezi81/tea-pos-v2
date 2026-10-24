@@ -465,7 +465,9 @@
         "newClaim": "Klaim Baru",
         "payrollInfo": "Info Penggajian",
         "editPayrollInfo": "Ubah Info Penggajian",
-        "moreNew": "Lainnya •"
+        "moreNew": "Lainnya •",
+        "pay": "Gaji",
+        "supply": "Stok"
     },
     "shell": {
         "account": "Akun",
@@ -487,10 +489,14 @@
             "infoTitle": "Kenapa muncul",
             "infoBody": "Aplikasi sudah lama tidak dipakai, jadi data di layar mungkin sudah tidak sama dengan server."
         },
-        "allStores": "Semua toko",
-        "pickStore": "Pilih toko",
+        "allStores": "Semua Toko",
+        "pickStore": "Pilih Toko",
         "hideInactiveStores": "Sembunyikan toko tidak aktif",
-        "tenantNotFound": "Bisnis ini bukan milik Anda."
+        "tenantNotFound": "Bisnis ini bukan milik Anda.",
+        "comingSoon": "{name} segera hadir",
+        "inDevelopment": "Fitur ini masih dalam pengembangan",
+        "demo": "DEMO",
+        "inactive": "NONAKTIF"
     },
     "signIn": {
         "google": "Lanjutkan dengan Google",
