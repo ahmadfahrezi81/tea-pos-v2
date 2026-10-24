@@ -247,7 +247,11 @@
         "commission_not_found": "No such commission.",
         "claim_not_found": "No such claim.",
         "day_not_in_payout": "That day is not in this payout's period.",
-        "payout_settled": "This payout is already paid or skipped, so its decisions can no longer change."
+        "payout_settled": "This payout is already paid or skipped, so its decisions can no longer change.",
+        "payout_not_due": "This period has not reached its last day yet.",
+        "payout_pending_review": "Every commission and claim must be reviewed first.",
+        "proof_required": "Paying needs the transfer screenshot.",
+        "bad_proof": "That screenshot was not uploaded as this business's payroll proof."
     },
     "store": {
         "title": "Store",

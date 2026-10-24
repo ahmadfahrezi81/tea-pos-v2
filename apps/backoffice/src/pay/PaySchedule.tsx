@@ -3,7 +3,8 @@ import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { ConfirmSheet } from "@tea-pos/shell/FormFooter";
 import { toast } from "@tea-pos/ui/toast";
-import { AlertTriangle, CalendarClock, Check } from "lucide-react";
+import { Callout } from "@tea-pos/ui/Callout";
+import { CalendarClock, Check } from "lucide-react";
 import { useState } from "react";
 
 import { daysLeft } from "./PayHome";
@@ -97,18 +98,13 @@ export function PaySchedule() {
                     </p>
                 </div>
             </div>
+            {/* The rule that keeps a switch safe, where the switch happens. */}
             {!safe && (
-                <div className="flex items-start gap-3 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">
-                    <AlertTriangle size={18} className="shrink-0 mt-0.5 text-amber-600" />
-                    <div>
-                        <p className="font-semibold">{t("pay.notTheDay")}</p>
-                        <p>
-                            {t("pay.notTheDaySub")
-                                .replace("{n}", String(p.payouts))
-                                .replace("{days}", String(left))}
-                        </p>
-                    </div>
-                </div>
+                <Callout title={t("pay.notTheDay")}>
+                    {t("pay.notTheDaySub")
+                        .replace("{n}", String(p.payouts))
+                        .replace("{days}", String(left))}
+                </Callout>
             )}
             <div className="bg-white rounded-2xl overflow-hidden">
                 {FREQUENCIES.map((f, i) => {

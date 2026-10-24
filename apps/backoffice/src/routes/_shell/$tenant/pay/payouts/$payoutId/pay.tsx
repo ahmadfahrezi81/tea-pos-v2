@@ -1,10 +1,12 @@
 import { loadArea } from "@tea-pos/i18n";
-import { comingSoon } from "@tea-pos/shell/ComingSoonScreen";
 import { createFileRoute } from "@tanstack/react-router";
 
-// Built in Step 23.
+import { PayConfirm } from "../../../../../../pay/PayConfirm";
+
 export const Route = createFileRoute("/_shell/$tenant/pay/payouts/$payoutId/pay")({
     loader: () => loadArea("pay"),
     staticData: { shell: { titleKey: "pay.confirmPayout", parent: ".." } },
-    component: comingSoon("pay.confirmPayout"),
+    component: function Screen() {
+        return <PayConfirm id={Route.useParams().payoutId} />;
+    },
 });

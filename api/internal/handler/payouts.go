@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/domain"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/files"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/idem"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
@@ -230,6 +232,64 @@ func registerPayouts(api huma.API, d Deps) {
 			out.Body.Commissions, out.Body.Claims = cms, cls
 			return out, nil
 		})
+}
+
+func registerSettle(api huma.API, d Deps) {
+	route(api, huma.Operation{
+		OperationID: "settlePayout", Method: http.MethodPost, Path: "/tenants/{tenant}/pay/payouts/{id}/settle",
+		Summary: "Pay a payout (with the transfer screenshot) or skip it (nothing owed)", Tags: []string{"pay"},
+	}, payWrite, func(ctx context.Context, in *contract.SettlePayoutInput) (*struct{}, error) {
+		caller, _ := auth.CallerFrom(ctx)
+		id, err := uuid(in.ID, errPayoutNotFound)
+		if err != nil {
+			return nil, err
+		}
+		p, err := d.Queries.GetPayout(ctx, store.GetPayoutParams{ID: id, TenantID: caller.TenantID})
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errPayoutNotFound
+		}
+		if err != nil {
+			return nil, err
+		}
+		if p.Status != "pending" {
+			return nil, errPayoutSettled
+		}
+		// From the period's own last day (stores close that night and pay straight after), as the old app.
+		if time.Now().In(domain.WIB).Format(time.DateOnly) < day0(p.EndDate) {
+			return nil, errPayoutNotDue
+		}
+		pending, err := d.Queries.CountPayoutPending(ctx, store.CountPayoutPendingParams{ID: id, TenantID: caller.TenantID})
+		if err != nil {
+			return nil, err
+		}
+		if pending > 0 {
+			return nil, errPayoutPendingReview
+		}
+		proof := pgtype.Text{}
+		if in.Body.PaymentProofURL != "" {
+			// Only a screenshot uploaded for this tenant's payroll proofs.
+			path := files.PathIn(files.Purposes["payroll_proof"].Bucket, in.Body.PaymentProofURL)
+			if !strings.HasPrefix(path, caller.TenantID.String()+"/") {
+				return nil, errBadProof
+			}
+			proof = pgtype.Text{String: in.Body.PaymentProofURL, Valid: true}
+		}
+		if in.Body.Status == "paid" && !proof.Valid {
+			return nil, errProofRequired
+		}
+		q := idem.Queries(ctx, d.Queries)
+		n, err := q.SettlePayout(ctx, store.SettlePayoutParams{
+			ID: id, TenantID: caller.TenantID, Status: in.Body.Status, PaidBy: caller.UserID,
+			PaymentProofUrl: proof, Notes: pgtype.Text{String: in.Body.Notes, Valid: in.Body.Notes != ""},
+		})
+		if err != nil {
+			return nil, err
+		}
+		if n == 0 {
+			return nil, errPayoutSettled // settled a moment ago, elsewhere
+		}
+		return nil, logActivity(ctx, q, caller, pgtype.UUID{}, "payroll_payout_updated", id, "payroll_payouts", map[string]any{"status": in.Body.Status})
+	})
 }
 
 // openForDecisions refuses a decision on a day whose payout is settled (paid or skipped): its

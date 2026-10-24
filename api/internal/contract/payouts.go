@@ -95,3 +95,13 @@ type ReviewDayOutput struct {
 		Claims      int64 `json:"claims"`
 	}
 }
+
+type SettlePayoutInput struct {
+	Tenant string `path:"tenant"`
+	ID     string `path:"id" format:"uuid"`
+	Body   struct {
+		Status          string `json:"status" enum:"paid,skipped" doc:"skipped: nothing owed, no transfer"`
+		PaymentProofURL string `json:"paymentProofUrl,omitempty" maxLength:"1000" doc:"The transfer screenshot's address from POST /files (purpose payroll_proof); needed to pay"`
+		Notes           string `json:"notes,omitempty" maxLength:"500" doc:"For the staff member, on their payslip; cannot be changed after"`
+	}
+}
