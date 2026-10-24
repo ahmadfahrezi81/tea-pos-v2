@@ -31,6 +31,7 @@ jobs:
             migrations: ${{ steps.plan.outputs.migrations }}
             services: ${{ steps.plan.outputs.services }}
             apps: ${{ steps.plan.outputs.apps }}
+            version: ${{ steps.plan.outputs.version }}
         steps:
             - uses: actions/checkout@v7
               with:
@@ -42,6 +43,13 @@ jobs:
                   if [ "$GITHUB_REF_NAME" = main ]; then env=production; else env=staging; fi
                   # The PR this commit came from: a squash into staging, or the release into main.
                   pr=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq ".[] | select(.base.ref == \"$GITHUB_REF_NAME\") | .number" | head -1 || true)
+                  # The release's version is its PR's title (release-source checks it); staging has none.
+                  version=staging
+                  if [ "$env" = production ]; then
+                      title=$(gh pr view "$pr" --repo "$GITHUB_REPOSITORY" --json title --jq .title 2>/dev/null || true)
+                      version=${title#release: }
+                      [[ "$version" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9]+$ ]] || version=unknown
+                  fi
                   # What this merge changed: against the branch's previous commit (first parent).
                   changed=$(git diff --name-only HEAD^1 HEAD)
                   has() { if grep -qE "$1" <<< "$changed"; then echo true; else echo false; fi; }
@@ -51,6 +59,7 @@ jobs:
                   {
                       echo "env=$env"
                       echo "pr=$pr"
+                      echo "version=$version"
                       echo "config=$(has '^\.railway/')"
                       echo "migrations=$(has '^supabase/migrations/')"
                       echo "services=$(echo "$services" | xargs)"
@@ -236,6 +245,7 @@ jobs:
                   RAILWAY_TOKEN: ${{ needs.plan.outputs.env == 'production' && secrets.RAILWAY_TOKEN || secrets.RAILWAY_TOKEN_STAGING }}
                   DEPLOY_REPORT: deploy.jsonl
                   SERVICES: ${{ needs.plan.outputs.services }}
+                  APP_VERSION: ${{ needs.plan.outputs.version }}
               run: |
                   set -o pipefail
                   # shellcheck disable=SC2086 # one argument per service
@@ -289,6 +299,7 @@ jobs:
         with:
             production: ${{ needs.plan.outputs.env == 'production' }}
             sha: ${{ github.sha }}
+            version: ${{ needs.plan.outputs.version }}
         secrets: inherit
 
     # Staging: the whole system, with the test users. Its result is a commit status, so the

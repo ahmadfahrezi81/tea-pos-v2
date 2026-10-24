@@ -19,7 +19,7 @@ func main() {
 		slog.Error("config", "err", err)
 		os.Exit(1)
 	}
-	platform.SetupLog("worker", cfg.Env, cfg.LogLevel)
+	platform.SetupLog("worker", cfg.Env, cfg.LogLevel, nil)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()

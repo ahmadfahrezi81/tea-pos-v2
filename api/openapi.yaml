@@ -1,5 +1,38 @@
 components:
   schemas:
+    AppEvent:
+      additionalProperties: false
+      properties:
+        at:
+          description: The phone's clock; Go uses its own when this is far off
+          format: date-time
+          type: string
+        message:
+          maxLength: 2000
+          type: string
+        name:
+          examples:
+            - TypeError
+          maxLength: 200
+          type: string
+        path:
+          examples:
+            - /test-a/home
+          maxLength: 300
+          type: string
+        stack:
+          maxLength: 8000
+          type: string
+        type:
+          enum:
+            - error
+            - pageview
+          type: string
+      required:
+        - type
+        - path
+        - at
+      type: object
     Error:
       additionalProperties: false
       properties:
@@ -27,6 +60,18 @@ components:
         - code
         - message
       type: object
+    EventsInputBody:
+      additionalProperties: false
+      properties:
+        events:
+          items:
+            $ref: "#/components/schemas/AppEvent"
+          maxItems: 50
+          minItems: 1
+          type: array
+      required:
+        - events
+      type: object
     HealthOutputBody:
       additionalProperties: false
       properties:
@@ -50,6 +95,11 @@ components:
     Me:
       additionalProperties: false
       properties:
+        flags:
+          additionalProperties:
+            type: boolean
+          description: The feature flags on for this user (rules on role and app); a store's own are on the store
+          type: object
         tenants:
           description: Empty when the user belongs to no tenant
           items:
@@ -60,6 +110,7 @@ components:
       required:
         - user
         - tenants
+        - flags
       type: object
     MeStore:
       additionalProperties: false
@@ -68,6 +119,11 @@ components:
           examples:
             - "22:00"
           type: string
+        flags:
+          additionalProperties:
+            type: boolean
+          description: The feature flags on at this store (rules on tenantId and storeId); a flag not listed is off
+          type: object
         id:
           format: uuid
           type: string
@@ -91,6 +147,7 @@ components:
         - openTime
         - closeTime
         - isDefault
+        - flags
       type: object
     MeTenant:
       additionalProperties: false
@@ -243,6 +300,29 @@ paths:
       summary: Sign out of this app on this phone
       tags:
         - auth
+      x-access:
+        signedIn: true
+  /events:
+    post:
+      operationId: sendEvents
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventsInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Errors and page views from an app, for PostHog
+      tags:
+        - system
       x-access:
         signedIn: true
   /health:

@@ -26,6 +26,9 @@ func (s *statusRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return http.NewResponseController(s.ResponseWriter).Hijack()
 }
 
+// RequestLogMessage is the message of Logger's line; a 5xx's own error is logged where it happened.
+const RequestLogMessage = "request"
+
 // Logger writes one line per request; /health logs at debug so health checks stay out of the log.
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -35,16 +38,26 @@ func Logger(next http.Handler) http.Handler {
 
 		level := slog.LevelInfo
 		switch {
+		case rec.status == http.StatusServiceUnavailable:
+			// Maintenance, on purpose.
+			level = slog.LevelWarn
 		case rec.status >= 500:
 			level = slog.LevelError
 		case r.URL.Path == "/health":
 			level = slog.LevelDebug
 		}
-		slog.Log(r.Context(), level, "request",
+		attrs := []any{
 			"method", r.Method,
 			"path", r.URL.Path,
 			"status", rec.status,
 			"duration_ms", time.Since(start).Milliseconds(),
-		)
+		}
+		if info := InfoFrom(r.Context()); info != nil {
+			attrs = append(attrs, "db_ms", info.DB().Milliseconds())
+			if info.AppVersion != "" {
+				attrs = append(attrs, "app_version", info.AppVersion)
+			}
+		}
+		slog.Log(r.Context(), level, RequestLogMessage, attrs...)
 	})
 }

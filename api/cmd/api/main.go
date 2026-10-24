@@ -16,6 +16,7 @@ import (
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/middleware"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/platform"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/telemetry"
 )
 
 func main() {
@@ -28,7 +29,15 @@ func main() {
 		slog.Error("config", "err", err)
 		os.Exit(1)
 	}
-	platform.SetupLog("api", cfg.Env, cfg.LogLevel)
+	tel, err := telemetry.New(telemetry.Config{
+		Key: cfg.PostHogKey, FlagsKey: cfg.PostHogFlagsKey, Host: cfg.PostHogHost, FlagsPoll: cfg.FlagsPoll,
+	})
+	if err != nil {
+		slog.Error("posthog", "err", err)
+		os.Exit(1)
+	}
+	defer tel.Close()
+	platform.SetupLog("api", cfg.Env, cfg.LogLevel, tel.Enqueuer())
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -47,9 +56,10 @@ func main() {
 		Sessions:     auth.NewSessions(q),
 		Supabase:     auth.NewSupabase(cfg.SupabaseURL, cfg.SupabaseKey),
 		TestLoginKey: cfg.TestLoginKey,
+		Telemetry:    tel,
 	})
 
-	if err := platform.Serve(ctx, ":"+cfg.Port, middleware.Standard(mux, cfg.RequestTimeout, cfg.EdgeSecret), cfg.ShutdownTimeout); err != nil {
+	if err := platform.Serve(ctx, ":"+cfg.Port, middleware.Standard(mux, middleware.Options{RequestTimeout: cfg.RequestTimeout, EdgeSecret: cfg.EdgeSecret, MinAppVersions: cfg.MinAppVersions}), cfg.ShutdownTimeout); err != nil {
 		slog.Error("server", "err", err)
 		os.Exit(1)
 	}

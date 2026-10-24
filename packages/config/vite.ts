@@ -21,6 +21,20 @@ const contract = createHash("sha256")
     .digest("hex")
     .slice(0, 12);
 
+const APP_COMMIT = (process.env.APP_COMMIT ?? "dev").slice(0, 7);
+// The release's version, "staging" or "preview" (deploy.yml, pages.yml); "dev" locally.
+const APP_VERSION = process.env.APP_VERSION ?? "dev";
+// X-App-Version, on every request: "seller@2026.10.3+a1b2c3d".
+const appTag = (app: AppConfig) => `${app.id}@${APP_VERSION}+${APP_COMMIT}`;
+
+// Errors from the very start, kept until the shell sends them with the page views (shell/events.ts).
+// At most 20 a page load, so an error in a loop cannot flood.
+const EARLY_EVENTS =
+    'window.__events=[];(function(){var n=0;function k(e,m,s){if(n++<20)__events.push({type:"error",name:e||"Error",' +
+    'message:String(m||"").slice(0,2000),stack:String(s||"").slice(0,8000),path:location.pathname,at:new Date().toISOString()})}' +
+    'addEventListener("error",function(e){var r=e.error;k(r&&r.name,r?r.message:e.message,r&&r.stack)});' +
+    'addEventListener("unhandledrejection",function(e){var r=e.reason;k(r&&r.name||"UnhandledRejection",r&&r.message||r,r&&r.stack)})})()';
+
 // The routes drawn on first open; the bundle-size check counts what this preloads.
 const FIRST_SCREEN = [/src\/routes\/_shell\.tsx/, /src\/routes\/_shell\/index\.tsx/];
 
@@ -143,7 +157,9 @@ function appHtml(app: AppConfig): Plugin {
                 {
                     tag: "script",
                     // /me starts with the page, not after the JavaScript: one round trip less (useMe takes it).
-                    children: `if(location.pathname!=="/login")window.__me=fetch("/api/me").catch(function(){return null})`,
+                    children:
+                        `${EARLY_EVENTS};if(location.pathname!=="/login")window.__me=fetch("/api/me",` +
+                        `{headers:{"X-App-Version":${JSON.stringify(appTag(app))}}}).catch(function(){return null})`,
                     injectTo: "head-prepend",
                 },
                 {
@@ -166,7 +182,9 @@ function appHtml(app: AppConfig): Plugin {
 export function appConfig(app: AppConfig) {
     return defineConfig({
         define: {
-            __APP_COMMIT__: JSON.stringify((process.env.APP_COMMIT ?? "dev").slice(0, 7)),
+            __APP_COMMIT__: JSON.stringify(APP_COMMIT),
+            __APP_VERSION__: JSON.stringify(APP_VERSION),
+            __APP_TAG__: JSON.stringify(appTag(app)),
             __API_CONTRACT__: JSON.stringify(contract),
         },
         plugins: [

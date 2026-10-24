@@ -18,6 +18,7 @@ import (
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/handler"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/middleware"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/version"
 )
 
 const (
@@ -46,17 +47,30 @@ type API struct {
 // NewAPI serves the API on pool. supabaseURL is a fake Supabase, or "" when sign-in is not under test.
 func NewAPI(t *testing.T, pool *pgxpool.Pool, supabaseURL string) *API {
 	t.Helper()
+	return NewAPIWith(t, pool, Options{SupabaseURL: supabaseURL})
+}
+
+type Options struct {
+	SupabaseURL    string
+	MinAppVersions map[string]version.Release
+	// Flags replaces PostHog's; nil has every flag off.
+	Flags auth.Flags
+}
+
+func NewAPIWith(t *testing.T, pool *pgxpool.Pool, o Options) *API {
+	t.Helper()
 	q := store.New(pool)
 	sessions := auth.NewSessions(q)
 	mux := http.NewServeMux()
 	api := handler.NewAPI(mux, handler.Deps{
 		Queries:      q,
 		Sessions:     sessions,
-		Supabase:     auth.NewSupabase(supabaseURL, "test-publishable-key"),
+		Supabase:     auth.NewSupabase(o.SupabaseURL, "test-publishable-key"),
 		Limiter:      auth.NewLimiter(10, time.Minute),
 		TestLoginKey: TestLoginKey,
+		Flags:        o.Flags,
 	})
-	srv := httptest.NewServer(middleware.Standard(mux, 5*time.Second, EdgeSecret))
+	srv := httptest.NewServer(middleware.Standard(mux, middleware.Options{RequestTimeout: 5 * time.Second, EdgeSecret: EdgeSecret, MinAppVersions: o.MinAppVersions}))
 	t.Cleanup(srv.Close)
 	return &API{URL: srv.URL, Huma: api, Sessions: sessions}
 }
@@ -81,9 +95,22 @@ func Session(token string) *http.Cookie { return &http.Cookie{Name: auth.CookieN
 // Request is a call as the forwarder makes it: edge secret, app and its address set.
 func (a *API) Request(t *testing.T, method, path, app string, cookies ...*http.Cookie) *http.Response {
 	t.Helper()
-	req, err := http.NewRequest(method, a.URL+path, strings.NewReader(""))
+	return a.Send(t, method, path, app, "", nil, cookies...)
+}
+
+// Send is Request with a JSON body and headers ("Name: value" each).
+func (a *API) Send(t *testing.T, method, path, app, body string, headers []string, cookies ...*http.Cookie) *http.Response {
+	t.Helper()
+	req, err := http.NewRequest(method, a.URL+path, strings.NewReader(body))
 	if err != nil {
 		t.Fatal(err)
+	}
+	if body != "" {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	for _, h := range headers {
+		k, v, _ := strings.Cut(h, ":")
+		req.Header.Set(k, strings.TrimSpace(v))
 	}
 	req.Header.Set("X-Edge-Secret", EdgeSecret)
 	req.Header.Set("X-App", app)
