@@ -84,3 +84,15 @@ WHERE tenant_id = @tenant_id AND user_id = @user_id AND date = @date AND status 
 -- The old app's audit log, written the same way while both apps run.
 INSERT INTO tenant_activity_logs (tenant_id, user_id, store_id, type, ref_id, ref_table, metadata)
 VALUES (@tenant_id, @user_id, sqlc.narg(store_id), @type, sqlc.narg(ref_id), sqlc.narg(ref_table), @metadata);
+
+-- name: CountPayoutPending :one
+SELECT ((SELECT count(*) FROM payroll_commissions pc WHERE pc.payout_id = @id::uuid AND pc.tenant_id = @tenant_id::uuid AND pc.status = 'pending')
+    + (SELECT count(*) FROM payroll_claims cl WHERE cl.payout_id = @id::uuid AND cl.tenant_id = @tenant_id::uuid AND cl.status = 'pending'))::int;
+
+-- name: SettlePayout :execrows
+-- Only a payout still pending: settling twice would rewrite who paid it, when, and the proof.
+-- paid_at and paid_by are written for a skip too: who closed the period, and when.
+UPDATE payroll_payouts SET status = @status, paid_at = now(), paid_by = @paid_by,
+    payment_proof_url = COALESCE(sqlc.narg(payment_proof_url), payment_proof_url),
+    notes = COALESCE(sqlc.narg(notes), notes)
+WHERE id = @id AND tenant_id = @tenant_id AND status = 'pending';

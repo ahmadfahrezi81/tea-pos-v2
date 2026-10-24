@@ -662,6 +662,7 @@ components:
             - app_too_old
             - auto_needs_hours
             - bad_cursor
+            - bad_proof
             - bad_range
             - bad_request
             - claim_not_found
@@ -682,8 +683,11 @@ components:
             - not_found
             - not_in_tenant
             - not_signed_in
+            - payout_not_due
             - payout_not_found
+            - payout_pending_review
             - payout_settled
+            - proof_required
             - route_not_found
             - staff_not_found
             - store_not_found
@@ -1455,6 +1459,26 @@ components:
             - "null"
       required:
         - commissionTypeId
+      type: object
+    SettlePayoutInputBody:
+      additionalProperties: false
+      properties:
+        notes:
+          description: For the staff member, on their payslip; cannot be changed after
+          maxLength: 500
+          type: string
+        paymentProofUrl:
+          description: The transfer screenshot's address from POST /files (purpose payroll_proof); needed to pay
+          maxLength: 1000
+          type: string
+        status:
+          description: "skipped: nothing owed, no transfer"
+          enum:
+            - paid
+            - skipped
+          type: string
+      required:
+        - status
       type: object
     TeaWasteDay:
       additionalProperties: false
@@ -2529,6 +2553,45 @@ paths:
                 $ref: "#/components/schemas/Error"
           description: Error
       summary: Approve or reject every still-pending commission and claim of a payout's day
+      tags:
+        - pay
+      x-access:
+        roles:
+          - ADMIN
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/pay/payouts/{id}/settle:
+    post:
+      operationId: settlePayout
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettlePayoutInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Pay a payout (with the transfer screenshot) or skip it (nothing owed)
       tags:
         - pay
       x-access:

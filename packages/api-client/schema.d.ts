@@ -399,6 +399,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{tenant}/pay/payouts/{id}/settle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pay a payout (with the transfer screenshot) or skip it (nothing owed) */
+        post: operations["settlePayout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{tenant}/pay/period": {
         parameters: {
             query?: never;
@@ -859,7 +876,7 @@ export interface components {
              * @example day_already_closed
              * @enum {string}
              */
-            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_cursor" | "bad_range" | "bad_request" | "claim_not_found" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "payout_not_found" | "payout_settled" | "route_not_found" | "staff_not_found" | "store_not_found" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
+            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_cursor" | "bad_proof" | "bad_range" | "bad_request" | "claim_not_found" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "proof_required" | "route_not_found" | "staff_not_found" | "store_not_found" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
             details?: string[] | null;
             /** @example The day is already closed */
             message: string;
@@ -1226,6 +1243,17 @@ export interface components {
              * @description Null takes it away
              */
             commissionTypeId: string | null;
+        };
+        SettlePayoutInputBody: {
+            /** @description For the staff member, on their payslip; cannot be changed after */
+            notes?: string;
+            /** @description The transfer screenshot's address from POST /files (purpose payroll_proof); needed to pay */
+            paymentProofUrl?: string;
+            /**
+             * @description skipped: nothing owed, no transfer
+             * @enum {string}
+             */
+            status: "paid" | "skipped";
         };
         TeaWasteDay: {
             /** Format: date */
@@ -2161,6 +2189,40 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ReviewDayOutputBody"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    settlePayout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SettlePayoutInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

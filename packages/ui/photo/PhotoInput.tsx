@@ -16,12 +16,15 @@ export function PhotoInput({
     upload,
     children,
     failedLabel,
+    screenshot = false,
 }: {
     upload: (photo: Blob, onProgress: (fraction: number) => void) => Promise<unknown>;
     /** What the empty tile says (already translated). */
     children: ReactNode;
     /** What a failed upload says, tap to try again (already translated). */
     failedLabel: ReactNode;
+    /** A screenshot (a transfer receipt): from the gallery, never cropped. */
+    screenshot?: boolean;
 }) {
     const input = useRef<HTMLInputElement>(null);
     const [state, setState] = useState<State>({ at: "idle" });
@@ -41,7 +44,7 @@ export function PhotoInput({
         setState({ at: "shrinking" });
         const { shrinkPhoto } = await import("./shrink");
         try {
-            await send(await shrinkPhoto(file));
+            await send(await shrinkPhoto(file, !screenshot));
         } catch {
             setState({ at: "idle" });
         }
@@ -75,7 +78,7 @@ export function PhotoInput({
                 ref={input}
                 type="file"
                 accept="image/*"
-                capture="environment"
+                capture={screenshot ? undefined : "environment"}
                 className="hidden"
                 onChange={(e) => void take(e.target.files?.[0])}
             />

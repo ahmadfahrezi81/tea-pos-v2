@@ -16,3 +16,10 @@ The owner asked for the backoffice to be built overnight, merged to staging when
 - **Built as one step and one PR:** in v1 the day review (Step 21) and claim decisions (Step 22) are the same screen, the payslip, reached from Staff Payouts; splitting them would build that screen twice. Step 23 (settling a payout) stays its own
 - **The payouts list and the payslip are read in Go,** each in one request (v1: the list joins users and pay info on the phone; the payslip makes three requests)
 - **Every decision keeps v1's rules:** a decision on a settled (paid or skipped) payout's day is refused; a whole day decides only its still-pending rows, so a double tap never overturns a decision; each decision writes the same activity log entries as v1 (`payroll_commission_updated`, `claim_status_updated`; a day: one entry per table with its count)
+
+## Step 23 — paying a payout
+
+- **Two rules checked in Go as well as on the screen:** the period must have reached its last day, and paying needs the screenshot. v1 checks both only in the screen; a stale tab or a retried request would slip past it. The screenshot must be one uploaded for this tenant's payroll proofs
+- **Kept as v1:** skip versus pay is the screen's call from the total (v1's comment: what a zero total means is a judgement about the period, not a fact the server enforces); `paid_at`/`paid_by` are written for a skip too
+- **The screenshot is taken from the gallery and never cropped** (a new option on the shared photo input): the camera photos' 4:3 crop would cut a transfer receipt in half
+- **Compared with v1:** the pay calendar for every day of Dec 2024-2027 and each frequency (3,378 windows, 0 differ), and the totals of every payout on staging against v1's arithmetic (13, 0 differ). Staging holds only 13 payouts; production's comparison is part of the cutover (Step 25)

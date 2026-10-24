@@ -247,7 +247,11 @@
         "commission_not_found": "Komisi tidak ditemukan.",
         "claim_not_found": "Klaim tidak ditemukan.",
         "day_not_in_payout": "Hari itu di luar periode pembayaran ini.",
-        "payout_settled": "Pembayaran ini sudah dibayar atau dilewati, jadi keputusannya tidak bisa diubah."
+        "payout_settled": "Pembayaran ini sudah dibayar atau dilewati, jadi keputusannya tidak bisa diubah.",
+        "payout_not_due": "Periode ini belum sampai hari terakhirnya.",
+        "payout_pending_review": "Semua komisi dan klaim harus ditinjau dulu.",
+        "proof_required": "Membayar butuh tangkapan layar transfer.",
+        "bad_proof": "Tangkapan layar itu bukan bukti gaji usaha ini."
     },
     "store": {
         "title": "Toko",

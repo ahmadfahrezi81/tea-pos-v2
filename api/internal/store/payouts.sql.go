@@ -11,6 +11,23 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countPayoutPending = `-- name: CountPayoutPending :one
+SELECT ((SELECT count(*) FROM payroll_commissions pc WHERE pc.payout_id = $1::uuid AND pc.tenant_id = $2::uuid AND pc.status = 'pending')
+    + (SELECT count(*) FROM payroll_claims cl WHERE cl.payout_id = $1::uuid AND cl.tenant_id = $2::uuid AND cl.status = 'pending'))::int
+`
+
+type CountPayoutPendingParams struct {
+	ID       pgtype.UUID
+	TenantID pgtype.UUID
+}
+
+func (q *Queries) CountPayoutPending(ctx context.Context, arg CountPayoutPendingParams) (int32, error) {
+	row := q.db.QueryRow(ctx, countPayoutPending, arg.ID, arg.TenantID)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const getClaimRef = `-- name: GetClaimRef :one
 SELECT user_id, date FROM payroll_claims WHERE id = $1 AND tenant_id = $2
 `
@@ -435,4 +452,37 @@ type SetCommissionStatusParams struct {
 func (q *Queries) SetCommissionStatus(ctx context.Context, arg SetCommissionStatusParams) error {
 	_, err := q.db.Exec(ctx, setCommissionStatus, arg.Status, arg.ID, arg.TenantID)
 	return err
+}
+
+const settlePayout = `-- name: SettlePayout :execrows
+UPDATE payroll_payouts SET status = $1, paid_at = now(), paid_by = $2,
+    payment_proof_url = COALESCE($3, payment_proof_url),
+    notes = COALESCE($4, notes)
+WHERE id = $5 AND tenant_id = $6 AND status = 'pending'
+`
+
+type SettlePayoutParams struct {
+	Status          string
+	PaidBy          pgtype.UUID
+	PaymentProofUrl pgtype.Text
+	Notes           pgtype.Text
+	ID              pgtype.UUID
+	TenantID        pgtype.UUID
+}
+
+// Only a payout still pending: settling twice would rewrite who paid it, when, and the proof.
+// paid_at and paid_by are written for a skip too: who closed the period, and when.
+func (q *Queries) SettlePayout(ctx context.Context, arg SettlePayoutParams) (int64, error) {
+	result, err := q.db.Exec(ctx, settlePayout,
+		arg.Status,
+		arg.PaidBy,
+		arg.PaymentProofUrl,
+		arg.Notes,
+		arg.ID,
+		arg.TenantID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
