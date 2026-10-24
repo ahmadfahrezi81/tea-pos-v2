@@ -15,25 +15,20 @@ RFC: At a glance (photo uploads, signed URLs), Supabase stays for files. Build o
 ## The plan
 
 1. **Go signs, the phone uploads:** `POST /api/files/upload` (signed in, per tenant) takes what the file is for (`purpose`: `daily_photo`, `expense`, `report`, `product_image`, `avatar`, `payroll_proof`) and its size; Go checks the caller may upload that kind, picks the bucket and a path (`<tenant>/<purpose>/<date>/<uuid>.webp`, never the phone's file name), and returns a signed upload URL valid for a few minutes. The phone PUTs the file straight to Supabase: the photo never passes through Railway
-2. **Reading:** private buckets only; `GET` routes that return a photo return a short-lived signed read URL, made by Go for callers allowed to see it (one helper, `internal/files`). The bucket rules stay in Go, not in Supabase policies
-3. **Shrunk on the phone first** (`packages/ui` `PhotoInput`, its code loaded only when a photo is taken): longest side 1600 px, WebP at quality 0.8 (JPEG where WebP encoding is missing), done off the main thread (`createImageBitmap` and `OffscreenCanvas` in a worker where supported). A 4 MB camera photo becomes about 200-300 KB: about 10× less to send on slow 4G. Orientation fixed from the photo's own data
+2. **The same buckets as v1** (`daily-photos`, `payroll-proofs`, `product-images`, `avatars`, `store-reports`, `store-requests`; shared while both apps run), read the way v1 reads them: public addresses where v1 uses them, a short-lived signed read URL from Go for private ones (`daily-photos`), only for callers allowed to see it (one helper, `internal/files`)
+3. **Shrunk on the phone first, as v1 does** (owner, 2026-10-24: keep v1's settings, as small as possible): longest side 1080 px, WebP at quality 0.6 (JPEG at 0.7 where WebP encoding is missing, as on iOS), at most 0.4 MB (if still larger, encoded again at a lower quality), orientation from the photo's own data, and photos wider than 4:3 (or taller than 3:4) cropped to it. Three changes from v1: **no library** (v1 uses `browser-image-compression`, about 20 KB; the browser's own `createImageBitmap` and canvas do the same, off the main thread where `OffscreenCanvas` exists); **straight to Supabase** (v1 sends each photo through a Vercel route, phone → Vercel → Supabase, twice over slow 4G); **the crop in both apps** (v1 crops in seller only). In `packages/ui` `PhotoInput`, its code loaded only when a photo is taken. A camera photo leaves at about 100-300 KB
 4. **Retried:** an upload that fails (no signal, timeout) is tried again with backoff while the app is open, with its progress shown; the screen's save waits for it. The file is kept in memory, not on the phone (offline queues come after every store runs v2)
 5. **Secret key:** `SUPABASE_SECRET_KEY` for `api` (Infisical, `preserve()`); config refuses to start the API without it, like the other secrets
-6. **Tests:** integration tests against a fake Storage: a seller cannot get an upload URL for another tenant, nor for a purpose their role may not upload; paths never contain the phone's file name; a read URL is only signed for an allowed caller. A browser check that a 4000×3000 photo leaves the phone under 400 KB, measured on the 20× throttled profile for the time it takes
+6. **Tests:** integration tests against a fake Storage: a seller cannot get an upload URL for another tenant, nor for a purpose their role may not upload; paths never contain the phone's file name; a read URL is only signed for an allowed caller. A browser check that a 4000×3000 photo leaves the phone under 0.4 MB, and no larger than v1's for the same photo, measured on the 20× throttled profile for the time it takes
 
 ## Owner's part
 
 - **Supabase:** the project's secret key (Project settings → API keys → Secret key; for staging and production) into Infisical `staging` and `prod`, path `/app`, as `SUPABASE_SECRET_KEY`. I'll write the clicks
 
-## Open questions
-
-1. **WebP or JPEG:** WebP is about 30% smaller at the same quality and every phone we support shows it; JPEG only as the fallback. I recommend WebP
-2. **The size and quality (1600 px, 0.8):** enough to read a receipt and see a store's display, at about a quarter of today's upload. Your call if photos must stay sharper
-
 ## Done when
 
 - One photo through the whole path on staging: shrunk on the phone, uploaded straight to Storage, shown back through a signed read URL
-- A photo taken on a 20× throttled profile is shrunk without freezing the screen, and leaves at under 400 KB
+- A photo taken on a 20× throttled profile is shrunk without freezing the screen, and leaves at under 0.4 MB, the same size as v1's
 - An upload interrupted halfway (network cut in DevTools) finishes by itself when the network returns
 - A seller of another tenant gets 403 for an upload URL and for a read URL
 

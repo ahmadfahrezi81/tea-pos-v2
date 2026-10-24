@@ -16,10 +16,10 @@ RFC: One component library, The backend decides (permissions as flags). Build or
 ## The plan
 
 1. **The tenant in the address:** every screen under `/<tenant>/…` (TanStack Router), as the old app; `/` goes to the user's tenant (the only one, or the last used). The API's tenant routes already take the slug
-2. **The chosen store:** the store the app works in, kept on the phone per user (default: `isDefault` from `/me`); a switcher in the header when the user has more than one; changing it changes every screen's queries (the store id is part of their keys)
+2. **One store picker for both apps** (the old backoffice's `StorePickerDrawer`, moved into the shell): kept on the phone per user, changing it changes every screen's queries (the store id is part of their keys). Two settings, as the old apps differ on purpose: **seller** works in one store and must pick one (default: `isDefault` from `/me`); **backoffice** looks at stores and also offers **All stores**, its default, with "hide inactive stores" as today
 3. **`useFlag(key)`:** the flag for the chosen store (its `flags` from `/me`), falling back to the user's; no flag code elsewhere. Reminder in its comment: the route behind it must check too (the RFC's rule)
 4. **Account** (both apps, one screen): name and avatar (avatar upload through 017c), email, role, the language switch (saved to the profile: `PATCH /api/me`, and the phone's copy), sign out, sign out everywhere (017b sends the other phones to sign-in), the version and commit (from 016b; the status rows move here from home)
-5. **What's new** (both apps, one screen): the release notes' "For users" lines, in English and Indonesian, per app. They live in the repo as `packages/shell/whats-new/<locale>.json` (newest first, each entry tagged with its apps), loaded only when the screen opens; the `release` skill adds the entries in a small PR to `staging` before the release PR, so the tag, the GitHub Release and the screen say the same. A dot on More when there is an entry the user has not seen
+5. **What's new** (both apps, one screen): the release notes' "For users" lines, in English and Indonesian, per app, starting empty (owner, 2026-10-24). **Written by the `release` skill, not by hand:** before the release PR it takes the "For users" lines, writes their Indonesian, tags each with its apps, and adds them to `packages/shell/whats-new.json` in a small PR to `staging`, so the GitHub Release and the screen say the same. Loaded only when the screen opens; a dot on More while there is an entry the user has not seen
 6. **More** (both apps): the menu that holds Account, What's new, and each app's own entries (registered by the app: `staticData`, like the shell's titles)
 7. **Tests:** integration: `PATCH /api/me` changes only the caller's language and rejects an unknown one. In the app: switching the store refetches the screen with the new store; a flag off for one store and on for another follows the switch
 
@@ -27,14 +27,9 @@ RFC: One component library, The backend decides (permissions as flags). Build or
 
 None.
 
-## Open questions
-
-1. **Backoffice and the chosen store:** the backoffice today shows every store of the tenant, with no store chosen. Keep it that way (no switcher in backoffice; a screen that needs one store asks for it), or give it the same switcher? I recommend no switcher in backoffice
-2. **Old patch notes:** start v2's What's new empty, or copy the old app's recent entries? I recommend empty: v2 is a new app, and its first entry says so
-
 ## Done when
 
-- Both apps open on `/<tenant>/`, and a user with two stores switches between them; every screen follows
+- Both apps open on `/<tenant>/`; a seller with two stores switches between them, the backoffice between All stores and one; every screen follows
 - Account changes the language at once and keeps it on the next open, on another phone too
 - What's new shows the latest release's "For users" lines in the user's language, with a dot until seen
 - The first screen does not grow: Account, More and What's new load when opened
