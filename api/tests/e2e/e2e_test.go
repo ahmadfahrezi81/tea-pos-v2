@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
 )
@@ -100,6 +101,22 @@ func TestHealth_RunsTheCommitUnderTest(t *testing.T) {
 		if want != "" && body["commit"] != want {
 			t.Errorf("%s runs %v, want %s", app, body["commit"], want)
 		}
+		if body["version"] != "staging" {
+			t.Errorf("%s says version %v, want staging", app, body["version"])
+		}
+	}
+}
+
+func TestMonitoring_TimingAndEventsReachThePhone(t *testing.T) {
+	p := newPhone(t, seller)
+	mustSignIn(t, p, "seller@test-a.test")
+	resp, _ := p.do(http.MethodGet, "/me", "", nil)
+	if st := resp.Header.Get("Server-Timing"); !strings.Contains(st, "db;dur=") {
+		t.Errorf("Server-Timing through the forwarder: %q", st)
+	}
+	at := time.Now().UTC().Format(time.RFC3339)
+	if resp, body := p.do(http.MethodPost, "/events", `{"events":[{"type":"pageview","path":"/e2e","at":"`+at+`"}]}`, nil); resp.StatusCode != http.StatusNoContent {
+		t.Errorf("/events: status %d %v", resp.StatusCode, body["code"])
 	}
 }
 

@@ -5,7 +5,8 @@
     "exports": {
         ".": "./index.ts",
         "./query": "./query.ts",
-        "./me": "./me.ts"
+        "./me": "./me.ts",
+        "./status": "./status.ts"
     },
     "scripts": {
         "generate": "openapi-typescript ../../api/openapi.yaml -o schema.d.ts",
@@ -26,6 +27,7 @@
     },
     "devDependencies": {
         "@tanstack/react-query": "5.104.5",
+        "@types/react": "19.3.0",
         "openapi-typescript": "7.13.0",
         "react": "19.3.1"
     }

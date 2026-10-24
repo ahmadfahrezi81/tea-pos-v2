@@ -40,11 +40,31 @@ var (
 	errNotInTenant = httpx.New(http.StatusForbidden, "not_in_tenant", "Not allowed in this tenant")
 	errTooMany     = httpx.New(http.StatusTooManyRequests, "too_many_requests", "Too many attempts, try again in a minute")
 	errNoAccess    = httpx.New(http.StatusInternalServerError, "internal", "Something went wrong")
+	errMaintenance = httpx.New(http.StatusServiceUnavailable, "maintenance", "Under maintenance, back soon")
 )
 
-// Middleware enforces each route's Access: rate limit, session, app, role, tenant. A route
-// without an Access is refused, so forgetting one fails closed.
-func Middleware(sessions *Sessions, q *store.Queries, limiter *Limiter) func(huma.Context, func(huma.Context)) {
+// Flags are evaluated in memory (telemetry.Client); a nil one has every flag off.
+type Flags interface {
+	Enabled(key, distinctID string, props map[string]any) bool
+	All(distinctID string, props map[string]any) map[string]bool
+}
+
+// MaintenanceFlag, while on, answers 503 to everyone but admins, who check before reopening.
+const MaintenanceFlag = "ops-maintenance"
+
+// FlagProps is who the caller is, for flag rules on role, app and (tenant routes) tenantId.
+// The names are v1's, so its rules keep working; v1 sends no app.
+func FlagProps(c Caller) map[string]any {
+	p := map[string]any{"role": c.Role, "app": c.App}
+	if c.TenantID.Valid {
+		p["tenantId"] = c.TenantID.String()
+	}
+	return p
+}
+
+// Middleware enforces each route's Access: rate limit, session, app, role, tenant, maintenance.
+// A route without an Access is refused, so forgetting one fails closed.
+func Middleware(sessions *Sessions, q *store.Queries, limiter *Limiter, flags Flags) func(huma.Context, func(huma.Context)) {
 	return func(ctx huma.Context, next func(huma.Context)) {
 		access, ok := ctx.Operation().Metadata[metadataKey].(Access)
 		if !ok {
@@ -84,6 +104,8 @@ func Middleware(sessions *Sessions, q *store.Queries, limiter *Limiter) func(hum
 		}
 
 		caller := Caller{UserID: session.UserID, Role: session.Role, App: app, token: cookie.Value}
+		info := middleware.InfoFrom(ctx.Context())
+		info.SetCaller(caller.UserID.String(), "")
 		if access.Tenant {
 			tenantID, err := q.GetUserTenant(ctx.Context(), store.GetUserTenantParams{
 				Slug:   ctx.Param("tenant"),
@@ -99,6 +121,12 @@ func Middleware(sessions *Sessions, q *store.Queries, limiter *Limiter) func(hum
 				return
 			}
 			caller.TenantID = tenantID
+			info.SetCaller(caller.UserID.String(), tenantID.String())
+		}
+		// After the tenant, so a rule can name one; routes outside a tenant match on role and app only.
+		if caller.Role != "ADMIN" && flags.Enabled(MaintenanceFlag, caller.UserID.String(), FlagProps(caller)) {
+			write(ctx, errMaintenance)
+			return
 		}
 
 		if renewed {

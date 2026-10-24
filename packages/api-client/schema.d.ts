@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Errors and page views from an app, for PostHog */
+        post: operations["sendEvents"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -93,6 +110,21 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AppEvent: {
+            /**
+             * Format: date-time
+             * @description The phone's clock; Go uses its own when this is far off
+             */
+            at: string;
+            message?: string;
+            /** @example TypeError */
+            name?: string;
+            /** @example /test-a/home */
+            path: string;
+            stack?: string;
+            /** @enum {string} */
+            type: "error" | "pageview";
+        };
         Error: {
             /** @example day_already_closed */
             code: string;
@@ -105,6 +137,9 @@ export interface components {
              */
             status: number;
         };
+        EventsInputBody: {
+            events: components["schemas"]["AppEvent"][];
+        };
         HealthOutputBody: {
             /** @example a1b2c3d */
             commit: string;
@@ -114,6 +149,10 @@ export interface components {
             version: string;
         };
         Me: {
+            /** @description The feature flags on for this user (rules on role and app); a store's own are on the store */
+            flags: {
+                [key: string]: boolean;
+            };
             /** @description Empty when the user belongs to no tenant */
             tenants: components["schemas"]["MeTenant"][];
             user: components["schemas"]["MeUser"];
@@ -121,6 +160,10 @@ export interface components {
         MeStore: {
             /** @example 22:00 */
             closeTime: string;
+            /** @description The feature flags on at this store (rules on tenantId and storeId); a flag not listed is off */
+            flags: {
+                [key: string]: boolean;
+            };
             /** Format: uuid */
             id: string;
             /** @description The store this user's app opens on */
@@ -244,6 +287,37 @@ export interface operations {
             204: {
                 headers: {
                     "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    sendEvents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EventsInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
                     [name: string]: unknown;
                 };
                 content?: never;

@@ -14,6 +14,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/platform"
 )
 
 // Roles Supabase has and a plain Postgres lacks; cluster-wide, so made once per server.
@@ -65,6 +67,7 @@ func DB(t *testing.T) *pgxpool.Pool {
 	}
 	cfg.ConnConfig.Database = name
 	load(t, ctx, cfg.ConnConfig)
+	cfg.ConnConfig.Tracer = platform.DBTimer{}
 
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {

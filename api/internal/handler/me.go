@@ -50,10 +50,14 @@ func registerMe(api huma.API, d Deps) {
 				Language:  me.PreferredLanguage,
 			},
 			Tenants: make([]contract.MeTenant, 0, len(tenants)),
+			Flags:   d.Flags.All(caller.UserID.String(), auth.FlagProps(caller)),
 		}}
 		byTenant := map[string][]contract.MeStore{}
 		for _, s := range stores {
 			id := s.TenantID.String()
+			// In memory, no network: a few stores cost microseconds.
+			props := auth.FlagProps(caller)
+			props["tenantId"], props["storeId"] = id, s.ID.String()
 			byTenant[id] = append(byTenant[id], contract.MeStore{
 				ID:        s.ID.String(),
 				Name:      s.Name,
@@ -61,6 +65,7 @@ func registerMe(api huma.API, d Deps) {
 				OpenTime:  s.OpenTime,
 				CloseTime: s.CloseTime,
 				IsDefault: s.IsDefault,
+				Flags:     d.Flags.All(caller.UserID.String(), props),
 			})
 		}
 		for _, t := range tenants {

@@ -15,6 +15,7 @@ import { createRoot } from "react-dom/client";
 
 import { AppContext } from "./AppContext";
 import { AppUpdateProvider } from "./AppUpdate";
+import { reportError, startEvents } from "./events";
 import { savedUser } from "./session";
 import { hideSplash } from "./splash";
 import { trackFirstLoads } from "./trackFirstLoads";
@@ -31,6 +32,7 @@ export function createAppRouter<TRouteTree extends AnyRoute>(routeTree: TRouteTr
         // Per history entry: back returns to where you were, a new screen starts at the top.
         scrollRestoration: true,
         scrollToTopSelectors: ["#shell-scroll"],
+        defaultOnCatch: reportError,
     });
 }
 
@@ -41,6 +43,7 @@ export async function startApp(router: ReturnType<typeof createAppRouter>, app: 
         offRendered();
         if (!router.state.matches.some((m) => m.staticData.holdsSplash)) hideSplash();
     });
+    startEvents(router);
     // index.html already picked it, to preload that file; the same rule as pickLocale.
     const locale =
         (document.documentElement.dataset.locale as Locale | undefined) ?? pickLocale(app.locales);

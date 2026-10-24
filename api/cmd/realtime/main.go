@@ -25,7 +25,7 @@ func main() {
 		slog.Error("config", "err", err)
 		os.Exit(1)
 	}
-	platform.SetupLog("realtime", cfg.Env, cfg.LogLevel)
+	platform.SetupLog("realtime", cfg.Env, cfg.LogLevel, nil)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -40,7 +40,7 @@ func main() {
 	mux := http.NewServeMux()
 	handler.NewHealth(mux)
 
-	if err := platform.Serve(ctx, ":"+cfg.Port, middleware.Standard(mux, cfg.RequestTimeout, cfg.EdgeSecret), cfg.ShutdownTimeout); err != nil {
+	if err := platform.Serve(ctx, ":"+cfg.Port, middleware.Standard(mux, middleware.Options{RequestTimeout: cfg.RequestTimeout, EdgeSecret: cfg.EdgeSecret, MinAppVersions: cfg.MinAppVersions}), cfg.ShutdownTimeout); err != nil {
 		slog.Error("server", "err", err)
 		os.Exit(1)
 	}

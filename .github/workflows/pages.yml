@@ -12,6 +12,9 @@ on:
             sha:
                 type: string
                 default: ""
+            version:
+                type: string
+                default: ""
     pull_request:
         branches: [staging]
         paths:
@@ -49,6 +52,7 @@ jobs:
             WRANGLER: npx -y wrangler@4.151.3
             BRANCH: ${{ inputs.production && 'main' || github.head_ref || github.ref_name }}
             APP_COMMIT: ${{ inputs.sha || github.event.pull_request.head.sha || github.sha }}
+            APP_VERSION: ${{ inputs.version || 'preview' }}
             PAGES_ENV: ${{ inputs.production && 'production' || 'preview' }}
             EDGE_SECRET: ${{ inputs.production && secrets.EDGE_SECRET_PRODUCTION || secrets.EDGE_SECRET_STAGING }}
         defaults:
