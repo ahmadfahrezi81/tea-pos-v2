@@ -8,7 +8,7 @@
     inset-inline: 0;
     top: 0;
     z-index: 10;
-    height: 2px;
+    height: 3px;
     overflow: hidden;
     pointer-events: none;
     /* Never hidden with opacity, so its layer stays alive; at rest it sits off-screen. */

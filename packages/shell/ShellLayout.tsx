@@ -6,7 +6,7 @@ import { useEffect, useRef } from "react";
 
 import type { MessageKey } from "@tea-pos/i18n";
 import { ToastHost } from "@tea-pos/ui/toast";
-import { Menu, type LucideIcon } from "lucide-react";
+import { MoreHorizontal, type LucideIcon } from "lucide-react";
 
 import { avatar } from "./avatar";
 import { BootScreen } from "./BootScreen";
@@ -24,6 +24,10 @@ export interface AppTab {
     path: string;
     labelKey: MessageKey;
     icon: LucideIcon;
+    /** Other screens (under the tenant) that light this tab up. */
+    also?: string[];
+    /** Its other face inside part of the app (seller's POS shows as Manage in manage). */
+    variant?: { path: string; labelKey: MessageKey; icon: LucideIcon };
 }
 
 /** The layout route every app's screens sit in, with the app's tabs. */
@@ -67,11 +71,17 @@ function Frame({
     const under = (path: string) => (path ? `${root}/${path}` : root);
     const tabs: Tab[] = slug
         ? [
-              ...own.map((t) => ({ ...t, path: under(t.path), matchPaths: [under(t.path)] })),
+              ...own.map((t) => ({
+                  path: under(t.path),
+                  labelKey: t.labelKey,
+                  icon: t.icon,
+                  matchPaths: [t.path, ...(t.also ?? [])].map(under),
+                  variant: t.variant && { ...t.variant, pathContains: under(t.variant.path) },
+              })),
               {
                   path: `${root}/more`,
                   labelKey: unseen ? "nav.moreNew" : "nav.more",
-                  icon: Menu,
+                  icon: MoreHorizontal,
                   matchPaths: [`${root}/more`],
               },
           ]

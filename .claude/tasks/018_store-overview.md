@@ -44,3 +44,14 @@ RFC: Build order Step 18 (owner, 2026-10-24: Store for the stores, Pay for the p
 - Analytics (the list of days, the charts page, a day's detail): Step 19
 - Orders and its chart: Step 19b
 - The Pay tab: Step 20
+
+## Owner's feedback, 2026-10-24 (on staging)
+
+The frame must feel like v1's, one-to-one in look and use (what runs underneath may differ). Fixed first:
+
+1. **Footer:** v1's full tab bars, with screens not built yet showing v1's "coming soon" card. Backoffice: Store (`LayoutDashboard`), Pay (`DollarSign`), Supply (`Package`), Chats (`MessagesSquare`), More (`MoreHorizontal`). Seller: POS (`ShoppingCart`, Manage `Layers` inside manage), Orders (`ReceiptText`), Analytics (`ChartNoAxesCombined`), Chats, More; the seller opens on POS (v1 has no Home tab)
+2. **Header:** the store as v1 shows it: the name large in the brand colour with `ChevronsUpDown`
+3. **The store sheet** as v1's: pull tab, "Select Store" with the eye switch hiding demo and inactive stores, All Stores first in bold, DEMO and INACTIVE tags, round checks; the shared `Sheet` takes v1's sheet styling
+4. **Menu rows in v1's style, as one component:** `SettingsGroup` and `SettingsRow` (`packages/shell/Settings.tsx`: the icon, the label, the orange chevron, a divider under each row), used by the Store overview's rows and More, and by every later menu (Pay, Supply)
+5. **The loading bar under the header:** 3 px instead of v1's 2 px
+6. **Translations split by screen** (owner's question: why does each step make the first open heavier?): the first open loaded every screen's words. Now the core file (`packages/i18n/en.json`, `id.json`) holds the shell's and each app's first screen's; the Store screens' words (`areas/store.*.json`) load with their routes (`loadArea` in the route's `loader`), and the old app's seller sections not used yet (`areas/seller.*.json`) wait for their screens. First screens: seller 129.3 → 126.0 KB, backoffice 137.1 → 134.2 KB; the backoffice budget is back to 135
