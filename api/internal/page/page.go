@@ -81,3 +81,12 @@ func Rows[T any](rows []T, limit int, key func(T) Cursor) Output[T] {
 	}
 	return out
 }
+
+// Map turns a page of rows into a page of what the route answers.
+func Map[T, U any](o Output[T], f func(T) U) Output[U] {
+	items := make([]U, len(o.Items))
+	for i, v := range o.Items {
+		items[i] = f(v)
+	}
+	return Output[U]{Items: items, Next: o.Next}
+}

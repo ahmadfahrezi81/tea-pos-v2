@@ -91,6 +91,44 @@ func (s *Storage) SignRead(ctx context.Context, bucket, path string, ttl time.Du
 	return s.URL + "/storage/v1" + out.SignedURL, nil
 }
 
+// SignReads signs several paths of one bucket in one call: path to address; a path Storage
+// does not have is left out.
+func (s *Storage) SignReads(ctx context.Context, bucket string, paths []string, ttl time.Duration) (map[string]string, error) {
+	out := map[string]string{}
+	if len(paths) == 0 {
+		return out, nil
+	}
+	var signed []struct {
+		Path      string  `json:"path"`
+		SignedURL *string `json:"signedURL"`
+	}
+	if err := s.post(ctx, "/object/sign/"+bucket, map[string]any{"expiresIn": int(ttl.Seconds()), "paths": paths}, &signed); err != nil {
+		return nil, err
+	}
+	for _, p := range signed {
+		if p.SignedURL != nil {
+			out[p.Path] = s.URL + "/storage/v1" + *p.SignedURL
+		}
+	}
+	return out, nil
+}
+
+// PathIn is the path inside bucket of an address saved in a row (the old app saves the public
+// form, private bucket or not); empty when the address is not that bucket's.
+func PathIn(bucket, address string) string {
+	for _, kind := range []string{"/object/public/", "/object/sign/", "/object/"} {
+		_, rest, ok := strings.Cut(address, kind+bucket+"/")
+		if !ok {
+			continue
+		}
+		rest, _, _ = strings.Cut(rest, "?")
+		if p, err := url.PathUnescape(rest); err == nil {
+			return p
+		}
+	}
+	return ""
+}
+
 // PublicURL is the address saved in a row, the old app's form, private bucket or not; a
 // private photo is read through SignRead with the path taken from it.
 func (s *Storage) PublicURL(bucket, path string) string {

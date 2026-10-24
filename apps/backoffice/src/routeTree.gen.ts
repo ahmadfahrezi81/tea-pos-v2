@@ -17,6 +17,14 @@ import { Route as ShellTenantIndexRouteImport } from './routes/_shell/$tenant/in
 import { Route as ShellTenantAccountRouteImport } from './routes/_shell/$tenant/account'
 import { Route as ShellTenantMoreRouteImport } from './routes/_shell/$tenant/more'
 import { Route as ShellTenantWhatsNewRouteImport } from './routes/_shell/$tenant/whats-new'
+import { Route as ShellTenantStoreIndexRouteImport } from './routes/_shell/$tenant/store/index'
+import { Route as ShellTenantStoreAnalyticsIndexRouteImport } from './routes/_shell/$tenant/store/analytics/index'
+import { Route as ShellTenantStoreAnalyticsChartsRouteImport } from './routes/_shell/$tenant/store/analytics/charts'
+import { Route as ShellTenantStoreOrdersIndexRouteImport } from './routes/_shell/$tenant/store/orders/index'
+import { Route as ShellTenantStoreOrdersChartRouteImport } from './routes/_shell/$tenant/store/orders/chart'
+import { Route as ShellTenantStoreAnalyticsDaysDayIdIndexRouteImport } from './routes/_shell/$tenant/store/analytics/days/$dayId/index'
+import { Route as ShellTenantStoreAnalyticsDaysDayIdActivityRouteImport } from './routes/_shell/$tenant/store/analytics/days/$dayId/activity'
+import { Route as ShellTenantStoreAnalyticsDaysDayIdSessionsRouteImport } from './routes/_shell/$tenant/store/analytics/days/$dayId/sessions'
 
 const ShellRoute = ShellRouteImport.update({
   id: '/_shell',
@@ -57,6 +65,53 @@ const ShellTenantWhatsNewRoute = ShellTenantWhatsNewRouteImport.update({
   path: '/whats-new',
   getParentRoute: () => ShellTenantRoute,
 } as any)
+const ShellTenantStoreIndexRoute = ShellTenantStoreIndexRouteImport.update({
+  id: '/store/',
+  path: '/store/',
+  getParentRoute: () => ShellTenantRoute,
+} as any)
+const ShellTenantStoreAnalyticsIndexRoute =
+  ShellTenantStoreAnalyticsIndexRouteImport.update({
+    id: '/store/analytics/',
+    path: '/store/analytics/',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantStoreAnalyticsChartsRoute =
+  ShellTenantStoreAnalyticsChartsRouteImport.update({
+    id: '/store/analytics/charts',
+    path: '/store/analytics/charts',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantStoreOrdersIndexRoute =
+  ShellTenantStoreOrdersIndexRouteImport.update({
+    id: '/store/orders/',
+    path: '/store/orders/',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantStoreOrdersChartRoute =
+  ShellTenantStoreOrdersChartRouteImport.update({
+    id: '/store/orders/chart',
+    path: '/store/orders/chart',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantStoreAnalyticsDaysDayIdIndexRoute =
+  ShellTenantStoreAnalyticsDaysDayIdIndexRouteImport.update({
+    id: '/store/analytics/days/$dayId/',
+    path: '/store/analytics/days/$dayId/',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantStoreAnalyticsDaysDayIdActivityRoute =
+  ShellTenantStoreAnalyticsDaysDayIdActivityRouteImport.update({
+    id: '/store/analytics/days/$dayId/activity',
+    path: '/store/analytics/days/$dayId/activity',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantStoreAnalyticsDaysDayIdSessionsRoute =
+  ShellTenantStoreAnalyticsDaysDayIdSessionsRouteImport.update({
+    id: '/store/analytics/days/$dayId/sessions',
+    path: '/store/analytics/days/$dayId/sessions',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof ShellIndexRoute
@@ -66,6 +121,14 @@ export interface FileRoutesByFullPath {
   '/$tenant/more': typeof ShellTenantMoreRoute
   '/$tenant/whats-new': typeof ShellTenantWhatsNewRoute
   '/$tenant/': typeof ShellTenantIndexRoute
+  '/$tenant/store/': typeof ShellTenantStoreIndexRoute
+  '/$tenant/store/analytics/charts': typeof ShellTenantStoreAnalyticsChartsRoute
+  '/$tenant/store/orders/chart': typeof ShellTenantStoreOrdersChartRoute
+  '/$tenant/store/analytics/': typeof ShellTenantStoreAnalyticsIndexRoute
+  '/$tenant/store/orders/': typeof ShellTenantStoreOrdersIndexRoute
+  '/$tenant/store/analytics/days/$dayId/activity': typeof ShellTenantStoreAnalyticsDaysDayIdActivityRoute
+  '/$tenant/store/analytics/days/$dayId/sessions': typeof ShellTenantStoreAnalyticsDaysDayIdSessionsRoute
+  '/$tenant/store/analytics/days/$dayId/': typeof ShellTenantStoreAnalyticsDaysDayIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -74,6 +137,14 @@ export interface FileRoutesByTo {
   '/$tenant/more': typeof ShellTenantMoreRoute
   '/$tenant/whats-new': typeof ShellTenantWhatsNewRoute
   '/$tenant': typeof ShellTenantIndexRoute
+  '/$tenant/store': typeof ShellTenantStoreIndexRoute
+  '/$tenant/store/analytics/charts': typeof ShellTenantStoreAnalyticsChartsRoute
+  '/$tenant/store/orders/chart': typeof ShellTenantStoreOrdersChartRoute
+  '/$tenant/store/analytics': typeof ShellTenantStoreAnalyticsIndexRoute
+  '/$tenant/store/orders': typeof ShellTenantStoreOrdersIndexRoute
+  '/$tenant/store/analytics/days/$dayId/activity': typeof ShellTenantStoreAnalyticsDaysDayIdActivityRoute
+  '/$tenant/store/analytics/days/$dayId/sessions': typeof ShellTenantStoreAnalyticsDaysDayIdSessionsRoute
+  '/$tenant/store/analytics/days/$dayId': typeof ShellTenantStoreAnalyticsDaysDayIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -85,6 +156,14 @@ export interface FileRoutesById {
   '/_shell/$tenant/more': typeof ShellTenantMoreRoute
   '/_shell/$tenant/whats-new': typeof ShellTenantWhatsNewRoute
   '/_shell/$tenant/': typeof ShellTenantIndexRoute
+  '/_shell/$tenant/store/': typeof ShellTenantStoreIndexRoute
+  '/_shell/$tenant/store/analytics/charts': typeof ShellTenantStoreAnalyticsChartsRoute
+  '/_shell/$tenant/store/orders/chart': typeof ShellTenantStoreOrdersChartRoute
+  '/_shell/$tenant/store/analytics/': typeof ShellTenantStoreAnalyticsIndexRoute
+  '/_shell/$tenant/store/orders/': typeof ShellTenantStoreOrdersIndexRoute
+  '/_shell/$tenant/store/analytics/days/$dayId/activity': typeof ShellTenantStoreAnalyticsDaysDayIdActivityRoute
+  '/_shell/$tenant/store/analytics/days/$dayId/sessions': typeof ShellTenantStoreAnalyticsDaysDayIdSessionsRoute
+  '/_shell/$tenant/store/analytics/days/$dayId/': typeof ShellTenantStoreAnalyticsDaysDayIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -96,6 +175,14 @@ export interface FileRouteTypes {
     | '/$tenant/more'
     | '/$tenant/whats-new'
     | '/$tenant/'
+    | '/$tenant/store/'
+    | '/$tenant/store/analytics/charts'
+    | '/$tenant/store/orders/chart'
+    | '/$tenant/store/analytics/'
+    | '/$tenant/store/orders/'
+    | '/$tenant/store/analytics/days/$dayId/activity'
+    | '/$tenant/store/analytics/days/$dayId/sessions'
+    | '/$tenant/store/analytics/days/$dayId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -104,6 +191,14 @@ export interface FileRouteTypes {
     | '/$tenant/more'
     | '/$tenant/whats-new'
     | '/$tenant'
+    | '/$tenant/store'
+    | '/$tenant/store/analytics/charts'
+    | '/$tenant/store/orders/chart'
+    | '/$tenant/store/analytics'
+    | '/$tenant/store/orders'
+    | '/$tenant/store/analytics/days/$dayId/activity'
+    | '/$tenant/store/analytics/days/$dayId/sessions'
+    | '/$tenant/store/analytics/days/$dayId'
   id:
     | '__root__'
     | '/_shell'
@@ -114,6 +209,14 @@ export interface FileRouteTypes {
     | '/_shell/$tenant/more'
     | '/_shell/$tenant/whats-new'
     | '/_shell/$tenant/'
+    | '/_shell/$tenant/store/'
+    | '/_shell/$tenant/store/analytics/charts'
+    | '/_shell/$tenant/store/orders/chart'
+    | '/_shell/$tenant/store/analytics/'
+    | '/_shell/$tenant/store/orders/'
+    | '/_shell/$tenant/store/analytics/days/$dayId/activity'
+    | '/_shell/$tenant/store/analytics/days/$dayId/sessions'
+    | '/_shell/$tenant/store/analytics/days/$dayId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -179,6 +282,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellTenantWhatsNewRouteImport
       parentRoute: typeof ShellTenantRoute
     }
+    '/_shell/$tenant/store/': {
+      id: '/_shell/$tenant/store/'
+      path: '/store'
+      fullPath: '/$tenant/store/'
+      preLoaderRoute: typeof ShellTenantStoreIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/store/analytics/': {
+      id: '/_shell/$tenant/store/analytics/'
+      path: '/store/analytics'
+      fullPath: '/$tenant/store/analytics/'
+      preLoaderRoute: typeof ShellTenantStoreAnalyticsIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/store/analytics/charts': {
+      id: '/_shell/$tenant/store/analytics/charts'
+      path: '/store/analytics/charts'
+      fullPath: '/$tenant/store/analytics/charts'
+      preLoaderRoute: typeof ShellTenantStoreAnalyticsChartsRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/store/orders/': {
+      id: '/_shell/$tenant/store/orders/'
+      path: '/store/orders'
+      fullPath: '/$tenant/store/orders/'
+      preLoaderRoute: typeof ShellTenantStoreOrdersIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/store/orders/chart': {
+      id: '/_shell/$tenant/store/orders/chart'
+      path: '/store/orders/chart'
+      fullPath: '/$tenant/store/orders/chart'
+      preLoaderRoute: typeof ShellTenantStoreOrdersChartRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/store/analytics/days/$dayId/': {
+      id: '/_shell/$tenant/store/analytics/days/$dayId/'
+      path: '/store/analytics/days/$dayId'
+      fullPath: '/$tenant/store/analytics/days/$dayId/'
+      preLoaderRoute: typeof ShellTenantStoreAnalyticsDaysDayIdIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/store/analytics/days/$dayId/activity': {
+      id: '/_shell/$tenant/store/analytics/days/$dayId/activity'
+      path: '/store/analytics/days/$dayId/activity'
+      fullPath: '/$tenant/store/analytics/days/$dayId/activity'
+      preLoaderRoute: typeof ShellTenantStoreAnalyticsDaysDayIdActivityRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/store/analytics/days/$dayId/sessions': {
+      id: '/_shell/$tenant/store/analytics/days/$dayId/sessions'
+      path: '/store/analytics/days/$dayId/sessions'
+      fullPath: '/$tenant/store/analytics/days/$dayId/sessions'
+      preLoaderRoute: typeof ShellTenantStoreAnalyticsDaysDayIdSessionsRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
   }
 }
 
@@ -187,6 +346,14 @@ interface ShellTenantRouteChildren {
   ShellTenantMoreRoute: typeof ShellTenantMoreRoute
   ShellTenantWhatsNewRoute: typeof ShellTenantWhatsNewRoute
   ShellTenantIndexRoute: typeof ShellTenantIndexRoute
+  ShellTenantStoreIndexRoute: typeof ShellTenantStoreIndexRoute
+  ShellTenantStoreAnalyticsChartsRoute: typeof ShellTenantStoreAnalyticsChartsRoute
+  ShellTenantStoreOrdersChartRoute: typeof ShellTenantStoreOrdersChartRoute
+  ShellTenantStoreAnalyticsIndexRoute: typeof ShellTenantStoreAnalyticsIndexRoute
+  ShellTenantStoreOrdersIndexRoute: typeof ShellTenantStoreOrdersIndexRoute
+  ShellTenantStoreAnalyticsDaysDayIdActivityRoute: typeof ShellTenantStoreAnalyticsDaysDayIdActivityRoute
+  ShellTenantStoreAnalyticsDaysDayIdSessionsRoute: typeof ShellTenantStoreAnalyticsDaysDayIdSessionsRoute
+  ShellTenantStoreAnalyticsDaysDayIdIndexRoute: typeof ShellTenantStoreAnalyticsDaysDayIdIndexRoute
 }
 
 const ShellTenantRouteChildren: ShellTenantRouteChildren = {
@@ -194,6 +361,17 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
   ShellTenantMoreRoute: ShellTenantMoreRoute,
   ShellTenantWhatsNewRoute: ShellTenantWhatsNewRoute,
   ShellTenantIndexRoute: ShellTenantIndexRoute,
+  ShellTenantStoreIndexRoute: ShellTenantStoreIndexRoute,
+  ShellTenantStoreAnalyticsChartsRoute: ShellTenantStoreAnalyticsChartsRoute,
+  ShellTenantStoreOrdersChartRoute: ShellTenantStoreOrdersChartRoute,
+  ShellTenantStoreAnalyticsIndexRoute: ShellTenantStoreAnalyticsIndexRoute,
+  ShellTenantStoreOrdersIndexRoute: ShellTenantStoreOrdersIndexRoute,
+  ShellTenantStoreAnalyticsDaysDayIdActivityRoute:
+    ShellTenantStoreAnalyticsDaysDayIdActivityRoute,
+  ShellTenantStoreAnalyticsDaysDayIdSessionsRoute:
+    ShellTenantStoreAnalyticsDaysDayIdSessionsRoute,
+  ShellTenantStoreAnalyticsDaysDayIdIndexRoute:
+    ShellTenantStoreAnalyticsDaysDayIdIndexRoute,
 }
 
 const ShellTenantRouteWithChildren = ShellTenantRoute._addFileChildren(

@@ -538,6 +538,51 @@
         "too_large": "This is too large to send.",
         "too_many_requests": "Too many tries. Wait a minute and try again.",
         "unauthorized": "Sign in to continue.",
-        "unknown_app": "Open sign-in from the app."
+        "unknown_app": "Open sign-in from the app.",
+        "bad_range": "Pick a shorter range of dates.",
+        "day_not_found": "No such day.",
+        "bad_cursor": "This list moved on; pull down to start again."
+    },
+    "store": {
+        "title": "Store",
+        "thisMonth": "This month",
+        "vsLastMonth": "vs last month",
+        "todayNotClosed": "Today counts once it is closed",
+        "daysNotClosed": "{n} day(s) not closed yet",
+        "noSales": "No sales this month yet",
+        "cupsPerDay": "Cups per day",
+        "days": "day(s)",
+        "dayMenu": "Day options",
+        "productSales": "Product Sales",
+        "productSalesSubtitle": "Breakdown by product for the month",
+        "productsSold": "{n} products sold this month",
+        "analyticsRow": "Analytics",
+        "analyticsRowSub": "Each day, its cash and who worked; the charts",
+        "ordersRow": "Orders",
+        "ordersRowSub": "Every order of a day, and sales by hour",
+        "photo": {
+            "ice": "Ice Bin",
+            "syrup": "Syrup",
+            "bags": "Bags",
+            "cups": "Cups",
+            "tea": "Tea Waste"
+        },
+        "event": {
+            "order_created": "Order",
+            "store_opened": "Store opened",
+            "store_closed": "Store closed",
+            "session_transferred": "Session handed over",
+            "session_ended": "Session ended",
+            "expense_created": "Expense added",
+            "expense_updated": "Expense updated",
+            "expense_deleted": "Expense deleted",
+            "opening_balance_updated": "Opening balance updated",
+            "summary_photo_uploaded": "Photo uploaded",
+            "summary_photo_deleted": "Photo deleted",
+            "summary_photo_updated": "Photo updated",
+            "supply_request_created": "Supply requested",
+            "incident_report_created": "Incident reported"
+        },
+        "orderNumber": "Order #{n}"
     }
 }

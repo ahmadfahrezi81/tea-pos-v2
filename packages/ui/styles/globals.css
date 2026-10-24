@@ -279,3 +279,11 @@ a,
         animation: action-fade 1.2s ease-in-out infinite;
     }
 }
+
+/* Sideways scrolling without a bar (charts wider than the phone). */
+@utility no-scrollbar {
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
