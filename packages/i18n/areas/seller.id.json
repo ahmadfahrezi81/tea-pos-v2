@@ -187,29 +187,6 @@
         "freqBiWeekly": "Dua Mingguan",
         "freqFourWeekly": "Setiap 4 Minggu"
     },
-    "map": {
-        "search": "Cari feedback...",
-        "noFeedback": "Belum ada feedback dikirim",
-        "noResults": "Tidak ada hasil",
-        "submittedBy": "Dikirim oleh",
-        "filter": "Filter",
-        "dateRange": "Rentang Tanggal",
-        "allTime": "Semua waktu",
-        "last7Days": "7 hari terakhir",
-        "last30Days": "30 hari terakhir",
-        "submittedByFilter": "Dikirim Oleh",
-        "today": "Hari ini",
-        "yesterday": "Kemarin",
-        "location": "Lokasi",
-        "searchArea": "Cari area atau kecamatan...",
-        "anyObservations": "Ada catatan? (opsional)",
-        "submit": "Kirim Feedback",
-        "submitting": "Mengirim...",
-        "submitted": "Feedback terkirim!",
-        "failed": "Gagal mengirim. Coba lagi.",
-        "vote": "suara",
-        "votes": "suara"
-    },
     "chats": {
         "emptyTitle": "Chat segera hadir",
         "emptySubtitle": "Fitur ini masih dalam pengembangan"

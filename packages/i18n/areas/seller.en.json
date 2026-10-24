@@ -187,29 +187,6 @@
         "freqBiWeekly": "Bi-Weekly",
         "freqFourWeekly": "Every 4 Weeks"
     },
-    "map": {
-        "search": "Search feedback...",
-        "noFeedback": "No feedback submitted yet",
-        "noResults": "No results found",
-        "submittedBy": "Submitted by",
-        "filter": "Filter",
-        "dateRange": "Date Range",
-        "allTime": "All time",
-        "last7Days": "Last 7 days",
-        "last30Days": "Last 30 days",
-        "submittedByFilter": "Submitted By",
-        "today": "Today",
-        "yesterday": "Yesterday",
-        "location": "Location",
-        "searchArea": "Search area or district...",
-        "anyObservations": "Any observations? (optional)",
-        "submit": "Submit Feedback",
-        "submitting": "Submitting...",
-        "submitted": "Feedback submitted!",
-        "failed": "Failed to submit. Please try again.",
-        "vote": "vote",
-        "votes": "votes"
-    },
     "chats": {
         "emptyTitle": "Chats are coming soon",
         "emptySubtitle": "This feature is still in development"

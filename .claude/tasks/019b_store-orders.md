@@ -1,6 +1,6 @@
 # Task 019b — Store orders: the day's orders and their chart
 
-**Status: built 2026-10-24, not committed. `orders` (a day in WIB, cursor-paged, each order with its items) and `sales/hours` (cups and orders per hour, the day's totals); integration test: 23:30 WIB stays on its day, 00:30 is the next, every order once across pages, the hours trimmed as v1. Seen in the browser on staging's Test A orders: totals, the hourly chart, the list numbered against the day, and the orders chart. Live refetch is wired (`meta.live: ["order"]`) and starts working with Step 29's POS.**
+**Status: done 2026-10-25 (PR #41), on staging after the owner's review of the frame. `orders` (a day in WIB, cursor-paged, each order with its items) and `sales/hours` (cups and orders per hour, the day's totals); integration test: 23:30 WIB stays on its day, 00:30 is the next, every order once across pages, the hours trimmed as v1. Seen in the browser on staging's Test A orders: totals, the hourly chart, the list numbered against the day, and the orders chart. Live refetch is wired (`meta.live: ["order"]`) and starts working with Step 29's POS.**
 
 ## The goal
 

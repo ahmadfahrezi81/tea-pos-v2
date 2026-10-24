@@ -738,6 +738,48 @@ components:
         - session
         - device
       type: object
+    Feedback:
+      additionalProperties: false
+      properties:
+        at:
+          format: date-time
+          type: string
+        id:
+          format: uuid
+          type: string
+        latitude:
+          format: double
+          type: number
+        locationDisplay:
+          type: string
+        locationName:
+          type: string
+        longitude:
+          format: double
+          type: number
+        notes:
+          type: string
+        userName:
+          type: string
+      required:
+        - id
+        - locationName
+        - locationDisplay
+        - latitude
+        - longitude
+        - at
+      type: object
+    FeedbacksOutputBody:
+      additionalProperties: false
+      properties:
+        feedbacks:
+          description: Newest first
+          items:
+            $ref: "#/components/schemas/Feedback"
+          type: array
+      required:
+        - feedbacks
+      type: object
     HealthOutputBody:
       additionalProperties: false
       properties:
@@ -1578,6 +1620,57 @@ components:
         - path
         - url
       type: object
+    WeatherHour:
+      additionalProperties: false
+      properties:
+        code:
+          description: Tomorrow.io's weather code
+          format: int64
+          type: integer
+        date:
+          format: date
+          type: string
+        fetchedAt:
+          format: date-time
+          type: string
+        hour:
+          format: int64
+          maximum: 23
+          minimum: 0
+          type: integer
+        rainChance:
+          description: "%"
+          format: double
+          type: number
+        temperature:
+          description: °C
+          format: double
+          type: number
+      required:
+        - date
+        - hour
+        - temperature
+        - rainChance
+        - code
+        - fetchedAt
+      type: object
+    WeatherOutputBody:
+      additionalProperties: false
+      properties:
+        city:
+          type: string
+        hours:
+          description: Yesterday to tomorrow, by hour, in WIB
+          items:
+            $ref: "#/components/schemas/WeatherHour"
+          type: array
+        region:
+          type: string
+      required:
+        - city
+        - region
+        - hours
+      type: object
 info:
   title: tea-pos API
   version: dev
@@ -1949,6 +2042,45 @@ paths:
       summary: Who held a store's day, and the handovers
       tags:
         - store
+      x-access:
+        roles:
+          - ADMIN
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/feedbacks:
+    get:
+      operationId: listFeedbacks
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: limit
+          schema:
+            default: 100
+            format: int64
+            maximum: 500
+            minimum: 1
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbacksOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Where customers asked for a store, newest first
+      tags:
+        - more
       x-access:
         roles:
           - ADMIN
@@ -2957,5 +3089,33 @@ paths:
       x-access:
         roles:
           - ADMIN
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/weather:
+    get:
+      operationId: getWeather
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeatherOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: The forecast by hour, yesterday to tomorrow
+      tags:
+        - more
+      x-access:
         tenant: true
         signedIn: true

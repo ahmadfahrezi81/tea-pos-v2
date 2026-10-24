@@ -1,0 +1,50 @@
+{
+    "map": {
+        "search": "Search feedback...",
+        "noFeedback": "No feedback submitted yet",
+        "noResults": "No results found",
+        "submittedBy": "Submitted by",
+        "filter": "Filter",
+        "dateRange": "Date Range",
+        "allTime": "All time",
+        "last7Days": "Last 7 days",
+        "last30Days": "Last 30 days",
+        "submittedByFilter": "Submitted By",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "location": "Location",
+        "searchArea": "Search area or district...",
+        "anyObservations": "Any observations? (optional)",
+        "submit": "Submit Feedback",
+        "submitting": "Submitting...",
+        "submitted": "Feedback submitted!",
+        "failed": "Failed to submit. Please try again.",
+        "vote": "vote",
+        "votes": "votes",
+        "notes": "Notes"
+    },
+    "weather": {
+        "asOf": "As of",
+        "now": "Now",
+        "noData": "No weather data yet",
+        "clear": "Clear",
+        "mostlyClear": "Mostly Clear",
+        "partlyCloudy": "Partly Cloudy",
+        "mostlyCloudy": "Mostly Cloudy",
+        "cloudy": "Cloudy",
+        "foggy": "Foggy",
+        "windy": "Windy",
+        "drizzle": "Drizzle",
+        "lightRain": "Light Rain",
+        "rain": "Rain",
+        "heavyRain": "Heavy Rain",
+        "snow": "Snow",
+        "freezingRain": "Freezing Rain",
+        "thunderstorm": "Thunderstorm",
+        "unknown": "Unknown"
+    },
+    "moreRows": {
+        "weather": "Weather",
+        "feedback": "Location Feedback"
+    }
+}

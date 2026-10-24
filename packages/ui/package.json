@@ -15,6 +15,7 @@
         "./ComingSoon": "./ComingSoon.tsx",
         "./ListRow": "./ListRow.tsx",
         "./Callout": "./Callout.tsx",
+        "./weather": "./weather.ts",
         "./form/*": "./form/*.tsx",
         "./dot-grid": "./styles/dot-grid.ts",
         "./globals.css": "./styles/globals.css"
