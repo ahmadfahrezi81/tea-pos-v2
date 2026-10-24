@@ -7,6 +7,10 @@ components:
           description: The phone's clock; Go uses its own when this is far off
           format: date-time
           type: string
+        chunks:
+          additionalProperties:
+            type: string
+          type: object
         message:
           maxLength: 2000
           type: string
@@ -20,6 +24,8 @@ components:
             - /test-a/home
           maxLength: 300
           type: string
+        ready:
+          $ref: "#/components/schemas/AppReady"
         stack:
           maxLength: 8000
           type: string
@@ -27,11 +33,110 @@ components:
           enum:
             - error
             - pageview
+            - pageleave
+            - app_ready
           type: string
       required:
         - type
         - path
         - at
+      type: object
+    AppReady:
+      additionalProperties: false
+      properties:
+        hidden:
+          description: "Hidden at some moment before ready: the time is not the app's"
+          type: boolean
+        htmlMs:
+          description: The page's first byte (responseStart)
+          format: double
+          minimum: 0
+          type: number
+        jsMs:
+          description: The main script done (domContentLoadedEventEnd)
+          format: double
+          minimum: 0
+          type: number
+        me:
+          description: Whether the first screen drew /me from the phone's copy; none on sign-in
+          enum:
+            - saved
+            - network
+            - none
+          type: string
+        open:
+          description: "network: no service worker yet; saved: from its copy; update: the first open of a new version"
+          enum:
+            - network
+            - saved
+            - update
+          type: string
+        paintMs:
+          description: "First paint: the splash (first-contentful-paint)"
+          format: double
+          minimum: 0
+          type: number
+        readyMs:
+          format: double
+          minimum: 0
+          type: number
+        screen:
+          enum:
+            - shell
+            - signin
+            - other
+          type: string
+      required:
+        - readyMs
+        - htmlMs
+        - jsMs
+        - paintMs
+        - open
+        - me
+        - screen
+        - hidden
+      type: object
+    Device:
+      additionalProperties: false
+      properties:
+        cores:
+          format: int64
+          type: integer
+        downlink:
+          description: Mbit/s
+          format: double
+          type: number
+        memory:
+          description: GB, navigator.deviceMemory (rounded by the browser)
+          format: double
+          type: number
+        model:
+          description: Android Chrome's client hints
+          examples:
+            - SM-M115F
+          maxLength: 60
+          type: string
+        net:
+          description: navigator.connection.effectiveType
+          examples:
+            - 4g
+          maxLength: 10
+          type: string
+        osVersion:
+          maxLength: 20
+          type: string
+        rtt:
+          description: ms
+          format: int64
+          type: integer
+        saveData:
+          type: boolean
+        screenHeight:
+          format: int64
+          type: integer
+        screenWidth:
+          format: int64
+          type: integer
       type: object
     Error:
       additionalProperties: false
@@ -63,14 +168,21 @@ components:
     EventsInputBody:
       additionalProperties: false
       properties:
+        device:
+          $ref: "#/components/schemas/Device"
         events:
           items:
             $ref: "#/components/schemas/AppEvent"
           maxItems: 50
           minItems: 1
           type: array
+        session:
+          format: uuid
+          type: string
       required:
         - events
+        - session
+        - device
       type: object
     HealthOutputBody:
       additionalProperties: false
@@ -305,6 +417,11 @@ paths:
   /events:
     post:
       operationId: sendEvents
+      parameters:
+        - in: header
+          name: User-Agent
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -320,7 +437,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
           description: Error
-      summary: Errors and page views from an app, for PostHog
+      summary: Errors, page views and open times from an app, for PostHog
       tags:
         - system
       x-access:

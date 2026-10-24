@@ -146,9 +146,11 @@ func TestMeFlags(t *testing.T) {
 func TestEvents(t *testing.T) {
 	a := testkit.NewAPI(t, testkit.DB(t), "")
 	seller := testkit.Session(a.SignIn(t, testkit.SellerA, "seller"))
-	batch := `{"events":[
+	batch := `{"session":"0192f1a2-3b4c-7d5e-8f60-718293a4b5c6","device":{"screenWidth":720,"net":"4g","memory":4,"model":"SM-M115F"},"events":[
 		{"type":"pageview","path":"/test-a/home","at":"2026-10-24T08:00:00Z"},
-		{"type":"error","path":"/test-a/home","at":"2026-10-24T08:00:01Z","name":"TypeError","message":"x is undefined","stack":"at f (app.js:1:2)"}
+		{"type":"app_ready","path":"/","at":"2026-10-24T08:00:00Z","ready":{"readyMs":812,"htmlMs":40,"jsMs":300,"paintMs":120,"open":"saved","me":"saved","screen":"shell","hidden":false}},
+		{"type":"error","path":"/test-a/home","at":"2026-10-24T08:00:01Z","name":"TypeError","message":"x is undefined","stack":"at f (app.js:1:2)","chunks":{"app.js":"7c65793e-4545-5062-a3ab-ab50a8368955"}},
+		{"type":"pageleave","path":"/test-a/home","at":"2026-10-24T08:00:02Z"}
 	]}`
 
 	if resp := a.Send(t, http.MethodPost, "/events", "seller", batch, nil, seller); resp.StatusCode != http.StatusNoContent {
@@ -157,9 +159,12 @@ func TestEvents(t *testing.T) {
 	if resp := a.Send(t, http.MethodPost, "/events", "seller", batch, nil); resp.StatusCode != http.StatusUnauthorized {
 		t.Fatalf("signed out: status %d", resp.StatusCode)
 	}
+	const sess = `"session":"0192f1a2-3b4c-7d5e-8f60-718293a4b5c6","device":{},`
 	for _, bad := range []string{
-		`{"events":[]}`,
-		`{"events":[{"type":"click","path":"/","at":"2026-10-24T08:00:00Z"}]}`,
+		`{` + sess + `"events":[]}`,
+		`{` + sess + `"events":[{"type":"click","path":"/","at":"2026-10-24T08:00:00Z"}]}`,
+		`{` + sess + `"events":[{"type":"app_ready","path":"/","at":"2026-10-24T08:00:00Z","ready":{"readyMs":1,"htmlMs":0,"jsMs":0,"paintMs":0,"open":"warm","me":"saved","screen":"shell","hidden":false}}]}`,
+		`{"session":"not-a-uuid","device":{},"events":[{"type":"pageview","path":"/","at":"2026-10-24T08:00:00Z"}]}`,
 	} {
 		if resp := a.Send(t, http.MethodPost, "/events", "seller", bad, nil, seller); resp.StatusCode != http.StatusBadRequest {
 			t.Fatalf("%s: status %d", bad, resp.StatusCode)

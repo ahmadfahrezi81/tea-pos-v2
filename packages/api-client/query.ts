@@ -25,6 +25,21 @@ export const STALE = {
 
 const DAY = 24 * 60 * 60 * 1000;
 
+/** Answers that asking again cannot change: maintenance, a too-old app, not signed in, not allowed. */
+const FINAL = new Set([
+    "maintenance",
+    "app_too_old",
+    "not_signed_in",
+    "not_allowed",
+    "not_in_tenant",
+]);
+
+/** A network blip is tried 3 times; an answer that will not change is not, so its screen shows at once. */
+function retry(count: number, error: unknown): boolean {
+    const e = error as { code?: string; message?: string } | null;
+    return count < 3 && !FINAL.has(e?.code ?? e?.message ?? "");
+}
+
 export function createQueryClient() {
     return new QueryClient({
         defaultOptions: {
@@ -33,7 +48,7 @@ export function createQueryClient() {
                 // Kept as long as the saved copy, or a cold open would find nothing to draw.
                 gcTime: DAY,
                 refetchOnWindowFocus: false,
-                retry: 3,
+                retry,
             },
         },
     });

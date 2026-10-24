@@ -17,8 +17,12 @@ export function ShellLayout() {
     const painted = useHasPainted();
     const ready = painted && (me.data !== undefined || me.isError);
     useEffect(() => {
-        if (ready) hideSplash();
-    }, [ready]);
+        if (!ready) return;
+        // For app_ready (events.ts): drawn from the phone's copy when that copy is older than this load.
+        globalThis.__readyMe ??=
+            me.dataUpdatedAt > 0 && me.dataUpdatedAt < performance.timeOrigin ? "saved" : "network";
+        hideSplash();
+    }, [ready, me.dataUpdatedAt]);
     const maintenance = useMaintenanceWatch(me.refetch);
     return (
         <>
