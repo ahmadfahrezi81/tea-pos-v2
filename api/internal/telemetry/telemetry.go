@@ -29,7 +29,10 @@ func New(c Config) (*Client, error) {
 		Endpoint:                           c.Host,
 		SecretKey:                          c.FlagsKey,
 		DefaultFeatureFlagsPollingInterval: c.FlagsPoll,
-		Logger:                             quietLogger{},
+		// The newer protocol only fills in what an event lacks, so the phone's $os (from /events)
+		// is kept; the default one overwrites it with the server's (Linux).
+		CaptureMode: posthog.CaptureModeAnalyticsV1,
+		Logger:      quietLogger{},
 	})
 	if err != nil {
 		return nil, err
