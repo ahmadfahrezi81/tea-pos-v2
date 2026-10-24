@@ -71,7 +71,9 @@ packages/shell/      the mobile shell, sign-in, boot and update screens, startAp
 packages/format/     dates and money for display, Intl only, in the store's time zone
 packages/edge/       the /api forwarder: drops /api, adds X-Edge-Secret and X-Client-IP
 packages/api-client/ generated types, the fetch client, React Query hooks, the query cache saved per user (query.ts)
-packages/i18n/       translations (en.json, id.json), t() and useT(); only the active language loads; a wrong key fails the typecheck
+packages/i18n/       translations, t() and useT(); only the active language loads, and of it only the core (en.json,
+                     id.json: the shell and each app's first screen) at start; a screen's own words live in an area
+                     (areas/<area>.<lang>.json) its route loads (`loader: () => loadArea("store")`); a wrong key fails the typecheck
 supabase/            migrations (owned here, copied from the old repo) and config.toml
 .railway/railway.ts  Railway services for production (main) and staging (staging branch)
 .github/             CI, deploy.yml (every deploy, in order), Railway plan, migrations dry run, releases, rulesets, the report action

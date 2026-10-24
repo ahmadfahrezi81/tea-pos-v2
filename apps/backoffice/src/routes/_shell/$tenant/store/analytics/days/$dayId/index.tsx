@@ -1,8 +1,11 @@
+import { loadArea } from "@tea-pos/i18n";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { DayDetail } from "../../../../../../../store/DayDetail";
 
 export const Route = createFileRoute("/_shell/$tenant/store/analytics/days/$dayId/")({
+    // The Store screens\' words come with them, not on the first open.
+    loader: () => loadArea("store"),
     staticData: {
         shell: { titleKey: "nav.daySummaryDetails", parent: "../..", refreshable: true },
     },

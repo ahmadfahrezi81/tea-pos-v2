@@ -40,9 +40,9 @@ export function StoreOverview() {
     const notClosed = (days ?? []).filter((d) => d.notClosed > 0 && d.date !== today).length;
     const todayOpen = days?.some((d) => d.date === today && d.notClosed > 0);
     const figures = [
-        { label: t("analytics.totalSales"), pick: (d: Day) => d.sales, show: formatMoney },
-        { label: t("analytics.cups"), pick: (d: Day) => d.cups, show: String },
-        { label: t("analytics.orders"), pick: (d: Day) => d.orders, show: String },
+        { label: t("store.sales"), pick: (d: Day) => d.sales, show: formatMoney },
+        { label: t("store.cups"), pick: (d: Day) => d.cups, show: String },
+        { label: t("store.orders"), pick: (d: Day) => d.orders, show: String },
     ];
 
     return (
@@ -90,7 +90,7 @@ export function StoreOverview() {
                             label: formatDate(d.date, locale),
                             value: d.cups,
                         }))}
-                        unit={t("orders.cups")}
+                        unit={t("store.cupsUnit")}
                     />
                 )}
                 {todayOpen && (
