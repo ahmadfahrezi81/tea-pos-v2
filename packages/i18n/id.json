@@ -183,7 +183,11 @@
         "comingSoon": "{name} segera hadir",
         "inDevelopment": "Fitur ini masih dalam pengembangan",
         "demo": "DEMO",
-        "inactive": "NONAKTIF"
+        "inactive": "NONAKTIF",
+        "form": {
+            "noteTitle": "Yang berubah",
+            "noteBody": "Gaji yang sudah tercatat tetap. Ini berlaku mulai sekarang, untuk hari yang ditutup dan klaim yang diajukan setelah disimpan."
+        }
     },
     "signIn": {
         "google": "Lanjutkan dengan Google",
@@ -234,7 +238,11 @@
         "unknown_app": "Buka halaman masuk dari aplikasi.",
         "bad_range": "Pilih rentang tanggal yang lebih pendek.",
         "day_not_found": "Hari tidak ditemukan.",
-        "bad_cursor": "Daftar ini sudah berubah; tarik ke bawah untuk mulai lagi."
+        "bad_cursor": "Daftar ini sudah berubah; tarik ke bawah untuk mulai lagi.",
+        "staff_not_found": "Staf tidak ditemukan.",
+        "commission_type_not_found": "Jenis komisi itu tidak ada atau nonaktif.",
+        "claim_type_not_found": "Jenis klaim tidak ditemukan.",
+        "auto_needs_hours": "Jenis klaim otomatis butuh minimal jam kerja."
     },
     "store": {
         "title": "Toko",

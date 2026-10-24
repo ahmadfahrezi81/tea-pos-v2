@@ -215,3 +215,14 @@ func TestStore_AdminSeesTheTenantsSales(t *testing.T) {
 		t.Fatalf("seller: %d, want 403", resp.StatusCode)
 	}
 }
+
+// The Pay tab answers the test admin through the forwarder: the period and the staff.
+func TestPay_AdminSeesThePeriodAndStaff(t *testing.T) {
+	admin := newPhone(t, backoffice)
+	mustSignIn(t, admin, "admin@test-a.test")
+	for _, path := range []string{"/tenants/test-a/pay/period", "/tenants/test-a/pay/staff", "/tenants/test-a/pay/commission-types", "/tenants/test-a/pay/claim-types"} {
+		if resp, body := admin.do(http.MethodGet, path, "", nil); resp.StatusCode != http.StatusOK {
+			t.Errorf("%s: %d %v", path, resp.StatusCode, body["code"])
+		}
+	}
+}

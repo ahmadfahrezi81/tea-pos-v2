@@ -96,6 +96,174 @@ components:
         - screen
         - hidden
       type: object
+    Bank:
+      additionalProperties: false
+      properties:
+        accountHolder:
+          type: string
+        accountNumber:
+          type: string
+        name:
+          type: string
+      type: object
+    ClaimEligibleOutputBody:
+      additionalProperties: false
+      properties:
+        userIds:
+          items:
+            type: string
+          type: array
+      required:
+        - userIds
+      type: object
+    ClaimType:
+      additionalProperties: false
+      properties:
+        amount:
+          format: int64
+          type: integer
+        autoThresholdHours:
+          format: double
+          type: number
+        enabled:
+          type: boolean
+        frequency:
+          enum:
+            - daily
+            - weekly
+            - monthly
+            - one_time
+          type: string
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        source:
+          description: "manual: staff submits; auto_submit: made for staff, an admin reviews; auto: made and approved when enough hours were worked"
+          enum:
+            - manual
+            - auto
+            - auto_submit
+          type: string
+      required:
+        - id
+        - name
+        - slug
+        - frequency
+        - enabled
+        - amount
+        - source
+      type: object
+    ClaimTypesOutputBody:
+      additionalProperties: false
+      properties:
+        types:
+          items:
+            $ref: "#/components/schemas/ClaimType"
+          type: array
+      required:
+        - types
+      type: object
+    CommissionType:
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        ratePerCup:
+          description: Rupiah per cup
+          format: int64
+          type: integer
+        slug:
+          type: string
+      required:
+        - id
+        - name
+        - slug
+        - enabled
+        - ratePerCup
+      type: object
+    CommissionTypesOutputBody:
+      additionalProperties: false
+      properties:
+        types:
+          items:
+            $ref: "#/components/schemas/CommissionType"
+          type: array
+      required:
+        - types
+      type: object
+    CreateClaimTypeInputBody:
+      additionalProperties: false
+      properties:
+        amount:
+          format: int64
+          maximum: 100000000
+          minimum: 0
+          type: integer
+        autoThresholdHours:
+          description: Needed for auto
+          format: double
+          maximum: 24
+          minimum: 0
+          type: number
+        frequency:
+          enum:
+            - daily
+            - weekly
+            - monthly
+            - one_time
+          type: string
+        name:
+          maxLength: 100
+          minLength: 1
+          type: string
+        slug:
+          maxLength: 100
+          pattern: ^[A-Z0-9_]+$
+          type: string
+        source:
+          enum:
+            - manual
+            - auto
+            - auto_submit
+          type: string
+      required:
+        - name
+        - slug
+        - frequency
+        - amount
+        - source
+      type: object
+    CreateCommissionTypeInputBody:
+      additionalProperties: false
+      properties:
+        name:
+          maxLength: 100
+          minLength: 1
+          type: string
+        ratePerCup:
+          format: int64
+          maximum: 1000000
+          minimum: 0
+          type: integer
+        slug:
+          description: Uppercase letters, digits and underscores
+          maxLength: 100
+          pattern: ^[A-Z0-9_]+$
+          type: string
+      required:
+        - name
+        - slug
+        - ratePerCup
+      type: object
     Day:
       additionalProperties: false
       properties:
@@ -480,9 +648,12 @@ components:
           enum:
             - account_inactive
             - app_too_old
+            - auto_needs_hours
             - bad_cursor
             - bad_range
             - bad_request
+            - claim_type_not_found
+            - commission_type_not_found
             - conflict
             - day_not_found
             - error
@@ -497,6 +668,7 @@ components:
             - not_in_tenant
             - not_signed_in
             - route_not_found
+            - staff_not_found
             - store_not_found
             - store_required
             - too_large
@@ -759,6 +931,103 @@ components:
       required:
         - items
       type: object
+    PayPeriod:
+      additionalProperties: false
+      properties:
+        approved:
+          description: Commissions and claims approved
+          format: int64
+          type: integer
+        claims:
+          format: int64
+          type: integer
+        commissions:
+          description: Approved, selling staff only
+          format: int64
+          type: integer
+        end:
+          format: date
+          type: string
+        frequency:
+          enum:
+            - weekly
+            - bi_weekly
+            - four_weekly
+          type: string
+        payoutDate:
+          description: The day after the period ends
+          format: date
+          type: string
+        payouts:
+          description: "Payouts counted into the period, all staff: a schedule switch is safe at 0"
+          format: int64
+          type: integer
+        reviewed:
+          description: Approved plus still pending
+          format: int64
+          type: integer
+        start:
+          format: date
+          type: string
+        total:
+          format: int64
+          type: integer
+      required:
+        - frequency
+        - start
+        - end
+        - payoutDate
+        - payouts
+        - commissions
+        - claims
+        - total
+        - approved
+        - reviewed
+      type: object
+    PayStaff:
+      additionalProperties: false
+      properties:
+        avatarUrl:
+          type: string
+        bank:
+          $ref: "#/components/schemas/Bank"
+          description: Set by the staff member in the seller app
+        commissionType:
+          $ref: "#/components/schemas/CommissionType"
+        email:
+          type: string
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        role:
+          examples:
+            - USER
+          type: string
+        status:
+          examples:
+            - active
+          type: string
+      required:
+        - id
+        - name
+        - email
+        - role
+        - status
+        - bank
+      type: object
+    PayStaffOutputBody:
+      additionalProperties: false
+      properties:
+        staff:
+          description: Every user of the tenant, admins included; by name
+          items:
+            $ref: "#/components/schemas/PayStaff"
+          type: array
+      required:
+        - staff
+      type: object
     SalesDay:
       additionalProperties: false
       properties:
@@ -871,6 +1140,42 @@ components:
       required:
         - products
       type: object
+    SetClaimEligibleInputBody:
+      additionalProperties: false
+      properties:
+        userIds:
+          description: Everyone who may claim it; the rest may not
+          items:
+            type: string
+          maxItems: 500
+          type: array
+      required:
+        - userIds
+      type: object
+    SetPayScheduleInputBody:
+      additionalProperties: false
+      properties:
+        frequency:
+          enum:
+            - weekly
+            - bi_weekly
+            - four_weekly
+          type: string
+      required:
+        - frequency
+      type: object
+    SetStaffCommissionInputBody:
+      additionalProperties: false
+      properties:
+        commissionTypeId:
+          description: Null takes it away
+          format: uuid
+          type:
+            - string
+            - "null"
+      required:
+        - commissionTypeId
+      type: object
     TeaWasteDay:
       additionalProperties: false
       properties:
@@ -894,6 +1199,31 @@ components:
           type: array
       required:
         - days
+      type: object
+    UpdateClaimTypeInputBody:
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+        name:
+          maxLength: 100
+          minLength: 1
+          type: string
+      type: object
+    UpdateCommissionTypeInputBody:
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+        name:
+          maxLength: 100
+          minLength: 1
+          type: string
+        ratePerCup:
+          format: int64
+          maximum: 1000000
+          minimum: 0
+          type: integer
       type: object
     UploadInputBody:
       additionalProperties: false
@@ -1430,6 +1760,430 @@ paths:
         roles:
           - ADMIN
         tenant: true
+        signedIn: true
+  /tenants/{tenant}/pay/claim-types:
+    get:
+      operationId: listClaimTypes
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimTypesOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: The tenant's claim types, by name
+      tags:
+        - pay
+      x-access:
+        roles:
+          - ADMIN
+        tenant: true
+        signedIn: true
+    post:
+      operationId: createClaimType
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClaimTypeInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimType"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Add a claim type
+      tags:
+        - pay
+      x-access:
+        roles:
+          - ADMIN
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/pay/claim-types/{id}:
+    patch:
+      operationId: updateClaimType
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateClaimTypeInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimType"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Rename or switch off a claim type
+      tags:
+        - pay
+      x-access:
+        roles:
+          - ADMIN
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/pay/claim-types/{id}/eligible:
+    get:
+      operationId: listClaimEligible
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimEligibleOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Who may claim a claim type
+      tags:
+        - pay
+      x-access:
+        roles:
+          - ADMIN
+        tenant: true
+        signedIn: true
+    put:
+      operationId: setClaimEligible
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetClaimEligibleInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "Set who may claim a claim type: everyone listed, no one else"
+      tags:
+        - pay
+      x-access:
+        roles:
+          - ADMIN
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/pay/commission-types:
+    get:
+      operationId: listCommissionTypes
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommissionTypesOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: The tenant's commission types, by name
+      tags:
+        - pay
+      x-access:
+        roles:
+          - ADMIN
+        tenant: true
+        signedIn: true
+    post:
+      operationId: createCommissionType
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommissionTypeInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommissionType"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Add a commission type
+      tags:
+        - pay
+      x-access:
+        roles:
+          - ADMIN
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/pay/commission-types/{id}:
+    patch:
+      operationId: updateCommissionType
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCommissionTypeInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommissionType"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Rename, switch off or re-rate a commission type
+      tags:
+        - pay
+      x-access:
+        roles:
+          - ADMIN
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/pay/period:
+    get:
+      operationId: getPayPeriod
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayPeriod"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: The current pay period and what it owes the selling staff
+      tags:
+        - pay
+      x-access:
+        roles:
+          - ADMIN
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/pay/schedule:
+    put:
+      operationId: setPaySchedule
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetPayScheduleInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Set the tenant's pay frequency, for every staff member
+      tags:
+        - pay
+      x-access:
+        roles:
+          - ADMIN
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/pay/staff:
+    get:
+      operationId: listPayStaff
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayStaffOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: The tenant's users with their commission type and bank details
+      tags:
+        - pay
+      x-access:
+        roles:
+          - ADMIN
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/pay/staff/{userId}/commission-type:
+    put:
+      operationId: setStaffCommission
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetStaffCommissionInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Give a staff member a commission type, or none
+      tags:
+        - pay
+      x-access:
+        roles:
+          - ADMIN
+        tenant: true
+        idempotent: true
         signedIn: true
   /tenants/{tenant}/sales/days:
     get:
