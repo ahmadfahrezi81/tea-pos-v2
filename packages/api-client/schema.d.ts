@@ -226,6 +226,162 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{tenant}/pay/claim-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The tenant's claim types, by name */
+        get: operations["listClaimTypes"];
+        put?: never;
+        /** Add a claim type */
+        post: operations["createClaimType"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/claim-types/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename or switch off a claim type */
+        patch: operations["updateClaimType"];
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/claim-types/{id}/eligible": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Who may claim a claim type */
+        get: operations["listClaimEligible"];
+        /** Set who may claim a claim type: everyone listed, no one else */
+        put: operations["setClaimEligible"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/commission-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The tenant's commission types, by name */
+        get: operations["listCommissionTypes"];
+        put?: never;
+        /** Add a commission type */
+        post: operations["createCommissionType"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/commission-types/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename, switch off or re-rate a commission type */
+        patch: operations["updateCommissionType"];
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/period": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The current pay period and what it owes the selling staff */
+        get: operations["getPayPeriod"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set the tenant's pay frequency, for every staff member */
+        put: operations["setPaySchedule"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/staff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The tenant's users with their commission type and bank details */
+        get: operations["listPayStaff"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/staff/{userId}/commission-type": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Give a staff member a commission type, or none */
+        put: operations["setStaffCommission"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{tenant}/sales/days": {
         parameters: {
             query?: never;
@@ -349,6 +505,72 @@ export interface components {
             readyMs: number;
             /** @enum {string} */
             screen: "shell" | "signin" | "other";
+        };
+        Bank: {
+            accountHolder?: string;
+            accountNumber?: string;
+            name?: string;
+        };
+        ClaimEligibleOutputBody: {
+            userIds: string[];
+        };
+        ClaimType: {
+            /** Format: int64 */
+            amount: number;
+            /** Format: double */
+            autoThresholdHours?: number;
+            enabled: boolean;
+            /** @enum {string} */
+            frequency: "daily" | "weekly" | "monthly" | "one_time";
+            /** Format: uuid */
+            id: string;
+            name: string;
+            slug: string;
+            /**
+             * @description manual: staff submits; auto_submit: made for staff, an admin reviews; auto: made and approved when enough hours were worked
+             * @enum {string}
+             */
+            source: "manual" | "auto" | "auto_submit";
+        };
+        ClaimTypesOutputBody: {
+            types: components["schemas"]["ClaimType"][];
+        };
+        CommissionType: {
+            enabled: boolean;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /**
+             * Format: int64
+             * @description Rupiah per cup
+             */
+            ratePerCup: number;
+            slug: string;
+        };
+        CommissionTypesOutputBody: {
+            types: components["schemas"]["CommissionType"][];
+        };
+        CreateClaimTypeInputBody: {
+            /** Format: int64 */
+            amount: number;
+            /**
+             * Format: double
+             * @description Needed for auto
+             */
+            autoThresholdHours?: number;
+            /** @enum {string} */
+            frequency: "daily" | "weekly" | "monthly" | "one_time";
+            name: string;
+            slug: string;
+            /** @enum {string} */
+            source: "manual" | "auto" | "auto_submit";
+        };
+        CreateCommissionTypeInputBody: {
+            name: string;
+            /** Format: int64 */
+            ratePerCup: number;
+            /** @description Uppercase letters, digits and underscores */
+            slug: string;
         };
         Day: {
             /**
@@ -548,7 +770,7 @@ export interface components {
              * @example day_already_closed
              * @enum {string}
              */
-            code: "account_inactive" | "app_too_old" | "bad_cursor" | "bad_range" | "bad_request" | "conflict" | "day_not_found" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "route_not_found" | "store_not_found" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
+            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_cursor" | "bad_range" | "bad_request" | "claim_type_not_found" | "commission_type_not_found" | "conflict" | "day_not_found" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "route_not_found" | "staff_not_found" | "store_not_found" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
             details?: string[] | null;
             /** @example The day is already closed */
             message: string;
@@ -656,6 +878,61 @@ export interface components {
             items: components["schemas"]["Order"][];
             next?: string;
         };
+        PayPeriod: {
+            /**
+             * Format: int64
+             * @description Commissions and claims approved
+             */
+            approved: number;
+            /** Format: int64 */
+            claims: number;
+            /**
+             * Format: int64
+             * @description Approved, selling staff only
+             */
+            commissions: number;
+            /** Format: date */
+            end: string;
+            /** @enum {string} */
+            frequency: "weekly" | "bi_weekly" | "four_weekly";
+            /**
+             * Format: date
+             * @description The day after the period ends
+             */
+            payoutDate: string;
+            /**
+             * Format: int64
+             * @description Payouts counted into the period, all staff: a schedule switch is safe at 0
+             */
+            payouts: number;
+            /**
+             * Format: int64
+             * @description Approved plus still pending
+             */
+            reviewed: number;
+            /** Format: date */
+            start: string;
+            /** Format: int64 */
+            total: number;
+        };
+        PayStaff: {
+            avatarUrl?: string;
+            /** @description Set by the staff member in the seller app */
+            bank: components["schemas"]["Bank"];
+            commissionType?: components["schemas"]["CommissionType"];
+            email: string;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @example USER */
+            role: string;
+            /** @example active */
+            status: string;
+        };
+        PayStaffOutputBody: {
+            /** @description Every user of the tenant, admins included; by name */
+            staff: components["schemas"]["PayStaff"][];
+        };
         SalesDay: {
             /** Format: int64 */
             cups: number;
@@ -712,6 +989,21 @@ export interface components {
             /** @description Most first */
             products: components["schemas"]["SalesProduct"][];
         };
+        SetClaimEligibleInputBody: {
+            /** @description Everyone who may claim it; the rest may not */
+            userIds: string[];
+        };
+        SetPayScheduleInputBody: {
+            /** @enum {string} */
+            frequency: "weekly" | "bi_weekly" | "four_weekly";
+        };
+        SetStaffCommissionInputBody: {
+            /**
+             * Format: uuid
+             * @description Null takes it away
+             */
+            commissionTypeId: string | null;
+        };
         TeaWasteDay: {
             /** Format: date */
             date: string;
@@ -721,6 +1013,16 @@ export interface components {
         TeaWasteOutputBody: {
             /** @description Only days whose tea was measured at closing */
             days: components["schemas"]["TeaWasteDay"][];
+        };
+        UpdateClaimTypeInputBody: {
+            enabled?: boolean;
+            name?: string;
+        };
+        UpdateCommissionTypeInputBody: {
+            enabled?: boolean;
+            name?: string;
+            /** Format: int64 */
+            ratePerCup?: number;
         };
         UploadInputBody: {
             /** @enum {string} */
@@ -1195,6 +1497,405 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["OutputOrder"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listClaimTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimTypesOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createClaimType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateClaimTypeInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimType"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    updateClaimType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateClaimTypeInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimType"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listClaimEligible: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimEligibleOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    setClaimEligible: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetClaimEligibleInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listCommissionTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommissionTypesOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createCommissionType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCommissionTypeInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommissionType"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    updateCommissionType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCommissionTypeInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommissionType"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getPayPeriod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPeriod"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    setPaySchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetPayScheduleInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listPayStaff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayStaffOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    setStaffCommission: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetStaffCommissionInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

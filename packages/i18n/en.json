@@ -183,7 +183,11 @@
         "comingSoon": "{name} is coming soon",
         "inDevelopment": "This feature is still in development",
         "demo": "DEMO",
-        "inactive": "INACTIVE"
+        "inactive": "INACTIVE",
+        "form": {
+            "noteTitle": "What this changes",
+            "noteBody": "Payroll already recorded stays as it is. This applies from here on, to days closed and claims submitted after you save."
+        }
     },
     "signIn": {
         "google": "Continue with Google",
@@ -234,7 +238,11 @@
         "unknown_app": "Open sign-in from the app.",
         "bad_range": "Pick a shorter range of dates.",
         "day_not_found": "No such day.",
-        "bad_cursor": "This list moved on; pull down to start again."
+        "bad_cursor": "This list moved on; pull down to start again.",
+        "staff_not_found": "No such staff member.",
+        "commission_type_not_found": "That commission type is gone or switched off.",
+        "claim_type_not_found": "No such claim type.",
+        "auto_needs_hours": "An automatic claim type needs its minimum hours worked."
     },
     "store": {
         "title": "Store",

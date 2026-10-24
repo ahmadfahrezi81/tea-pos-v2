@@ -17,14 +17,26 @@ import { Route as ShellTenantIndexRouteImport } from './routes/_shell/$tenant/in
 import { Route as ShellTenantAccountRouteImport } from './routes/_shell/$tenant/account'
 import { Route as ShellTenantChatsRouteImport } from './routes/_shell/$tenant/chats'
 import { Route as ShellTenantMoreRouteImport } from './routes/_shell/$tenant/more'
-import { Route as ShellTenantPayRouteImport } from './routes/_shell/$tenant/pay'
 import { Route as ShellTenantSupplyRouteImport } from './routes/_shell/$tenant/supply'
 import { Route as ShellTenantWhatsNewRouteImport } from './routes/_shell/$tenant/whats-new'
+import { Route as ShellTenantPayIndexRouteImport } from './routes/_shell/$tenant/pay/index'
+import { Route as ShellTenantPayPayScheduleRouteImport } from './routes/_shell/$tenant/pay/pay-schedule'
+import { Route as ShellTenantPayPayoutsRouteImport } from './routes/_shell/$tenant/pay/payouts'
 import { Route as ShellTenantStoreIndexRouteImport } from './routes/_shell/$tenant/store/index'
+import { Route as ShellTenantPayClaimTypesIndexRouteImport } from './routes/_shell/$tenant/pay/claim-types/index'
+import { Route as ShellTenantPayClaimTypesAddRouteImport } from './routes/_shell/$tenant/pay/claim-types/add'
+import { Route as ShellTenantPayCommissionTypesIndexRouteImport } from './routes/_shell/$tenant/pay/commission-types/index'
+import { Route as ShellTenantPayCommissionTypesAddRouteImport } from './routes/_shell/$tenant/pay/commission-types/add'
+import { Route as ShellTenantPayStaffCommissionsIndexRouteImport } from './routes/_shell/$tenant/pay/staff-commissions/index'
+import { Route as ShellTenantPayStaffCommissionsUserIdRouteImport } from './routes/_shell/$tenant/pay/staff-commissions/$userId'
+import { Route as ShellTenantPayStaffIndexRouteImport } from './routes/_shell/$tenant/pay/staff/index'
+import { Route as ShellTenantPayStaffUserIdRouteImport } from './routes/_shell/$tenant/pay/staff/$userId'
 import { Route as ShellTenantStoreAnalyticsIndexRouteImport } from './routes/_shell/$tenant/store/analytics/index'
 import { Route as ShellTenantStoreAnalyticsChartsRouteImport } from './routes/_shell/$tenant/store/analytics/charts'
 import { Route as ShellTenantStoreOrdersIndexRouteImport } from './routes/_shell/$tenant/store/orders/index'
 import { Route as ShellTenantStoreOrdersChartRouteImport } from './routes/_shell/$tenant/store/orders/chart'
+import { Route as ShellTenantPayClaimTypesIdEditRouteImport } from './routes/_shell/$tenant/pay/claim-types/$id/edit'
+import { Route as ShellTenantPayCommissionTypesIdEditRouteImport } from './routes/_shell/$tenant/pay/commission-types/$id/edit'
 import { Route as ShellTenantStoreAnalyticsDaysDayIdIndexRouteImport } from './routes/_shell/$tenant/store/analytics/days/$dayId/index'
 import { Route as ShellTenantStoreAnalyticsDaysDayIdActivityRouteImport } from './routes/_shell/$tenant/store/analytics/days/$dayId/activity'
 import { Route as ShellTenantStoreAnalyticsDaysDayIdSessionsRouteImport } from './routes/_shell/$tenant/store/analytics/days/$dayId/sessions'
@@ -68,11 +80,6 @@ const ShellTenantMoreRoute = ShellTenantMoreRouteImport.update({
   path: '/more',
   getParentRoute: () => ShellTenantRoute,
 } as any)
-const ShellTenantPayRoute = ShellTenantPayRouteImport.update({
-  id: '/pay',
-  path: '/pay',
-  getParentRoute: () => ShellTenantRoute,
-} as any)
 const ShellTenantSupplyRoute = ShellTenantSupplyRouteImport.update({
   id: '/supply',
   path: '/supply',
@@ -83,11 +90,75 @@ const ShellTenantWhatsNewRoute = ShellTenantWhatsNewRouteImport.update({
   path: '/whats-new',
   getParentRoute: () => ShellTenantRoute,
 } as any)
+const ShellTenantPayIndexRoute = ShellTenantPayIndexRouteImport.update({
+  id: '/pay/',
+  path: '/pay/',
+  getParentRoute: () => ShellTenantRoute,
+} as any)
+const ShellTenantPayPayScheduleRoute =
+  ShellTenantPayPayScheduleRouteImport.update({
+    id: '/pay/pay-schedule',
+    path: '/pay/pay-schedule',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantPayPayoutsRoute = ShellTenantPayPayoutsRouteImport.update({
+  id: '/pay/payouts',
+  path: '/pay/payouts',
+  getParentRoute: () => ShellTenantRoute,
+} as any)
 const ShellTenantStoreIndexRoute = ShellTenantStoreIndexRouteImport.update({
   id: '/store/',
   path: '/store/',
   getParentRoute: () => ShellTenantRoute,
 } as any)
+const ShellTenantPayClaimTypesIndexRoute =
+  ShellTenantPayClaimTypesIndexRouteImport.update({
+    id: '/pay/claim-types/',
+    path: '/pay/claim-types/',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantPayClaimTypesAddRoute =
+  ShellTenantPayClaimTypesAddRouteImport.update({
+    id: '/pay/claim-types/add',
+    path: '/pay/claim-types/add',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantPayCommissionTypesIndexRoute =
+  ShellTenantPayCommissionTypesIndexRouteImport.update({
+    id: '/pay/commission-types/',
+    path: '/pay/commission-types/',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantPayCommissionTypesAddRoute =
+  ShellTenantPayCommissionTypesAddRouteImport.update({
+    id: '/pay/commission-types/add',
+    path: '/pay/commission-types/add',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantPayStaffCommissionsIndexRoute =
+  ShellTenantPayStaffCommissionsIndexRouteImport.update({
+    id: '/pay/staff-commissions/',
+    path: '/pay/staff-commissions/',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantPayStaffCommissionsUserIdRoute =
+  ShellTenantPayStaffCommissionsUserIdRouteImport.update({
+    id: '/pay/staff-commissions/$userId',
+    path: '/pay/staff-commissions/$userId',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantPayStaffIndexRoute =
+  ShellTenantPayStaffIndexRouteImport.update({
+    id: '/pay/staff/',
+    path: '/pay/staff/',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantPayStaffUserIdRoute =
+  ShellTenantPayStaffUserIdRouteImport.update({
+    id: '/pay/staff/$userId',
+    path: '/pay/staff/$userId',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
 const ShellTenantStoreAnalyticsIndexRoute =
   ShellTenantStoreAnalyticsIndexRouteImport.update({
     id: '/store/analytics/',
@@ -110,6 +181,18 @@ const ShellTenantStoreOrdersChartRoute =
   ShellTenantStoreOrdersChartRouteImport.update({
     id: '/store/orders/chart',
     path: '/store/orders/chart',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantPayClaimTypesIdEditRoute =
+  ShellTenantPayClaimTypesIdEditRouteImport.update({
+    id: '/pay/claim-types/$id/edit',
+    path: '/pay/claim-types/$id/edit',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantPayCommissionTypesIdEditRoute =
+  ShellTenantPayCommissionTypesIdEditRouteImport.update({
+    id: '/pay/commission-types/$id/edit',
+    path: '/pay/commission-types/$id/edit',
     getParentRoute: () => ShellTenantRoute,
   } as any)
 const ShellTenantStoreAnalyticsDaysDayIdIndexRoute =
@@ -138,15 +221,27 @@ export interface FileRoutesByFullPath {
   '/$tenant/account': typeof ShellTenantAccountRoute
   '/$tenant/chats': typeof ShellTenantChatsRoute
   '/$tenant/more': typeof ShellTenantMoreRoute
-  '/$tenant/pay': typeof ShellTenantPayRoute
   '/$tenant/supply': typeof ShellTenantSupplyRoute
   '/$tenant/whats-new': typeof ShellTenantWhatsNewRoute
   '/$tenant/': typeof ShellTenantIndexRoute
+  '/$tenant/pay/pay-schedule': typeof ShellTenantPayPayScheduleRoute
+  '/$tenant/pay/payouts': typeof ShellTenantPayPayoutsRoute
+  '/$tenant/pay/': typeof ShellTenantPayIndexRoute
   '/$tenant/store/': typeof ShellTenantStoreIndexRoute
+  '/$tenant/pay/claim-types/add': typeof ShellTenantPayClaimTypesAddRoute
+  '/$tenant/pay/commission-types/add': typeof ShellTenantPayCommissionTypesAddRoute
+  '/$tenant/pay/staff-commissions/$userId': typeof ShellTenantPayStaffCommissionsUserIdRoute
+  '/$tenant/pay/staff/$userId': typeof ShellTenantPayStaffUserIdRoute
   '/$tenant/store/analytics/charts': typeof ShellTenantStoreAnalyticsChartsRoute
   '/$tenant/store/orders/chart': typeof ShellTenantStoreOrdersChartRoute
+  '/$tenant/pay/claim-types/': typeof ShellTenantPayClaimTypesIndexRoute
+  '/$tenant/pay/commission-types/': typeof ShellTenantPayCommissionTypesIndexRoute
+  '/$tenant/pay/staff-commissions/': typeof ShellTenantPayStaffCommissionsIndexRoute
+  '/$tenant/pay/staff/': typeof ShellTenantPayStaffIndexRoute
   '/$tenant/store/analytics/': typeof ShellTenantStoreAnalyticsIndexRoute
   '/$tenant/store/orders/': typeof ShellTenantStoreOrdersIndexRoute
+  '/$tenant/pay/claim-types/$id/edit': typeof ShellTenantPayClaimTypesIdEditRoute
+  '/$tenant/pay/commission-types/$id/edit': typeof ShellTenantPayCommissionTypesIdEditRoute
   '/$tenant/store/analytics/days/$dayId/activity': typeof ShellTenantStoreAnalyticsDaysDayIdActivityRoute
   '/$tenant/store/analytics/days/$dayId/sessions': typeof ShellTenantStoreAnalyticsDaysDayIdSessionsRoute
   '/$tenant/store/analytics/days/$dayId/': typeof ShellTenantStoreAnalyticsDaysDayIdIndexRoute
@@ -157,15 +252,27 @@ export interface FileRoutesByTo {
   '/$tenant/account': typeof ShellTenantAccountRoute
   '/$tenant/chats': typeof ShellTenantChatsRoute
   '/$tenant/more': typeof ShellTenantMoreRoute
-  '/$tenant/pay': typeof ShellTenantPayRoute
   '/$tenant/supply': typeof ShellTenantSupplyRoute
   '/$tenant/whats-new': typeof ShellTenantWhatsNewRoute
   '/$tenant': typeof ShellTenantIndexRoute
+  '/$tenant/pay/pay-schedule': typeof ShellTenantPayPayScheduleRoute
+  '/$tenant/pay/payouts': typeof ShellTenantPayPayoutsRoute
+  '/$tenant/pay': typeof ShellTenantPayIndexRoute
   '/$tenant/store': typeof ShellTenantStoreIndexRoute
+  '/$tenant/pay/claim-types/add': typeof ShellTenantPayClaimTypesAddRoute
+  '/$tenant/pay/commission-types/add': typeof ShellTenantPayCommissionTypesAddRoute
+  '/$tenant/pay/staff-commissions/$userId': typeof ShellTenantPayStaffCommissionsUserIdRoute
+  '/$tenant/pay/staff/$userId': typeof ShellTenantPayStaffUserIdRoute
   '/$tenant/store/analytics/charts': typeof ShellTenantStoreAnalyticsChartsRoute
   '/$tenant/store/orders/chart': typeof ShellTenantStoreOrdersChartRoute
+  '/$tenant/pay/claim-types': typeof ShellTenantPayClaimTypesIndexRoute
+  '/$tenant/pay/commission-types': typeof ShellTenantPayCommissionTypesIndexRoute
+  '/$tenant/pay/staff-commissions': typeof ShellTenantPayStaffCommissionsIndexRoute
+  '/$tenant/pay/staff': typeof ShellTenantPayStaffIndexRoute
   '/$tenant/store/analytics': typeof ShellTenantStoreAnalyticsIndexRoute
   '/$tenant/store/orders': typeof ShellTenantStoreOrdersIndexRoute
+  '/$tenant/pay/claim-types/$id/edit': typeof ShellTenantPayClaimTypesIdEditRoute
+  '/$tenant/pay/commission-types/$id/edit': typeof ShellTenantPayCommissionTypesIdEditRoute
   '/$tenant/store/analytics/days/$dayId/activity': typeof ShellTenantStoreAnalyticsDaysDayIdActivityRoute
   '/$tenant/store/analytics/days/$dayId/sessions': typeof ShellTenantStoreAnalyticsDaysDayIdSessionsRoute
   '/$tenant/store/analytics/days/$dayId': typeof ShellTenantStoreAnalyticsDaysDayIdIndexRoute
@@ -179,15 +286,27 @@ export interface FileRoutesById {
   '/_shell/$tenant/account': typeof ShellTenantAccountRoute
   '/_shell/$tenant/chats': typeof ShellTenantChatsRoute
   '/_shell/$tenant/more': typeof ShellTenantMoreRoute
-  '/_shell/$tenant/pay': typeof ShellTenantPayRoute
   '/_shell/$tenant/supply': typeof ShellTenantSupplyRoute
   '/_shell/$tenant/whats-new': typeof ShellTenantWhatsNewRoute
   '/_shell/$tenant/': typeof ShellTenantIndexRoute
+  '/_shell/$tenant/pay/pay-schedule': typeof ShellTenantPayPayScheduleRoute
+  '/_shell/$tenant/pay/payouts': typeof ShellTenantPayPayoutsRoute
+  '/_shell/$tenant/pay/': typeof ShellTenantPayIndexRoute
   '/_shell/$tenant/store/': typeof ShellTenantStoreIndexRoute
+  '/_shell/$tenant/pay/claim-types/add': typeof ShellTenantPayClaimTypesAddRoute
+  '/_shell/$tenant/pay/commission-types/add': typeof ShellTenantPayCommissionTypesAddRoute
+  '/_shell/$tenant/pay/staff-commissions/$userId': typeof ShellTenantPayStaffCommissionsUserIdRoute
+  '/_shell/$tenant/pay/staff/$userId': typeof ShellTenantPayStaffUserIdRoute
   '/_shell/$tenant/store/analytics/charts': typeof ShellTenantStoreAnalyticsChartsRoute
   '/_shell/$tenant/store/orders/chart': typeof ShellTenantStoreOrdersChartRoute
+  '/_shell/$tenant/pay/claim-types/': typeof ShellTenantPayClaimTypesIndexRoute
+  '/_shell/$tenant/pay/commission-types/': typeof ShellTenantPayCommissionTypesIndexRoute
+  '/_shell/$tenant/pay/staff-commissions/': typeof ShellTenantPayStaffCommissionsIndexRoute
+  '/_shell/$tenant/pay/staff/': typeof ShellTenantPayStaffIndexRoute
   '/_shell/$tenant/store/analytics/': typeof ShellTenantStoreAnalyticsIndexRoute
   '/_shell/$tenant/store/orders/': typeof ShellTenantStoreOrdersIndexRoute
+  '/_shell/$tenant/pay/claim-types/$id/edit': typeof ShellTenantPayClaimTypesIdEditRoute
+  '/_shell/$tenant/pay/commission-types/$id/edit': typeof ShellTenantPayCommissionTypesIdEditRoute
   '/_shell/$tenant/store/analytics/days/$dayId/activity': typeof ShellTenantStoreAnalyticsDaysDayIdActivityRoute
   '/_shell/$tenant/store/analytics/days/$dayId/sessions': typeof ShellTenantStoreAnalyticsDaysDayIdSessionsRoute
   '/_shell/$tenant/store/analytics/days/$dayId/': typeof ShellTenantStoreAnalyticsDaysDayIdIndexRoute
@@ -201,15 +320,27 @@ export interface FileRouteTypes {
     | '/$tenant/account'
     | '/$tenant/chats'
     | '/$tenant/more'
-    | '/$tenant/pay'
     | '/$tenant/supply'
     | '/$tenant/whats-new'
     | '/$tenant/'
+    | '/$tenant/pay/pay-schedule'
+    | '/$tenant/pay/payouts'
+    | '/$tenant/pay/'
     | '/$tenant/store/'
+    | '/$tenant/pay/claim-types/add'
+    | '/$tenant/pay/commission-types/add'
+    | '/$tenant/pay/staff-commissions/$userId'
+    | '/$tenant/pay/staff/$userId'
     | '/$tenant/store/analytics/charts'
     | '/$tenant/store/orders/chart'
+    | '/$tenant/pay/claim-types/'
+    | '/$tenant/pay/commission-types/'
+    | '/$tenant/pay/staff-commissions/'
+    | '/$tenant/pay/staff/'
     | '/$tenant/store/analytics/'
     | '/$tenant/store/orders/'
+    | '/$tenant/pay/claim-types/$id/edit'
+    | '/$tenant/pay/commission-types/$id/edit'
     | '/$tenant/store/analytics/days/$dayId/activity'
     | '/$tenant/store/analytics/days/$dayId/sessions'
     | '/$tenant/store/analytics/days/$dayId/'
@@ -220,15 +351,27 @@ export interface FileRouteTypes {
     | '/$tenant/account'
     | '/$tenant/chats'
     | '/$tenant/more'
-    | '/$tenant/pay'
     | '/$tenant/supply'
     | '/$tenant/whats-new'
     | '/$tenant'
+    | '/$tenant/pay/pay-schedule'
+    | '/$tenant/pay/payouts'
+    | '/$tenant/pay'
     | '/$tenant/store'
+    | '/$tenant/pay/claim-types/add'
+    | '/$tenant/pay/commission-types/add'
+    | '/$tenant/pay/staff-commissions/$userId'
+    | '/$tenant/pay/staff/$userId'
     | '/$tenant/store/analytics/charts'
     | '/$tenant/store/orders/chart'
+    | '/$tenant/pay/claim-types'
+    | '/$tenant/pay/commission-types'
+    | '/$tenant/pay/staff-commissions'
+    | '/$tenant/pay/staff'
     | '/$tenant/store/analytics'
     | '/$tenant/store/orders'
+    | '/$tenant/pay/claim-types/$id/edit'
+    | '/$tenant/pay/commission-types/$id/edit'
     | '/$tenant/store/analytics/days/$dayId/activity'
     | '/$tenant/store/analytics/days/$dayId/sessions'
     | '/$tenant/store/analytics/days/$dayId'
@@ -241,15 +384,27 @@ export interface FileRouteTypes {
     | '/_shell/$tenant/account'
     | '/_shell/$tenant/chats'
     | '/_shell/$tenant/more'
-    | '/_shell/$tenant/pay'
     | '/_shell/$tenant/supply'
     | '/_shell/$tenant/whats-new'
     | '/_shell/$tenant/'
+    | '/_shell/$tenant/pay/pay-schedule'
+    | '/_shell/$tenant/pay/payouts'
+    | '/_shell/$tenant/pay/'
     | '/_shell/$tenant/store/'
+    | '/_shell/$tenant/pay/claim-types/add'
+    | '/_shell/$tenant/pay/commission-types/add'
+    | '/_shell/$tenant/pay/staff-commissions/$userId'
+    | '/_shell/$tenant/pay/staff/$userId'
     | '/_shell/$tenant/store/analytics/charts'
     | '/_shell/$tenant/store/orders/chart'
+    | '/_shell/$tenant/pay/claim-types/'
+    | '/_shell/$tenant/pay/commission-types/'
+    | '/_shell/$tenant/pay/staff-commissions/'
+    | '/_shell/$tenant/pay/staff/'
     | '/_shell/$tenant/store/analytics/'
     | '/_shell/$tenant/store/orders/'
+    | '/_shell/$tenant/pay/claim-types/$id/edit'
+    | '/_shell/$tenant/pay/commission-types/$id/edit'
     | '/_shell/$tenant/store/analytics/days/$dayId/activity'
     | '/_shell/$tenant/store/analytics/days/$dayId/sessions'
     | '/_shell/$tenant/store/analytics/days/$dayId/'
@@ -318,13 +473,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellTenantMoreRouteImport
       parentRoute: typeof ShellTenantRoute
     }
-    '/_shell/$tenant/pay': {
-      id: '/_shell/$tenant/pay'
-      path: '/pay'
-      fullPath: '/$tenant/pay'
-      preLoaderRoute: typeof ShellTenantPayRouteImport
-      parentRoute: typeof ShellTenantRoute
-    }
     '/_shell/$tenant/supply': {
       id: '/_shell/$tenant/supply'
       path: '/supply'
@@ -339,11 +487,88 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellTenantWhatsNewRouteImport
       parentRoute: typeof ShellTenantRoute
     }
+    '/_shell/$tenant/pay/': {
+      id: '/_shell/$tenant/pay/'
+      path: '/pay'
+      fullPath: '/$tenant/pay/'
+      preLoaderRoute: typeof ShellTenantPayIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/pay/pay-schedule': {
+      id: '/_shell/$tenant/pay/pay-schedule'
+      path: '/pay/pay-schedule'
+      fullPath: '/$tenant/pay/pay-schedule'
+      preLoaderRoute: typeof ShellTenantPayPayScheduleRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/pay/payouts': {
+      id: '/_shell/$tenant/pay/payouts'
+      path: '/pay/payouts'
+      fullPath: '/$tenant/pay/payouts'
+      preLoaderRoute: typeof ShellTenantPayPayoutsRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
     '/_shell/$tenant/store/': {
       id: '/_shell/$tenant/store/'
       path: '/store'
       fullPath: '/$tenant/store/'
       preLoaderRoute: typeof ShellTenantStoreIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/pay/claim-types/': {
+      id: '/_shell/$tenant/pay/claim-types/'
+      path: '/pay/claim-types'
+      fullPath: '/$tenant/pay/claim-types/'
+      preLoaderRoute: typeof ShellTenantPayClaimTypesIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/pay/claim-types/add': {
+      id: '/_shell/$tenant/pay/claim-types/add'
+      path: '/pay/claim-types/add'
+      fullPath: '/$tenant/pay/claim-types/add'
+      preLoaderRoute: typeof ShellTenantPayClaimTypesAddRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/pay/commission-types/': {
+      id: '/_shell/$tenant/pay/commission-types/'
+      path: '/pay/commission-types'
+      fullPath: '/$tenant/pay/commission-types/'
+      preLoaderRoute: typeof ShellTenantPayCommissionTypesIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/pay/commission-types/add': {
+      id: '/_shell/$tenant/pay/commission-types/add'
+      path: '/pay/commission-types/add'
+      fullPath: '/$tenant/pay/commission-types/add'
+      preLoaderRoute: typeof ShellTenantPayCommissionTypesAddRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/pay/staff-commissions/': {
+      id: '/_shell/$tenant/pay/staff-commissions/'
+      path: '/pay/staff-commissions'
+      fullPath: '/$tenant/pay/staff-commissions/'
+      preLoaderRoute: typeof ShellTenantPayStaffCommissionsIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/pay/staff-commissions/$userId': {
+      id: '/_shell/$tenant/pay/staff-commissions/$userId'
+      path: '/pay/staff-commissions/$userId'
+      fullPath: '/$tenant/pay/staff-commissions/$userId'
+      preLoaderRoute: typeof ShellTenantPayStaffCommissionsUserIdRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/pay/staff/': {
+      id: '/_shell/$tenant/pay/staff/'
+      path: '/pay/staff'
+      fullPath: '/$tenant/pay/staff/'
+      preLoaderRoute: typeof ShellTenantPayStaffIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/pay/staff/$userId': {
+      id: '/_shell/$tenant/pay/staff/$userId'
+      path: '/pay/staff/$userId'
+      fullPath: '/$tenant/pay/staff/$userId'
+      preLoaderRoute: typeof ShellTenantPayStaffUserIdRouteImport
       parentRoute: typeof ShellTenantRoute
     }
     '/_shell/$tenant/store/analytics/': {
@@ -374,6 +599,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellTenantStoreOrdersChartRouteImport
       parentRoute: typeof ShellTenantRoute
     }
+    '/_shell/$tenant/pay/claim-types/$id/edit': {
+      id: '/_shell/$tenant/pay/claim-types/$id/edit'
+      path: '/pay/claim-types/$id/edit'
+      fullPath: '/$tenant/pay/claim-types/$id/edit'
+      preLoaderRoute: typeof ShellTenantPayClaimTypesIdEditRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/pay/commission-types/$id/edit': {
+      id: '/_shell/$tenant/pay/commission-types/$id/edit'
+      path: '/pay/commission-types/$id/edit'
+      fullPath: '/$tenant/pay/commission-types/$id/edit'
+      preLoaderRoute: typeof ShellTenantPayCommissionTypesIdEditRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
     '/_shell/$tenant/store/analytics/days/$dayId/': {
       id: '/_shell/$tenant/store/analytics/days/$dayId/'
       path: '/store/analytics/days/$dayId'
@@ -402,15 +641,27 @@ interface ShellTenantRouteChildren {
   ShellTenantAccountRoute: typeof ShellTenantAccountRoute
   ShellTenantChatsRoute: typeof ShellTenantChatsRoute
   ShellTenantMoreRoute: typeof ShellTenantMoreRoute
-  ShellTenantPayRoute: typeof ShellTenantPayRoute
   ShellTenantSupplyRoute: typeof ShellTenantSupplyRoute
   ShellTenantWhatsNewRoute: typeof ShellTenantWhatsNewRoute
   ShellTenantIndexRoute: typeof ShellTenantIndexRoute
+  ShellTenantPayPayScheduleRoute: typeof ShellTenantPayPayScheduleRoute
+  ShellTenantPayPayoutsRoute: typeof ShellTenantPayPayoutsRoute
+  ShellTenantPayIndexRoute: typeof ShellTenantPayIndexRoute
   ShellTenantStoreIndexRoute: typeof ShellTenantStoreIndexRoute
+  ShellTenantPayClaimTypesAddRoute: typeof ShellTenantPayClaimTypesAddRoute
+  ShellTenantPayCommissionTypesAddRoute: typeof ShellTenantPayCommissionTypesAddRoute
+  ShellTenantPayStaffCommissionsUserIdRoute: typeof ShellTenantPayStaffCommissionsUserIdRoute
+  ShellTenantPayStaffUserIdRoute: typeof ShellTenantPayStaffUserIdRoute
   ShellTenantStoreAnalyticsChartsRoute: typeof ShellTenantStoreAnalyticsChartsRoute
   ShellTenantStoreOrdersChartRoute: typeof ShellTenantStoreOrdersChartRoute
+  ShellTenantPayClaimTypesIndexRoute: typeof ShellTenantPayClaimTypesIndexRoute
+  ShellTenantPayCommissionTypesIndexRoute: typeof ShellTenantPayCommissionTypesIndexRoute
+  ShellTenantPayStaffCommissionsIndexRoute: typeof ShellTenantPayStaffCommissionsIndexRoute
+  ShellTenantPayStaffIndexRoute: typeof ShellTenantPayStaffIndexRoute
   ShellTenantStoreAnalyticsIndexRoute: typeof ShellTenantStoreAnalyticsIndexRoute
   ShellTenantStoreOrdersIndexRoute: typeof ShellTenantStoreOrdersIndexRoute
+  ShellTenantPayClaimTypesIdEditRoute: typeof ShellTenantPayClaimTypesIdEditRoute
+  ShellTenantPayCommissionTypesIdEditRoute: typeof ShellTenantPayCommissionTypesIdEditRoute
   ShellTenantStoreAnalyticsDaysDayIdActivityRoute: typeof ShellTenantStoreAnalyticsDaysDayIdActivityRoute
   ShellTenantStoreAnalyticsDaysDayIdSessionsRoute: typeof ShellTenantStoreAnalyticsDaysDayIdSessionsRoute
   ShellTenantStoreAnalyticsDaysDayIdIndexRoute: typeof ShellTenantStoreAnalyticsDaysDayIdIndexRoute
@@ -420,15 +671,31 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
   ShellTenantAccountRoute: ShellTenantAccountRoute,
   ShellTenantChatsRoute: ShellTenantChatsRoute,
   ShellTenantMoreRoute: ShellTenantMoreRoute,
-  ShellTenantPayRoute: ShellTenantPayRoute,
   ShellTenantSupplyRoute: ShellTenantSupplyRoute,
   ShellTenantWhatsNewRoute: ShellTenantWhatsNewRoute,
   ShellTenantIndexRoute: ShellTenantIndexRoute,
+  ShellTenantPayPayScheduleRoute: ShellTenantPayPayScheduleRoute,
+  ShellTenantPayPayoutsRoute: ShellTenantPayPayoutsRoute,
+  ShellTenantPayIndexRoute: ShellTenantPayIndexRoute,
   ShellTenantStoreIndexRoute: ShellTenantStoreIndexRoute,
+  ShellTenantPayClaimTypesAddRoute: ShellTenantPayClaimTypesAddRoute,
+  ShellTenantPayCommissionTypesAddRoute: ShellTenantPayCommissionTypesAddRoute,
+  ShellTenantPayStaffCommissionsUserIdRoute:
+    ShellTenantPayStaffCommissionsUserIdRoute,
+  ShellTenantPayStaffUserIdRoute: ShellTenantPayStaffUserIdRoute,
   ShellTenantStoreAnalyticsChartsRoute: ShellTenantStoreAnalyticsChartsRoute,
   ShellTenantStoreOrdersChartRoute: ShellTenantStoreOrdersChartRoute,
+  ShellTenantPayClaimTypesIndexRoute: ShellTenantPayClaimTypesIndexRoute,
+  ShellTenantPayCommissionTypesIndexRoute:
+    ShellTenantPayCommissionTypesIndexRoute,
+  ShellTenantPayStaffCommissionsIndexRoute:
+    ShellTenantPayStaffCommissionsIndexRoute,
+  ShellTenantPayStaffIndexRoute: ShellTenantPayStaffIndexRoute,
   ShellTenantStoreAnalyticsIndexRoute: ShellTenantStoreAnalyticsIndexRoute,
   ShellTenantStoreOrdersIndexRoute: ShellTenantStoreOrdersIndexRoute,
+  ShellTenantPayClaimTypesIdEditRoute: ShellTenantPayClaimTypesIdEditRoute,
+  ShellTenantPayCommissionTypesIdEditRoute:
+    ShellTenantPayCommissionTypesIdEditRoute,
   ShellTenantStoreAnalyticsDaysDayIdActivityRoute:
     ShellTenantStoreAnalyticsDaysDayIdActivityRoute,
   ShellTenantStoreAnalyticsDaysDayIdSessionsRoute:

@@ -1,4 +1,5 @@
 import type en from "./en.json";
+import type payArea from "./areas/pay.en.json";
 import type sellerArea from "./areas/seller.en.json";
 import type storeArea from "./areas/store.en.json";
 
@@ -9,8 +10,8 @@ export type Locale = "en" | "id";
  * the areas, each loaded with the screens that use it (`loadArea`), so the first open carries
  * only what it draws.
  */
-export type Messages = typeof en & typeof storeArea & typeof sellerArea;
-export type Area = "store" | "seller";
+export type Messages = typeof en & typeof storeArea & typeof payArea & typeof sellerArea;
+export type Area = "store" | "pay" | "seller";
 
 type Leaves<T, P extends string = ""> = {
     [K in keyof T & string]: T[K] extends string ? `${P}${K}` : Leaves<T[K], `${P}${K}.`>;
@@ -23,6 +24,10 @@ const areas: Record<Area, Record<Locale, () => Promise<{ default: object }>>> = 
     store: {
         en: () => import("./areas/store.en.json"),
         id: (): Promise<{ default: typeof storeArea }> => import("./areas/store.id.json"),
+    },
+    pay: {
+        en: () => import("./areas/pay.en.json"),
+        id: (): Promise<{ default: typeof payArea }> => import("./areas/pay.id.json"),
     },
     seller: {
         en: () => import("./areas/seller.en.json"),

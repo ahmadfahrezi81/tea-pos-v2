@@ -6,6 +6,7 @@
         "./*": "./*.tsx",
         "./routes": "./routes.ts",
         "./avatar": "./avatar.ts",
+        "./useApiMutation": "./useApiMutation.ts",
         "./navProgress": "./navProgress.ts",
         "./refreshGate": "./refreshGate.ts",
         "./useHasPainted": "./useHasPainted.ts",
