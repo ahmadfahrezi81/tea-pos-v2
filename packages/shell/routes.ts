@@ -8,7 +8,7 @@ import type { LucideIcon } from "lucide-react";
  */
 export type ShellRoute = {
     titleKey: MessageKey;
-    /** `null` marks a root tab; `"lastRootTab"` returns to the tab the user came from; else a path. */
+    /** `null` marks a root tab; `"lastRootTab"` returns to the tab the user came from; else a path, or one relative to this screen (`..`). */
     parent: string | null | "lastRootTab";
     /** Compact header: title beside a close button, rather than under a back arrow. */
     inlineHeader?: boolean;

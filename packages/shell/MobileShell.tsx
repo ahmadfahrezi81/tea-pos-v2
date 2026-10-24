@@ -158,7 +158,9 @@ export function MobileShell({
             ? homePath
             : parent === "lastRootTab"
               ? lastRootTabRef.current
-              : parent;
+              : parent.startsWith(".")
+                ? up(router.state.location.pathname, parent)
+                : parent;
         router.history.replace(parentPath);
     }, [canGoBack, parent, homePath, router]);
 
@@ -462,4 +464,9 @@ export function MobileShell({
             </FooterSlotContext>
         </ScrollContext>
     );
+}
+
+/** A parent relative to the screen (`..` is one level up), as a path with no trailing slash. */
+function up(pathname: string, relative: string): string {
+    return new URL(relative, `https://app${pathname}/`).pathname.replace(/\/$/, "") || "/";
 }

@@ -5,6 +5,7 @@
     "exports": {
         "./*": "./*.tsx",
         "./routes": "./routes.ts",
+        "./avatar": "./avatar.ts",
         "./navProgress": "./navProgress.ts",
         "./refreshGate": "./refreshGate.ts",
         "./useHasPainted": "./useHasPainted.ts",

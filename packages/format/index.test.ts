@@ -5,6 +5,7 @@ import {
     formatDateTime,
     formatMoney,
     formatMonth,
+    formatDay,
     formatRelative,
     formatTime,
     localDate,
@@ -68,5 +69,17 @@ describe("formatMoney", () => {
     it("is rupiah with Indonesian grouping", () => {
         expect(formatMoney(15000)).toBe("Rp 15.000");
         expect(formatMoney(0)).toBe("Rp 0");
+    });
+});
+
+describe("formatDay", () => {
+    const now = new Date("2026-10-24T05:00:00Z");
+    it("says today and yesterday, in the store's day", () => {
+        expect(formatDay("2026-10-24", "en", now)).toBe("Today");
+        expect(formatDay("2026-10-23", "en", now)).toBe("Yesterday");
+        expect(formatDay("2026-10-23", "id", now)).toBe("Kemarin");
+    });
+    it("names older days with their weekday", () => {
+        expect(formatDay("2026-10-01", "en", now)).toBe("Thu 1 Oct");
     });
 });

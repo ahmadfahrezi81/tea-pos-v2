@@ -1,7 +1,7 @@
 import { useT } from "@tea-pos/i18n/react";
+import { Sheet } from "@tea-pos/ui/Sheet";
 import { Check, ChevronDown } from "lucide-react";
 import { useState } from "react";
-import { createPortal } from "react-dom";
 
 import { useApp } from "./AppContext";
 import { useTenant } from "./tenant";
@@ -43,40 +43,26 @@ export function StorePicker() {
                 <span className="truncate">{store?.name ?? t("shell.allStores")}</span>
                 <ChevronDown size={16} className="shrink-0" />
             </button>
-            {open &&
-                // Into the page body: the header is its own layer, which would trap a fixed sheet.
-                createPortal(
-                    <div
-                        className="fixed inset-0 z-50 flex items-end bg-black/40"
-                        onClick={() => setOpen(false)}
-                    >
-                        <div
-                            className="w-full max-h-[70vh] overflow-y-auto bg-white rounded-t-2xl p-5 pb-8"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <p className="font-bold text-gray-900 mb-2">{t("shell.pickStore")}</p>
-                            <ul className="divide-y divide-gray-100">
-                                {mode === "all" && row(null, t("shell.allStores"))}
-                                {stores.map((s) =>
-                                    mode === "one" && s.status !== "active"
-                                        ? null
-                                        : row(s.id, s.name, s.status !== "active"),
-                                )}
-                            </ul>
-                            {mode === "all" && (
-                                <label className="mt-3 flex items-center gap-2 text-sm text-gray-600">
-                                    <input
-                                        type="checkbox"
-                                        checked={hideInactive}
-                                        onChange={(e) => setHideInactive(e.target.checked)}
-                                    />
-                                    {t("shell.hideInactiveStores")}
-                                </label>
-                            )}
-                        </div>
-                    </div>,
-                    document.body,
+            <Sheet open={open} onClose={() => setOpen(false)} title={t("shell.pickStore")}>
+                <ul className="divide-y divide-gray-100">
+                    {mode === "all" && row(null, t("shell.allStores"))}
+                    {stores.map((s) =>
+                        mode === "one" && s.status !== "active"
+                            ? null
+                            : row(s.id, s.name, s.status !== "active"),
+                    )}
+                </ul>
+                {mode === "all" && (
+                    <label className="mt-3 flex items-center gap-2 text-sm text-gray-600">
+                        <input
+                            type="checkbox"
+                            checked={hideInactive}
+                            onChange={(e) => setHideInactive(e.target.checked)}
+                        />
+                        {t("shell.hideInactiveStores")}
+                    </label>
                 )}
+            </Sheet>
         </>
     );
 }

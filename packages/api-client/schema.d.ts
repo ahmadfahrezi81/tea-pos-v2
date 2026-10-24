@@ -124,6 +124,74 @@ export interface paths {
         patch: operations["patchMe"];
         trace?: never;
     };
+    "/tenants/{tenant}/days": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A month of the stores' days, with expenses and who worked */
+        get: operations["listDays"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/days/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One store's day: cash, expenses, who worked, photos, products */
+        get: operations["getDay"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/days/{id}/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What happened during a store's day, oldest first */
+        get: operations["getDayActivity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/days/{id}/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Who held a store's day, and the handovers */
+        get: operations["getDaySessions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{tenant}/files": {
         parameters: {
             query?: never;
@@ -135,6 +203,91 @@ export interface paths {
         put?: never;
         /** An address to upload one photo to, straight to Storage */
         post: operations["signUpload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A day's orders over one store or several, newest first, a page at a time */
+        get: operations["listDayOrders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/sales/days": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sales, orders and cups per day, over one store or several */
+        get: operations["salesDays"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/sales/hours": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A day's cups and orders per hour, and its totals, over one store or several */
+        get: operations["salesHours"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/sales/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cups per product over one store or several */
+        get: operations["salesProducts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/tea-waste": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Litres of tea left at closing per day, over one store or several */
+        get: operations["teaWaste"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -197,6 +350,164 @@ export interface components {
             /** @enum {string} */
             screen: "shell" | "signin" | "other";
         };
+        Day: {
+            /**
+             * Format: int64
+             * @description Null until counted at closing
+             */
+            actualCash: number | null;
+            /**
+             * Format: date-time
+             * @description Empty while the day is open
+             */
+            closedAt?: string;
+            /** Format: int64 */
+            cups: number;
+            /** Format: date */
+            date: string;
+            /** Format: int64 */
+            expectedCash: number;
+            expenseItems: components["schemas"]["DayExpense"][];
+            /** Format: int64 */
+            expenses: number;
+            /** Format: uuid */
+            id: string;
+            notes?: string;
+            /** Format: int64 */
+            openingBalance: number;
+            /** Format: int64 */
+            orders: number;
+            /** Format: int64 */
+            sales: number;
+            /** @description Who worked (a session or an order), the most cups first */
+            sellers: components["schemas"]["DaySeller"][];
+            /** Format: uuid */
+            storeId: string;
+            storeName: string;
+            /** Format: int64 */
+            variance: number | null;
+        };
+        DayActivityOutputBody: {
+            /** @description Oldest first */
+            events: components["schemas"]["DayEvent"][];
+        };
+        DayDetail: {
+            /**
+             * Format: int64
+             * @description Null until counted at closing
+             */
+            actualCash: number | null;
+            /**
+             * Format: date-time
+             * @description Empty while the day is open
+             */
+            closedAt?: string;
+            closedBy?: string;
+            /** Format: int64 */
+            cups: number;
+            /** Format: date */
+            date: string;
+            /** Format: int64 */
+            expectedCash: number;
+            expenseItems: components["schemas"]["DayExpense"][];
+            /** Format: int64 */
+            expenses: number;
+            /** Format: uuid */
+            id: string;
+            notes?: string;
+            /** Format: date-time */
+            openedAt?: string;
+            openedBy?: string;
+            /** Format: int64 */
+            openingBalance: number;
+            /** Format: int64 */
+            orders: number;
+            photos: components["schemas"]["DayPhoto"][];
+            /** @description What the day sold per product, most first */
+            products: components["schemas"]["DayProduct"][];
+            /** Format: int64 */
+            sales: number;
+            /** @description Who worked (a session or an order), the most cups first */
+            sellers: components["schemas"]["DaySeller"][];
+            /** Format: uuid */
+            storeId: string;
+            storeName: string;
+            /** Format: int64 */
+            variance: number | null;
+        };
+        DayEvent: {
+            /** Format: date-time */
+            at: string;
+            /** Format: uuid */
+            id: string;
+            /** @description As the event saved it; a photo_url in it is a signed address */
+            metadata: unknown;
+            /** @example store_opened */
+            type: string;
+            userName?: string;
+        };
+        DayExpense: {
+            /** Format: int64 */
+            amount: number;
+            /** Format: uuid */
+            id: string;
+            notes?: string;
+            type: string;
+        };
+        DayPhoto: {
+            quantity?: components["schemas"]["DayQuantity"];
+            /**
+             * @description opening, closing:ice, closing:syrup, closing:bags, closing:cups, closing:tea
+             * @example closing:tea
+             */
+            type: string;
+            /** @description A signed address, for a few minutes; empty when it could not be signed */
+            url: string;
+        };
+        DayProduct: {
+            name: string;
+            /** Format: int64 */
+            quantity: number;
+            /** Format: int64 */
+            revenue: number;
+        };
+        DayQuantity: {
+            unit: string;
+            /** Format: double */
+            value: number;
+        };
+        DaySeller: {
+            avatarUrl?: string;
+            /** Format: int64 */
+            cups: number;
+            name: string;
+            /** Format: uuid */
+            userId: string;
+        };
+        DaySession: {
+            avatarUrl?: string;
+            /** Format: date-time */
+            endedAt?: string;
+            /** Format: uuid */
+            id: string;
+            /** @description The session this one took over from */
+            previousSessionId?: string;
+            /** Format: date-time */
+            startedAt: string;
+            /** @example active */
+            status: string;
+            /** Format: uuid */
+            userId: string;
+            userName?: string;
+        };
+        DaySessionsOutputBody: {
+            /** @description In the order they started */
+            sessions: components["schemas"]["DaySession"][];
+        };
+        DaysOutputBody: {
+            /** @description Newest first; with several stores, each store's day */
+            days: components["schemas"]["Day"][];
+        };
         Device: {
             /** Format: int64 */
             cores?: number;
@@ -237,7 +548,7 @@ export interface components {
              * @example day_already_closed
              * @enum {string}
              */
-            code: "account_inactive" | "app_too_old" | "bad_request" | "conflict" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "route_not_found" | "store_not_found" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
+            code: "account_inactive" | "app_too_old" | "bad_cursor" | "bad_range" | "bad_request" | "conflict" | "day_not_found" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "route_not_found" | "store_not_found" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
             details?: string[] | null;
             /** @example The day is already closed */
             message: string;
@@ -314,6 +625,102 @@ export interface components {
             language: string;
             /** @example USER */
             role: string;
+        };
+        Order: {
+            /** Format: date-time */
+            at: string;
+            /** Format: int64 */
+            cups: number;
+            /** Format: uuid */
+            id: string;
+            items: components["schemas"]["OrderItem"][];
+            /** @example cash */
+            paymentMethod: string;
+            seller?: string;
+            storeName: string;
+            /** Format: int64 */
+            total: number;
+        };
+        OrderItem: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: int64 */
+            quantity: number;
+            /** Format: int64 */
+            totalPrice: number;
+            /** Format: int64 */
+            unitPrice: number;
+        };
+        OutputOrder: {
+            items: components["schemas"]["Order"][];
+            next?: string;
+        };
+        SalesDay: {
+            /** Format: int64 */
+            cups: number;
+            /** Format: date */
+            date: string;
+            /**
+             * Format: int64
+             * @description How many of them are not closed yet: their totals come when they close
+             */
+            notClosed: number;
+            /** Format: int64 */
+            orders: number;
+            /**
+             * Format: int64
+             * @description Rupiah
+             */
+            sales: number;
+            /**
+             * Format: int64
+             * @description How many of the stores have this day
+             */
+            stores: number;
+        };
+        SalesDaysOutputBody: {
+            /** @description Only days with a summary, oldest first */
+            days: components["schemas"]["SalesDay"][];
+        };
+        SalesHour: {
+            /** Format: int64 */
+            cups: number;
+            /** Format: int64 */
+            hour: number;
+            /** Format: int64 */
+            orders: number;
+        };
+        SalesHoursOutputBody: {
+            /** Format: int64 */
+            cups: number;
+            /** @description From the hour before the first sale to the hour after the last; empty without sales */
+            hours: components["schemas"]["SalesHour"][];
+            /** Format: int64 */
+            orders: number;
+            /** Format: int64 */
+            sales: number;
+        };
+        SalesProduct: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: int64 */
+            quantity: number;
+        };
+        SalesProductsOutputBody: {
+            /** @description Most first */
+            products: components["schemas"]["SalesProduct"][];
+        };
+        TeaWasteDay: {
+            /** Format: date */
+            date: string;
+            /** Format: double */
+            litres: number;
+        };
+        TeaWasteOutputBody: {
+            /** @description Only days whose tea was measured at closing */
+            days: components["schemas"]["TeaWasteDay"][];
         };
         UploadInputBody: {
             /** @enum {string} */
@@ -593,6 +1000,137 @@ export interface operations {
             };
         };
     };
+    listDays: {
+        parameters: {
+            query: {
+                month: string;
+                /** @description Repeat for several; none is every store of the tenant (All stores) */
+                storeId?: string[] | null;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DaysOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getDay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DayDetail"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getDayActivity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DayActivityOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getDaySessions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DaySessionsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     signUpload: {
         parameters: {
             query?: never;
@@ -615,6 +1153,193 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UploadOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listDayOrders: {
+        parameters: {
+            query: {
+                /** @description The day, in the stores' time zone */
+                date: string;
+                /** @description Repeat for several; none is every store of the tenant (All stores) */
+                storeId?: string[] | null;
+                /** @description From the previous page's next; empty for the first */
+                cursor?: string;
+                limit?: number;
+                /** @description Only rows changed after this (a list catching up) */
+                since?: string;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutputOrder"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    salesDays: {
+        parameters: {
+            query: {
+                from: string;
+                /** @description Included; at most 400 days after from */
+                to: string;
+                /** @description Repeat for several; none is every store of the tenant (All stores) */
+                storeId?: string[] | null;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesDaysOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    salesHours: {
+        parameters: {
+            query: {
+                date: string;
+                /** @description Repeat for several; none is every store of the tenant (All stores) */
+                storeId?: string[] | null;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesHoursOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    salesProducts: {
+        parameters: {
+            query: {
+                from: string;
+                /** @description Included; at most 400 days after from */
+                to: string;
+                /** @description Repeat for several; none is every store of the tenant (All stores) */
+                storeId?: string[] | null;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesProductsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    teaWaste: {
+        parameters: {
+            query: {
+                from: string;
+                /** @description Included; at most 400 days after from */
+                to: string;
+                /** @description Repeat for several; none is every store of the tenant (All stores) */
+                storeId?: string[] | null;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeaWasteOutputBody"];
                 };
             };
             /** @description Error */

@@ -192,3 +192,26 @@ func TestSignOutEverywhere(t *testing.T) {
 		t.Fatalf("the other phone's /me: status %d, want 401", resp.StatusCode)
 	}
 }
+
+// The Store tab's numbers come through the backoffice's forwarder for the test admin, from
+// seed.sql's days and orders, and a seller cannot read them.
+func TestStore_AdminSeesTheTenantsSales(t *testing.T) {
+	admin := newPhone(t, backoffice)
+	mustSignIn(t, admin, "admin@test-a.test")
+	today := time.Now().In(time.FixedZone("WIB", 7*3600)).Format(time.DateOnly)
+	resp, body := admin.do(http.MethodGet, "/tenants/test-a/sales/days?from="+today[:8]+"01&to="+today, "", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("sales/days: %d %v", resp.StatusCode, body["code"])
+	}
+	if days, _ := body["days"].([]any); len(days) == 0 {
+		t.Fatal("no days this month: is seed.sql's Store data there?")
+	}
+	if resp, body := admin.do(http.MethodGet, "/tenants/test-a/orders?date="+today, "", nil); resp.StatusCode != http.StatusOK {
+		t.Fatalf("orders: %d %v", resp.StatusCode, body["code"])
+	}
+	sellerPhone := newPhone(t, seller)
+	mustSignIn(t, sellerPhone, "seller@test-a.test")
+	if resp, _ := sellerPhone.do(http.MethodGet, "/tenants/test-a/sales/days?from="+today+"&to="+today, "", nil); resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("seller: %d, want 403", resp.StatusCode)
+	}
+}

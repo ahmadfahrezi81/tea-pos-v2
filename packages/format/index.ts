@@ -95,6 +95,28 @@ export function formatRelative(
     return format.format(-Math.floor(elapsed / HOUR), "hour");
 }
 
+/** A store's day: `Today`, `Yesterday`, else `Thu 1 Oct` (with the year outside this one). */
+export function formatDay(value: DateInput, locale: Locale, now: DateInput = new Date()): string {
+    const days = Math.round((Date.parse(localDate(now)) - Date.parse(localDate(value))) / DAY);
+    if (days === 0 || days === 1) {
+        const key = `rd:${locale}`;
+        let format = cache.get(key) as Intl.RelativeTimeFormat | undefined;
+        if (!format) {
+            format = new Intl.RelativeTimeFormat(tags[locale], { numeric: "auto" });
+            cache.set(key, format);
+        }
+        const word = format.format(-days, "day");
+        return word.charAt(0).toUpperCase() + word.slice(1);
+    }
+    const sameYear = localDate(value).slice(0, 4) === localDate(now).slice(0, 4);
+    return dateFormat(locale, {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        year: sameYear ? undefined : "numeric",
+    }).format(toDate(value));
+}
+
 const money = new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",

@@ -4,8 +4,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 
+import type { MessageKey } from "@tea-pos/i18n";
 import { ToastHost } from "@tea-pos/ui/toast";
-import { House, Menu } from "lucide-react";
+import { Menu, type LucideIcon } from "lucide-react";
 
 import { avatar } from "./avatar";
 import { BootScreen } from "./BootScreen";
@@ -18,8 +19,15 @@ import { hideSplash } from "./splash";
 import { useHasPainted } from "./useHasPainted";
 import { useMeSync } from "./useMeSync";
 
-/** The layout route every app's screens sit in. Tabs arrive with later steps. */
-export function ShellLayout() {
+/** One of an app's own tabs, under the tenant (`""` is the tenant's first screen); More is added last. */
+export interface AppTab {
+    path: string;
+    labelKey: MessageKey;
+    icon: LucideIcon;
+}
+
+/** The layout route every app's screens sit in, with the app's tabs. */
+function ShellLayout({ tabs }: { tabs: AppTab[] }) {
     // Ready once /me is known (saved on the phone or answered) and the shell has painted under the splash.
     const me = useMe();
     useMeSync(me.data);
@@ -35,30 +43,40 @@ export function ShellLayout() {
     const maintenance = useMaintenanceWatch(me.refetch);
     return (
         <TenantProvider me={me.data}>
-            <Frame ready={ready} avatarUrl={me.data?.user.avatarUrl} />
+            <Frame tabs={tabs} ready={ready} avatarUrl={me.data?.user.avatarUrl} />
             {maintenance && <BootScreen state="maintenance" />}
             <ToastHost />
         </TenantProvider>
     );
 }
 
-/** Home and More for every app, under the tenant in the address; each app adds its own tabs later. */
-function Frame({ ready, avatarUrl }: { ready: boolean; avatarUrl?: string }) {
+/** The app's tabs and More, under the tenant in the address. */
+function Frame({
+    tabs: own,
+    ready,
+    avatarUrl,
+}: {
+    tabs: AppTab[];
+    ready: boolean;
+    avatarUrl?: string;
+}) {
     const slug = useTenant()?.tenant.slug;
     const navigate = useNavigate();
     const unseen = LATEST !== "" && seen() !== LATEST;
-    const home = slug ? `/${slug}` : "/";
+    const root = slug ? `/${slug}` : "/";
+    const under = (path: string) => (path ? `${root}/${path}` : root);
     const tabs: Tab[] = slug
         ? [
-              { path: home, labelKey: "home.title", icon: House, matchPaths: [home] },
+              ...own.map((t) => ({ ...t, path: under(t.path), matchPaths: [under(t.path)] })),
               {
-                  path: `${home}/more`,
+                  path: `${root}/more`,
                   labelKey: unseen ? "nav.moreNew" : "nav.more",
                   icon: Menu,
-                  matchPaths: [`${home}/more`],
+                  matchPaths: [`${root}/more`],
               },
           ]
         : [];
+    const home = tabs[0]?.path ?? "/";
     return (
         <MobileShell
             rootTabPaths={tabs.map((t) => t.path)}
@@ -66,7 +84,7 @@ function Frame({ ready, avatarUrl }: { ready: boolean; avatarUrl?: string }) {
             homePath={home}
             titleAccessory={<StorePicker />}
             avatarUrl={avatarUrl ? avatar(avatarUrl) : null}
-            onAccount={slug ? () => void navigate({ to: `${home}/account` }) : undefined}
+            onAccount={slug ? () => void navigate({ to: `${root}/account` }) : undefined}
             ready={ready}
         />
     );
@@ -94,5 +112,8 @@ function useMaintenanceWatch(retry: () => unknown): boolean {
     return maintenance;
 }
 
-/** The options for each app's `/_shell` route. */
-export const shellRoute = { component: ShellLayout, staticData: { holdsSplash: true } };
+/** The options for each app's `/_shell` route, with its tabs. */
+export const shellRoute = (tabs: AppTab[]) => ({
+    component: () => <ShellLayout tabs={tabs} />,
+    staticData: { holdsSplash: true },
+});

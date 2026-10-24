@@ -19,4 +19,7 @@ var (
 	errStoreNotFound = httpx.NotFound("store_not_found", "No such store")
 	errFilesOff      = httpx.New(http.StatusServiceUnavailable, "files_unavailable", "Photos cannot be uploaded right now")
 	errFilesFailed   = httpx.New(http.StatusBadGateway, "files_unavailable", "Photos cannot be uploaded right now")
+	errBadCursor     = httpx.New(http.StatusBadRequest, "bad_cursor", "This list's place is out of date; start again from the top")
+	errDayNotFound   = httpx.NotFound("day_not_found", "No such day")
+	errBadRange      = httpx.New(http.StatusBadRequest, "bad_range", "Pick a range of at most 400 days, from before to")
 )
