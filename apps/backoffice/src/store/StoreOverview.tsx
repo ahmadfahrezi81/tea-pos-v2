@@ -2,9 +2,8 @@ import type { components } from "@tea-pos/api-client";
 import { formatDate, formatMoney, formatMonth, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
-import { Link } from "@tanstack/react-router";
-import { BarChart3, ChevronRight, CircleAlert, ReceiptText } from "lucide-react";
-import type { ReactNode } from "react";
+import { ChartNoAxesCombined, CircleAlert, ReceiptText } from "lucide-react";
+import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { useTenant } from "@tea-pos/shell/tenant";
 
 import { useSalesDays } from "./sales";
@@ -99,50 +98,19 @@ export function StoreOverview() {
                 )}
             </div>
 
-            <ul className="rounded-2xl bg-white divide-y divide-gray-100">
-                <MenuRow
-                    to="/$tenant/store/analytics"
-                    slug={slug}
-                    icon={<BarChart3 size={20} />}
+            <SettingsGroup>
+                <SettingsRow
+                    to={`/${slug}/store/analytics`}
+                    icon={<ChartNoAxesCombined {...rowIcon} />}
                     label={t("store.analyticsRow")}
-                    sub={t("store.analyticsRowSub")}
                 />
-                <MenuRow
-                    to="/$tenant/store/orders"
-                    slug={slug}
-                    icon={<ReceiptText size={20} />}
+                <SettingsRow
+                    to={`/${slug}/store/orders`}
+                    icon={<ReceiptText {...rowIcon} />}
                     label={t("store.ordersRow")}
-                    sub={t("store.ordersRowSub")}
                 />
-            </ul>
+            </SettingsGroup>
         </div>
-    );
-}
-
-function MenuRow({
-    to,
-    slug,
-    icon,
-    label,
-    sub,
-}: {
-    to: "/$tenant/store/analytics" | "/$tenant/store/orders";
-    slug: string;
-    icon: ReactNode;
-    label: string;
-    sub: string;
-}) {
-    return (
-        <li>
-            <Link to={to} params={{ tenant: slug }} className="flex items-center gap-3 p-4">
-                <span className="text-gray-500">{icon}</span>
-                <span className="flex-1 min-w-0">
-                    <span className="block font-semibold text-gray-900">{label}</span>
-                    <span className="block text-xs text-gray-500 truncate">{sub}</span>
-                </span>
-                <ChevronRight size={18} className="text-gray-300" />
-            </Link>
-        </li>
     );
 }
 

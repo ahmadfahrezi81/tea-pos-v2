@@ -52,3 +52,5 @@ The frame must feel like v1's, one-to-one in look and use (what runs underneath 
 1. **Footer:** v1's full tab bars, with screens not built yet showing v1's "coming soon" card. Backoffice: Store (`LayoutDashboard`), Pay (`DollarSign`), Supply (`Package`), Chats (`MessagesSquare`), More (`MoreHorizontal`). Seller: POS (`ShoppingCart`, Manage `Layers` inside manage), Orders (`ReceiptText`), Analytics (`ChartNoAxesCombined`), Chats, More; the seller opens on POS (v1 has no Home tab)
 2. **Header:** the store as v1 shows it: the name large in the brand colour with `ChevronsUpDown`
 3. **The store sheet** as v1's: pull tab, "Select Store" with the eye switch hiding demo and inactive stores, All Stores first in bold, DEMO and INACTIVE tags, round checks; the shared `Sheet` takes v1's sheet styling
+4. **Menu rows in v1's style, as one component:** `SettingsGroup` and `SettingsRow` (`packages/shell/Settings.tsx`: the icon, the label, the orange chevron, a divider under each row), used by the Store overview's rows and More, and by every later menu (Pay, Supply)
+5. **The loading bar under the header:** 3 px instead of v1's 2 px
