@@ -9,6 +9,7 @@
 - **Not yet seen:** PostHog itself (web analytics, a readable stack, the alert, the dashboard), the real phone. After 016b and this are deployed to staging
 
 **Found while building:**
+- On staging, every event's OS said Linux (Debian 12): posthog-go's default capture mode adds the server's system over the event's own. Its newer mode (`CaptureModeAnalyticsV1`) only fills in what is missing; a test event in it was accepted (fix/posthog-os)
 - Maintenance took about 7 s to show on staging (016b): every failed query was retried 3 times. Answers that cannot change by asking again (`maintenance`, `app_too_old`, `not_signed_in`, `not_allowed`, `not_in_tenant`) are now not retried
 - `pnpm bench` cannot see a request sent as a page closes, so it sends the app to the background after each load (as a seller switching apps does) and reads the batch then; it now prints `app_ready check: …` (and in the release PR's comment)
 - Loading `events.ts` late at first split a 3.4 KB shared chunk out of the main file (an import both sides used); it takes the version tag as an argument instead
