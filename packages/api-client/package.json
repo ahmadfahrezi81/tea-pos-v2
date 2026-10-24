@@ -6,7 +6,10 @@
         ".": "./index.ts",
         "./query": "./query.ts",
         "./me": "./me.ts",
-        "./status": "./status.ts"
+        "./status": "./status.ts",
+        "./live": "./live.ts",
+        "./files": "./files.ts",
+        "./list": "./list.ts"
     },
     "scripts": {
         "generate": "openapi-typescript ../../api/openapi.yaml -o schema.d.ts",

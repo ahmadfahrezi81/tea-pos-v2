@@ -5,6 +5,10 @@
     "exports": {
         "./ActionButton": "./ActionButton.tsx",
         "./Emoji": "./Emoji.tsx",
+        "./PhotoInput": "./photo/PhotoInput.tsx",
+        "./shrinkPhoto": "./photo/shrink.ts",
+        "./toast": "./toast/Toast.tsx",
+        "./LoadMore": "./LoadMore.tsx",
         "./dot-grid": "./styles/dot-grid.ts",
         "./globals.css": "./styles/globals.css"
     },

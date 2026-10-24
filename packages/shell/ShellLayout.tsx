@@ -1,10 +1,19 @@
 import { useMe } from "@tea-pos/api-client/me";
 import { useMaintenance } from "@tea-pos/api-client/status";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 
+import { ToastHost } from "@tea-pos/ui/toast";
+import { House, Menu } from "lucide-react";
+
+import { avatar } from "./avatar";
 import { BootScreen } from "./BootScreen";
 import { MobileShell } from "./MobileShell";
+import type { Tab } from "./routes";
+import { StorePicker } from "./StorePicker";
+import { TenantProvider, useTenant } from "./tenant";
+import { LATEST, seen } from "./whatsNew";
 import { hideSplash } from "./splash";
 import { useHasPainted } from "./useHasPainted";
 import { useMeSync } from "./useMeSync";
@@ -25,10 +34,41 @@ export function ShellLayout() {
     }, [ready, me.dataUpdatedAt]);
     const maintenance = useMaintenanceWatch(me.refetch);
     return (
-        <>
-            <MobileShell rootTabPaths={["/"]} tabs={[]} homePath="/" ready={ready} />
+        <TenantProvider me={me.data}>
+            <Frame ready={ready} avatarUrl={me.data?.user.avatarUrl} />
             {maintenance && <BootScreen state="maintenance" />}
-        </>
+            <ToastHost />
+        </TenantProvider>
+    );
+}
+
+/** Home and More for every app, under the tenant in the address; each app adds its own tabs later. */
+function Frame({ ready, avatarUrl }: { ready: boolean; avatarUrl?: string }) {
+    const slug = useTenant()?.tenant.slug;
+    const navigate = useNavigate();
+    const unseen = LATEST !== "" && seen() !== LATEST;
+    const home = slug ? `/${slug}` : "/";
+    const tabs: Tab[] = slug
+        ? [
+              { path: home, labelKey: "home.title", icon: House, matchPaths: [home] },
+              {
+                  path: `${home}/more`,
+                  labelKey: unseen ? "nav.moreNew" : "nav.more",
+                  icon: Menu,
+                  matchPaths: [`${home}/more`],
+              },
+          ]
+        : [];
+    return (
+        <MobileShell
+            rootTabPaths={tabs.map((t) => t.path)}
+            tabs={tabs}
+            homePath={home}
+            titleAccessory={<StorePicker />}
+            avatarUrl={avatarUrl ? avatar(avatarUrl) : null}
+            onAccount={slug ? () => void navigate({ to: `${home}/account` }) : undefined}
+            ready={ready}
+        />
     );
 }
 

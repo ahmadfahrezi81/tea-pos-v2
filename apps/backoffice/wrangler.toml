@@ -6,7 +6,9 @@ compatibility_date = "2026-10-01"
 [vars]
 APP = "backoffice"
 API_ORIGIN = "https://api-staging-c60d.up.railway.app"
+REALTIME_ORIGIN = "https://realtime-staging-4a79.up.railway.app"
 
 [env.production.vars]
 APP = "backoffice"
 API_ORIGIN = "https://api-production-f3625.up.railway.app"
+REALTIME_ORIGIN = "https://realtime-production-887b.up.railway.app"

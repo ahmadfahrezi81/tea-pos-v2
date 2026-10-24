@@ -46,6 +46,7 @@ export async function startApp(router: ReturnType<typeof createAppRouter>, app: 
         if (!router.state.matches.some((m) => m.staticData.holdsSplash)) hideSplash();
     });
     whenIdle(() => void import("./events").then((m) => m.startEvents(router, APP_TAG)));
+    whenIdle(() => void import("@tea-pos/api-client/live").then((m) => m.startLive(queryClient)));
     // index.html already picked it, to preload that file; the same rule as pickLocale.
     const locale =
         (document.documentElement.dataset.locale as Locale | undefined) ?? pickLocale(app.locales);

@@ -10,6 +10,10 @@ export const api = createFetchClient<paths>({ baseUrl: "/api" });
 api.use({
     onRequest({ request }) {
         request.headers.set("X-App-Version", APP_TAG);
+        // A write without its action's key (useApiMutation sets one) gets its own: Go needs one.
+        if (request.method !== "GET" && !request.headers.has("Idempotency-Key")) {
+            request.headers.set("Idempotency-Key", crypto.randomUUID());
+        }
     },
     async onResponse({ response }) {
         // A session that ended (expired, signed out elsewhere) sends the user to sign in again.

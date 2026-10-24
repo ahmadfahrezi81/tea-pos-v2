@@ -40,6 +40,10 @@ func TestPermission_EveryRoute(t *testing.T) {
 				t.Errorf("%s declares no access: register it with handler.route", name)
 				continue
 			}
+			// A write is saved once per Idempotency-Key, or declared harmless to repeat.
+			if method != http.MethodGet && !access.SavedOnce && !access.SafeToRepeat {
+				t.Errorf("%s is a write without .Idempotent() or .Repeatable()", name)
+			}
 			if access.Public {
 				continue
 			}

@@ -15,3 +15,7 @@ UPDATE sessions SET last_seen_at = now(), expires_at = $2 WHERE id = $1;
 
 -- name: DeleteSession :exec
 DELETE FROM sessions WHERE token_hash = $1;
+
+-- name: DeleteUserSessions :exec
+-- Signing out everywhere: every app, every phone.
+DELETE FROM sessions WHERE user_id = $1;

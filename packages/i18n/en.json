@@ -34,7 +34,8 @@
             "friday": "Friday",
             "saturday": "Saturday",
             "sunday": "Sunday"
-        }
+        },
+        "loadMore": "Load more"
     },
     "home": {
         "title": "Home",
@@ -375,7 +376,12 @@
         "selectBank": "Select bank",
         "selectBankTitle": "Select Bank",
         "searchBank": "Search bank...",
-        "accountHolderPlaceholder": "As printed on the account"
+        "accountHolderPlaceholder": "As printed on the account",
+        "title": "Account",
+        "signOut": "Sign out",
+        "signOutEverywhere": "Sign out on every phone",
+        "signingOut": "Signing out…",
+        "app": "App"
     },
     "more": {
         "workDays": "Work Days",
@@ -390,13 +396,16 @@
         "locationFeedback": "Location Feedback",
         "patchNotes": "Patch Notes",
         "noStores": "No stores assigned yet.",
-        "default": "Default"
+        "default": "Default",
+        "account": "Account",
+        "whatsNew": "What's new"
     },
     "whatsNew": {
         "title": "What's New",
         "scrollToContinue": "Scroll to continue",
         "gotIt": "Got it",
-        "close": "Close"
+        "close": "Close",
+        "empty": "Nothing new yet."
     },
     "map": {
         "search": "Search feedback...",
@@ -455,7 +464,8 @@
         "myClaims": "My Claims",
         "newClaim": "New Claim",
         "payrollInfo": "Payroll Info",
-        "editPayrollInfo": "Edit Payroll Info"
+        "editPayrollInfo": "Edit Payroll Info",
+        "moreNew": "More •"
     },
     "shell": {
         "account": "Account",
@@ -476,7 +486,11 @@
             "body": "You've been inactive — refresh to avoid stale data.",
             "infoTitle": "Why this appears",
             "infoBody": "The app has been idle for a while, so what's on screen may no longer match the server."
-        }
+        },
+        "allStores": "All stores",
+        "pickStore": "Choose a store",
+        "hideInactiveStores": "Hide inactive stores",
+        "tenantNotFound": "This business isn't one of yours."
     },
     "signIn": {
         "google": "Continue with Google",
@@ -500,5 +514,30 @@
         "app": "App",
         "ok": "Connected",
         "down": "Unreachable"
+    },
+    "errors": {
+        "account_inactive": "This account isn't active. Ask the owner.",
+        "app_too_old": "This version is too old. Updating…",
+        "bad_request": "Something in this form isn't right.",
+        "conflict": "This changed meanwhile. Refresh and try again.",
+        "error": "Something went wrong.",
+        "files_unavailable": "Photos can't be uploaded right now. Try again soon.",
+        "forbidden": "You're not allowed to do this.",
+        "idempotency_key_required": "Something went wrong. Try again.",
+        "idempotency_key_reused": "Something went wrong. Try again.",
+        "internal": "Something went wrong. Try again.",
+        "maintenance": "Under maintenance, back soon.",
+        "not_allowed": "You're not allowed to do this.",
+        "not_found": "It isn't there anymore.",
+        "not_in_tenant": "This isn't one of your businesses.",
+        "not_signed_in": "Sign in to continue.",
+        "offline": "No connection. Try again when you're back online.",
+        "route_not_found": "It isn't there anymore.",
+        "store_not_found": "That store isn't one of yours.",
+        "store_required": "Choose a store first.",
+        "too_large": "This is too large to send.",
+        "too_many_requests": "Too many tries. Wait a minute and try again.",
+        "unauthorized": "Sign in to continue.",
+        "unknown_app": "Open sign-in from the app."
     }
 }

@@ -12,7 +12,6 @@ import (
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
-	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/httpx"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/middleware"
 )
 
@@ -24,7 +23,7 @@ func registerTestLogin(api huma.API, d Deps) {
 	}
 	slog.Warn("test sign-in is on: POST /auth/test (staging only)")
 	// Anything wrong looks like a route that does not exist.
-	notFound := httpx.NotFound("route_not_found", "No such route")
+	notFound := errRouteNotFound
 
 	route(api, huma.Operation{
 		OperationID:   "testSignIn",
@@ -34,7 +33,7 @@ func registerTestLogin(api huma.API, d Deps) {
 		Tags:          []string{"auth"},
 		DefaultStatus: http.StatusNoContent,
 		// Not rate limited: the 64-character key cannot be guessed, and the e2e suite signs in often.
-	}, auth.Public, func(ctx context.Context, in *contract.TestSignInInput) (*contract.LogoutOutput, error) {
+	}, auth.Public.Repeatable(), func(ctx context.Context, in *contract.TestSignInInput) (*contract.LogoutOutput, error) {
 		if subtle.ConstantTimeCompare([]byte(in.Key), []byte(d.TestLoginKey)) != 1 {
 			return nil, notFound
 		}
@@ -45,9 +44,9 @@ func registerTestLogin(api huma.API, d Deps) {
 		}
 		if !auth.Allowed(app, user.Role, user.Status) {
 			if user.Status != "active" {
-				return nil, httpx.New(http.StatusForbidden, "account_inactive", "This account is not active")
+				return nil, errAccountOff
 			}
-			return nil, httpx.New(http.StatusForbidden, "not_allowed", "Not allowed in this app")
+			return nil, errNotInApp
 		}
 		token, err := d.Sessions.Create(ctx, user.ID, app, middleware.ClientIP(ctx), in.UserAgent)
 		if err != nil {

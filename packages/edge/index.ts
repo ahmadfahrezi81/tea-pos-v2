@@ -2,6 +2,8 @@
 
 export interface Env {
     API_ORIGIN: string;
+    /** The realtime service (the WebSocket hub), for /api/realtime. */
+    REALTIME_ORIGIN?: string;
     EDGE_SECRET: string;
     /** Which app this Pages project is: "seller" or "backoffice". */
     APP: string;
@@ -12,9 +14,15 @@ export async function forward(request: Request, env: Env): Promise<Response> {
         return new Response("API_ORIGIN, EDGE_SECRET or APP is not set", { status: 500 });
     }
     const url = new URL(request.url);
+    const path = url.pathname.replace(/^\/api/, "") || "/";
+    // The hub is its own service; its socket passes through like any request.
+    const realtime = path === "/realtime";
+    if (realtime && !env.REALTIME_ORIGIN) {
+        return new Response("REALTIME_ORIGIN is not set", { status: 500 });
+    }
     // Only the path is set, so no path (e.g. //other.host) can change where it goes.
-    const target = new URL(env.API_ORIGIN);
-    target.pathname = url.pathname.replace(/^\/api/, "") || "/";
+    const target = new URL(realtime ? env.REALTIME_ORIGIN! : env.API_ORIGIN);
+    target.pathname = path;
     target.search = url.search;
 
     // set() replaces anything a client sent under these names.

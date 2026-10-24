@@ -12,6 +12,7 @@ import (
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/config"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/files"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/handler"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/middleware"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/platform"
@@ -38,6 +39,9 @@ func main() {
 	}
 	defer tel.Close()
 	platform.SetupLog("api", cfg.Env, cfg.LogLevel, tel.Enqueuer())
+	if cfg.SupabaseSecretKey == "" {
+		slog.Warn("SUPABASE_SECRET_KEY is not set: photo uploads answer 503")
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -52,11 +56,13 @@ func main() {
 	q := store.New(db)
 	mux := http.NewServeMux()
 	handler.NewAPI(mux, handler.Deps{
+		DB:           db,
 		Queries:      q,
 		Sessions:     auth.NewSessions(q),
 		Supabase:     auth.NewSupabase(cfg.SupabaseURL, cfg.SupabaseKey),
 		TestLoginKey: cfg.TestLoginKey,
 		Telemetry:    tel,
+		Files:        files.NewStorage(cfg.SupabaseURL, cfg.SupabaseSecretKey),
 	})
 
 	if err := platform.Serve(ctx, ":"+cfg.Port, middleware.Standard(mux, middleware.Options{RequestTimeout: cfg.RequestTimeout, EdgeSecret: cfg.EdgeSecret, MinAppVersions: cfg.MinAppVersions}), cfg.ShutdownTimeout); err != nil {
