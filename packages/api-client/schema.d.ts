@@ -192,6 +192,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{tenant}/feedbacks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Where customers asked for a store, newest first */
+        get: operations["listFeedbacks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{tenant}/files": {
         parameters: {
             query?: never;
@@ -552,6 +569,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{tenant}/weather": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The forecast by hour, yesterday to tomorrow */
+        get: operations["getWeather"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -891,6 +925,24 @@ export interface components {
             events: components["schemas"]["AppEvent"][];
             /** Format: uuid */
             session: string;
+        };
+        Feedback: {
+            /** Format: date-time */
+            at: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: double */
+            latitude: number;
+            locationDisplay: string;
+            locationName: string;
+            /** Format: double */
+            longitude: number;
+            notes?: string;
+            userName?: string;
+        };
+        FeedbacksOutputBody: {
+            /** @description Newest first */
+            feedbacks: components["schemas"]["Feedback"][];
         };
         HealthOutputBody: {
             /** @example a1b2c3d */
@@ -1299,6 +1351,35 @@ export interface components {
             /** @description The address saved in the row (the old app's form); a private photo opens only through a signed address */
             url: string;
         };
+        WeatherHour: {
+            /**
+             * Format: int64
+             * @description Tomorrow.io's weather code
+             */
+            code: number;
+            /** Format: date */
+            date: string;
+            /** Format: date-time */
+            fetchedAt: string;
+            /** Format: int64 */
+            hour: number;
+            /**
+             * Format: double
+             * @description %
+             */
+            rainChance: number;
+            /**
+             * Format: double
+             * @description °C
+             */
+            temperature: number;
+        };
+        WeatherOutputBody: {
+            city: string;
+            /** @description Yesterday to tomorrow, by hour, in WIB */
+            hours: components["schemas"]["WeatherHour"][];
+            region: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -1671,6 +1752,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DaySessionsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listFeedbacks: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbacksOutputBody"];
                 };
             };
             /** @description Error */
@@ -2497,6 +2611,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TeaWasteOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getWeather: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeatherOutputBody"];
                 };
             };
             /** @description Error */
