@@ -279,6 +279,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{tenant}/pay/claims/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Approve or reject one claim */
+        put: operations["decideClaim"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{tenant}/pay/commission-types": {
         parameters: {
             query?: never;
@@ -312,6 +329,74 @@ export interface paths {
         head?: never;
         /** Rename, switch off or re-rate a commission type */
         patch: operations["updateCommissionType"];
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/commissions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Approve or reject one commission */
+        put: operations["decideCommission"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/payouts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Staff payouts overlapping a month, with their totals */
+        get: operations["listPayouts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/payouts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A payout with every commission and claim in it */
+        get: operations["getPayslip"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/payouts/{id}/days/{date}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve or reject every still-pending commission and claim of a payout's day */
+        post: operations["reviewDay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/tenants/{tenant}/pay/period": {
@@ -730,6 +815,10 @@ export interface components {
             /** @description Newest first; with several stores, each store's day */
             days: components["schemas"]["Day"][];
         };
+        DecisionInputBody: {
+            /** @enum {string} */
+            status: "pending" | "approved" | "rejected";
+        };
         Device: {
             /** Format: int64 */
             cores?: number;
@@ -770,7 +859,7 @@ export interface components {
              * @example day_already_closed
              * @enum {string}
              */
-            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_cursor" | "bad_range" | "bad_request" | "claim_type_not_found" | "commission_type_not_found" | "conflict" | "day_not_found" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "route_not_found" | "staff_not_found" | "store_not_found" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
+            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_cursor" | "bad_range" | "bad_request" | "claim_not_found" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "payout_not_found" | "payout_settled" | "route_not_found" | "staff_not_found" | "store_not_found" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
             details?: string[] | null;
             /** @example The day is already closed */
             message: string;
@@ -932,6 +1021,140 @@ export interface components {
         PayStaffOutputBody: {
             /** @description Every user of the tenant, admins included; by name */
             staff: components["schemas"]["PayStaff"][];
+        };
+        Payout: {
+            /**
+             * Format: int64
+             * @description Commissions and claims approved
+             */
+            approved: number;
+            avatarUrl?: string;
+            /** Format: int64 */
+            claims: number;
+            /** Format: int64 */
+            commissions: number;
+            /** Format: int64 */
+            cups: number;
+            /** Format: date */
+            end: string;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @description No commission per cup (SELLER_0 or rate 0): hidden from the list by default */
+            nonSeller: boolean;
+            /** Format: int64 */
+            orders: number;
+            /** Format: date-time */
+            paidAt?: string;
+            /**
+             * Format: int64
+             * @description Still to review
+             */
+            pending: number;
+            /** Format: date */
+            start: string;
+            /** @enum {string} */
+            status: "pending" | "paid" | "skipped";
+            /** Format: int64 */
+            total: number;
+            /** Format: uuid */
+            userId: string;
+        };
+        PayoutsOutputBody: {
+            /** @description Overlapping the month, newest period first */
+            payouts: components["schemas"]["Payout"][];
+        };
+        Payslip: {
+            /**
+             * Format: int64
+             * @description Commissions and claims approved
+             */
+            approved: number;
+            avatarUrl?: string;
+            claimRows: components["schemas"]["PayslipClaim"][];
+            commissionRows: components["schemas"]["PayslipCommission"][];
+            /** Format: int64 */
+            cups: number;
+            /** Format: date */
+            end: string;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @description No commission per cup (SELLER_0 or rate 0): hidden from the list by default */
+            nonSeller: boolean;
+            /** @description For the staff member */
+            notes?: string;
+            /** Format: int64 */
+            orders: number;
+            /** Format: date-time */
+            paidAt?: string;
+            paidBy?: string;
+            /** @description A signed address, for a few minutes */
+            paymentProofUrl?: string;
+            /**
+             * Format: int64
+             * @description Still to review
+             */
+            pending: number;
+            /**
+             * Format: int64
+             * @description Of the period's first commission; 0 without any
+             */
+            ratePerCup: number;
+            /** Format: date */
+            start: string;
+            /** @enum {string} */
+            status: "pending" | "paid" | "skipped";
+            /** Format: int64 */
+            total: number;
+            /** Format: uuid */
+            userId: string;
+        };
+        PayslipClaim: {
+            /** Format: int64 */
+            amount: number;
+            /** Format: date */
+            date: string;
+            /** Format: double */
+            hoursWorked?: number;
+            /** Format: uuid */
+            id: string;
+            notes?: string;
+            /** @enum {string} */
+            status: "pending" | "approved" | "rejected";
+            /** Format: double */
+            thresholdHours?: number;
+            type?: string;
+        };
+        PayslipCommission: {
+            /** Format: int64 */
+            amount: number;
+            /** Format: int64 */
+            cups: number;
+            /** Format: date */
+            date: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: int64 */
+            orders: number;
+            /** Format: int64 */
+            ratePerCup: number;
+            /** @enum {string} */
+            status: "pending" | "approved" | "rejected";
+            storeName?: string;
+        };
+        ReviewDayInputBody: {
+            /** @enum {string} */
+            status: "approved" | "rejected";
+        };
+        ReviewDayOutputBody: {
+            /** Format: int64 */
+            claims: number;
+            /**
+             * Format: int64
+             * @description How many were decided
+             */
+            commissions: number;
         };
         SalesDay: {
             /** Format: int64 */
@@ -1677,6 +1900,40 @@ export interface operations {
             };
         };
     };
+    decideClaim: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     listCommissionTypes: {
         parameters: {
             query?: never;
@@ -1766,6 +2023,143 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CommissionType"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    decideCommission: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listPayouts: {
+        parameters: {
+            query: {
+                month: string;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayoutsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getPayslip: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Payslip"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    reviewDay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                /** @description The payout */
+                id: string;
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewDayInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewDayOutputBody"];
                 };
             };
             /** @description Error */

@@ -57,6 +57,7 @@ func NewAPI(mux *http.ServeMux, d Deps) huma.API {
 	registerDays(api, d)
 	registerOrders(api, d)
 	registerPay(api, d)
+	registerPayouts(api, d)
 	registerTestLogin(api, d)
 	return api
 }

@@ -242,7 +242,12 @@
         "staff_not_found": "No such staff member.",
         "commission_type_not_found": "That commission type is gone or switched off.",
         "claim_type_not_found": "No such claim type.",
-        "auto_needs_hours": "An automatic claim type needs its minimum hours worked."
+        "auto_needs_hours": "An automatic claim type needs its minimum hours worked.",
+        "payout_not_found": "No such payout.",
+        "commission_not_found": "No such commission.",
+        "claim_not_found": "No such claim.",
+        "day_not_in_payout": "That day is not in this payout's period.",
+        "payout_settled": "This payout is already paid or skipped, so its decisions can no longer change."
     },
     "store": {
         "title": "Store",

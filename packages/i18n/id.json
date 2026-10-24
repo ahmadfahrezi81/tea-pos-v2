@@ -242,7 +242,12 @@
         "staff_not_found": "Staf tidak ditemukan.",
         "commission_type_not_found": "Jenis komisi itu tidak ada atau nonaktif.",
         "claim_type_not_found": "Jenis klaim tidak ditemukan.",
-        "auto_needs_hours": "Jenis klaim otomatis butuh minimal jam kerja."
+        "auto_needs_hours": "Jenis klaim otomatis butuh minimal jam kerja.",
+        "payout_not_found": "Pembayaran tidak ditemukan.",
+        "commission_not_found": "Komisi tidak ditemukan.",
+        "claim_not_found": "Klaim tidak ditemukan.",
+        "day_not_in_payout": "Hari itu di luar periode pembayaran ini.",
+        "payout_settled": "Pembayaran ini sudah dibayar atau dilewati, jadi keputusannya tidak bisa diubah."
     },
     "store": {
         "title": "Toko",
