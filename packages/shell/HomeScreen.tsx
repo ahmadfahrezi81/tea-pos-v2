@@ -1,79 +1,66 @@
 import { useMe, type Me } from "@tea-pos/api-client/me";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useT } from "@tea-pos/i18n/react";
-import { ActionButton } from "@tea-pos/ui/ActionButton";
-import { useQueryClient } from "@tanstack/react-query";
+import { Outlet, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 
-import { signOut } from "./session";
-import { StatusScreen } from "./StatusScreen";
+import { useTenant } from "./tenant";
 
 type Tenant = Me["tenants"][number];
 
-// Google serves any size by URL; ask for 96 px, sharp at 48 px on a 2× screen.
-function avatar(url: string): string {
-    try {
-        if (new URL(url).hostname.endsWith(".googleusercontent.com")) {
-            return url.replace(/=s\d+(-c)?$/, "") + "=s96-c";
-        }
-    } catch {
-        // Not a URL: shown as it is.
-    }
-    return url;
-}
-
-/** Who is signed in, their business and stores; the status card stays below until real screens arrive. */
+/** The tenant's stores; the first real screens replace it (Steps 18 and 27). */
 export function HomeScreen() {
-    const t = useT();
-    const queryClient = useQueryClient();
-    const me = useMe().data;
-    if (!me) return null;
-    const { user } = me;
-
-    return (
-        <div className="flex flex-col gap-4">
-            <div className="rounded-2xl bg-white p-4 flex items-center gap-3">
-                {user.avatarUrl ? (
-                    <img
-                        src={avatar(user.avatarUrl)}
-                        alt=""
-                        width={48}
-                        height={48}
-                        referrerPolicy="no-referrer"
-                        className="size-12 rounded-full"
-                    />
-                ) : (
-                    <div className="size-12 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500">
-                        {user.fullName.slice(0, 1)}
-                    </div>
-                )}
-                <div className="min-w-0">
-                    <p className="font-bold text-gray-900 truncate">{user.fullName}</p>
-                    <p className="text-sm text-gray-500 truncate">
-                        {t(`home.roles.${user.role}` as MessageKey)} · {user.email}
-                    </p>
-                </div>
-            </div>
-
-            {me.tenants.length === 0 ? (
-                <p className="rounded-2xl bg-white p-4 text-sm text-gray-700">
-                    {t("home.noTenant")}
-                </p>
-            ) : (
-                me.tenants.map((tenant) => <TenantCard key={tenant.id} tenant={tenant} />)
-            )}
-
-            <ActionButton
-                action={() => signOut(queryClient)}
-                busyLabel={t("home.signingOut")}
-                className="rounded-2xl bg-white p-4 text-sm font-bold text-red-600"
-            >
-                {t("home.signOut")}
-            </ActionButton>
-
-            <StatusScreen />
-        </div>
-    );
+    const tenant = useTenant()?.tenant;
+    if (!tenant) return null;
+    return <TenantCard tenant={tenant} />;
 }
+
+/** Where `/` goes: the user's tenant (the last one used, else the first), or why there is none. */
+export function GoToTenant() {
+    const t = useT();
+    const me = useMe().data;
+    const navigate = useNavigate();
+    const slug = me && (me.tenants.find((x) => x.slug === lastTenant()) ?? me.tenants[0])?.slug;
+    useEffect(() => {
+        if (slug) void navigate({ to: "/$tenant", params: { tenant: slug }, replace: true });
+    }, [slug, navigate]);
+    if (!me || slug) return null;
+    return <p className="rounded-2xl bg-white p-4 text-sm text-gray-700">{t("home.noTenant")}</p>;
+}
+
+/** Guards `/<tenant>/…`: a slug that is not one of the user's says so. */
+export function TenantGuard() {
+    const t = useT();
+    const me = useMe().data;
+    const tenant = useTenant()?.tenant;
+    useEffect(() => {
+        if (tenant) rememberTenant(tenant.slug);
+    }, [tenant]);
+    if (!me) return null;
+    if (!tenant)
+        return (
+            <p className="rounded-2xl bg-white p-4 text-sm text-gray-700">
+                {t("shell.tenantNotFound")}
+            </p>
+        );
+    return <Outlet />;
+}
+
+const TENANT_KEY = "tea-pos:tenant";
+const lastTenant = () => {
+    try {
+        return localStorage.getItem(TENANT_KEY);
+    } catch {
+        return null;
+    }
+};
+const rememberTenant = (slug: string) => {
+    try {
+        localStorage.setItem(TENANT_KEY, slug);
+    } catch {
+        // The first tenant opens instead.
+    }
+};
 
 function TenantCard({ tenant }: { tenant: Tenant }) {
     const t = useT();

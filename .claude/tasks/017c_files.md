@@ -1,6 +1,6 @@
 # Task 017c — Files: photo uploads that work on slow 4G
 
-**Status: planned 2026-10-24, waiting on the owner's review.**
+**Status: built 2026-10-24, not committed. Checked locally: integration tests against a fake Storage (a store's photo under its tenant and store, named by Go; every address in the old app's row form; another tenant's store, a seller's product image, over 1 MB and not a photo are refused). Changed after a check of staging's buckets: only `product-images` is public (`store-reports`, `store-requests`, `reimbursements` are private too), each allows at most 1 MB, and there is no `avatars` bucket (avatars come from Google), so `avatar` is not a purpose. In Chrome, on the same 4000×3000 photo (5.6 MB): v1's library 184 KB in 391 ms, v2 98 KB in 160 ms, both 1080×810 WebP; 0.6 s at 20× slower CPU, in a worker on phones. Not yet seen: Supabase Storage itself (needs SUPABASE_SECRET_KEY).**
 
 ## The goal
 

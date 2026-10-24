@@ -28,3 +28,6 @@ FROM stores s
 JOIN user_tenant_assignments t ON t.tenant_id = s.tenant_id
 WHERE t.user_id = $1
 ORDER BY s.name;
+
+-- name: SetUserLanguage :exec
+UPDATE users SET preferred_language = $2 WHERE id = $1;

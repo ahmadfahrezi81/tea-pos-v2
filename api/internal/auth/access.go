@@ -17,6 +17,11 @@ type Access struct {
 	Tenant bool `json:"tenant,omitempty"`
 	// RateLimited routes allow a few calls a minute per caller IP (sign-in).
 	RateLimited bool `json:"rateLimited,omitempty"`
+	// Idempotent writes are saved once per Idempotency-Key (internal/idem). Every write route
+	// is Idempotent or Repeatable; the permission test checks it.
+	SavedOnce bool `json:"idempotent,omitempty"`
+	// Repeatable writes are harmless to repeat (signing out, a language, a signed address).
+	SafeToRepeat bool `json:"repeatable,omitempty"`
 }
 
 var (
@@ -28,6 +33,8 @@ func Roles(roles ...string) Access { return Access{Roles: roles} }
 
 func (a Access) InTenant() Access        { a.Tenant = true; return a }
 func (a Access) RateLimit() Access       { a.RateLimited = true; return a }
+func (a Access) Idempotent() Access      { a.SavedOnce = true; return a }
+func (a Access) Repeatable() Access      { a.SafeToRepeat = true; return a }
 func (a Access) allows(role string) bool { return len(a.Roles) == 0 || slices.Contains(a.Roles, role) }
 
 // MarshalJSON names a signed-in route as such in the spec, rather than an empty object.
@@ -51,6 +58,12 @@ func Declare(op *huma.Operation, a Access) {
 		op.Extensions = map[string]any{}
 	}
 	op.Extensions["x-access"] = a
+}
+
+// AccessOf is a route's declared Access.
+func AccessOf(op *huma.Operation) (Access, bool) {
+	a, ok := op.Metadata[metadataKey].(Access)
+	return a, ok
 }
 
 // appRoles is who each app lets in at all, as the old app did; a route narrows it further.

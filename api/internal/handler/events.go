@@ -26,7 +26,7 @@ func registerEvents(api huma.API, d Deps) {
 		Summary:       "Errors, page views and open times from an app, for PostHog",
 		Tags:          []string{"system"},
 		DefaultStatus: http.StatusNoContent,
-	}, auth.SignedIn, func(ctx context.Context, in *contract.EventsInput) (*struct{}, error) {
+	}, auth.SignedIn.Repeatable(), func(ctx context.Context, in *contract.EventsInput) (*struct{}, error) {
 		caller, _ := auth.CallerFrom(ctx)
 		user := caller.UserID.String()
 		origin := middleware.AppOrigin(ctx)

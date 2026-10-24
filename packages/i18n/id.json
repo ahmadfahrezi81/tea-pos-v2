@@ -34,7 +34,8 @@
             "friday": "Jumat",
             "saturday": "Sabtu",
             "sunday": "Minggu"
-        }
+        },
+        "loadMore": "Muat lebih banyak"
     },
     "home": {
         "title": "Beranda",
@@ -375,7 +376,12 @@
         "selectBank": "Pilih bank",
         "selectBankTitle": "Pilih Bank",
         "searchBank": "Cari bank...",
-        "accountHolderPlaceholder": "Sesuai yang tertera di rekening"
+        "accountHolderPlaceholder": "Sesuai yang tertera di rekening",
+        "title": "Akun",
+        "signOut": "Keluar",
+        "signOutEverywhere": "Keluar dari semua ponsel",
+        "signingOut": "Sedang keluar…",
+        "app": "Aplikasi"
     },
     "more": {
         "workDays": "Hari Kerja",
@@ -390,13 +396,16 @@
         "locationFeedback": "Feedback Lokasi",
         "patchNotes": "Catatan Rilis",
         "noStores": "Belum ada toko yang ditugaskan.",
-        "default": "Utama"
+        "default": "Utama",
+        "account": "Akun",
+        "whatsNew": "Yang baru"
     },
     "whatsNew": {
         "title": "Yang Baru",
         "scrollToContinue": "Geser untuk lanjut",
         "gotIt": "Mengerti",
-        "close": "Tutup"
+        "close": "Tutup",
+        "empty": "Belum ada yang baru."
     },
     "map": {
         "search": "Cari feedback...",
@@ -455,7 +464,8 @@
         "myClaims": "Klaim Saya",
         "newClaim": "Klaim Baru",
         "payrollInfo": "Info Penggajian",
-        "editPayrollInfo": "Ubah Info Penggajian"
+        "editPayrollInfo": "Ubah Info Penggajian",
+        "moreNew": "Lainnya •"
     },
     "shell": {
         "account": "Akun",
@@ -476,7 +486,11 @@
             "body": "Anda sudah lama tidak aktif — muat ulang agar data tetap terbaru.",
             "infoTitle": "Kenapa muncul",
             "infoBody": "Aplikasi sudah lama tidak dipakai, jadi data di layar mungkin sudah tidak sama dengan server."
-        }
+        },
+        "allStores": "Semua toko",
+        "pickStore": "Pilih toko",
+        "hideInactiveStores": "Sembunyikan toko tidak aktif",
+        "tenantNotFound": "Bisnis ini bukan milik Anda."
     },
     "signIn": {
         "google": "Lanjutkan dengan Google",
@@ -500,5 +514,30 @@
         "app": "Aplikasi",
         "ok": "Terhubung",
         "down": "Tidak terjangkau"
+    },
+    "errors": {
+        "account_inactive": "Akun ini tidak aktif. Hubungi pemilik.",
+        "app_too_old": "Versi ini terlalu lama. Memperbarui…",
+        "bad_request": "Ada yang belum benar di formulir ini.",
+        "conflict": "Ini sudah berubah. Muat ulang dan coba lagi.",
+        "error": "Terjadi kesalahan.",
+        "files_unavailable": "Foto belum bisa diunggah. Coba lagi nanti.",
+        "forbidden": "Anda tidak diizinkan melakukan ini.",
+        "idempotency_key_required": "Terjadi kesalahan. Coba lagi.",
+        "idempotency_key_reused": "Terjadi kesalahan. Coba lagi.",
+        "internal": "Terjadi kesalahan. Coba lagi.",
+        "maintenance": "Sedang perbaikan, segera kembali.",
+        "not_allowed": "Anda tidak diizinkan melakukan ini.",
+        "not_found": "Sudah tidak ada.",
+        "not_in_tenant": "Ini bukan bisnis Anda.",
+        "not_signed_in": "Masuk untuk melanjutkan.",
+        "offline": "Tidak ada koneksi. Coba lagi saat sudah online.",
+        "route_not_found": "Sudah tidak ada.",
+        "store_not_found": "Toko itu bukan milik Anda.",
+        "store_required": "Pilih toko dulu.",
+        "too_large": "Ini terlalu besar untuk dikirim.",
+        "too_many_requests": "Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.",
+        "unauthorized": "Masuk untuk melanjutkan.",
+        "unknown_app": "Buka halaman masuk dari aplikasi."
     }
 }

@@ -111,6 +111,28 @@ func (s *Sessions) Lookup(ctx context.Context, token string) (_ Session, renewed
 	return session, renewed, nil
 }
 
+// Forget drops a token from the cache, so its next Lookup reads the database (the realtime
+// hub, told a user signed out somewhere).
+func (s *Sessions) Forget(token string) {
+	hash := sha256.Sum256([]byte(token))
+	s.mu.Lock()
+	delete(s.cache, hash)
+	s.mu.Unlock()
+}
+
+// DeleteAll ends every session of the user; other processes' caches drop theirs within cacheTTL,
+// the realtime hub at once (it is told).
+func (s *Sessions) DeleteAll(ctx context.Context, userID pgtype.UUID) error {
+	s.mu.Lock()
+	for hash, c := range s.cache {
+		if c.session.UserID == userID {
+			delete(s.cache, hash)
+		}
+	}
+	s.mu.Unlock()
+	return s.q.DeleteUserSessions(ctx, userID)
+}
+
 func (s *Sessions) Delete(ctx context.Context, token string) error {
 	hash := sha256.Sum256([]byte(token))
 	s.mu.Lock()

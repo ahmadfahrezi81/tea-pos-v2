@@ -1,6 +1,6 @@
 # Task 017d — The app frame: tenant and store, flags, Account and More
 
-**Status: planned 2026-10-24, waiting on the owner's review.**
+**Status: built 2026-10-24, not committed. Checked in the browser (backoffice, local Go on the staging database): `/` goes to `/test-a`, the header's store picker opens with All stores, both stores and "hide inactive", picking one keeps it; More lists Account and What's new; Account shows the profile, both sign-outs and the version rows. `PATCH /me` tested (own language only, known languages only). Found: the header is its own layer, so the picker's sheet renders into the page body. First screen 125.8 → 127.9 KB with 017e (budget 130).**
 
 ## The goal
 

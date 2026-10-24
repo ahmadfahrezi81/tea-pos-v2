@@ -25,6 +25,8 @@ type Config struct {
 	// Supabase does the Google exchange at sign-in; nothing else.
 	SupabaseURL string
 	SupabaseKey string
+	// SupabaseSecretKey signs photo uploads and private reads (Storage); without it photos are off.
+	SupabaseSecretKey string
 	// TestLoginKey switches on the staging test sign-in, in a binary built with -tags testlogin.
 	TestLoginKey string
 	// MinAppVersions refuses older releases of an app with 426; an app not named has no cut-off.
@@ -33,22 +35,29 @@ type Config struct {
 	PostHogKey      string
 	PostHogFlagsKey string
 	PostHogHost     string
+	// TomorrowKey is Tomorrow.io's, for the worker's weather.
+	TomorrowKey string
+	// JobsSchedule runs the worker's schedules (JOBS_SCHEDULE=on on Railway; off on a laptop,
+	// so a local worker never runs them against staging's database).
+	JobsSchedule bool
 	// FlagsPoll is how often the flag rules are downloaded; PostHog bills each download as 10 flag checks.
 	FlagsPoll time.Duration
 }
 
 func Load() (Config, error) {
 	cfg := Config{
-		Port:            getenv("PORT", "8080"),
-		Env:             getenv("ENV", "local"),
-		DatabaseURL:     os.Getenv("DATABASE_URL"),
-		EdgeSecret:      os.Getenv("EDGE_SECRET"),
-		SupabaseURL:     os.Getenv("SUPABASE_URL"),
-		SupabaseKey:     os.Getenv("SUPABASE_PUBLISHABLE_KEY"),
-		TestLoginKey:    os.Getenv("TEST_LOGIN_KEY"),
-		PostHogKey:      os.Getenv("POSTHOG_KEY"),
-		PostHogFlagsKey: os.Getenv("POSTHOG_FLAGS_KEY"),
-		PostHogHost:     getenv("POSTHOG_HOST", "https://us.i.posthog.com"),
+		Port:              getenv("PORT", "8080"),
+		Env:               getenv("ENV", "local"),
+		DatabaseURL:       os.Getenv("DATABASE_URL"),
+		EdgeSecret:        os.Getenv("EDGE_SECRET"),
+		SupabaseURL:       os.Getenv("SUPABASE_URL"),
+		SupabaseKey:       os.Getenv("SUPABASE_PUBLISHABLE_KEY"),
+		SupabaseSecretKey: os.Getenv("SUPABASE_SECRET_KEY"),
+		TestLoginKey:      os.Getenv("TEST_LOGIN_KEY"),
+		PostHogKey:        os.Getenv("POSTHOG_KEY"),
+		PostHogFlagsKey:   os.Getenv("POSTHOG_FLAGS_KEY"),
+		PostHogHost:       getenv("POSTHOG_HOST", "https://us.i.posthog.com"),
+		TomorrowKey:       os.Getenv("TOMORROW_IO_API_KEY"),
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, errors.New("DATABASE_URL is required")
@@ -66,6 +75,13 @@ func Load() (Config, error) {
 		}
 	}
 
+	switch v := os.Getenv("JOBS_SCHEDULE"); v {
+	case "on":
+		cfg.JobsSchedule = true
+	case "", "off":
+	default:
+		return Config{}, fmt.Errorf("JOBS_SCHEDULE: want on or off, got %q", v)
+	}
 	if cfg.PostHogFlagsKey != "" && cfg.PostHogKey == "" {
 		return Config{}, errors.New("POSTHOG_FLAGS_KEY needs POSTHOG_KEY")
 	}

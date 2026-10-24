@@ -37,3 +37,10 @@ type MeStore struct {
 	IsDefault bool            `json:"isDefault" doc:"The store this user's app opens on"`
 	Flags     map[string]bool `json:"flags" nullable:"false" doc:"The feature flags on at this store (rules on tenantId and storeId); a flag not listed is off"`
 }
+
+// MePatchInput changes the caller's own profile; only the language for now.
+type MePatchInput struct {
+	Body struct {
+		Language string `json:"language" enum:"en,id"`
+	}
+}

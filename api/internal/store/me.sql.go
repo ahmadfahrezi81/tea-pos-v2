@@ -176,3 +176,17 @@ func (q *Queries) ListUserTenants(ctx context.Context, userID pgtype.UUID) ([]Li
 	}
 	return items, nil
 }
+
+const setUserLanguage = `-- name: SetUserLanguage :exec
+UPDATE users SET preferred_language = $2 WHERE id = $1
+`
+
+type SetUserLanguageParams struct {
+	ID                pgtype.UUID
+	PreferredLanguage string
+}
+
+func (q *Queries) SetUserLanguage(ctx context.Context, arg SetUserLanguageParams) error {
+	_, err := q.db.Exec(ctx, setUserLanguage, arg.ID, arg.PreferredLanguage)
+	return err
+}

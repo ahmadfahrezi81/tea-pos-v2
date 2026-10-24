@@ -142,6 +142,29 @@ components:
       additionalProperties: false
       properties:
         code:
+          enum:
+            - account_inactive
+            - app_too_old
+            - bad_request
+            - conflict
+            - error
+            - files_unavailable
+            - forbidden
+            - idempotency_key_required
+            - idempotency_key_reused
+            - internal
+            - maintenance
+            - not_allowed
+            - not_found
+            - not_in_tenant
+            - not_signed_in
+            - route_not_found
+            - store_not_found
+            - store_required
+            - too_large
+            - too_many_requests
+            - unauthorized
+            - unknown_app
           examples:
             - day_already_closed
           type: string
@@ -223,6 +246,17 @@ components:
         - user
         - tenants
         - flags
+      type: object
+    MePatchInputBody:
+      additionalProperties: false
+      properties:
+        language:
+          enum:
+            - en
+            - id
+          type: string
+      required:
+        - language
       type: object
     MeStore:
       additionalProperties: false
@@ -314,6 +348,55 @@ components:
         - fullName
         - role
         - language
+      type: object
+    UploadInputBody:
+      additionalProperties: false
+      properties:
+        contentType:
+          enum:
+            - image/webp
+            - image/jpeg
+          type: string
+        purpose:
+          enum:
+            - daily_photo
+            - report
+            - request
+            - reimbursement
+            - payroll_proof
+            - product_image
+          type: string
+        size:
+          description: Bytes, after the phone shrank it
+          format: int64
+          maximum: 1048576
+          minimum: 1
+          type: integer
+        storeId:
+          description: "For a store's photos: daily_photo, report, request"
+          format: uuid
+          type: string
+      required:
+        - purpose
+        - contentType
+        - size
+      type: object
+    UploadOutputBody:
+      additionalProperties: false
+      properties:
+        path:
+          description: Where it is kept, for the row that refers to it
+          type: string
+        uploadUrl:
+          description: PUT the photo here, straight to Storage; it works for a few minutes
+          type: string
+        url:
+          description: The address saved in the row (the old app's form); a private photo opens only through a signed address
+          type: string
+      required:
+        - uploadUrl
+        - path
+        - url
       type: object
 info:
   title: tea-pos API
@@ -413,6 +496,29 @@ paths:
       tags:
         - auth
       x-access:
+        repeatable: true
+        signedIn: true
+  /auth/logout-everywhere:
+    post:
+      operationId: logoutEverywhere
+      responses:
+        "204":
+          description: No Content
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Sign out of every app on every phone
+      tags:
+        - auth
+      x-access:
+        repeatable: true
         signedIn: true
   /events:
     post:
@@ -441,6 +547,7 @@ paths:
       tags:
         - system
       x-access:
+        repeatable: true
         signedIn: true
   /health:
     get:
@@ -483,4 +590,62 @@ paths:
       tags:
         - me
       x-access:
+        signedIn: true
+    patch:
+      operationId: patchMe
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MePatchInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Change the signed-in user's own language
+      tags:
+        - me
+      x-access:
+        repeatable: true
+        signedIn: true
+  /tenants/{tenant}/files:
+    post:
+      operationId: signUpload
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: An address to upload one photo to, straight to Storage
+      tags:
+        - files
+      x-access:
+        tenant: true
+        repeatable: true
         signedIn: true

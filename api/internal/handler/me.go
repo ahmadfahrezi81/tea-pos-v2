@@ -82,6 +82,20 @@ func registerMe(api huma.API, d Deps) {
 	})
 }
 
+func registerMePatch(api huma.API, d Deps) {
+	route(api, huma.Operation{
+		OperationID:   "patchMe",
+		Method:        http.MethodPatch,
+		Path:          "/me",
+		Summary:       "Change the signed-in user's own language",
+		Tags:          []string{"me"},
+		DefaultStatus: http.StatusNoContent,
+	}, auth.SignedIn.Repeatable(), func(ctx context.Context, in *contract.MePatchInput) (*struct{}, error) {
+		caller, _ := auth.CallerFrom(ctx)
+		return nil, d.Queries.SetUserLanguage(ctx, store.SetUserLanguageParams{ID: caller.UserID, PreferredLanguage: in.Body.Language})
+	})
+}
+
 // listStores is the stores the app shows: seller its roster, backoffice the whole tenant.
 func listStores(ctx context.Context, q *store.Queries, caller auth.Caller) ([]store.ListAssignedStoresRow, error) {
 	if caller.App == "seller" {

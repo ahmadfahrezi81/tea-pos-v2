@@ -58,3 +58,15 @@ Migrations only add, so older code runs against the newer schema.
 3. Go up but errors: Supabase's status page and dashboard (the database is the usual cause)
 
 **Too old an app:** a release that breaks older apps adds `MIN_APP_VERSION: "seller@2026.11.2"` (comma-separated per app) to `api` in `.railway/railway.ts`. Older apps get 426 and update themselves.
+
+## Background jobs and schedules
+
+v2's cron is the `worker` service (River, its tables in schema `river`): every schedule is a line in `jobs.Schedules` (`api/internal/jobs`), with its timing for production and for staging; they run on Railway (`JOBS_SCHEDULE: "on"`), never on a laptop. Each run is in Railway's worker logs; a job that fails for good is an error in PostHog.
+
+- **Weather:** production every 20 minutes while a store in its area (a weather cell of about 5 km) is open, one call per area to Tomorrow.io; staging once a day at 21:00 WIB, every area. Off on both until Step 45, while the old cron website still fetches: switch both in the same hour
+- **Run the weather once by hand:** `infisical run --env=prod --path=/app -- sh -c 'cd api && go run ./cmd/worker -once weather'` (every area, open or not)
+- **Clean-up:** hourly, drops Idempotency-Keys older than 24 hours
+
+## Live updates
+
+The `realtime` service holds every phone's socket. After a deploy it restarts: the phones reconnect by themselves within a few seconds and refetch what they show. A phone in the background holds no socket after a minute.

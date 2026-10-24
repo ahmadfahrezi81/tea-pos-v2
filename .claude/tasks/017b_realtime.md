@@ -1,6 +1,6 @@
 # Task 017b — The realtime service: live updates for both apps
 
-**Status: planned 2026-10-24, waiting on the owner's review.**
+**Status: built 2026-10-24, not committed. Checked locally: integration tests with the hub in-process: a socket needs a session of its own app; another tenant's store is refused out loud; an announcement reaches only its topic; a rolled-back change sends nothing; signing out everywhere closes that user's sockets (as "signed out", 1008: the app then finds /me gone) and only theirs. The forwarder sends /api/realtime to REALTIME_ORIGIN (unit test). Found: the hub closes an ended session's socket before a message could reach it, so the close itself says "signed out". Not yet seen: a socket through Cloudflare (needs the realtime service's Railway domain in wrangler.toml).**
 
 ## The goal
 

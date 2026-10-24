@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"sort"
+	"sync"
 
 	"github.com/danielgtaylor/huma/v2"
 )
@@ -21,8 +23,32 @@ type Error struct {
 func (e *Error) Error() string  { return e.Message }
 func (e *Error) GetStatus() int { return e.Status }
 
+// New is an error the API can send. Declare each as a package-level var, so every code is
+// known when the contract is printed (Codes): the apps must translate each one.
 func New(status int, code, message string) *Error {
+	known.Store(code, true)
 	return &Error{Status: status, Code: code, Message: message}
+}
+
+var known sync.Map
+
+// Codes is every error code the API can send, sorted: the contract lists them, and the apps'
+// typecheck fails on one without a translation.
+func Codes() []string {
+	set := map[string]bool{"error": true}
+	for _, c := range codes {
+		set[c] = true
+	}
+	known.Range(func(k, _ any) bool {
+		set[k.(string)] = true
+		return true
+	})
+	out := make([]string, 0, len(set))
+	for c := range set {
+		out = append(out, c)
+	}
+	sort.Strings(out)
+	return out
 }
 
 // Write sends e as JSON, for the few responses that do not go through Huma.

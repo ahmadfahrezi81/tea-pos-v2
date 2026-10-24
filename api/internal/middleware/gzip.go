@@ -6,7 +6,15 @@ import (
 	"github.com/klauspost/compress/gzhttp"
 )
 
-// Gzip compresses responses the client accepts; tiny and already-compressed ones are left alone.
+// Gzip compresses responses the client accepts; tiny and already-compressed ones are left alone,
+// and a WebSocket upgrade passes straight through.
 func Gzip(next http.Handler) http.Handler {
-	return gzhttp.GzipHandler(next)
+	gz := gzhttp.GzipHandler(next)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if IsWebSocket(r) {
+			next.ServeHTTP(w, r)
+			return
+		}
+		gz.ServeHTTP(w, r)
+	})
 }

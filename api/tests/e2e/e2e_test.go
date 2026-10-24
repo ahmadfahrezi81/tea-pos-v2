@@ -179,3 +179,16 @@ func TestSignOut_EndsTheSession(t *testing.T) {
 		t.Fatalf("/me after sign out: status %d, want 401", resp.StatusCode)
 	}
 }
+
+// Signing out everywhere ends the user's other sessions too (017b also closes their sockets).
+func TestSignOutEverywhere(t *testing.T) {
+	one, two := newPhone(t, seller), newPhone(t, seller)
+	mustSignIn(t, one, "seller@test-b.test")
+	mustSignIn(t, two, "seller@test-b.test")
+	if resp, _ := one.do(http.MethodPost, "/auth/logout-everywhere", "", nil); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("sign out everywhere: status %d", resp.StatusCode)
+	}
+	if resp, _ := two.do(http.MethodGet, "/me", "", nil); resp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("the other phone's /me: status %d, want 401", resp.StatusCode)
+	}
+}

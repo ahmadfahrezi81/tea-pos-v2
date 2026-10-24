@@ -78,3 +78,21 @@ func TestMeSignedOut(t *testing.T) {
 		t.Fatalf("status %d", resp.StatusCode)
 	}
 }
+
+func TestMeLanguage(t *testing.T) {
+	a := testkit.NewAPI(t, testkit.DB(t), "")
+	seller := testkit.Session(a.SignIn(t, testkit.SellerA, "seller"))
+	if resp := a.Send(t, http.MethodPatch, "/me", "seller", `{"language":"id"}`, nil, seller); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("set: %d", resp.StatusCode)
+	}
+	if me := getMe(t, a, testkit.SellerA, "seller"); me.User.Language != "id" {
+		t.Fatalf("language %q", me.User.Language)
+	}
+	// Only the caller's own profile, only a language the apps have.
+	if me := getMe(t, a, testkit.SellerB, "seller"); me.User.Language == "id" {
+		t.Fatal("another user's language changed")
+	}
+	if resp := a.Send(t, http.MethodPatch, "/me", "seller", `{"language":"fr"}`, nil, seller); resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("unknown language: %d", resp.StatusCode)
+	}
+}

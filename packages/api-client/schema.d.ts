@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/logout-everywhere": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign out of every app on every phone */
+        post: operations["logoutEverywhere"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/events": {
         parameters: {
             query?: never;
@@ -100,6 +117,24 @@ export interface paths {
         get: operations["getMe"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change the signed-in user's own language */
+        patch: operations["patchMe"];
+        trace?: never;
+    };
+    "/tenants/{tenant}/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** An address to upload one photo to, straight to Storage */
+        post: operations["signUpload"];
         delete?: never;
         options?: never;
         head?: never;
@@ -198,8 +233,11 @@ export interface components {
             screenWidth?: number;
         };
         Error: {
-            /** @example day_already_closed */
-            code: string;
+            /**
+             * @example day_already_closed
+             * @enum {string}
+             */
+            code: "account_inactive" | "app_too_old" | "bad_request" | "conflict" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "route_not_found" | "store_not_found" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
             details?: string[] | null;
             /** @example The day is already closed */
             message: string;
@@ -231,6 +269,10 @@ export interface components {
             /** @description Empty when the user belongs to no tenant */
             tenants: components["schemas"]["MeTenant"][];
             user: components["schemas"]["MeUser"];
+        };
+        MePatchInputBody: {
+            /** @enum {string} */
+            language: "en" | "id";
         };
         MeStore: {
             /** @example 22:00 */
@@ -272,6 +314,30 @@ export interface components {
             language: string;
             /** @example USER */
             role: string;
+        };
+        UploadInputBody: {
+            /** @enum {string} */
+            contentType: "image/webp" | "image/jpeg";
+            /** @enum {string} */
+            purpose: "daily_photo" | "report" | "request" | "reimbursement" | "payroll_proof" | "product_image";
+            /**
+             * Format: int64
+             * @description Bytes, after the phone shrank it
+             */
+            size: number;
+            /**
+             * Format: uuid
+             * @description For a store's photos: daily_photo, report, request
+             */
+            storeId?: string;
+        };
+        UploadOutputBody: {
+            /** @description Where it is kept, for the row that refers to it */
+            path: string;
+            /** @description PUT the photo here, straight to Storage; it works for a few minutes */
+            uploadUrl: string;
+            /** @description The address saved in the row (the old app's form); a private photo opens only through a signed address */
+            url: string;
         };
     };
     responses: never;
@@ -377,6 +443,34 @@ export interface operations {
             };
         };
     };
+    logoutEverywhere: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     sendEvents: {
         parameters: {
             query?: never;
@@ -455,6 +549,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Me"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    patchMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MePatchInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    signUpload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UploadInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadOutputBody"];
                 };
             };
             /** @description Error */

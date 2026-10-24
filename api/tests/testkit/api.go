@@ -15,8 +15,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/files"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/handler"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/middleware"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/realtime"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/version"
 )
@@ -55,6 +57,8 @@ type Options struct {
 	MinAppVersions map[string]version.Release
 	// Flags replaces PostHog's; nil has every flag off.
 	Flags auth.Flags
+	// StorageURL is a fake Supabase for photo uploads.
+	StorageURL string
 }
 
 func NewAPIWith(t *testing.T, pool *pgxpool.Pool, o Options) *API {
@@ -63,12 +67,14 @@ func NewAPIWith(t *testing.T, pool *pgxpool.Pool, o Options) *API {
 	sessions := auth.NewSessions(q)
 	mux := http.NewServeMux()
 	api := handler.NewAPI(mux, handler.Deps{
+		DB:           pool,
 		Queries:      q,
 		Sessions:     sessions,
 		Supabase:     auth.NewSupabase(o.SupabaseURL, "test-publishable-key"),
 		Limiter:      auth.NewLimiter(10, time.Minute),
 		TestLoginKey: TestLoginKey,
 		Flags:        o.Flags,
+		Files:        files.NewStorage(o.StorageURL, "test-secret-key"),
 	})
 	srv := httptest.NewServer(middleware.Standard(mux, middleware.Options{RequestTimeout: 5 * time.Second, EdgeSecret: EdgeSecret, MinAppVersions: o.MinAppVersions}))
 	t.Cleanup(srv.Close)
@@ -130,3 +136,23 @@ func (a *API) Send(t *testing.T, method, path, app, body string, headers []strin
 var noRedirects = &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error {
 	return http.ErrUseLastResponse
 }}
+
+// NewRealtime serves the realtime hub on pool, listening for announcements as in production.
+func NewRealtime(t *testing.T, pool *pgxpool.Pool) string {
+	t.Helper()
+	q := store.New(pool)
+	hub := realtime.NewHub(auth.NewSessions(q), q)
+	ctx, cancel := context.WithCancel(context.Background())
+	go hub.Listen(ctx, pool.Config().ConnConfig.Copy())
+	mux := http.NewServeMux()
+	mux.Handle("GET /realtime", hub)
+	srv := httptest.NewServer(middleware.Standard(mux, middleware.Options{RequestTimeout: 5 * time.Second, EdgeSecret: EdgeSecret}))
+	t.Cleanup(func() {
+		hub.CloseAll()
+		cancel()
+		srv.Close()
+	})
+	// LISTEN is set up a moment after start; announcements before it would be missed.
+	time.Sleep(200 * time.Millisecond)
+	return "ws" + strings.TrimPrefix(srv.URL, "http") + "/realtime"
+}

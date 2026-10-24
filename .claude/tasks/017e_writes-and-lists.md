@@ -1,6 +1,6 @@
 # Task 017e — Writes and lists: saved once, errors in words, lists that page
 
-**Status: planned 2026-10-24, waiting on the owner's review.**
+**Status: built 2026-10-24, not committed. Checked locally: a write sent twice runs once with the same answer (the second marked replayed), ten at once run once, another user's same key is theirs, a key reused for another body is refused (409), none at all too (400), a 500 is not kept; every write route declares Idempotent or Repeatable (the permission test); every error code is in the contract and the typecheck names a code without a translation (tried by removing one); paging 95 rows while rows are added sees each once, since returns only the newer ones. The worker drops keys after 24 hours.**
 
 ## The goal
 
@@ -17,14 +17,14 @@ RFC: Testing ("the same order sent twice is saved once"), Translations stay in t
 ### Saved once
 
 1. **`Idempotency-Key` on every write** (POST, PATCH, DELETE) from `packages/api-client`: a key made when the user acts, kept across that action's retries, new for the next action
-2. **Go keeps each key's answer for 24 hours** (`idempotency_keys`: key, user, route, status, body; a migration), in middleware every write route passes: the first request runs and its answer is stored in the same transaction as the change; a repeat gets the stored answer without running again; a repeat while the first is still running gets 409 `in_progress` and the app waits and asks again. A key reused for a different route or body is refused (422)
+2. **Go keeps each key's answer for 24 hours** (`idempotency_keys`: key, user, route, status, body; a migration), in middleware every write route passes: the first request runs and its answer is stored in the same transaction as the change; a repeat gets the stored answer without running again; a repeat while the first is still running waits for it and gets its answer; a 5xx is not kept, so the next try runs. A key reused for a different route or body is refused (409 `idempotency_key_reused`)
 3. **Declared per route:** `auth.SignedIn.Idempotent()` beside the access rule, and the permission test checks every write route has it, as it checks access today
 4. **Tests:** integration: the same request twice saves one row and both answers are the same; two at once save one; the key of one user does nothing for another
 
 ### Errors in words
 
 5. **Every `code` has an English and Indonesian line** in `packages/i18n` (`errors.<code>`), and the typecheck fails when Go has a code the apps do not translate (the codes are listed in the contract: an enum generated into `schema.d.ts`)
-6. **One way to show them:** `useApiMutation` (wraps React Query's mutation with the key, the retry rule from 016c, and the translated message for the screen) and a toast in `packages/ui` for errors that belong to no field
+6. **One way to show them:** `useApiMutation` (wraps React Query's mutation with the key, retries when the answer may change (no connection, a 5xx; 3 at most), and the translated message for the screen) and a toast in `packages/ui` for errors that belong to no field
 
 ### Lists
 
