@@ -5,6 +5,7 @@ import {
     createQueryClient,
     PersistQueryClientProvider,
 } from "@tea-pos/api-client/query";
+import { APP_TAG } from "@tea-pos/api-client/status";
 import type { AppConfig } from "@tea-pos/config/app";
 import { loadMessages, type Locale } from "@tea-pos/i18n";
 import { pickLocale } from "@tea-pos/i18n/pick";
@@ -15,7 +16,7 @@ import { createRoot } from "react-dom/client";
 
 import { AppContext } from "./AppContext";
 import { AppUpdateProvider } from "./AppUpdate";
-import { reportError, startEvents } from "./events";
+import { whenIdle } from "./idle";
 import { savedUser } from "./session";
 import { hideSplash } from "./splash";
 import { trackFirstLoads } from "./trackFirstLoads";
@@ -32,7 +33,8 @@ export function createAppRouter<TRouteTree extends AnyRoute>(routeTree: TRouteTr
         // Per history entry: back returns to where you were, a new screen starts at the top.
         scrollRestoration: true,
         scrollToTopSelectors: ["#shell-scroll"],
-        defaultOnCatch: reportError,
+        // events.ts loads after the first screen, off the startup path.
+        defaultOnCatch: (error) => void import("./events").then((m) => m.reportError(error)),
     });
 }
 
@@ -43,7 +45,7 @@ export async function startApp(router: ReturnType<typeof createAppRouter>, app: 
         offRendered();
         if (!router.state.matches.some((m) => m.staticData.holdsSplash)) hideSplash();
     });
-    startEvents(router);
+    whenIdle(() => void import("./events").then((m) => m.startEvents(router, APP_TAG)));
     // index.html already picked it, to preload that file; the same rule as pickLocale.
     const locale =
         (document.documentElement.dataset.locale as Locale | undefined) ?? pickLocale(app.locales);

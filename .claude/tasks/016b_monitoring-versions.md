@@ -1,6 +1,6 @@
 # Task 016b — Monitoring and versions
 
-**Status: built 2026-10-24, not committed: waiting on the owner's code review and clicks. Verified locally: integration tests (426, Server-Timing, maintenance, /me flags, /events), and in the browser against a local Go on the staging database: `X-App-Version` on every request, `Server-Timing` in DevTools, a thrown error and page views reaching `/events` with the user and version. Bundle 125.0 → 126.0 KB per app. Not yet seen: PostHog receiving them (needs the keys), the maintenance screen and 426 in the browser (need a flag and a release build), the Railway variable on a real deploy.**
+**Status: done on staging 2026-10-24, PR #36 (`86a2a05`). The deploy set `APP_VERSION` before deploying: `/health` says `staging`; e2e 7 passed, including `Server-Timing` and `/events` through the forwarder; `/me` as the test seller: `Server-Timing: db;dur=6.7, app;dur=6.9`, no flags (staging's rules name the owner's own accounts). Maintenance on in TEA-POS-STG: the owner saw the maintenance screen, after about 7 s of retries (fixed in 016c: maintenance and other final answers are not retried). Production's first run is the next release.**
 
 ## The goal
 

@@ -64,7 +64,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Errors and page views from an app, for PostHog */
+        /** Errors, page views and open times from an app, for PostHog */
         post: operations["sendEvents"];
         delete?: never;
         options?: never;
@@ -116,14 +116,86 @@ export interface components {
              * @description The phone's clock; Go uses its own when this is far off
              */
             at: string;
+            chunks?: {
+                [key: string]: string;
+            };
             message?: string;
             /** @example TypeError */
             name?: string;
             /** @example /test-a/home */
             path: string;
+            ready?: components["schemas"]["AppReady"];
             stack?: string;
             /** @enum {string} */
-            type: "error" | "pageview";
+            type: "error" | "pageview" | "pageleave" | "app_ready";
+        };
+        AppReady: {
+            /** @description Hidden at some moment before ready: the time is not the app's */
+            hidden: boolean;
+            /**
+             * Format: double
+             * @description The page's first byte (responseStart)
+             */
+            htmlMs: number;
+            /**
+             * Format: double
+             * @description The main script done (domContentLoadedEventEnd)
+             */
+            jsMs: number;
+            /**
+             * @description Whether the first screen drew /me from the phone's copy; none on sign-in
+             * @enum {string}
+             */
+            me: "saved" | "network" | "none";
+            /**
+             * @description network: no service worker yet; saved: from its copy; update: the first open of a new version
+             * @enum {string}
+             */
+            open: "network" | "saved" | "update";
+            /**
+             * Format: double
+             * @description First paint: the splash (first-contentful-paint)
+             */
+            paintMs: number;
+            /** Format: double */
+            readyMs: number;
+            /** @enum {string} */
+            screen: "shell" | "signin" | "other";
+        };
+        Device: {
+            /** Format: int64 */
+            cores?: number;
+            /**
+             * Format: double
+             * @description Mbit/s
+             */
+            downlink?: number;
+            /**
+             * Format: double
+             * @description GB, navigator.deviceMemory (rounded by the browser)
+             */
+            memory?: number;
+            /**
+             * @description Android Chrome's client hints
+             * @example SM-M115F
+             */
+            model?: string;
+            /**
+             * @description navigator.connection.effectiveType
+             * @example 4g
+             */
+            net?: string;
+            osVersion?: string;
+            /**
+             * Format: int64
+             * @description ms
+             */
+            rtt?: number;
+            saveData?: boolean;
+            /** Format: int64 */
+            screenHeight?: number;
+            /** Format: int64 */
+            screenWidth?: number;
         };
         Error: {
             /** @example day_already_closed */
@@ -138,7 +210,10 @@ export interface components {
             status: number;
         };
         EventsInputBody: {
+            device: components["schemas"]["Device"];
             events: components["schemas"]["AppEvent"][];
+            /** Format: uuid */
+            session: string;
         };
         HealthOutputBody: {
             /** @example a1b2c3d */
@@ -305,7 +380,9 @@ export interface operations {
     sendEvents: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "User-Agent"?: string;
+            };
             path?: never;
             cookie?: never;
         };

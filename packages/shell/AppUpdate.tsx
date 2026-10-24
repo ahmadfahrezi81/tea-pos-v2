@@ -4,6 +4,8 @@ import { onAppTooOld } from "@tea-pos/api-client/status";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { registerSW } from "virtual:pwa-register";
 
+import { whenIdle } from "./idle";
+
 /** Foreground can fire in bursts; one check a minute is plenty for a deploy. */
 const CHECK_THROTTLE_MS = 60_000;
 /** Stay off the network while the app boots. */
@@ -20,16 +22,6 @@ interface AppUpdate {
 }
 
 const AppUpdateContext = createContext<AppUpdate | null>(null);
-
-/** Runs `fn` once the browser is idle (soon after the first screen), or after `timeout`. */
-function whenIdle(fn: () => void, timeout = 3000): () => void {
-    if (typeof requestIdleCallback === "function") {
-        const handle = requestIdleCallback(fn, { timeout });
-        return () => cancelIdleCallback(handle);
-    }
-    const handle = setTimeout(fn, 1000);
-    return () => clearTimeout(handle);
-}
 
 /**
  * Registers the service worker on every screen, once the first screen is up so it

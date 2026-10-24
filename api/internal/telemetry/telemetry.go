@@ -53,24 +53,25 @@ func (c *Client) Capture(distinctID, event string, props map[string]any, at time
 	_ = c.ph.Enqueue(posthog.Capture{DistinctId: distinctID, Event: event, Properties: props, Timestamp: at})
 }
 
-// Exception sends an error from an app, in PostHog's error tracking shape.
-func (c *Client) Exception(distinctID, kind, message, stack string, props map[string]any, at time.Time) {
+// Exception sends an error from an app in PostHog's error tracking shape; frames (ParseStack)
+// let PostHog read it through the uploaded source maps.
+func (c *Client) Exception(distinctID, kind, message string, frames []Frame, props map[string]any, at time.Time) {
 	if c == nil {
 		return
 	}
 	if kind == "" {
 		kind = "Error"
 	}
-	p := posthog.NewProperties().Merge(props)
-	if stack != "" {
-		p.Set("stack", stack)
+	item := map[string]any{
+		"type":      kind,
+		"value":     message,
+		"mechanism": map[string]any{"type": "generic", "handled": false, "synthetic": false},
 	}
-	_ = c.ph.Enqueue(posthog.Exception{
-		DistinctId:    distinctID,
-		Timestamp:     at,
-		ExceptionList: []posthog.ExceptionItem{{Type: kind, Value: message}},
-		Properties:    p,
-	})
+	if len(frames) > 0 {
+		item["stacktrace"] = map[string]any{"type": "raw", "frames": frames}
+	}
+	p := posthog.NewProperties().Merge(props).Set("$exception_list", []any{item})
+	_ = c.ph.Enqueue(posthog.Capture{DistinctId: distinctID, Event: "$exception", Properties: p, Timestamp: at})
 }
 
 // Enabled is one flag for one user, from the rules in memory: no network call, ever.

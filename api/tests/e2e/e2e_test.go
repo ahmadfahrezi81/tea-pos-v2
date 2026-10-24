@@ -115,7 +115,7 @@ func TestMonitoring_TimingAndEventsReachThePhone(t *testing.T) {
 		t.Errorf("Server-Timing through the forwarder: %q", st)
 	}
 	at := time.Now().UTC().Format(time.RFC3339)
-	if resp, body := p.do(http.MethodPost, "/events", `{"events":[{"type":"pageview","path":"/e2e","at":"`+at+`"}]}`, nil); resp.StatusCode != http.StatusNoContent {
+	if resp, body := p.do(http.MethodPost, "/events", `{"session":"0192f1a2-3b4c-7d5e-8f60-718293a4b5c6","device":{},"events":[{"type":"pageview","path":"/e2e","at":"`+at+`"}]}`, nil); resp.StatusCode != http.StatusNoContent {
 		t.Errorf("/events: status %d %v", resp.StatusCode, body["code"])
 	}
 }

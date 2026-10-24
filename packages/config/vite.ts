@@ -28,8 +28,10 @@ const APP_VERSION = process.env.APP_VERSION ?? "dev";
 const appTag = (app: AppConfig) => `${app.id}@${APP_VERSION}+${APP_COMMIT}`;
 
 // Errors from the very start, kept until the shell sends them with the page views (shell/events.ts).
-// At most 20 a page load, so an error in a loop cannot flood.
+// At most 20 a page load, so an error in a loop cannot flood. And whether the page was ever hidden
+// while it loaded: such an open time is not the app's (app_ready leaves it out).
 const EARLY_EVENTS =
+    'window.__wasHidden=document.hidden;addEventListener("visibilitychange",function(){if(document.hidden)__wasHidden=true});' +
     'window.__events=[];(function(){var n=0;function k(e,m,s){if(n++<20)__events.push({type:"error",name:e||"Error",' +
     'message:String(m||"").slice(0,2000),stack:String(s||"").slice(0,8000),path:location.pathname,at:new Date().toISOString()})}' +
     'addEventListener("error",function(e){var r=e.error;k(r&&r.name,r?r.message:e.message,r&&r.stack)});' +
@@ -231,7 +233,8 @@ export function appConfig(app: AppConfig) {
             }),
         ],
         // The bundle-size check reads which files the first screen loads.
-        build: { manifest: true },
+        // Maps for PostHog to read app errors with (pages.yml uploads and deletes them); the files never point to them.
+        build: { manifest: true, sourcemap: "hidden" },
         // Local dev reaches the API the way the Pages forwarder does (API_ORIGIN=http://localhost:8080 for a local Go).
         server: {
             proxy: {
