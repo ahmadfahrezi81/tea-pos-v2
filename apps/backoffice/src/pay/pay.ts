@@ -172,3 +172,56 @@ export function payDate(date: string, locale: string): string {
         timeZone: "UTC",
     }).format(new Date(`${date}T00:00:00Z`));
 }
+
+export function usePayouts(month: string) {
+    const tenant = useSlug();
+    return $api.useQuery(
+        "get",
+        "/tenants/{tenant}/pay/payouts",
+        { params: { path: { tenant }, query: { month } } },
+        { enabled: !!tenant, staleTime: STALE.QUICK },
+    );
+}
+
+export function usePayslip(id: string) {
+    const tenant = useSlug();
+    return $api.useQuery(
+        "get",
+        "/tenants/{tenant}/pay/payouts/{id}",
+        { params: { path: { tenant, id } } },
+        { enabled: !!tenant, staleTime: STALE.QUICK },
+    );
+}
+
+type Decision = "pending" | "approved" | "rejected";
+
+export const decisions = {
+    commission: (tenant: string, { id, status }: { id: string; status: Decision }, k: string) =>
+        api
+            .PUT("/tenants/{tenant}/pay/commissions/{id}", {
+                params: { path: { tenant, id } },
+                body: { status },
+                headers: key(k),
+            })
+            .then(ok),
+    claim: (tenant: string, { id, status }: { id: string; status: Decision }, k: string) =>
+        api
+            .PUT("/tenants/{tenant}/pay/claims/{id}", {
+                params: { path: { tenant, id } },
+                body: { status },
+                headers: key(k),
+            })
+            .then(ok),
+    day: (
+        tenant: string,
+        { id, date, status }: { id: string; date: string; status: "approved" | "rejected" },
+        k: string,
+    ) =>
+        api
+            .POST("/tenants/{tenant}/pay/payouts/{id}/days/{date}/review", {
+                params: { path: { tenant, id, date } },
+                body: { status },
+                headers: key(k),
+            })
+            .then(ok),
+};
