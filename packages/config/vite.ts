@@ -43,8 +43,9 @@ const FIRST_SCREEN = [
     /src\/routes\/_shell\/index\.tsx/,
     /src\/routes\/_shell\/\$tenant\.tsx/,
     /src\/routes\/_shell\/\$tenant\/index\.tsx/,
-    // The backoffice opens on its Store tab.
+    // Each app's first tab: backoffice Store, seller POS.
     /src\/routes\/_shell\/\$tenant\/store\/index\.tsx/,
+    /src\/routes\/_shell\/\$tenant\/pos\.tsx/,
 ];
 
 // Everything the first screen needs is requested with the main JavaScript, not after
