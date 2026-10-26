@@ -10,7 +10,7 @@
     },
     "dependencies": {
         "@tanstack/react-query": "5.104.5",
-        "@tanstack/react-router": "1.170.45",
+        "@tanstack/react-router": "1.170.46",
         "@tea-pos/api-client": "workspace:*",
         "@tea-pos/i18n": "workspace:*",
         "@tea-pos/shell": "workspace:*",
