@@ -3,18 +3,21 @@ import { useInfiniteList } from "@tea-pos/api-client/list";
 import { STALE } from "@tea-pos/api-client/query";
 import { localDate } from "@tea-pos/format";
 import { useTenant } from "@tea-pos/shell/tenant";
-import type { SearchSchemaInput } from "@tanstack/react-router";
+import { useParams, type SearchSchemaInput } from "@tanstack/react-router";
 
-/**
- * The stores a Store screen adds up, as the header's picker says: the chosen one, or All
- * stores (every store of the tenant, or only the open ones when inactive are hidden).
- */
+/** The store in the address (`/store/<storeId>/…`); `all` is every store of the tenant together. */
+export function useStoreId(): string {
+    return (useParams({ strict: false }) as { storeId?: string }).storeId ?? ALL;
+}
+
+export const ALL = "all";
+
+/** The stores a Store screen adds up: the one in the address, or every store of the tenant. */
 export function useStoreScope(): { tenant: string; storeId?: string[] } | null {
-    const state = useTenant();
-    if (!state) return null;
-    const { tenant, store, stores, hideInactive } = state;
-    if (store) return { tenant: tenant.slug, storeId: [store.id] };
-    return { tenant: tenant.slug, storeId: hideInactive ? stores.map((s) => s.id) : undefined };
+    const tenant = useTenant()?.tenant;
+    const storeId = useStoreId();
+    if (!tenant) return null;
+    return { tenant: tenant.slug, storeId: storeId === ALL ? undefined : [storeId] };
 }
 
 /** Sales, orders and cups per day over the picked stores, `from` to `to` (both `2026-10-01`). */
@@ -174,5 +177,21 @@ export function useDayOrders(date: string) {
             return data;
         },
         ["order"],
+    );
+}
+
+/** Every store right now. v1 writes without telling the hub, so it refetches every minute while on screen. */
+export function useStoresLive() {
+    const tenant = useTenantSlug();
+    return $api.useQuery(
+        "get",
+        "/tenants/{tenant}/stores/live",
+        { params: { path: { tenant } } },
+        {
+            enabled: !!tenant,
+            staleTime: STALE.WARM,
+            refetchInterval: 60_000,
+            meta: { live: ["order"] },
+        },
     );
 }

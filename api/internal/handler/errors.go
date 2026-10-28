@@ -35,4 +35,5 @@ var (
 	errBadProof               = httpx.New(http.StatusBadRequest, "bad_proof", "That screenshot was not uploaded as this tenant's payroll proof")
 	errDayNotFound            = httpx.NotFound("day_not_found", "No such day")
 	errBadRange               = httpx.New(http.StatusBadRequest, "bad_range", "Pick a range of at most 400 days, from before to")
+	errNoPeriod               = httpx.NotFound("period_not_found", "No such pay period: a day, or current, not after this one")
 )

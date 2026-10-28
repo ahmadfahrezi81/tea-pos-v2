@@ -11,8 +11,33 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createPendingUser = `-- name: CreatePendingUser :exec
+INSERT INTO users (id, email, full_name, role, status, avatar_url)
+VALUES ($1, $2, $3, 'USER', 'pending', $4)
+ON CONFLICT (id) DO NOTHING
+`
+
+type CreatePendingUserParams struct {
+	ID        pgtype.UUID
+	Email     string
+	FullName  string
+	AvatarUrl pgtype.Text
+}
+
+// Someone new: an account in no tenant and no app, waiting until a tenant lets them in. v1 lets
+// a pending account in nowhere either.
+func (q *Queries) CreatePendingUser(ctx context.Context, arg CreatePendingUserParams) error {
+	_, err := q.db.Exec(ctx, createPendingUser,
+		arg.ID,
+		arg.Email,
+		arg.FullName,
+		arg.AvatarUrl,
+	)
+	return err
+}
+
 const getTestUser = `-- name: GetTestUser :one
-SELECT u.id, u.role, u.status
+SELECT u.id, u.role, u.status, coalesce(ARRAY(SELECT DISTINCT x.app FROM user_app_access x WHERE x.user_id = u.id), '{}')::text[] AS apps
 FROM users u
 WHERE u.email = $1
   AND EXISTS (
@@ -29,51 +54,91 @@ type GetTestUserRow struct {
 	ID     pgtype.UUID
 	Role   string
 	Status string
+	Apps   []string
 }
 
 // Only users who belong to test tenants alone (slug test-...): the staging test sign-in reaches no one else.
 func (q *Queries) GetTestUser(ctx context.Context, email string) (GetTestUserRow, error) {
 	row := q.db.QueryRow(ctx, getTestUser, email)
 	var i GetTestUserRow
-	err := row.Scan(&i.ID, &i.Role, &i.Status)
+	err := row.Scan(
+		&i.ID,
+		&i.Role,
+		&i.Status,
+		&i.Apps,
+	)
 	return i, err
 }
 
 const getUserForSignIn = `-- name: GetUserForSignIn :one
-SELECT id, role, status FROM users WHERE id = $1
+SELECT u.id, u.role, u.status, coalesce(ARRAY(SELECT DISTINCT x.app FROM user_app_access x WHERE x.user_id = u.id), '{}')::text[] AS apps
+FROM users u WHERE u.id = $1
 `
 
 type GetUserForSignInRow struct {
 	ID     pgtype.UUID
 	Role   string
 	Status string
+	Apps   []string
 }
 
 func (q *Queries) GetUserForSignIn(ctx context.Context, id pgtype.UUID) (GetUserForSignInRow, error) {
 	row := q.db.QueryRow(ctx, getUserForSignIn, id)
 	var i GetUserForSignInRow
-	err := row.Scan(&i.ID, &i.Role, &i.Status)
+	err := row.Scan(
+		&i.ID,
+		&i.Role,
+		&i.Status,
+		&i.Apps,
+	)
 	return i, err
 }
 
 const getUserTenant = `-- name: GetUserTenant :one
-SELECT t.id
+SELECT t.id, a.status, coalesce(t.owner_id = a.user_id, false)::bool AS is_owner,
+    coalesce((
+        SELECT x.access FROM user_app_access x
+        WHERE x.tenant_id = t.id AND x.user_id = a.user_id AND x.app = $1::text
+    ), '')::text AS access,
+    EXISTS (
+        SELECT 1 FROM user_app_access x WHERE x.tenant_id = t.id AND x.user_id = a.user_id
+    ) AS has_levels,
+    (SELECT u.status FROM users u WHERE u.id = a.user_id)::text AS user_status
 FROM tenants t
 JOIN user_tenant_assignments a ON a.tenant_id = t.id
-WHERE t.slug = $1 AND a.user_id = $2
+WHERE t.slug = $2 AND a.user_id = $3
 `
 
 type GetUserTenantParams struct {
+	App    string
 	Slug   string
 	UserID pgtype.UUID
 }
 
-// The tenant behind a slug, only if the user is assigned to it.
-func (q *Queries) GetUserTenant(ctx context.Context, arg GetUserTenantParams) (pgtype.UUID, error) {
-	row := q.db.QueryRow(ctx, getUserTenant, arg.Slug, arg.UserID)
-	var id pgtype.UUID
-	err := row.Scan(&id)
-	return id, err
+type GetUserTenantRow struct {
+	ID         pgtype.UUID
+	Status     string
+	IsOwner    bool
+	Access     string
+	HasLevels  bool
+	UserStatus string
+}
+
+// The tenant behind a slug, only if the user is assigned to it, with their membership, whether they
+// own it, their level in the app (” for none) and whether they have any level row there at all
+// (people v1 added after the backfill have none: Go falls back to users.role for them).
+func (q *Queries) GetUserTenant(ctx context.Context, arg GetUserTenantParams) (GetUserTenantRow, error) {
+	row := q.db.QueryRow(ctx, getUserTenant, arg.App, arg.Slug, arg.UserID)
+	var i GetUserTenantRow
+	err := row.Scan(
+		&i.ID,
+		&i.Status,
+		&i.IsOwner,
+		&i.Access,
+		&i.HasLevels,
+		&i.UserStatus,
+	)
+	return i, err
 }
 
 const setUserAvatar = `-- name: SetUserAvatar :exec

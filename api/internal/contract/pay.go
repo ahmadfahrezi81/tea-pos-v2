@@ -157,3 +157,26 @@ type SetPayScheduleInput struct {
 		Frequency string `json:"frequency" enum:"weekly,bi_weekly,four_weekly"`
 	}
 }
+
+type PayPeriodAtInput struct {
+	Tenant string `path:"tenant"`
+	Start  string `path:"start" doc:"Any day of the period (its first, as the app links it), or current"`
+}
+
+type PayPeriodAtOutput struct {
+	Body PayPeriodAt
+}
+
+// PayPeriodAt is the Pay tab's home: one period and each person it pays, by what needs the admin.
+type PayPeriodAt struct {
+	Frequency  string `json:"frequency" enum:"weekly,bi_weekly,four_weekly"`
+	Start      string `json:"start" format:"date"`
+	End        string `json:"end" format:"date"`
+	PayoutDate string `json:"payoutDate" format:"date" doc:"The day after the period ends"`
+	Previous   string `json:"previous" format:"date" doc:"The period before's first day"`
+	Next       string `json:"next,omitempty" format:"date" doc:"The next period's first day; none after the current one"`
+	Owed       int64  `json:"owed" doc:"Approved, every person not yet paid or skipped"`
+	ToReview   int    `json:"toReview" doc:"People with commissions or claims still to review"`
+	// Every payout overlapping the period (a schedule change can leave them uneven), by name.
+	People []Payout `json:"people" nullable:"false"`
+}

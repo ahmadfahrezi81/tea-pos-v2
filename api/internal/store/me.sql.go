@@ -38,6 +38,35 @@ func (q *Queries) GetMe(ctx context.Context, id pgtype.UUID) (GetMeRow, error) {
 	return i, err
 }
 
+const listAskedTenants = `-- name: ListAskedTenants :many
+SELECT DISTINCT t.slug
+FROM tenant_access_requests r
+JOIN tenants t ON t.id = r.tenant_id
+WHERE r.user_id = $1 AND r.status IN ('pending', 'blocked')
+ORDER BY t.slug
+`
+
+// The tenants the user asked to join and is still waiting on (blocked looks the same to them).
+func (q *Queries) ListAskedTenants(ctx context.Context, userID pgtype.UUID) ([]string, error) {
+	rows, err := q.db.Query(ctx, listAskedTenants, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var slug string
+		if err := rows.Scan(&slug); err != nil {
+			return nil, err
+		}
+		items = append(items, slug)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAssignedStores = `-- name: ListAssignedStores :many
 SELECT s.id, s.tenant_id, s.name, s.status, s.open_time, s.close_time, a.is_default
 FROM user_store_assignments a
@@ -138,20 +167,38 @@ func (q *Queries) ListTenantStores(ctx context.Context, userID pgtype.UUID) ([]L
 }
 
 const listUserTenants = `-- name: ListUserTenants :many
-SELECT t.id, t.slug, t.name, t.pay_frequency
+SELECT t.id, t.slug, t.name, t.pay_frequency, a.status,
+    coalesce(t.owner_id = a.user_id, false)::bool AS is_owner,
+    coalesce((
+        SELECT x.access FROM user_app_access x
+        WHERE x.tenant_id = t.id AND x.user_id = a.user_id AND x.app = 'seller'
+    ), '')::text AS seller_access,
+    coalesce((
+        SELECT x.access FROM user_app_access x
+        WHERE x.tenant_id = t.id AND x.user_id = a.user_id AND x.app = 'backoffice'
+    ), '')::text AS backoffice_access,
+    EXISTS (
+        SELECT 1 FROM user_app_access x WHERE x.tenant_id = t.id AND x.user_id = a.user_id
+    ) AS has_levels
 FROM tenants t
 JOIN user_tenant_assignments a ON a.tenant_id = t.id
-WHERE a.user_id = $1
+WHERE a.user_id = $1 AND a.status = 'active'
 ORDER BY t.name
 `
 
 type ListUserTenantsRow struct {
-	ID           pgtype.UUID
-	Slug         string
-	Name         string
-	PayFrequency string
+	ID               pgtype.UUID
+	Slug             string
+	Name             string
+	PayFrequency     string
+	Status           string
+	IsOwner          bool
+	SellerAccess     string
+	BackofficeAccess string
+	HasLevels        bool
 }
 
+// The tenants the user is an active member of, with what auth.LevelIn reads.
 func (q *Queries) ListUserTenants(ctx context.Context, userID pgtype.UUID) ([]ListUserTenantsRow, error) {
 	rows, err := q.db.Query(ctx, listUserTenants, userID)
 	if err != nil {
@@ -166,6 +213,11 @@ func (q *Queries) ListUserTenants(ctx context.Context, userID pgtype.UUID) ([]Li
 			&i.Slug,
 			&i.Name,
 			&i.PayFrequency,
+			&i.Status,
+			&i.IsOwner,
+			&i.SellerAccess,
+			&i.BackofficeAccess,
+			&i.HasLevels,
 		); err != nil {
 			return nil, err
 		}

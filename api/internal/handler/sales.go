@@ -10,16 +10,51 @@ import (
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/domain"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
 )
 
-// storeAccess is the Store tab's: the backoffice's admins, in their tenant.
-var storeAccess = auth.Roles("ADMIN").InTenant()
+// storeAccess is the Store tab's: anyone with a backoffice level in the tenant, guests included.
+var storeAccess = auth.App("backoffice", auth.Guest)
 
 // maxDays bounds a range: a year and a bit, for the monthly chart.
 const maxDays = 400
 
 func registerSales(api huma.API, d Deps) {
+	route(api, huma.Operation{
+		OperationID: "storesLive",
+		Method:      http.MethodGet,
+		Path:        "/tenants/{tenant}/stores/live",
+		Summary:     "Every store right now: open or closed, who is selling, today's sales",
+		Tags:        []string{"store"},
+	}, storeAccess, func(ctx context.Context, _ *contract.StoresLiveInput) (*contract.StoresLiveOutput, error) {
+		caller, _ := auth.CallerFrom(ctx)
+		today := time.Now().In(domain.WIB).Format(time.DateOnly)
+		start, end, _ := dayBounds(today)
+		rows, err := d.Queries.StoresLive(ctx, store.StoresLiveParams{TenantID: caller.TenantID, DayStart: start, DayEnd: end})
+		if err != nil {
+			return nil, err
+		}
+		out := &contract.StoresLiveOutput{}
+		out.Body.Date = today
+		out.Body.Stores = make([]contract.StoreLive, len(rows))
+		for i, r := range rows {
+			s := contract.StoreLive{
+				ID: r.ID.String(), Name: r.Name, Status: r.Status, Open: r.OpenSince.Valid,
+				Orders: r.Orders, Cups: r.Cups, Sales: r.Sales,
+			}
+			if s.Open {
+				s.OpenSince, s.SellerName, s.SellerAvatar = &r.OpenSince.Time, r.SellerName, r.SellerAvatar
+			} else if r.LastClosed.Valid {
+				// The old tables hold UTC without a zone.
+				at := r.LastClosed.Time.UTC()
+				s.LastClosed = &at
+			}
+			out.Body.Stores[i] = s
+		}
+		return out, nil
+	})
+
 	route(api, huma.Operation{
 		OperationID: "salesDays",
 		Method:      http.MethodGet,

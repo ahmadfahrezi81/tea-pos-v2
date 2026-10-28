@@ -2,14 +2,14 @@ import type { components } from "@tea-pos/api-client";
 import { formatMoney, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { ActionButton } from "@tea-pos/ui/ActionButton";
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
+import { useAccess } from "@tea-pos/shell/tenant";
 import { AlertTriangle, Check, Copy, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
-import { daysLeft } from "./PayHome";
-import { dayMonth, shortDay, weeks } from "./Payouts";
-import { decisions, payDate, usePayslip, usePayWrite, useSlug } from "./pay";
+import { daysLeft, dayMonth, shortDay, weeks } from "./dates";
+import { decisions, payDate, usePayslip, usePayWrite } from "./pay";
 
 type Slip = components["schemas"]["Payslip"];
 type Row = { id: string; date: string; status: string; amount: number };
@@ -45,8 +45,9 @@ const addDays = (d: string, n: number) => {
 export function Payslip({ id }: { id: string }) {
     const t = useT();
     const locale = useLocale();
-    const slug = useSlug();
+    const pathname = useLocation({ select: (l) => l.pathname });
     const { data: slip } = usePayslip(id);
+    const { canWrite } = useAccess();
     const [confirm, setConfirm] = useState<Confirm | null>(null);
     const [warningDismissed, setWarningDismissed] = useState(false);
     const [showProof, setShowProof] = useState(false);
@@ -95,7 +96,7 @@ export function Payslip({ id }: { id: string }) {
                     onClick={() =>
                         setConfirm({ kind, id: r.id, status: s, label, amount: r.amount })
                     }
-                    disabled={slip.status !== "pending"}
+                    disabled={slip.status !== "pending" || !canWrite}
                     className={`p-2 rounded-lg disabled:opacity-40 ${
                         r.status === s
                             ? s === "approved"
@@ -367,7 +368,7 @@ export function Payslip({ id }: { id: string }) {
                                     </div>
                                 ))}
                                 {/* With one left, its own buttons already are the day's. */}
-                                {pending.length > 1 && slip.status === "pending" && (
+                                {pending.length > 1 && slip.status === "pending" && canWrite && (
                                     <div className="flex gap-2 px-4 py-3 border-t border-gray-100 bg-gray-50/60">
                                         {(["rejected", "approved"] as const).map((s) => (
                                             <button
@@ -408,7 +409,7 @@ export function Payslip({ id }: { id: string }) {
                 </div>
             </Group>
 
-            {slip.status === "pending" && slip.pending === 0 && (
+            {slip.status === "pending" && slip.pending === 0 && canWrite && (
                 <div className="fixed bottom-0 inset-x-0 mx-auto max-w-[480px] p-4 pb-8 bg-white border-t border-gray-100 z-10">
                     {left > 0 ? (
                         <button
@@ -419,8 +420,7 @@ export function Payslip({ id }: { id: string }) {
                         </button>
                     ) : (
                         <Link
-                            to="/$tenant/pay/payouts/$payoutId/pay"
-                            params={{ tenant: slug, payoutId: id }}
+                            to={pathname.concat("/settle")}
                             className={`block text-center w-full py-3.5 text-white font-bold rounded-xl active:opacity-80 ${isSkip ? "bg-gray-700" : "bg-green-600"}`}
                         >
                             {t(isSkip ? "pay.skip" : "pay.pay")}

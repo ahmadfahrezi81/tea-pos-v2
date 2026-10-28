@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/access-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask a tenant to let the caller in */
+        post: operations["askAccess"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/callback": {
         parameters: {
             query?: never;
@@ -450,6 +467,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{tenant}/pay/periods/{start}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A pay period and each person it pays, with what is still to review */
+        get: operations["getPayPeriodAt"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{tenant}/pay/schedule": {
         parameters: {
             query?: never;
@@ -552,6 +586,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{tenant}/stores/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every store right now: open or closed, who is selling, today's sales */
+        get: operations["storesLive"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{tenant}/tea-waste": {
         parameters: {
             query?: never;
@@ -563,6 +614,92 @@ export interface paths {
         get: operations["teaWaste"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/uac": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Requests waiting and everyone in the tenant, with their levels per app */
+        get: operations["getUac"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/uac/people/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One person: their levels per app, stores and status */
+        get: operations["getUacPerson"];
+        /** Set a person's levels per app, stores and status, at once */
+        put: operations["setUacPerson"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/uac/requests/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One request waiting */
+        get: operations["getUacRequest"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/uac/requests/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Let the person in with these levels and stores */
+        post: operations["approveUacRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/uac/requests/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn a request down, or block the person's later asks too */
+        post: operations["rejectUacRequest"];
         delete?: never;
         options?: never;
         head?: never;
@@ -590,6 +727,17 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AccessRequest: {
+            /** Format: date-time */
+            at: string;
+            avatarUrl?: string;
+            email: string;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: uuid */
+            userId: string;
+        };
         AppEvent: {
             /**
              * Format: date-time
@@ -641,6 +789,10 @@ export interface components {
             readyMs: number;
             /** @enum {string} */
             screen: "shell" | "signin" | "other";
+        };
+        AskAccessInputBody: {
+            /** @description The tenant's slug, from its address */
+            tenant: string;
         };
         Bank: {
             accountHolder?: string;
@@ -910,7 +1062,7 @@ export interface components {
              * @example day_already_closed
              * @enum {string}
              */
-            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_cursor" | "bad_proof" | "bad_range" | "bad_request" | "claim_not_found" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "proof_required" | "route_not_found" | "staff_not_found" | "store_not_found" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
+            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_cursor" | "bad_level" | "bad_proof" | "bad_range" | "bad_request" | "claim_not_found" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_yourself" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_not_found" | "person_not_found" | "proof_required" | "request_not_found" | "route_not_found" | "staff_not_found" | "store_not_found" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
             details?: string[] | null;
             /** @example The day is already closed */
             message: string;
@@ -953,6 +1105,8 @@ export interface components {
             version: string;
         };
         Me: {
+            /** @description Slugs of the tenants the user asked to join, still waiting */
+            asked: string[];
             /** @description The feature flags on for this user (rules on role and app); a store's own are on the store */
             flags: {
                 [key: string]: boolean;
@@ -960,6 +1114,12 @@ export interface components {
             /** @description Empty when the user belongs to no tenant */
             tenants: components["schemas"]["MeTenant"][];
             user: components["schemas"]["MeUser"];
+        };
+        MeAccess: {
+            /** @description guest, admin, or '' for none */
+            backoffice: string;
+            /** @description member, or '' for none */
+            seller: string;
         };
         MePatchInputBody: {
             /** @enum {string} */
@@ -983,9 +1143,13 @@ export interface components {
             status: string;
         };
         MeTenant: {
+            /** @description The user's level in each app here; the screens hide what they cannot do */
+            access: components["schemas"]["MeAccess"];
             /** Format: uuid */
             id: string;
             name: string;
+            /** @description The tenant's owner: an admin everywhere, whatever the levels say */
+            owner: boolean;
             /** @example bi_weekly */
             payFrequency: string;
             slug: string;
@@ -1072,6 +1236,40 @@ export interface components {
             start: string;
             /** Format: int64 */
             total: number;
+        };
+        PayPeriodAt: {
+            /** Format: date */
+            end: string;
+            /** @enum {string} */
+            frequency: "weekly" | "bi_weekly" | "four_weekly";
+            /**
+             * Format: date
+             * @description The next period's first day; none after the current one
+             */
+            next?: string;
+            /**
+             * Format: int64
+             * @description Approved, every person not yet paid or skipped
+             */
+            owed: number;
+            /**
+             * Format: date
+             * @description The day after the period ends
+             */
+            payoutDate: string;
+            people: components["schemas"]["Payout"][];
+            /**
+             * Format: date
+             * @description The period before's first day
+             */
+            previous: string;
+            /** Format: date */
+            start: string;
+            /**
+             * Format: int64
+             * @description People with commissions or claims still to review
+             */
+            toReview: number;
         };
         PayStaff: {
             avatarUrl?: string;
@@ -1212,6 +1410,10 @@ export interface components {
             status: "pending" | "approved" | "rejected";
             storeName?: string;
         };
+        RejectRequestInputBody: {
+            /** @description Also drop this person's later asks, quietly */
+            block: boolean;
+        };
         ReviewDayInputBody: {
             /** @enum {string} */
             status: "approved" | "rejected";
@@ -1307,6 +1509,40 @@ export interface components {
              */
             status: "paid" | "skipped";
         };
+        StoreLive: {
+            /** Format: int64 */
+            cups: number;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            lastClosed?: string;
+            name: string;
+            /** @description Someone is selling there now */
+            open: boolean;
+            /** Format: date-time */
+            openSince?: string;
+            /** Format: int64 */
+            orders: number;
+            /** Format: int64 */
+            sales: number;
+            /** @description The seller's Google photo address */
+            sellerAvatar?: string;
+            sellerName?: string;
+            /**
+             * @description The store itself: active, fake (a demo) or inactive
+             * @example active
+             */
+            status: string;
+        };
+        StoresLiveOutputBody: {
+            /**
+             * Format: date
+             * @description Today, in the stores' time zone
+             */
+            date: string;
+            /** @description Open stores first, then by name */
+            stores: components["schemas"]["StoreLive"][];
+        };
         TeaWasteDay: {
             /** Format: date */
             date: string;
@@ -1316,6 +1552,30 @@ export interface components {
         TeaWasteOutputBody: {
             /** @description Only days whose tea was measured at closing */
             days: components["schemas"]["TeaWasteDay"][];
+        };
+        UacOutputBody: {
+            /** @description Active first, then by name */
+            people: components["schemas"]["UacPerson"][];
+            /** @description Waiting, oldest first */
+            requests: components["schemas"]["AccessRequest"][];
+        };
+        UacPerson: {
+            access: components["schemas"]["MeAccess"];
+            active: boolean;
+            avatarUrl?: string;
+            email: string;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            owner: boolean;
+            storeIds: string[];
+        };
+        UacPersonChange: {
+            /** @description Each app's level, or '' for none; only the levels each app offers */
+            access: components["schemas"]["MeAccess"];
+            active: boolean;
+            /** @description Exactly these of the tenant's stores */
+            storeIds: string[];
         };
         UpdateClaimTypeInputBody: {
             enabled?: boolean;
@@ -1389,6 +1649,37 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    askAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AskAccessInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     finishSignIn: {
         parameters: {
             query?: {
@@ -2380,6 +2671,39 @@ export interface operations {
             };
         };
     };
+    getPayPeriodAt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                /** @description Any day of the period (its first, as the app links it), or current */
+                start: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPeriodAt"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     setPaySchedule: {
         parameters: {
             query?: never;
@@ -2587,6 +2911,37 @@ export interface operations {
             };
         };
     };
+    storesLive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoresLiveOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     teaWaste: {
         parameters: {
             query: {
@@ -2612,6 +2967,207 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TeaWasteOutputBody"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getUac: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UacOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getUacPerson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UacPerson"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    setUacPerson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UacPersonChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UacPerson"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getUacRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessRequest"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    approveUacRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UacPersonChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UacPerson"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    rejectUacRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectRequestInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

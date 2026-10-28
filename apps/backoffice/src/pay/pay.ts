@@ -16,6 +16,17 @@ export function usePayPeriod() {
     });
 }
 
+/** A pay period by any of its days (`current` for today's) and each person it pays. */
+export function usePayPeriodAt(start: string) {
+    const tenant = useSlug();
+    return $api.useQuery(
+        "get",
+        "/tenants/{tenant}/pay/periods/{start}",
+        { params: { path: { tenant, start } } },
+        { enabled: !!tenant && !!start, staleTime: STALE.QUICK },
+    );
+}
+
 export function usePayStaff() {
     const tenant = useSlug();
     return $api.useQuery("get", "/tenants/{tenant}/pay/staff", path(tenant), {
@@ -171,16 +182,6 @@ export function payDate(date: string, locale: string): string {
         year: "numeric",
         timeZone: "UTC",
     }).format(new Date(`${date}T00:00:00Z`));
-}
-
-export function usePayouts(month: string) {
-    const tenant = useSlug();
-    return $api.useQuery(
-        "get",
-        "/tenants/{tenant}/pay/payouts",
-        { params: { path: { tenant }, query: { month } } },
-        { enabled: !!tenant, staleTime: STALE.QUICK },
-    );
 }
 
 export function usePayslip(id: string) {

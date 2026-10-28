@@ -51,6 +51,7 @@ type SupabaseUser struct {
 	Email    string `json:"email"`
 	Metadata struct {
 		AvatarURL string `json:"avatar_url"`
+		FullName  string `json:"full_name"`
 	} `json:"user_metadata"`
 }
 

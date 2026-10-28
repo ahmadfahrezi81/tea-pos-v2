@@ -18,11 +18,11 @@ import (
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
 )
 
-// payAccess is the Pay tab's: admins, in their tenant. payWrite is the same for writes, each
-// saved once per Idempotency-Key.
+// payAccess is the Pay tab's: anyone with a backoffice level in the tenant reads; payWrite is
+// its admins only, each write saved once per Idempotency-Key.
 var (
-	payAccess = auth.Roles("ADMIN").InTenant()
-	payWrite  = auth.Roles("ADMIN").InTenant().Idempotent()
+	payAccess = auth.App("backoffice", auth.Guest)
+	payWrite  = auth.App("backoffice", auth.Admin).Idempotent()
 )
 
 func registerPay(api huma.API, d Deps) {
@@ -56,6 +56,59 @@ func registerPay(api huma.API, d Deps) {
 				Commissions: totals.Commissions, Claims: totals.Claims, Total: totals.Commissions + totals.Claims,
 				Approved: int(totals.Approved), Reviewed: int(totals.Approved + totals.Pending),
 			}}, nil
+		})
+
+	route(api, op("getPayPeriodAt", http.MethodGet, "/periods/{start}", "A pay period and each person it pays, with what is still to review"), payAccess,
+		func(ctx context.Context, in *contract.PayPeriodAtInput) (*contract.PayPeriodAtOutput, error) {
+			caller, _ := auth.CallerFrom(ctx)
+			frequency, err := d.Queries.GetPayFrequency(ctx, caller.TenantID)
+			if err != nil {
+				return nil, err
+			}
+			today := time.Now().In(domain.WIB)
+			day := today
+			if in.Start != "current" {
+				if day, err = time.Parse(time.DateOnly, in.Start); err != nil {
+					return nil, errNoPeriod
+				}
+			}
+			start, end, err := domain.PayWindow(day, frequency)
+			if err != nil {
+				return nil, err
+			}
+			current, _, _ := domain.PayWindow(today, frequency)
+			if start.After(current) {
+				return nil, errNoPeriod
+			}
+			previous, _, _ := domain.PayWindow(start.AddDate(0, 0, -1), frequency)
+			rows, err := d.Queries.ListPayouts(ctx, store.ListPayoutsParams{TenantID: caller.TenantID, FromDate: date(start), ToDate: date(end)})
+			if err != nil {
+				return nil, err
+			}
+			out := contract.PayPeriodAt{
+				Frequency: frequency, Start: start.Format(time.DateOnly), End: end.Format(time.DateOnly),
+				PayoutDate: domain.PayoutDate(end).Format(time.DateOnly), Previous: previous.Format(time.DateOnly),
+				People: make([]contract.Payout, len(rows)),
+			}
+			if start.Before(current) {
+				out.Next = end.AddDate(0, 0, 1).Format(time.DateOnly)
+			}
+			for i, r := range rows {
+				p := contract.Payout{
+					ID: r.ID.String(), UserID: r.UserID.String(), Name: r.FullName, AvatarURL: r.AvatarUrl.String,
+					NonSeller: r.NonSeller, Status: r.Status, Start: day0(r.StartDate), End: day0(r.EndDate), PaidAt: tsz(r.PaidAt),
+					Commissions: r.Commissions, Claims: r.Claims, Total: r.Commissions + r.Claims, Cups: r.Cups, Orders: r.Orders,
+					Approved: int(r.CommissionsApproved + r.ClaimsApproved), Pending: int(r.Pending),
+				}
+				if p.Status == "pending" {
+					out.Owed += p.Total
+					if p.Pending > 0 {
+						out.ToReview++
+					}
+				}
+				out.People[i] = p
+			}
+			return &contract.PayPeriodAtOutput{Body: out}, nil
 		})
 
 	route(api, op("setPaySchedule", http.MethodPut, "/schedule", "Set the tenant's pay frequency, for every staff member"), payWrite,

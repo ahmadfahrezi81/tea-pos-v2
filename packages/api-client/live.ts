@@ -68,6 +68,9 @@ export function startLive(queryClient: QueryClient) {
         // Signed out somewhere: if it was here, /me answers 401 and sends this phone to sign in.
         if (e.kind === "signed_out")
             return void queryClient.invalidateQueries({ queryKey: ME_KEY });
+        // Someone's access changed: if it was this user's, /me brings their new levels.
+        if (e.kind === "access" && e.topic === `user:${me()?.user.id}`)
+            void queryClient.invalidateQueries({ queryKey: ME_KEY });
         void queryClient.invalidateQueries({
             predicate: (q) => !!e.kind && (q.meta?.live?.includes(e.kind) ?? false),
             refetchType: "active",

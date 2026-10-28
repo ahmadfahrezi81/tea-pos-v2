@@ -192,7 +192,7 @@ func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	app := middleware.App(ctx)
-	if session.App != app || !auth.Allowed(app, session.Role, session.Status) {
+	if session.App != app || !auth.Allowed(app, session.Role, session.Status, session.Apps) {
 		httpx.Write(w, errNotAllowed)
 		return
 	}

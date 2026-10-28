@@ -36,6 +36,8 @@ type Session struct {
 	App    string
 	Role   string
 	Status string
+	// Apps the user has a level in, in any tenant (Allowed).
+	Apps []string
 }
 
 type cached struct {
@@ -89,7 +91,7 @@ func (s *Sessions) Lookup(ctx context.Context, token string) (_ Session, renewed
 	if err != nil {
 		return Session{}, false, err
 	}
-	session := Session{ID: row.ID, UserID: row.UserID, App: row.App, Role: row.Role, Status: row.Status}
+	session := Session{ID: row.ID, UserID: row.UserID, App: row.App, Role: row.Role, Status: row.Status, Apps: row.Apps}
 	if time.Since(row.LastSeenAt.Time) > renewAfter {
 		err := s.q.RenewSession(ctx, store.RenewSessionParams{
 			ID:        row.ID,

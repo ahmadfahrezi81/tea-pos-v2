@@ -109,3 +109,18 @@ export function useTenant(): TenantState | null {
 export function useFlag(key: string): boolean {
     return useTenant()?.flags[key] ?? false;
 }
+
+/**
+ * The user's level in this app here, and whether it lets them change things: a guest only
+ * looks. The screen hides what they cannot do; Go refuses it anyway (auth.App on every route).
+ */
+export function useAccess(): { level: string; canWrite: boolean; owner: boolean } {
+    const { id } = useApp();
+    const tenant = useTenant()?.tenant;
+    const level = tenant?.access[id as keyof Tenant["access"]] ?? "";
+    return {
+        level,
+        canWrite: level === "member" || level === "admin",
+        owner: tenant?.owner ?? false,
+    };
+}

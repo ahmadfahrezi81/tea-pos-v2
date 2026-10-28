@@ -7,12 +7,11 @@ import { Callout } from "@tea-pos/ui/Callout";
 import { Field } from "@tea-pos/ui/form/Field";
 import { Textarea } from "@tea-pos/ui/form/Textarea";
 import { PhotoInput } from "@tea-pos/ui/PhotoInput";
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link, useLocation, useRouter } from "@tanstack/react-router";
 import { Check, Copy } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import { daysLeft } from "./PayHome";
-import { dayMonth } from "./Payouts";
+import { daysLeft, dayMonth } from "./dates";
 import { usePayslip, usePayStaff, usePayWrite, useSlug } from "./pay";
 
 function Copyable({
@@ -54,6 +53,7 @@ export function PayConfirm({ id }: { id: string }) {
     const locale = useLocale();
     const router = useRouter();
     const slug = useSlug();
+    const pathname = useLocation({ select: (l) => l.pathname });
     const { data: slip } = usePayslip(id);
     const { data: staff } = usePayStaff();
     const [proof, setProof] = useState<string | null>(null);
@@ -97,8 +97,7 @@ export function PayConfirm({ id }: { id: string }) {
                     <p className="text-sm text-gray-500">{t("pay.alreadySub")}</p>
                 </div>
                 <Link
-                    to="/$tenant/pay/payouts/$payoutId"
-                    params={{ tenant: slug, payoutId: id }}
+                    to={pathname.replace(/\/settle$/, "")}
                     replace
                     className="block text-center w-full py-3.5 bg-brand text-white font-bold rounded-xl active:opacity-80"
                 >

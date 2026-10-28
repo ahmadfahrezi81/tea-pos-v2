@@ -42,7 +42,7 @@ func registerTestLogin(api huma.API, d Deps) {
 		if err != nil || app == "" {
 			return nil, notFound
 		}
-		if !auth.Allowed(app, user.Role, user.Status) {
+		if !auth.Allowed(app, user.Role, user.Status, user.Apps) {
 			if user.Status != "active" {
 				return nil, errAccountOff
 			}

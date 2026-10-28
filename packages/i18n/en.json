@@ -41,7 +41,7 @@
         "title": "Home",
         "signOut": "Sign out",
         "signingOut": "Signing out…",
-        "noTenant": "Your account isn't part of a business yet. Ask the owner to add you.",
+        "noTenant": "You're signed in, but not part of a business yet. Open the link the owner sent you to ask for access.",
         "noStores": "No stores yet",
         "default": "Default",
         "roles": {
@@ -154,12 +154,14 @@
         "editPayrollInfo": "Edit Payroll Info",
         "moreNew": "More •",
         "pay": "Pay",
-        "supply": "Supply"
+        "uac": "UAC"
     },
     "shell": {
         "account": "Account",
         "add": "Add",
         "edit": "Edit",
+        "settings": "Settings",
+        "moreActions": "More actions",
         "refreshNow": "Refresh Now",
         "refreshing": "Refreshing...",
         "maintenance": "Under Maintenance",
@@ -179,7 +181,6 @@
         "allStores": "All Stores",
         "pickStore": "Select Store",
         "hideInactiveStores": "Hide inactive stores",
-        "tenantNotFound": "This business isn't one of yours.",
         "comingSoon": "{name} is coming soon",
         "inDevelopment": "This feature is still in development",
         "demo": "DEMO",
@@ -187,7 +188,11 @@
         "form": {
             "noteTitle": "What this changes",
             "noteBody": "Payroll already recorded stays as it is. This applies from here on, to days closed and claims submitted after you save."
-        }
+        },
+        "noAccessTitle": "No access yet",
+        "noAccessBody": "Ask to join this business. An admin will let you in.",
+        "requestAccess": "Request access",
+        "requestSent": "Request sent. You'll get in once an admin approves it."
     },
     "signIn": {
         "google": "Continue with Google",
@@ -237,6 +242,11 @@
         "unauthorized": "Sign in to continue.",
         "unknown_app": "Open sign-in from the app.",
         "bad_range": "Pick a shorter range of dates.",
+        "period_not_found": "That pay period doesn't exist yet.",
+        "person_not_found": "No such person here.",
+        "bad_level": "That app doesn't offer that level.",
+        "owner_kept": "The owner always keeps full access.",
+        "not_yourself": "You can't turn yourself off.",
         "day_not_found": "No such day.",
         "bad_cursor": "This list moved on; pull down to start again.",
         "staff_not_found": "No such staff member.",
@@ -251,16 +261,26 @@
         "payout_not_due": "This period has not reached its last day yet.",
         "payout_pending_review": "Every commission and claim must be reviewed first.",
         "proof_required": "Paying needs the transfer screenshot.",
-        "bad_proof": "That screenshot was not uploaded as this business's payroll proof."
+        "bad_proof": "That screenshot was not uploaded as this business's payroll proof.",
+        "request_not_found": "That request was already answered."
     },
     "store": {
         "title": "Store",
-        "thisMonth": "This month",
-        "vsLastMonth": "vs last month",
-        "todayNotClosed": "Today counts once it is closed",
-        "daysNotClosed": "{n} day(s) not closed yet",
-        "noSales": "No sales this month yet",
-        "cupsPerDay": "Cups per day",
+        "openCount": "{open} of {all} open",
+        "today": "today",
+        "open": "Open",
+        "closed": "Closed",
+        "openSince": "Open since {time}",
+        "isSelling": "{name} is selling",
+        "sellerSince": "{name} · since {time}",
+        "closedAt": "Closed {when}",
+        "notOpened": "Not opened yet",
+        "demo": "Demo",
+        "inactive": "Inactive",
+        "todayLabel": "Today",
+        "byHour": "by hour",
+        "noSalesToday": "No sales yet today",
+        "everyStore": "Every store together",
         "analyticsRow": "Analytics",
         "ordersRow": "Orders",
         "sales": "Total Sales",

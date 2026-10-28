@@ -41,7 +41,7 @@
         "title": "Beranda",
         "signOut": "Keluar",
         "signingOut": "Sedang keluar…",
-        "noTenant": "Akun Anda belum terdaftar di usaha mana pun. Minta pemilik untuk menambahkan Anda.",
+        "noTenant": "Kamu sudah masuk, tapi belum terdaftar di usaha mana pun. Buka tautan dari pemilik untuk meminta akses.",
         "noStores": "Belum ada toko",
         "default": "Utama",
         "roles": {
@@ -154,12 +154,14 @@
         "editPayrollInfo": "Ubah Info Penggajian",
         "moreNew": "Lainnya •",
         "pay": "Gaji",
-        "supply": "Stok"
+        "uac": "UAC"
     },
     "shell": {
         "account": "Akun",
         "add": "Tambah",
         "edit": "Ubah",
+        "settings": "Pengaturan",
+        "moreActions": "Aksi lainnya",
         "refreshNow": "Muat Ulang Sekarang",
         "refreshing": "Memuat ulang...",
         "maintenance": "Sedang Perbaikan",
@@ -179,7 +181,6 @@
         "allStores": "Semua Toko",
         "pickStore": "Pilih Toko",
         "hideInactiveStores": "Sembunyikan toko tidak aktif",
-        "tenantNotFound": "Bisnis ini bukan milik Anda.",
         "comingSoon": "{name} segera hadir",
         "inDevelopment": "Fitur ini masih dalam pengembangan",
         "demo": "DEMO",
@@ -187,7 +188,11 @@
         "form": {
             "noteTitle": "Yang berubah",
             "noteBody": "Gaji yang sudah tercatat tetap. Ini berlaku mulai sekarang, untuk hari yang ditutup dan klaim yang diajukan setelah disimpan."
-        }
+        },
+        "noAccessTitle": "Belum punya akses",
+        "noAccessBody": "Minta bergabung ke usaha ini. Admin akan mengizinkanmu masuk.",
+        "requestAccess": "Minta akses",
+        "requestSent": "Permintaan terkirim. Kamu bisa masuk setelah admin menyetujuinya."
     },
     "signIn": {
         "google": "Lanjutkan dengan Google",
@@ -237,6 +242,11 @@
         "unauthorized": "Masuk untuk melanjutkan.",
         "unknown_app": "Buka halaman masuk dari aplikasi.",
         "bad_range": "Pilih rentang tanggal yang lebih pendek.",
+        "period_not_found": "Periode gaji itu belum ada.",
+        "person_not_found": "Orang ini tidak ada di sini.",
+        "bad_level": "Aplikasi itu tidak punya level tersebut.",
+        "owner_kept": "Pemilik selalu punya akses penuh.",
+        "not_yourself": "Kamu tidak bisa menonaktifkan dirimu sendiri.",
         "day_not_found": "Hari tidak ditemukan.",
         "bad_cursor": "Daftar ini sudah berubah; tarik ke bawah untuk mulai lagi.",
         "staff_not_found": "Staf tidak ditemukan.",
@@ -251,16 +261,26 @@
         "payout_not_due": "Periode ini belum sampai hari terakhirnya.",
         "payout_pending_review": "Semua komisi dan klaim harus ditinjau dulu.",
         "proof_required": "Membayar butuh tangkapan layar transfer.",
-        "bad_proof": "Tangkapan layar itu bukan bukti gaji usaha ini."
+        "bad_proof": "Tangkapan layar itu bukan bukti gaji usaha ini.",
+        "request_not_found": "Permintaan itu sudah dijawab."
     },
     "store": {
         "title": "Toko",
-        "thisMonth": "Bulan ini",
-        "vsLastMonth": "vs bulan lalu",
-        "todayNotClosed": "Hari ini dihitung setelah ditutup",
-        "daysNotClosed": "{n} hari belum ditutup",
-        "noSales": "Belum ada penjualan bulan ini",
-        "cupsPerDay": "Gelas per hari",
+        "openCount": "{open} dari {all} buka",
+        "today": "hari ini",
+        "open": "Buka",
+        "closed": "Tutup",
+        "openSince": "Buka sejak {time}",
+        "isSelling": "{name} sedang berjualan",
+        "sellerSince": "{name} · sejak {time}",
+        "closedAt": "Tutup {when}",
+        "notOpened": "Belum pernah buka",
+        "demo": "Demo",
+        "inactive": "Nonaktif",
+        "todayLabel": "Hari ini",
+        "byHour": "per jam",
+        "noSalesToday": "Belum ada penjualan hari ini",
+        "everyStore": "Semua toko digabung",
         "analyticsRow": "Analitik",
         "ordersRow": "Pesanan",
         "sales": "Total Penjualan",

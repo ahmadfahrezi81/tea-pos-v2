@@ -96,3 +96,28 @@ func TestMeLanguage(t *testing.T) {
 		t.Fatalf("unknown language: %d", resp.StatusCode)
 	}
 }
+
+// Each tenant says the user's level in each app: from their rows, from users.role when they have
+// none (people v1 adds), and an inactive membership leaves the tenant out.
+func TestMeLevelsPerApp(t *testing.T) {
+	a := testkit.NewAPI(t, testkit.DB(t), "")
+	cases := []struct {
+		name, user, app string
+		want            contract.MeAccess
+	}{
+		{"a guest with rows", testkit.GuestA, "backoffice", contract.MeAccess{Seller: "member", Backoffice: "guest"}},
+		{"an admin from users.role", testkit.AdminA, "backoffice", contract.MeAccess{Seller: "member", Backoffice: "admin"}},
+		{"a seller from users.role", testkit.SellerA, "seller", contract.MeAccess{Seller: "member"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			me := getMe(t, a, tc.user, tc.app)
+			if len(me.Tenants) != 1 || me.Tenants[0].Access != tc.want || me.Tenants[0].Owner {
+				t.Fatalf("tenants: %+v, want access %+v", me.Tenants, tc.want)
+			}
+		})
+	}
+	if me := getMe(t, a, testkit.OffA, "seller"); len(me.Tenants) != 0 {
+		t.Errorf("turned off: tenants %+v, want none", me.Tenants)
+	}
+}

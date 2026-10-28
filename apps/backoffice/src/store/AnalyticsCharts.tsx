@@ -9,7 +9,7 @@ import { Package } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { MonthPicker } from "./AnalyticsMonth";
-import { monthRange, useSalesDays, useSalesProducts, useTeaWaste } from "./sales";
+import { monthRange, useSalesDays, useSalesProducts, useStoreId, useTeaWaste } from "./sales";
 
 // Tea waste, as the old app judged it: up to 12 L a day is fine, and a litre costs Rp 1.000.
 const TARGET_LITRES = 12;
@@ -31,6 +31,7 @@ const WEEK = [
 /** The old seller app's charts page for the picked stores: daily sales, tea waste, day of week, products. */
 export function AnalyticsCharts({ month }: { month: string }) {
     const slug = useTenant()?.tenant.slug ?? "";
+    const storeId = useStoreId();
     const navigate = useNavigate();
     const [from, to] = monthRange(month);
     return (
@@ -39,8 +40,8 @@ export function AnalyticsCharts({ month }: { month: string }) {
                 month={month}
                 onChange={(m) =>
                     void navigate({
-                        to: "/$tenant/store/analytics/charts",
-                        params: { tenant: slug },
+                        to: "/$tenant/store/$storeId/analytics/charts",
+                        params: { tenant: slug, storeId },
                         search: { month: m },
                         replace: true,
                     })

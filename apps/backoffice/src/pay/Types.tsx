@@ -3,6 +3,7 @@ import { formatMoney } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useT } from "@tea-pos/i18n/react";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
+import { useAccess } from "@tea-pos/shell/tenant";
 import { Field } from "@tea-pos/ui/form/Field";
 import { NumberInput } from "@tea-pos/ui/form/NumberInput";
 import { Switch } from "@tea-pos/ui/form/Switch";
@@ -45,6 +46,7 @@ function Enabled({ on }: { on: boolean }) {
 
 function EditLink({ to }: { to: string }) {
     const t = useT();
+    if (!useAccess().canWrite) return null;
     return (
         <Link to={to} className="p-2 -mr-2 text-brand active:opacity-70" aria-label={t("pay.edit")}>
             <Pencil size={22} strokeWidth={2} />
@@ -92,7 +94,7 @@ export function CommissionTypeList() {
                     trailing={
                         <div className="flex items-center gap-3 shrink-0">
                             <Enabled on={ty.enabled} />
-                            <EditLink to={`/${slug}/pay/commission-types/${ty.id}/edit`} />
+                            <EditLink to={`/${slug}/pay/settings/commission-types/${ty.id}/edit`} />
                         </div>
                     }
                 />
@@ -287,7 +289,7 @@ export function ClaimTypeList() {
                     trailing={
                         <div className="flex items-center gap-3 shrink-0">
                             <Enabled on={ty.enabled} />
-                            <EditLink to={`/${slug}/pay/claim-types/${ty.id}/edit`} />
+                            <EditLink to={`/${slug}/pay/settings/claim-types/${ty.id}/edit`} />
                         </div>
                     }
                 />

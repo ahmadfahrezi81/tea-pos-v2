@@ -1,0 +1,11 @@
+{
+    "version": "0.0.1",
+    "configurations": [
+        {
+            "name": "backoffice",
+            "runtimeExecutable": "sh",
+            "runtimeArgs": ["-c", "API_ORIGIN=http://localhost:8080 infisical run --env=staging --path=/app -- pnpm --filter @tea-pos/backoffice dev"],
+            "port": 5173
+        }
+    ]
+}
