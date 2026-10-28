@@ -22,17 +22,19 @@ func registerMe(api huma.API, d Deps) {
 	}, auth.SignedIn, func(ctx context.Context, _ *struct{}) (*contract.MeOutput, error) {
 		caller, _ := auth.CallerFrom(ctx)
 
-		// Three small reads, side by side: one round trip of waiting instead of three.
+		// Four small reads, side by side: one round trip of waiting instead of four.
 		var (
 			wg      sync.WaitGroup
 			me      store.GetMeRow
 			tenants []store.ListUserTenantsRow
 			stores  []store.ListAssignedStoresRow
-			errs    [3]error
+			asked   []string
+			errs    [4]error
 		)
 		wg.Go(func() { me, errs[0] = d.Queries.GetMe(ctx, caller.UserID) })
 		wg.Go(func() { tenants, errs[1] = d.Queries.ListUserTenants(ctx, caller.UserID) })
 		wg.Go(func() { stores, errs[2] = listStores(ctx, d.Queries, caller) })
+		wg.Go(func() { asked, errs[3] = d.Queries.ListAskedTenants(ctx, caller.UserID) })
 		wg.Wait()
 		for _, err := range errs {
 			if err != nil {
@@ -51,6 +53,7 @@ func registerMe(api huma.API, d Deps) {
 			},
 			Tenants: make([]contract.MeTenant, 0, len(tenants)),
 			Flags:   d.Flags.All(caller.UserID.String(), auth.FlagProps(caller)),
+			Asked:   append([]string{}, asked...),
 		}}
 		byTenant := map[string][]contract.MeStore{}
 		for _, s := range stores {
@@ -70,12 +73,22 @@ func registerMe(api huma.API, d Deps) {
 		}
 		for _, t := range tenants {
 			id := t.ID.String()
+			level := func(app, access string) string {
+				return string(auth.LevelIn(app, auth.Membership{
+					Status: t.Status, Owner: t.IsOwner, Access: access, HasLevels: t.HasLevels, Role: me.Role,
+				}))
+			}
 			out.Body.Tenants = append(out.Body.Tenants, contract.MeTenant{
 				ID:           id,
 				Slug:         t.Slug,
 				Name:         t.Name,
 				PayFrequency: t.PayFrequency,
-				Stores:       append([]contract.MeStore{}, byTenant[id]...),
+				Access: contract.MeAccess{
+					Seller:     level("seller", t.SellerAccess),
+					Backoffice: level("backoffice", t.BackofficeAccess),
+				},
+				Owner:  t.IsOwner,
+				Stores: append([]contract.MeStore{}, byTenant[id]...),
 			})
 		}
 		return out, nil

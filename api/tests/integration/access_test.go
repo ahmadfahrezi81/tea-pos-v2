@@ -24,8 +24,11 @@ func testRoutes(api huma.API) {
 		return &okOutput{}, nil
 	}
 	admin := huma.Operation{OperationID: "testAdmin", Method: http.MethodGet, Path: "/test/tenants/{tenant}/admin"}
-	auth.Declare(&admin, auth.Roles("ADMIN").InTenant())
+	auth.Declare(&admin, auth.App("backoffice", auth.Admin))
 	huma.Register(api, admin, ok)
+	guest := huma.Operation{OperationID: "testGuest", Method: http.MethodGet, Path: "/test/tenants/{tenant}/guest"}
+	auth.Declare(&guest, auth.App("backoffice", auth.Guest))
+	huma.Register(api, guest, ok)
 	member := huma.Operation{OperationID: "testMember", Method: http.MethodGet, Path: "/test/tenants/{tenant}/member"}
 	auth.Declare(&member, auth.SignedIn.InTenant())
 	huma.Register(api, member, ok)
@@ -49,6 +52,10 @@ func TestAccess_SessionAppRoleTenant(t *testing.T) {
 	inactive := api.SignIn(t, testkit.InactiveA, "seller")
 	driver := api.SignIn(t, testkit.DriverA, "seller")
 	sellerB := api.SignIn(t, testkit.SellerB, "seller")
+	guest := api.SignIn(t, testkit.GuestA, "backoffice")
+	guestSeller := api.SignIn(t, testkit.GuestA, "seller")
+	sellerBackoffice := api.SignIn(t, testkit.SellerA, "backoffice")
+	off := api.SignIn(t, testkit.OffA, "seller")
 
 	cases := []struct {
 		name, path, app, token string
@@ -60,8 +67,15 @@ func TestAccess_SessionAppRoleTenant(t *testing.T) {
 		{"a member of the tenant", "/test/tenants/tenant-a/member", "seller", seller, 200, ""},
 		{"another tenant's member", "/test/tenants/tenant-a/member", "seller", sellerB, 403, "not_in_tenant"},
 		{"a tenant that does not exist", "/test/tenants/nowhere/member", "seller", seller, 403, "not_in_tenant"},
-		{"a seller on an admin route", "/test/tenants/tenant-a/admin", "seller", seller, 403, "not_allowed"},
-		{"an admin on an admin route", "/test/tenants/tenant-a/admin", "seller", admin, 200, ""},
+		{"a seller on a backoffice route", "/test/tenants/tenant-a/admin", "seller", seller, 403, "not_allowed"},
+		{"an admin's seller session on a backoffice route", "/test/tenants/tenant-a/admin", "seller", admin, 403, "not_allowed"},
+		{"an admin in seller", "/test/tenants/tenant-a/member", "seller", admin, 200, ""},
+		{"a backoffice guest reads", "/test/tenants/tenant-a/guest", "backoffice", guest, 200, ""},
+		{"a backoffice guest cannot manage", "/test/tenants/tenant-a/admin", "backoffice", guest, 403, "not_allowed"},
+		{"a backoffice guest sells (its own level there)", "/test/tenants/tenant-a/member", "seller", guestSeller, 200, ""},
+		{"a seller has no backoffice level", "/test/tenants/tenant-a/guest", "backoffice", sellerBackoffice, 403, "not_allowed"},
+		{"turned off in the tenant", "/test/tenants/tenant-a/member", "seller", off, 403, "not_in_tenant"},
+		{"an admin reads as a guest would", "/test/tenants/tenant-a/guest", "backoffice", adminBackoffice, 200, ""},
 		{"an inactive seller", "/test/tenants/tenant-a/member", "seller", inactive, 403, "not_allowed"},
 		{"a role the app does not let in", "/test/tenants/tenant-a/member", "seller", driver, 403, "not_allowed"},
 		{"a seller session sent to backoffice", "/test/tenants/tenant-a/member", "backoffice", seller, 403, "not_allowed"},
@@ -83,6 +97,23 @@ func TestAccess_SessionAppRoleTenant(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// The owner never loses access: a level row saying guest still makes them an admin.
+func TestAccess_OwnerIsAlwaysAdmin(t *testing.T) {
+	pool := testkit.DB(t)
+	api := testkit.NewAPI(t, pool, "")
+	testRoutes(api.Huma)
+	guest := api.SignIn(t, testkit.GuestA, "backoffice")
+	if resp := api.Request(t, http.MethodGet, "/test/tenants/tenant-a/admin", "backoffice", testkit.Session(guest)); resp.StatusCode != 403 {
+		t.Fatalf("before: status %d, want 403", resp.StatusCode)
+	}
+	if _, err := pool.Exec(context.Background(), "UPDATE tenants SET owner_id = $1 WHERE slug = 'tenant-a'", testkit.GuestA); err != nil {
+		t.Fatal(err)
+	}
+	if resp := api.Request(t, http.MethodGet, "/test/tenants/tenant-a/admin", "backoffice", testkit.Session(guest)); resp.StatusCode != 200 {
+		t.Errorf("as the owner: status %d, want 200", resp.StatusCode)
 	}
 }
 

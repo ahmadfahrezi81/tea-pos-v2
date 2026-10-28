@@ -4,7 +4,6 @@ package integration
 
 import (
 	"net/http"
-	"slices"
 	"strings"
 	"testing"
 
@@ -20,9 +19,9 @@ import (
 func TestPermission_EveryRoute(t *testing.T) {
 	api := testkit.NewAPI(t, testkit.DB(t), "")
 	spec := api.Huma.OpenAPI()
-	seller := api.SignIn(t, testkit.SellerA, "seller")
 	admin := api.SignIn(t, testkit.AdminA, "seller")
 	sellerB := api.SignIn(t, testkit.SellerB, "seller")
+	guest := api.SignIn(t, testkit.GuestA, "backoffice")
 
 	checked := 0
 	for path, item := range spec.Paths {
@@ -51,14 +50,20 @@ func TestPermission_EveryRoute(t *testing.T) {
 			if resp := api.Request(t, method, url, "seller"); resp.StatusCode != http.StatusUnauthorized {
 				t.Errorf("%s without a session: status %d, want 401", name, resp.StatusCode)
 			}
-			if len(access.Roles) > 0 {
-				for _, who := range []struct{ token, role string }{{seller, "USER"}, {admin, "ADMIN"}} {
-					if !slices.Contains(access.Roles, who.role) {
-						if resp := api.Request(t, method, url, "seller", testkit.Session(who.token)); resp.StatusCode != http.StatusForbidden {
-							t.Errorf("%s as %s: status %d, want 403", name, who.role, resp.StatusCode)
-						}
+			// A route for one app refuses the other app's sessions; one for admins refuses a guest.
+			if access.App != "" {
+				if resp := api.Request(t, method, url, "seller", testkit.Session(admin)); resp.StatusCode != http.StatusForbidden {
+					t.Errorf("%s from the seller app: status %d, want 403", name, resp.StatusCode)
+				}
+				if access.Level == auth.Admin {
+					if resp := api.Request(t, method, url, "backoffice", testkit.Session(guest)); resp.StatusCode != http.StatusForbidden {
+						t.Errorf("%s as a backoffice guest: status %d, want 403", name, resp.StatusCode)
 					}
 				}
+			}
+			// Every write in the backoffice is for its admins.
+			if access.App == "backoffice" && method != http.MethodGet && access.Level != auth.Admin {
+				t.Errorf("%s is a backoffice write open to %q: want auth.Admin", name, access.Level)
 			}
 			if access.Tenant {
 				if resp := api.Request(t, method, url, "seller", testkit.Session(sellerB)); resp.StatusCode != http.StatusForbidden {

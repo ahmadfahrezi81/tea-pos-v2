@@ -126,7 +126,6 @@ func TestSignIn_Refusals(t *testing.T) {
 		{"a seller in backoffice", testkit.SellerA, "backoffice", "good-code", "not_allowed"},
 		{"an inactive seller", testkit.InactiveA, "seller", "good-code", "account_inactive"},
 		{"a driver in seller", testkit.DriverA, "seller", "good-code", "not_allowed"},
-		{"a Google account with no tea-pos user", "00000000-0000-0000-0009-000000000009", "seller", "good-code", "not_allowed"},
 		{"a code Supabase rejects", testkit.SellerA, "seller", "bad-code", "sign_in_failed"},
 	}
 	for _, tc := range cases {
@@ -140,6 +139,25 @@ func TestSignIn_Refusals(t *testing.T) {
 				t.Error("refused, yet a session cookie was set")
 			}
 		})
+	}
+}
+
+// Someone new gets an empty account (pending, no tenant): signed in, only to ask for access.
+func TestSignIn_NewAccountIsPending(t *testing.T) {
+	pool := testkit.DB(t)
+	const id = "00000000-0000-0000-0009-000000000009"
+	if _, err := pool.Exec(context.Background(), "INSERT INTO auth.users (id, email) VALUES ($1, 'x@test')", id); err != nil {
+		t.Fatal(err)
+	}
+	api := testkit.NewAPI(t, pool, fakeSupabase(t, id).URL)
+	done := signInThroughGoogle(t, api, "backoffice", "good-code")
+	if done.Header.Get("Location") != "/" || cookie(done, "session") == nil {
+		t.Fatalf("callback: to %q", done.Header.Get("Location"))
+	}
+	var role, status, name string
+	_ = pool.QueryRow(context.Background(), "SELECT role, status, full_name FROM users WHERE id = $1", id).Scan(&role, &status, &name)
+	if role != "USER" || status != "pending" || name != "x@test" {
+		t.Errorf("new account: %s %s %q", role, status, name)
 	}
 }
 

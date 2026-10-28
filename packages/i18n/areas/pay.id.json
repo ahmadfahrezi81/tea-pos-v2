@@ -204,6 +204,20 @@
         "confirmSkipSub": "{name} tidak punya tagihan periode ini.",
         "recordsTitle": "Yang dicatat",
         "recordsPay": "Tangkapan layar transfer, nama Anda dan tanggal hari ini disimpan di slip gaji. Catatan tidak bisa diubah setelahnya.",
-        "recordsSkip": "Periode ditutup tanpa transfer, atas nama Anda dan tanggal hari ini. Komisi dan klaimnya tidak bisa lagi disetujui atau ditolak."
+        "recordsSkip": "Periode ditutup tanpa transfer, atas nama Anda dan tanggal hari ini. Komisi dan klaimnya tidak bisa lagi disetujui atau ditolak.",
+        "toReview": "Perlu ditinjau",
+        "ready": "Siap",
+        "settled": "Dibayar dan dilewati",
+        "paysOn": "Dibayar {date}",
+        "owedLine": "{amount} terutang",
+        "reviewCount": "{n} perlu ditinjau",
+        "payDay": "Hari gajian: {n} harus dibayar",
+        "waiting": "{n} menunggu",
+        "settingsTitle": "Pengaturan Gaji",
+        "groupPeople": "Orang",
+        "groupTypes": "Jenis",
+        "groupSchedule": "Jadwal",
+        "noPeople": "Tidak ada yang dibayar pada periode ini.",
+        "noPayslip": "Tidak ada untuk orang ini pada periode ini."
     }
 }

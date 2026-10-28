@@ -4,6 +4,7 @@ import type { MessageKey } from "@tea-pos/i18n";
 import { useT } from "@tea-pos/i18n/react";
 import { avatar } from "@tea-pos/shell/avatar";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
+import { useAccess } from "@tea-pos/shell/tenant";
 import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { Check, Pencil, Search, UserCircle, X } from "lucide-react";
@@ -119,7 +120,7 @@ export function StaffInfoList() {
     const slug = useSlug();
     return (
         <StaffList
-            to={(id) => `/${slug}/pay/staff/${id}`}
+            to={(id) => `/${slug}/pay/settings/staff/${id}`}
             tag={(s) =>
                 STATUS_TAG[s.status] && (
                     <span
@@ -199,7 +200,7 @@ export function StaffInfo({ id }: { id: string }) {
                         </p>
                     </div>
                     <Link
-                        to="/$tenant/pay/staff-commissions/$userId"
+                        to="/$tenant/pay/settings/staff-commissions/$userId"
                         params={{ tenant: slug, userId: id }}
                         className="flex items-center gap-1.5 text-sm font-medium text-brand px-2 py-1 rounded-lg active:bg-brand/10 shrink-0"
                     >
@@ -232,7 +233,7 @@ export function StaffCommissionList() {
     const slug = useSlug();
     return (
         <StaffList
-            to={(id) => `/${slug}/pay/staff-commissions/${id}`}
+            to={(id) => `/${slug}/pay/settings/staff-commissions/${id}`}
             subtitle={(s) =>
                 s.commissionType ? (
                     s.commissionType.name
@@ -253,6 +254,7 @@ export function StaffCommission({ id }: { id: string }) {
     // undefined: untouched (what is stored shows); null: a deliberate None.
     const [picked, setPicked] = useState<string | null | undefined>(undefined);
     const save = usePayWrite(writes.setStaffCommission);
+    const { canWrite } = useAccess();
     if (!loaded || !types) return <div className="h-40 bg-white rounded-xl" />;
     if (!staff) return <p className="p-4 text-sm text-gray-400">{t("pay.staffNotFound")}</p>;
     const selected = picked !== undefined ? picked : (staff.commissionType?.id ?? null);
@@ -289,16 +291,18 @@ export function StaffCommission({ id }: { id: string }) {
                     )
                 )}
             </div>
-            <FormFooter
-                label={t("pay.saveChanges")}
-                busyLabel={t("pay.saving")}
-                confirmTitle={t("pay.confirmStaffCommission")}
-                confirmMessage={t("pay.confirmStaffCommissionSub")}
-                onSubmit={async () => {
-                    await save.mutateAsync({ userId: id, commissionTypeId: selected });
-                    router.history.back();
-                }}
-            />
+            {canWrite && (
+                <FormFooter
+                    label={t("pay.saveChanges")}
+                    busyLabel={t("pay.saving")}
+                    confirmTitle={t("pay.confirmStaffCommission")}
+                    confirmMessage={t("pay.confirmStaffCommissionSub")}
+                    onSubmit={async () => {
+                        await save.mutateAsync({ userId: id, commissionTypeId: selected });
+                        router.history.back();
+                    }}
+                />
+            )}
         </div>
     );
 }

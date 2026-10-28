@@ -12,7 +12,6 @@ import { avatar } from "./avatar";
 import { BootScreen } from "./BootScreen";
 import { MobileShell } from "./MobileShell";
 import type { Tab } from "./routes";
-import { StorePicker } from "./StorePicker";
 import { TenantProvider, useTenant } from "./tenant";
 import { LATEST, seen } from "./whatsNew";
 import { hideSplash } from "./splash";
@@ -92,7 +91,6 @@ function Frame({
             rootTabPaths={tabs.map((t) => t.path)}
             tabs={tabs}
             homePath={home}
-            titleAccessory={<StorePicker />}
             avatarUrl={avatarUrl ? avatar(avatarUrl) : null}
             onAccount={slug ? () => void navigate({ to: `${root}/account` }) : undefined}
             ready={ready}

@@ -3,6 +3,7 @@ import type moreArea from "./areas/more.en.json";
 import type payArea from "./areas/pay.en.json";
 import type sellerArea from "./areas/seller.en.json";
 import type storeArea from "./areas/store.en.json";
+import type uacArea from "./areas/uac.en.json";
 
 export type Locale = "en" | "id";
 
@@ -15,8 +16,9 @@ export type Messages = typeof en &
     typeof storeArea &
     typeof payArea &
     typeof moreArea &
-    typeof sellerArea;
-export type Area = "store" | "pay" | "more" | "seller";
+    typeof sellerArea &
+    typeof uacArea;
+export type Area = "store" | "pay" | "more" | "seller" | "uac";
 
 type Leaves<T, P extends string = ""> = {
     [K in keyof T & string]: T[K] extends string ? `${P}${K}` : Leaves<T[K], `${P}${K}.`>;
@@ -41,6 +43,10 @@ const areas: Record<Area, Record<Locale, () => Promise<{ default: object }>>> = 
     seller: {
         en: () => import("./areas/seller.en.json"),
         id: (): Promise<{ default: typeof sellerArea }> => import("./areas/seller.id.json"),
+    },
+    uac: {
+        en: () => import("./areas/uac.en.json"),
+        id: (): Promise<{ default: typeof uacArea }> => import("./areas/uac.id.json"),
     },
 };
 

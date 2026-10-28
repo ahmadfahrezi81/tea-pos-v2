@@ -6,7 +6,7 @@ import { LoadMore } from "@tea-pos/ui/LoadMore";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Calendar, CalendarDays, Receipt } from "lucide-react";
 
-import { useDayOrders, useSalesHours } from "./sales";
+import { useDayOrders, useSalesHours, useStoreId } from "./sales";
 
 const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
 
@@ -38,6 +38,7 @@ export function StoreOrders({ date }: { date: string }) {
     const locale = useLocale();
     const navigate = useNavigate();
     const slug = useTenant()?.tenant.slug ?? "";
+    const storeId = useStoreId();
     const severalStores = !useTenant()?.store;
     const hours = useSalesHours(date);
     const orders = useDayOrders(date);
@@ -79,8 +80,8 @@ export function StoreOrders({ date }: { date: string }) {
                 date={date}
                 onChange={(d) =>
                     void navigate({
-                        to: "/$tenant/store/orders",
-                        params: { tenant: slug },
+                        to: "/$tenant/store/$storeId/orders",
+                        params: { tenant: slug, storeId },
                         search: { date: d },
                         replace: true,
                     })
@@ -89,8 +90,8 @@ export function StoreOrders({ date }: { date: string }) {
 
             {totals && totals.hours.length > 0 && (
                 <Link
-                    to="/$tenant/store/orders/chart"
-                    params={{ tenant: slug }}
+                    to="/$tenant/store/$storeId/orders/chart"
+                    params={{ tenant: slug, storeId }}
                     search={{ date }}
                     className="block bg-white rounded-2xl p-2 pb-1"
                 >
@@ -253,6 +254,7 @@ export function OrdersChart({ date }: { date: string }) {
     const t = useT();
     const navigate = useNavigate();
     const slug = useTenant()?.tenant.slug ?? "";
+    const storeId = useStoreId();
     const { data } = useSalesHours(date);
     return (
         <div className="space-y-4">
@@ -260,8 +262,8 @@ export function OrdersChart({ date }: { date: string }) {
                 date={date}
                 onChange={(d) =>
                     void navigate({
-                        to: "/$tenant/store/orders/chart",
-                        params: { tenant: slug },
+                        to: "/$tenant/store/$storeId/orders/chart",
+                        params: { tenant: slug, storeId },
                         search: { date: d },
                         replace: true,
                     })

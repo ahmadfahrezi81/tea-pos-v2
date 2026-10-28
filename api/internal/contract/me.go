@@ -9,6 +9,7 @@ type Me struct {
 	User    MeUser          `json:"user"`
 	Tenants []MeTenant      `json:"tenants" nullable:"false" doc:"Empty when the user belongs to no tenant"`
 	Flags   map[string]bool `json:"flags" nullable:"false" doc:"The feature flags on for this user (rules on role and app); a store's own are on the store"`
+	Asked   []string        `json:"asked" nullable:"false" doc:"Slugs of the tenants the user asked to join, still waiting"`
 }
 
 type MeUser struct {
@@ -25,7 +26,14 @@ type MeTenant struct {
 	Slug         string    `json:"slug"`
 	Name         string    `json:"name"`
 	PayFrequency string    `json:"payFrequency" example:"bi_weekly"`
+	Access       MeAccess  `json:"access" doc:"The user's level in each app here; the screens hide what they cannot do"`
+	Owner        bool      `json:"owner" doc:"The tenant's owner: an admin everywhere, whatever the levels say"`
 	Stores       []MeStore `json:"stores" nullable:"false" doc:"Seller: the stores the user is assigned to. Backoffice: every store of the tenant"`
+}
+
+type MeAccess struct {
+	Seller     string `json:"seller" doc:"member, or '' for none"`
+	Backoffice string `json:"backoffice" doc:"guest, admin, or '' for none"`
 }
 
 type MeStore struct {

@@ -204,6 +204,20 @@
         "confirmSkipSub": "{name} is owed nothing for this period.",
         "recordsTitle": "What this records",
         "recordsPay": "The transfer screenshot, your name and today's date are saved to the payslip. The note cannot be edited afterwards.",
-        "recordsSkip": "The period closes with no transfer, against your name and today's date. Its commissions and claims can no longer be approved or rejected."
+        "recordsSkip": "The period closes with no transfer, against your name and today's date. Its commissions and claims can no longer be approved or rejected.",
+        "toReview": "To review",
+        "ready": "Ready",
+        "settled": "Paid and skipped",
+        "paysOn": "Pays {date}",
+        "owedLine": "{amount} owed",
+        "reviewCount": "{n} to review",
+        "payDay": "Pay day: {n} to pay",
+        "waiting": "{n} waiting",
+        "settingsTitle": "Pay Settings",
+        "groupPeople": "People",
+        "groupTypes": "Types",
+        "groupSchedule": "Schedule",
+        "noPeople": "Nobody to pay in this period.",
+        "noPayslip": "Nothing for this person in this period."
     }
 }

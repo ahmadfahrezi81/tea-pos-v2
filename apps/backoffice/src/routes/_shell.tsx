@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { shellRoute } from "@tea-pos/shell/ShellLayout";
-import { DollarSign, LayoutDashboard, MessagesSquare, Package } from "lucide-react";
+import { DollarSign, MessagesSquare, Store, UsersRound } from "lucide-react";
 
-// The old backoffice's tabs; More is added by the shell.
+// The backoffice's three cores and Chats (coming); More is added by the shell.
 export const Route = createFileRoute("/_shell")(
     shellRoute([
-        { path: "store", labelKey: "store.title", icon: LayoutDashboard },
+        { path: "store", labelKey: "store.title", icon: Store },
         { path: "pay", labelKey: "nav.pay", icon: DollarSign },
-        { path: "supply", labelKey: "nav.supply", icon: Package },
+        { path: "uac", labelKey: "nav.uac", icon: UsersRound },
         { path: "chats", labelKey: "nav.chats", icon: MessagesSquare },
     ]),
 );

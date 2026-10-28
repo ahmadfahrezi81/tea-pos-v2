@@ -10,6 +10,7 @@ import { useT } from "@tea-pos/i18n/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { FooterSlotContext } from "./FooterSlotContext";
+import { HeaderSlotContext, HeaderTitleSlotContext } from "./HeaderActions";
 import { MobileFooterNav } from "./MobileFooterNav";
 import { MobileHeader } from "./MobileHeader";
 import { navProgress } from "./navProgress";
@@ -44,8 +45,6 @@ export interface MobileShellProps {
     tabs: Tab[];
     /** Where "back" lands from a route whose parent is `null`. */
     homePath: string;
-    /** Rendered beside the title on routes that set `titleAccessory`. */
-    titleAccessory?: ReactNode;
     avatarUrl?: string | null;
     /** Without it the account button is hidden. */
     onAccount?: () => void;
@@ -66,7 +65,6 @@ export function MobileShell({
     rootTabPaths,
     tabs,
     homePath,
-    titleAccessory,
     avatarUrl,
     onAccount,
     extras,
@@ -88,6 +86,8 @@ export function MobileShell({
 
     // A DOM node pages portal into, so a page's footer never re-renders the shell.
     const [footerSlotEl, setFooterSlotEl] = useState<HTMLDivElement | null>(null);
+    const [headerSlotEl, setHeaderSlotEl] = useState<HTMLDivElement | null>(null);
+    const [titleSlotEl, setTitleSlotEl] = useState<HTMLSpanElement | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const pullSpinnerRef = useRef<HTMLDivElement>(null);
     // Closes an open pull gap at once; called when a route commits.
@@ -374,93 +374,101 @@ export function MobileShell({
     return (
         <ScrollContext value={scrollContext}>
             <FooterSlotContext value={footerSlotEl}>
-                {/* svh in a tab (no resize as the URL bar moves); installed, the measured --shell-height. */}
-                <div className="h-[100svh] [@media(display-mode:standalone)]:h-[var(--shell-height,100dvh)] flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
-                    <MobileHeader
-                        route={route}
-                        title={title}
-                        isSubPage={currentIsSubPage}
-                        titleAccessory={titleAccessory}
-                        avatarUrl={avatarUrl ?? null}
-                        showAccountIcon={showAccountIcon}
-                        onBack={goBack}
-                        onAccount={onAccount}
-                        onHeaderAction={() =>
-                            navigate(
-                                `${pathname}/${route?.headerAction === "edit" ? "edit" : "add"}`,
-                            )
-                        }
-                    />
-
-                    {/* min-h-0 lets it shrink and scroll; overflow-hidden clips content pushed down by a pull. */}
-                    <main className="flex-1 min-h-0 relative overflow-hidden">
-                        {/* Always mounted; navProgress drives it, never React. */}
-                        <div ref={attachBar} className="nav-progress" aria-hidden>
-                            <span className="crawl" />
-                            <span className="fill" />
-                        </div>
-                        {/* Behind the scroll container: sliding the content down uncovers it. */}
-                        <div ref={pullSpinnerRef} className="pull-spinner text-brand" aria-hidden>
-                            <svg viewBox="0 0 24 24" width="24" height="24" overflow="visible">
-                                <circle
-                                    cx="12"
-                                    cy="12"
-                                    r="9"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                    strokeLinecap="round"
-                                    pathLength={100}
-                                    strokeDasharray={100}
-                                    strokeDashoffset={100}
-                                />
-                                {/* Starts at the arc's start; the gesture rotates it to the end. */}
-                                <path
-                                    className="pull-arrowhead"
-                                    d="M15.8 12 L26.2 12 L21 18 Z"
-                                    fill="currentColor"
-                                    transform="rotate(0 12 12)"
-                                />
-                            </svg>
-                        </div>
-                        <div
-                            ref={scrollContainerRef}
-                            id="shell-scroll"
-                            data-scroll-restoration-id="shell"
-                            // No native bounce where a pull moves the content (iOS would move it twice).
-                            className={`absolute inset-0 overflow-y-auto p-4 ${scrollPaddingBottom} ${refreshable ? "overscroll-y-none" : ""}`}
-                        >
-                            {ready && <Outlet />}
-                        </div>
-                    </main>
-
-                    {/* Page slot, route CTA, then tabs; white only when something is in it. */}
-                    <footer className="shrink-0 pb-[env(safe-area-inset-bottom)] [&:has(>:not(:empty))]:bg-white [&:has(>.is-occupied)]:bg-white">
-                        <div ref={setFooterSlotEl} />
-                        {footerCtaLabel && (
-                            <div className="bg-white border-t border-gray-200 p-4">
-                                <button
-                                    onClick={() => navigate(`${pathname}/add`)}
-                                    className="w-full bg-brand text-white py-4 rounded-xl font-semibold text-base active:scale-[0.98] transition-transform"
-                                >
-                                    {footerCtaLabel}
-                                </button>
-                            </div>
-                        )}
-                        {!currentIsSubPage && tabs.length > 0 && (
-                            <MobileFooterNav
-                                tabs={resolvedTabs}
-                                currentPath={navPath}
-                                onTabClick={navigate}
+                <HeaderSlotContext value={headerSlotEl}>
+                    <HeaderTitleSlotContext value={titleSlotEl}>
+                        {/* svh in a tab (no resize as the URL bar moves); installed, the measured --shell-height. */}
+                        <div className="h-[100svh] [@media(display-mode:standalone)]:h-[var(--shell-height,100dvh)] flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+                            <MobileHeader
+                                title={title}
+                                isSubPage={currentIsSubPage}
+                                avatarUrl={avatarUrl ?? null}
+                                showAccountIcon={showAccountIcon}
+                                onBack={goBack}
+                                onAccount={onAccount}
+                                actionsRef={setHeaderSlotEl}
+                                titleRef={setTitleSlotEl}
                             />
-                        )}
-                    </footer>
 
-                    {extras}
-                </div>
+                            {/* min-h-0 lets it shrink and scroll; overflow-hidden clips content pushed down by a pull. */}
+                            <main className="flex-1 min-h-0 relative overflow-hidden">
+                                {/* Always mounted; navProgress drives it, never React. */}
+                                <div ref={attachBar} className="nav-progress" aria-hidden>
+                                    <span className="crawl" />
+                                    <span className="fill" />
+                                </div>
+                                {/* Behind the scroll container: sliding the content down uncovers it. */}
+                                <div
+                                    ref={pullSpinnerRef}
+                                    className="pull-spinner text-brand"
+                                    aria-hidden
+                                >
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        width="24"
+                                        height="24"
+                                        overflow="visible"
+                                    >
+                                        <circle
+                                            cx="12"
+                                            cy="12"
+                                            r="9"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2.5"
+                                            strokeLinecap="round"
+                                            pathLength={100}
+                                            strokeDasharray={100}
+                                            strokeDashoffset={100}
+                                        />
+                                        {/* Starts at the arc's start; the gesture rotates it to the end. */}
+                                        <path
+                                            className="pull-arrowhead"
+                                            d="M15.8 12 L26.2 12 L21 18 Z"
+                                            fill="currentColor"
+                                            transform="rotate(0 12 12)"
+                                        />
+                                    </svg>
+                                </div>
+                                <div
+                                    ref={scrollContainerRef}
+                                    id="shell-scroll"
+                                    data-scroll-restoration-id="shell"
+                                    // No native bounce where a pull moves the content (iOS would move it twice).
+                                    className={`absolute inset-0 overflow-y-auto p-4 ${scrollPaddingBottom} ${refreshable ? "overscroll-y-none" : ""}`}
+                                >
+                                    {ready && <Outlet />}
+                                </div>
+                            </main>
 
-                <RefreshSheet />
-                {overlay}
+                            {/* Page slot, route CTA, then tabs; white only when something is in it. */}
+                            <footer className="shrink-0 pb-[env(safe-area-inset-bottom)] [&:has(>:not(:empty))]:bg-white [&:has(>.is-occupied)]:bg-white">
+                                <div ref={setFooterSlotEl} />
+                                {footerCtaLabel && (
+                                    <div className="bg-white border-t border-gray-200 p-4">
+                                        <button
+                                            onClick={() => navigate(`${pathname}/add`)}
+                                            className="w-full bg-brand text-white py-4 rounded-xl font-semibold text-base active:scale-[0.98] transition-transform"
+                                        >
+                                            {footerCtaLabel}
+                                        </button>
+                                    </div>
+                                )}
+                                {!currentIsSubPage && tabs.length > 0 && (
+                                    <MobileFooterNav
+                                        tabs={resolvedTabs}
+                                        currentPath={navPath}
+                                        onTabClick={navigate}
+                                    />
+                                )}
+                            </footer>
+
+                            {extras}
+                        </div>
+
+                        <RefreshSheet />
+                        {overlay}
+                    </HeaderTitleSlotContext>
+                </HeaderSlotContext>
             </FooterSlotContext>
         </ScrollContext>
     );

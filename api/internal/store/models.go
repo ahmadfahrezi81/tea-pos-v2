@@ -374,6 +374,17 @@ type Tenant struct {
 	UpdatedAt    pgtype.Timestamptz
 	Slug         string
 	PayFrequency string
+	OwnerID      pgtype.UUID
+}
+
+type TenantAccessRequest struct {
+	ID        pgtype.UUID
+	TenantID  pgtype.UUID
+	UserID    pgtype.UUID
+	Status    string
+	CreatedAt pgtype.Timestamptz
+	DecidedBy pgtype.UUID
+	DecidedAt pgtype.Timestamptz
 }
 
 type TenantActivityLog struct {
@@ -440,6 +451,15 @@ type User struct {
 	AvatarUrl         pgtype.Text
 }
 
+type UserAppAccess struct {
+	TenantID  pgtype.UUID
+	UserID    pgtype.UUID
+	App       string
+	Access    string
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+}
+
 type UserStoreAssignment struct {
 	ID        pgtype.UUID
 	UserID    pgtype.UUID
@@ -453,6 +473,7 @@ type UserTenantAssignment struct {
 	TenantID  pgtype.UUID
 	UserID    pgtype.UUID
 	CreatedAt pgtype.Timestamptz
+	Status    string
 }
 
 type WeatherHour struct {

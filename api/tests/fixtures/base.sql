@@ -14,7 +14,9 @@ INSERT INTO auth.users (id, email) VALUES
     ('00000000-0000-0000-0001-00000000000b', 'seller@b.test'),
     ('00000000-0000-0000-0005-000000000000', 'none@test'),
     ('00000000-0000-0000-0001-00000000000f', 'seller@test-f.test'),
-    ('00000000-0000-0000-0006-00000000000f', 'mixed@test-f.test');
+    ('00000000-0000-0000-0006-00000000000f', 'mixed@test-f.test'),
+    ('00000000-0000-0000-0007-00000000000a', 'guest@a.test'),
+    ('00000000-0000-0000-0008-00000000000a', 'off@a.test');
 
 INSERT INTO public.users (id, email, full_name, role, status) VALUES
     ('00000000-0000-0000-0001-00000000000a', 'seller@a.test', 'Seller A', 'USER', 'active'),
@@ -24,7 +26,9 @@ INSERT INTO public.users (id, email, full_name, role, status) VALUES
     ('00000000-0000-0000-0001-00000000000b', 'seller@b.test', 'Seller B', 'USER', 'active'),
     ('00000000-0000-0000-0005-000000000000', 'none@test', 'No Tenant', 'USER', 'active'),
     ('00000000-0000-0000-0001-00000000000f', 'seller@test-f.test', 'Seller F', 'USER', 'active'),
-    ('00000000-0000-0000-0006-00000000000f', 'mixed@test-f.test', 'Mixed F', 'USER', 'active');
+    ('00000000-0000-0000-0006-00000000000f', 'mixed@test-f.test', 'Mixed F', 'USER', 'active'),
+    ('00000000-0000-0000-0007-00000000000a', 'guest@a.test', 'Guest A', 'USER', 'active'),
+    ('00000000-0000-0000-0008-00000000000a', 'off@a.test', 'Off A', 'USER', 'active');
 
 INSERT INTO public.user_tenant_assignments (tenant_id, user_id) VALUES
     ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0001-00000000000a'),
@@ -35,7 +39,18 @@ INSERT INTO public.user_tenant_assignments (tenant_id, user_id) VALUES
     ('00000000-0000-0000-0000-00000000000f', '00000000-0000-0000-0001-00000000000f'),
     -- In a test tenant and a real one: the test sign-in must refuse it.
     ('00000000-0000-0000-0000-00000000000f', '00000000-0000-0000-0006-00000000000f'),
-    ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0006-00000000000f');
+    ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0006-00000000000f'),
+    ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0007-00000000000a');
+
+-- Turned off in Tenant A only (v2's own switch; v1 never reads it).
+INSERT INTO public.user_tenant_assignments (tenant_id, user_id, status) VALUES
+    ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0008-00000000000a', 'inactive');
+
+-- Levels per app. Everyone else has no row, so Go reads users.role, as for people v1 adds.
+-- Guest A sells and looks at the backoffice: a family member who also sells.
+INSERT INTO public.user_app_access (tenant_id, user_id, app, access) VALUES
+    ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0007-00000000000a', 'seller', 'member'),
+    ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0007-00000000000a', 'backoffice', 'guest');
 
 -- Tenant A: two open stores and a closed one; Tenant B: one. Ids end in the tenant's letter.
 INSERT INTO public.stores (id, tenant_id, name, status) VALUES

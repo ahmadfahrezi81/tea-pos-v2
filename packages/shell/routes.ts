@@ -4,18 +4,13 @@ import type { LucideIcon } from "lucide-react";
 /**
  * What the shell needs to know about a route, set on the route itself as
  * `staticData: { shell: {...} }`. Every field is a layout capability, never a
- * specific screen; only `titleKey` and `parent` are required.
+ * specific screen; only `titleKey` and `parent` are required. A screen's header
+ * buttons are its own (`<HeaderActions>`), not route data.
  */
 export type ShellRoute = {
     titleKey: MessageKey;
     /** `null` marks a root tab; `"lastRootTab"` returns to the tab the user came from; else a path, or one relative to this screen (`..`). */
     parent: string | null | "lastRootTab";
-    /** Compact header: title beside a close button, rather than under a back arrow. */
-    inlineHeader?: boolean;
-    /** Primary action in the header, linking to `<route>/add` or `/edit`. */
-    headerAction?: "add" | "edit";
-    /** Render the app's title accessory (a store picker, a filter). */
-    titleAccessory?: boolean;
     /** A full-width button in the footer, linking to `<route>/add`. */
     footerCtaKey?: MessageKey;
     /** Overrides the scroll region's bottom padding. */

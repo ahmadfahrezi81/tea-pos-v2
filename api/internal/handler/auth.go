@@ -2,12 +2,14 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
@@ -97,10 +99,24 @@ func registerAuth(api huma.API, d Deps) {
 			return fail("sign_in_failed", "bad user id")
 		}
 		row, err := d.Queries.GetUserForSignIn(ctx, id)
-		if err != nil {
-			return fail("not_allowed", "no tea-pos user for this Google account")
+		if errors.Is(err, pgx.ErrNoRows) {
+			// Someone new gets an empty account: they can only ask a tenant to let them in.
+			name := user.Metadata.FullName
+			if name == "" {
+				name = user.Email
+			}
+			err = d.Queries.CreatePendingUser(ctx, store.CreatePendingUserParams{
+				ID: id, Email: user.Email, FullName: name,
+				AvatarUrl: pgtype.Text{String: user.Metadata.AvatarURL, Valid: user.Metadata.AvatarURL != ""},
+			})
+			if err == nil {
+				row, err = d.Queries.GetUserForSignIn(ctx, id)
+			}
 		}
-		if !auth.Allowed(app, row.Role, row.Status) {
+		if err != nil {
+			return fail("sign_in_failed", "user: "+err.Error())
+		}
+		if !auth.Allowed(app, row.Role, row.Status, row.Apps) {
 			if row.Status != "active" {
 				return fail("account_inactive", "status "+row.Status)
 			}

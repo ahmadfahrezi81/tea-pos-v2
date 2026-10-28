@@ -9,8 +9,9 @@ import { useTenant } from "./tenant";
 const StoreSheet = lazy(() => import("./StoreSheet"));
 
 /**
- * The header's store, as the old apps show it: its name large in the brand colour; a tap opens
- * the sheet (seller: its stores; backoffice: All Stores first, then each store).
+ * The screen's store, at the top of the Store screens until each has its store in the path (Step 48):
+ * its name large in the brand colour; a tap opens the sheet (seller: its stores; backoffice: All
+ * Stores first, then each store).
  */
 export function StorePicker() {
     const t = useT();
@@ -25,7 +26,10 @@ export function StorePicker() {
     };
     return (
         <>
-            <button onClick={show} className="flex min-w-0 items-center gap-0.5 active:scale-95">
+            <button
+                onClick={show}
+                className="mb-3 flex min-w-0 max-w-full items-center gap-0.5 active:scale-95"
+            >
                 <span className="truncate text-[22px] font-semibold tracking-tight text-brand">
                     {state.store?.name ?? t("shell.allStores")}
                 </span>

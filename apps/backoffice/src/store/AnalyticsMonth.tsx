@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-import { monthRange, useDays, useSalesDays } from "./sales";
+import { monthRange, useDays, useSalesDays, useStoreId } from "./sales";
 
 type Day = components["schemas"]["Day"];
 
@@ -59,6 +59,7 @@ export function AnalyticsMonth({ month }: { month: string }) {
     const locale = useLocale();
     const navigate = useNavigate();
     const slug = useTenant()?.tenant.slug ?? "";
+    const storeId = useStoreId();
     const severalStores = !useTenant()?.store;
     const [from, to] = monthRange(month);
     const days = useDays(month);
@@ -71,8 +72,8 @@ export function AnalyticsMonth({ month }: { month: string }) {
     const total = (pick: (d: Day) => number) => (list ?? []).reduce((sum, d) => sum + pick(d), 0);
     const setMonth = (m: string) =>
         void navigate({
-            to: "/$tenant/store/analytics",
-            params: { tenant: slug },
+            to: "/$tenant/store/$storeId/analytics",
+            params: { tenant: slug, storeId },
             search: { month: m },
             replace: true,
         });
@@ -139,8 +140,8 @@ export function AnalyticsMonth({ month }: { month: string }) {
 
             {perDay.data && perDay.data.days.length > 0 && (
                 <Link
-                    to="/$tenant/store/analytics/charts"
-                    params={{ tenant: slug }}
+                    to="/$tenant/store/$storeId/analytics/charts"
+                    params={{ tenant: slug, storeId }}
                     search={{ month }}
                     className="block bg-white rounded-2xl p-2 pb-1"
                 >
@@ -201,23 +202,23 @@ export function AnalyticsMonth({ month }: { month: string }) {
                         {
                             icon: Info,
                             label: t("analytics.details"),
-                            to: "/$tenant/store/analytics/days/$dayId",
+                            to: "/$tenant/store/$storeId/analytics/days/$dayId",
                         },
                         {
                             icon: History,
                             label: t("analytics.activity"),
-                            to: "/$tenant/store/analytics/days/$dayId/activity",
+                            to: "/$tenant/store/$storeId/analytics/days/$dayId/activity",
                         },
                         {
                             icon: Users,
                             label: t("analytics.sessions"),
-                            to: "/$tenant/store/analytics/days/$dayId/sessions",
+                            to: "/$tenant/store/$storeId/analytics/days/$dayId/sessions",
                         },
                     ].map((item, i, all) => (
                         <Link
                             key={item.label}
                             to={item.to}
-                            params={{ tenant: slug, dayId: active.id }}
+                            params={{ tenant: slug, storeId, dayId: active.id }}
                             onClick={() => setActive(null)}
                             className={`w-full flex items-center gap-3 py-5 ${i < all.length - 1 ? "border-b" : ""}`}
                         >

@@ -57,7 +57,8 @@ func (q *Queries) DeleteUserSessions(ctx context.Context, userID pgtype.UUID) er
 }
 
 const getSession = `-- name: GetSession :one
-SELECT s.id, s.user_id, s.app, s.last_seen_at, s.expires_at, u.role, u.status
+SELECT s.id, s.user_id, s.app, s.last_seen_at, s.expires_at, u.role, u.status,
+    coalesce(ARRAY(SELECT DISTINCT x.app FROM user_app_access x WHERE x.user_id = u.id), '{}')::text[] AS apps
 FROM sessions s
 JOIN users u ON u.id = s.user_id
 WHERE s.token_hash = $1 AND s.expires_at > now()
@@ -71,9 +72,10 @@ type GetSessionRow struct {
 	ExpiresAt  pgtype.Timestamptz
 	Role       string
 	Status     string
+	Apps       []string
 }
 
-// The caller's session with the user's current role and status, so a role change
+// The caller's session with the user's current role, status and apps, so a change
 // applies without signing in again.
 func (q *Queries) GetSession(ctx context.Context, tokenHash []byte) (GetSessionRow, error) {
 	row := q.db.QueryRow(ctx, getSession, tokenHash)
@@ -86,6 +88,7 @@ func (q *Queries) GetSession(ctx context.Context, tokenHash []byte) (GetSessionR
 		&i.ExpiresAt,
 		&i.Role,
 		&i.Status,
+		&i.Apps,
 	)
 	return i, err
 }

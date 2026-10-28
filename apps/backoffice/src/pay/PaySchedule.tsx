@@ -2,13 +2,14 @@ import { localDate } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { ConfirmSheet } from "@tea-pos/shell/FormFooter";
+import { useAccess } from "@tea-pos/shell/tenant";
 import { toast } from "@tea-pos/ui/toast";
 import { Callout } from "@tea-pos/ui/Callout";
 import { CalendarClock, Check } from "lucide-react";
 import { useState } from "react";
 
-import { daysLeft } from "./PayHome";
 import { usePayPeriod, usePayWrite, writes } from "./pay";
+import { daysLeft } from "./dates";
 
 type Frequency = "weekly" | "bi_weekly" | "four_weekly";
 const FREQUENCIES: Frequency[] = ["weekly", "bi_weekly", "four_weekly"];
@@ -51,6 +52,7 @@ export function PaySchedule() {
     const { data: p } = usePayPeriod();
     const [pending, setPending] = useState<Frequency | null>(null);
     const save = usePayWrite(writes.setSchedule);
+    const { canWrite } = useAccess();
     if (!p) return <div className="h-40 bg-white rounded-2xl" />;
     const current = p.frequency;
     const left = daysLeft(p.end, localDate());
@@ -114,7 +116,7 @@ export function PaySchedule() {
                         <button
                             key={f}
                             disabled={isCurrent}
-                            onClick={() => setPending(f)}
+                            onClick={() => canWrite && setPending(f)}
                             className={`w-full flex items-center justify-between gap-3 p-4 text-left ${i > 0 ? "border-t border-gray-100" : ""} ${isCurrent ? "" : "active:bg-gray-50"}`}
                         >
                             <div className="min-w-0">

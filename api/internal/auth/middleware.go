@@ -22,8 +22,10 @@ type Caller struct {
 	UserID pgtype.UUID
 	Role   string
 	App    string
-	// TenantID is set on tenant routes, already checked against the caller.
+	// TenantID is set on tenant routes, already checked against the caller, and Level is the
+	// caller's level in this app there.
 	TenantID pgtype.UUID
+	Level    Level
 	token    string
 }
 
@@ -98,7 +100,7 @@ func Middleware(sessions *Sessions, q *store.Queries, limiter *Limiter, flags Fl
 		}
 
 		app := middleware.App(ctx.Context())
-		if session.App != app || !Allowed(app, session.Role, session.Status) || !access.allows(session.Role) {
+		if session.App != app || !Allowed(app, session.Role, session.Status, session.Apps) {
 			write(ctx, errNotAllowed)
 			return
 		}
@@ -107,7 +109,8 @@ func Middleware(sessions *Sessions, q *store.Queries, limiter *Limiter, flags Fl
 		info := middleware.InfoFrom(ctx.Context())
 		info.SetCaller(caller.UserID.String(), "")
 		if access.Tenant {
-			tenantID, err := q.GetUserTenant(ctx.Context(), store.GetUserTenantParams{
+			m, err := q.GetUserTenant(ctx.Context(), store.GetUserTenantParams{
+				App:    app,
 				Slug:   ctx.Param("tenant"),
 				UserID: session.UserID,
 			})
@@ -120,8 +123,21 @@ func Middleware(sessions *Sessions, q *store.Queries, limiter *Limiter, flags Fl
 				write(ctx, errNoAccess)
 				return
 			}
-			caller.TenantID = tenantID
-			info.SetCaller(caller.UserID.String(), tenantID.String())
+			// An inactive member is out of the tenant from their next request; anyone in it needs a
+			// level in this app there, and the route's own app and level when it names them.
+			if m.Status != "active" {
+				write(ctx, errNotInTenant)
+				return
+			}
+			level := LevelIn(app, Membership{Status: m.Status, Owner: m.IsOwner, Access: m.Access, HasLevels: m.HasLevels, Role: session.Role})
+			// Seller also needs an active account, read fresh so someone just let in gets in at once.
+			if level == None || (app == "seller" && m.UserStatus != "active") ||
+				(access.App != "" && (access.App != app || !level.AtLeast(access.Level))) {
+				write(ctx, errNotAllowed)
+				return
+			}
+			caller.TenantID, caller.Level = m.ID, level
+			info.SetCaller(caller.UserID.String(), m.ID.String())
 		}
 		// After the tenant, so a rule can name one; routes outside a tenant match on role and app only.
 		if caller.Role != "ADMIN" && flags.Enabled(MaintenanceFlag, caller.UserID.String(), FlagProps(caller)) {

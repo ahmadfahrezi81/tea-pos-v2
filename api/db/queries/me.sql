@@ -2,10 +2,23 @@
 SELECT id, email, full_name, role, avatar_url, preferred_language FROM users WHERE id = $1;
 
 -- name: ListUserTenants :many
-SELECT t.id, t.slug, t.name, t.pay_frequency
+-- The tenants the user is an active member of, with what auth.LevelIn reads.
+SELECT t.id, t.slug, t.name, t.pay_frequency, a.status,
+    coalesce(t.owner_id = a.user_id, false)::bool AS is_owner,
+    coalesce((
+        SELECT x.access FROM user_app_access x
+        WHERE x.tenant_id = t.id AND x.user_id = a.user_id AND x.app = 'seller'
+    ), '')::text AS seller_access,
+    coalesce((
+        SELECT x.access FROM user_app_access x
+        WHERE x.tenant_id = t.id AND x.user_id = a.user_id AND x.app = 'backoffice'
+    ), '')::text AS backoffice_access,
+    EXISTS (
+        SELECT 1 FROM user_app_access x WHERE x.tenant_id = t.id AND x.user_id = a.user_id
+    ) AS has_levels
 FROM tenants t
 JOIN user_tenant_assignments a ON a.tenant_id = t.id
-WHERE a.user_id = $1
+WHERE a.user_id = $1 AND a.status = 'active'
 ORDER BY t.name;
 
 -- name: ListAssignedStores :many
@@ -31,3 +44,11 @@ ORDER BY s.name;
 
 -- name: SetUserLanguage :exec
 UPDATE users SET preferred_language = $2 WHERE id = $1;
+
+-- name: ListAskedTenants :many
+-- The tenants the user asked to join and is still waiting on (blocked looks the same to them).
+SELECT DISTINCT t.slug
+FROM tenant_access_requests r
+JOIN tenants t ON t.id = r.tenant_id
+WHERE r.user_id = $1 AND r.status IN ('pending', 'blocked')
+ORDER BY t.slug;
