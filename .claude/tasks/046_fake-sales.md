@@ -1,6 +1,6 @@
 # Task 046 — Fake sales on staging, and the 500 KB limits
 
-**Status: built 2026-10-28, not committed; waiting on the owner's review (built ahead of review, at the owner's ask).**
+**Status: merged 2026-10-28 (PR #50); first run on staging found two fixes: the script sets `ENV=staging` (Infisical has no `ENV`), and demo stores count too.**
 
 ## The goal
 
@@ -9,7 +9,7 @@ RFC: [Backoffice v2 refinement](https://app.notion.com/p/40595a7154058188873dd59
 
 ## The plan
 
-1. **`api/tools/fakesales`** (`pnpm --filter @tea-pos/api fake-sales`): for every store open today (an active session on today's open day), adds orders by the seller on shift, between the shift's start and now, the way v1's `createOrder` writes them: the order, its items at the product's price, the day's totals (sales, orders, cups; expected cash for cash orders only). One transaction per store
+1. **`api/tools/fakesales`** (`pnpm --filter @tea-pos/api fake-sales`): for every store open today, demo stores included (an active session on today's open day), adds orders by the seller on shift, between the shift's start and now, the way v1's `createOrder` writes them: the order, its items at the product's price, the day's totals (sales, orders, cups; expected cash for cash orders only). One transaction per store
    - Tops each store up to `-orders` (40), so running it twice adds nothing; `-tenant <slug>` for one tenant
    - Closed stores are listed and skipped; nothing else is created (no sessions, stores, products or people), and no activity log lines
    - Refuses unless `ENV=staging`. Under `api/tools/`, outside `cmd/`, so it never ships in the image
