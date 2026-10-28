@@ -68,7 +68,7 @@ func run(ctx context.Context, target int, tenant string) error {
 		JOIN tenants t ON t.id = s.tenant_id
 		LEFT JOIN store_sessions ss ON ss.store_id = s.id AND ss.status = 'active'
 		LEFT JOIN store_daily_summaries d ON d.id = ss.daily_summary_id
-		WHERE s.status = 'active' AND ($1 = '' OR t.slug = $1)
+		WHERE s.status IN ('active', 'fake') AND ($1 = '' OR t.slug = $1)
 		  AND (ss.id IS NULL OR (d.date = $2::date AND d.closed_at IS NULL))
 		ORDER BY t.slug, s.name`, tenant, today)
 	if err != nil {
