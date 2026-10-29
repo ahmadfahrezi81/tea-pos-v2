@@ -3,14 +3,41 @@ import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
+import { ChoiceList } from "@tea-pos/ui/ChoiceList";
+import { FilterButton } from "@tea-pos/ui/FilterButton";
+import { Pill } from "@tea-pos/ui/Pill";
 import { SearchBox } from "@tea-pos/ui/SearchBox";
+import { Sheet } from "@tea-pos/ui/Sheet";
 import { useTenant } from "@tea-pos/shell/tenant";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { useUac, type Person } from "./uac";
 
-/** UAC's home, as the old Staff Payroll Info list: requests waiting on top, then everyone, searchable. */
+type Filter = "all" | "seller" | "admin" | "guest" | "none" | "inactive";
+
+const FILTERS: Record<Filter, (p: Person) => boolean> = {
+    all: () => true,
+    seller: (p) => p.active && (p.owner || p.access.seller !== ""),
+    admin: (p) => p.active && (p.owner || p.access.backoffice === "admin"),
+    guest: (p) => p.active && p.access.backoffice === "guest",
+    none: (p) => p.active && !p.owner && !p.access.seller && !p.access.backoffice,
+    inactive: (p) => !p.active,
+};
+
+const FILTER_KEYS: Record<Filter, MessageKey> = {
+    all: "uac.filterAll",
+    seller: "uac.filterSeller",
+    admin: "uac.filterAdmin",
+    guest: "uac.filterGuest",
+    none: "uac.filterNone",
+    inactive: "uac.filterInactive",
+};
+
+/**
+ * UAC's home, as the old Staff Payroll Info list: requests waiting on top, then everyone A to Z,
+ * searchable and filtered; each row says what the person reaches in each app.
+ */
 export function UacHome() {
     const t = useT();
     const locale = useLocale();
@@ -18,8 +45,12 @@ export function UacHome() {
     const slug = useTenant()?.tenant.slug ?? "";
     const { data } = useUac();
     const [search, setSearch] = useState("");
+    const [filter, setFilter] = useState<Filter>("all");
+    const [filtering, setFiltering] = useState(false);
     const q = search.trim().toLowerCase();
-    const people = (data?.people ?? []).filter((p) => !q || p.name.toLowerCase().includes(q));
+    const people = (data?.people ?? [])
+        .filter((p) => FILTERS[filter](p) && (!q || p.name.toLowerCase().includes(q)))
+        .sort((a, b) => a.name.localeCompare(b.name, locale));
     return (
         <div className="space-y-3">
             {data && data.requests.length > 0 && (
@@ -48,12 +79,21 @@ export function UacHome() {
                     </ListCard>
                 </section>
             )}
-            <SearchBox
-                value={search}
-                onChange={setSearch}
-                placeholder={t("uac.search")}
-                clearLabel={t("common.close")}
-            />
+            <div className="flex gap-2">
+                <div className="flex-1 min-w-0">
+                    <SearchBox
+                        value={search}
+                        onChange={setSearch}
+                        placeholder={t("uac.search")}
+                        clearLabel={t("common.close")}
+                    />
+                </div>
+                <FilterButton
+                    active={filter !== "all"}
+                    label={t("uac.filter")}
+                    onClick={() => setFiltering(true)}
+                />
+            </div>
             <ListCard>
                 {!data ? (
                     [1, 2, 3].map((i) => <ListRowSkeleton key={i} withLeading />)
@@ -71,24 +111,49 @@ export function UacHome() {
                             }
                             leading={<Avatar url={p.avatarUrl} square />}
                             title={p.name}
-                            subtitle={summary(p, t)}
+                            subtitle={<Pills person={p} />}
                         />
                     ))
                 )}
             </ListCard>
+            <Sheet open={filtering} onClose={() => setFiltering(false)} title={t("uac.filter")}>
+                <div className="-mx-4">
+                    <ChoiceList
+                        value={filter}
+                        onChange={(f) => {
+                            setFilter(f);
+                            setFiltering(false);
+                        }}
+                        choices={(Object.keys(FILTERS) as Filter[]).map((f) => ({
+                            value: f,
+                            label: t(FILTER_KEYS[f]),
+                        }))}
+                    />
+                </div>
+            </Sheet>
         </div>
     );
 }
 
-/** `Seller · Admin`, `Owner`, `Inactive`: the apps someone reaches, in a few words. */
-function summary(p: Person, t: (k: MessageKey) => string): string {
-    if (!p.active) return t("uac.inactive");
-    if (p.owner) return t("uac.owner");
-    const parts = [];
-    if (p.access.seller) parts.push(t("uac.seller"));
-    if (p.access.backoffice)
-        parts.push(
-            `${t("uac.backoffice")} ${t(`uac.${p.access.backoffice}` as MessageKey).toLowerCase()}`,
-        );
-    return parts.length > 0 ? parts.join(" · ") : t("uac.noAccess");
+/** What someone reaches, one pill per app with its level: `Seller · Member`, `Backoffice · Admin`. */
+function Pills({ person: p }: { person: Person }) {
+    const t = useT();
+    const level = (l: string) => t(`uac.${l}` as MessageKey);
+    if (!p.active) return <Pill tone="red">{t("uac.inactive")}</Pill>;
+    if (p.owner) return <Pill tone="dark">{t("uac.owner")}</Pill>;
+    if (!p.access.seller && !p.access.backoffice) return <Pill>{t("uac.noAccess")}</Pill>;
+    return (
+        <span className="flex flex-wrap gap-1.5 pt-1">
+            {p.access.seller && (
+                <Pill tone="brand">
+                    {t("uac.seller")} · {level(p.access.seller)}
+                </Pill>
+            )}
+            {p.access.backoffice && (
+                <Pill tone="blue">
+                    {t("uac.backoffice")} · {level(p.access.backoffice)}
+                </Pill>
+            )}
+        </span>
+    );
 }

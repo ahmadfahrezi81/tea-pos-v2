@@ -33,6 +33,13 @@
         "search": "Search people...",
         "noStores": "No stores",
         "editTitle": "Edit access",
-        "status": "Status"
+        "status": "Status",
+        "filter": "Filter",
+        "filterAll": "Everyone",
+        "filterSeller": "Sellers",
+        "filterAdmin": "Backoffice admins",
+        "filterGuest": "Backoffice guests",
+        "filterNone": "No access",
+        "filterInactive": "Inactive"
     }
 }

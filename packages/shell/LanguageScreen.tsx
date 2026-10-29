@@ -1,9 +1,9 @@
 import { api } from "@tea-pos/api-client";
 import type { Locale } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
+import { ChoiceList } from "@tea-pos/ui/ChoiceList";
 import { toast } from "@tea-pos/ui/toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check } from "lucide-react";
 
 import { useApp } from "./AppContext";
 import { errorMessage } from "./errors";
@@ -38,31 +38,15 @@ export function LanguageScreen() {
     };
 
     return (
-        <div className="bg-white rounded-2xl px-4 py-1">
-            {LANGUAGES.map(({ locale, sublabel }) => {
-                const selected = locale === current;
-                const offered = (locales as readonly string[]).includes(locale);
-                return (
-                    <button
-                        key={locale}
-                        onClick={() => void pick(locale)}
-                        disabled={selected || !offered}
-                        className="w-full flex items-center justify-between py-5 border-b-2 last:border-b-0 border-slate-100 active:bg-gray-50 disabled:active:bg-transparent"
-                    >
-                        <div className={`text-left ${offered ? "" : "opacity-40"}`}>
-                            <p className="text-[17px] font-medium text-gray-900">
-                                {t(`language.${locale}`)}
-                            </p>
-                            <p className="text-sm text-gray-400">{sublabel}</p>
-                        </div>
-                        <span
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${selected ? "border-brand/90 bg-brand/90" : "border-gray-300"}`}
-                        >
-                            {selected && <Check size={16} className="text-white" strokeWidth={4} />}
-                        </span>
-                    </button>
-                );
-            })}
-        </div>
+        <ChoiceList
+            value={current}
+            onChange={(l) => void pick(l)}
+            choices={LANGUAGES.map(({ locale, sublabel }) => ({
+                value: locale,
+                label: t(`language.${locale}`),
+                sublabel,
+                disabled: !(locales as readonly string[]).includes(locale),
+            }))}
+        />
     );
 }

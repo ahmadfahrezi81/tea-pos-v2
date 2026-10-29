@@ -33,6 +33,13 @@
         "search": "Cari orang...",
         "noStores": "Tidak ada toko",
         "editTitle": "Ubah akses",
-        "status": "Status"
+        "status": "Status",
+        "filter": "Saring",
+        "filterAll": "Semua orang",
+        "filterSeller": "Penjual",
+        "filterAdmin": "Admin backoffice",
+        "filterGuest": "Tamu backoffice",
+        "filterNone": "Tanpa akses",
+        "filterInactive": "Nonaktif"
     }
 }
