@@ -1,6 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useT } from "@tea-pos/i18n/react";
-import { CirclePlus, MoreHorizontal, Pencil, Settings, type LucideIcon } from "lucide-react";
+import { CirclePlus, MoreHorizontal, Pencil, type LucideIcon } from "lucide-react";
 import { createContext, useContext, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -27,7 +27,6 @@ export function HeaderTitle({ children }: { children: string }) {
 const KINDS = {
     add: { icon: CirclePlus, labelKey: "shell.add", writes: true },
     edit: { icon: Pencil, labelKey: "shell.edit", writes: true },
-    settings: { icon: Settings, labelKey: "shell.settings", writes: false },
 } satisfies Record<string, { icon: LucideIcon; labelKey: MessageKey; writes: boolean }>;
 
 export type HeaderAction = { kind: keyof typeof KINDS } &

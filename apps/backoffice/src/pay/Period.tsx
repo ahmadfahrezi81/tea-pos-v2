@@ -3,9 +3,8 @@ import { formatMoney, localDate } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { avatar } from "@tea-pos/shell/avatar";
-import { HeaderActions } from "@tea-pos/shell/HeaderActions";
 import { Link } from "@tanstack/react-router";
-import { Check, ChevronLeft, ChevronRight, UserCircle } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Settings, UserCircle } from "lucide-react";
 
 import { daysLeft, shortDay } from "./dates";
 import { payDate, usePayPeriodAt, useSlug } from "./pay";
@@ -20,7 +19,7 @@ function group(p: Person): "toReview" | "ready" | "settled" {
 
 /**
  * The Pay tab's home: one period (‹ › flips between them) and each person it pays, grouped by
- * what needs you; a person opens their payslip. Settings sit behind the ⚙.
+ * what needs you; a person opens their payslip. Pay settings sit at the bottom.
  */
 export function PeriodHome({ start }: { start: string }) {
     const t = useT();
@@ -34,7 +33,6 @@ export function PeriodHome({ start }: { start: string }) {
     if (!p)
         return (
             <div className="space-y-3">
-                <HeaderActions actions={[{ kind: "settings", to: `/${slug}/pay/settings` }]} />
                 <div className="h-24 rounded-2xl bg-white" />
                 <div className="h-40 rounded-2xl bg-white" />
             </div>
@@ -51,8 +49,6 @@ export function PeriodHome({ start }: { start: string }) {
 
     return (
         <div className="space-y-4">
-            <HeaderActions actions={[{ kind: "settings", to: `/${slug}/pay/settings` }]} />
-
             <div className="rounded-2xl bg-white p-3">
                 <div className="flex items-center justify-between">
                     <Link
@@ -141,6 +137,16 @@ export function PeriodHome({ start }: { start: string }) {
                     </div>
                 </section>
             ))}
+
+            <Link
+                to="/$tenant/pay/settings"
+                params={{ tenant: slug }}
+                className="flex items-center gap-3 rounded-2xl bg-white p-4 active:scale-[0.99]"
+            >
+                <Settings size={22} className="text-gray-900" />
+                <span className="flex-1 text-gray-900">{t("pay.settingsTitle")}</span>
+                <ChevronRight size={20} className="text-gray-400" />
+            </Link>
         </div>
     );
 }

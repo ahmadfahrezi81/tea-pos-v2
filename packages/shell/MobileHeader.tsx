@@ -15,7 +15,7 @@ interface MobileHeaderProps {
 }
 
 /**
- * A tab's home: the big title on the left, then the screen's actions and the avatar.
+ * A tab's home: the big title on the left, the avatar (Account) on the right; actions live in the page.
  * A screen under it: back on the left, the title centred on one line, the actions
  * on the right (equal sides keep the title centred).
  */
