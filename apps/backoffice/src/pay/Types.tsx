@@ -4,6 +4,7 @@ import type { MessageKey } from "@tea-pos/i18n";
 import { useT } from "@tea-pos/i18n/react";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
 import { useAccess } from "@tea-pos/shell/tenant";
+import { CopyButton } from "@tea-pos/ui/CopyButton";
 import { Field } from "@tea-pos/ui/form/Field";
 import { NumberInput } from "@tea-pos/ui/form/NumberInput";
 import { Switch } from "@tea-pos/ui/form/Switch";
@@ -11,7 +12,7 @@ import { TextInput } from "@tea-pos/ui/form/TextInput";
 import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
 import { toast } from "@tea-pos/ui/toast";
 import { Link, useRouter } from "@tanstack/react-router";
-import { Check, Copy, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { SearchBox } from "./Staff";
@@ -106,28 +107,18 @@ export function CommissionTypeList() {
 /** The slug, fixed once made, with a copy button. */
 function SlugField({ slug }: { slug: string }) {
     const t = useT();
-    const [copied, setCopied] = useState(false);
     return (
         <Field label={t("pay.slug")}>
             <div className="flex items-center gap-2 p-4 px-3 border-2 border-gray-100 rounded-2xl bg-gray-50">
                 <p className="flex-1 font-mono text-base text-gray-500">{slug}</p>
-                <button
-                    onClick={() =>
-                        void navigator.clipboard.writeText(slug).then(
-                            () => {
-                                setCopied(true);
-                                toast(t("pay.slugCopied"));
-                                setTimeout(() => setCopied(false), 3000);
-                            },
-                            () => toast(t("pay.slugNotCopied")),
-                        )
-                    }
-                    disabled={copied}
-                    className={`p-1 active:scale-90 ${copied ? "text-green-500 opacity-50" : "text-gray-400"}`}
-                    aria-label={t("pay.copySlug")}
-                >
-                    {copied ? <Check size={16} /> : <Copy size={16} />}
-                </button>
+                <CopyButton
+                    value={slug}
+                    size={16}
+                    label={t("pay.copySlug")}
+                    className="p-1 active:scale-90"
+                    onCopied={() => toast(t("pay.slugCopied"))}
+                    onFailed={() => toast(t("pay.slugNotCopied"))}
+                />
             </div>
         </Field>
     );

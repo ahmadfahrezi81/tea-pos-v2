@@ -1,11 +1,10 @@
 import { formatRelative } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { avatar } from "@tea-pos/shell/avatar";
+import { Avatar } from "@tea-pos/ui/Avatar";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
 import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
 import { useAccess } from "@tea-pos/shell/tenant";
 import { useRouter } from "@tanstack/react-router";
-import { UserCircle } from "lucide-react";
 import { useState } from "react";
 
 import { AccessFields } from "./PersonPage";
@@ -46,18 +45,7 @@ export function RequestPage({ id }: { id: string }) {
             <HeaderTitle>{data.name}</HeaderTitle>
 
             <div className="flex items-center gap-3 rounded-2xl bg-white p-4">
-                {data.avatarUrl ? (
-                    <img
-                        src={avatar(data.avatarUrl)}
-                        alt=""
-                        width={44}
-                        height={44}
-                        referrerPolicy="no-referrer"
-                        className="size-11 rounded-full object-cover"
-                    />
-                ) : (
-                    <UserCircle size={44} className="text-gray-400" />
-                )}
+                <Avatar url={data.avatarUrl} size={44} />
                 <div className="min-w-0 flex-1">
                     <p className="truncate text-sm text-gray-600">{data.email}</p>
                     <p className="text-sm text-gray-500">

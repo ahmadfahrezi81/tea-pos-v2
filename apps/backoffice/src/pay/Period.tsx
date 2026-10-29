@@ -2,9 +2,9 @@ import type { components } from "@tea-pos/api-client";
 import { formatMoney, localDate } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { avatar } from "@tea-pos/shell/avatar";
+import { Avatar } from "@tea-pos/ui/Avatar";
 import { Link } from "@tanstack/react-router";
-import { Check, ChevronLeft, ChevronRight, Settings, UserCircle } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Settings } from "lucide-react";
 
 import { daysLeft, shortDay } from "./dates";
 import { payDate, usePayPeriodAt, useSlug } from "./pay";
@@ -160,18 +160,7 @@ function PersonRow({ person: x, start, last }: { person: Person; start: string; 
             params={{ tenant: slug, start, userId: x.userId }}
             className={`flex items-center gap-3 p-3 active:bg-gray-50 ${last ? "" : "border-b border-gray-100"}`}
         >
-            {x.avatarUrl ? (
-                <img
-                    src={avatar(x.avatarUrl)}
-                    alt=""
-                    width={36}
-                    height={36}
-                    referrerPolicy="no-referrer"
-                    className="size-9 shrink-0 rounded-full object-cover"
-                />
-            ) : (
-                <UserCircle size={36} className="shrink-0 text-gray-400" />
-            )}
+            <Avatar url={x.avatarUrl} size={36} />
             <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold text-gray-900">{x.name}</p>
                 {x.pending > 0 && (

@@ -1,10 +1,10 @@
 import type { components } from "@tea-pos/api-client";
 import { formatDay, formatMoney, formatTime } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { avatar } from "@tea-pos/shell/avatar";
+import { Avatar } from "@tea-pos/ui/Avatar";
 import { useTenant } from "@tea-pos/shell/tenant";
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, Layers, UserCircle } from "lucide-react";
+import { ChevronRight, Layers } from "lucide-react";
 
 import { ALL, useStoresLive } from "./sales";
 
@@ -72,7 +72,7 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
             <div className="mt-1.5 flex min-w-0 items-center gap-2 text-sm text-gray-600">
                 {s.open ? (
                     <>
-                        <SellerAvatar url={s.sellerAvatar} />
+                        <Avatar url={s.sellerAvatar} size={24} />
                         <span className="truncate">
                             {t("store.sellerSince")
                                 .replace("{name}", s.sellerName ?? "")
@@ -117,20 +117,5 @@ export function OpenBadge({ store: s }: { store: Store }) {
         >
             {s.open ? "●" : "○"} {t(s.open ? "store.open" : "store.closed")}
         </span>
-    );
-}
-
-export function SellerAvatar({ url, size = 24 }: { url?: string; size?: number }) {
-    return url ? (
-        <img
-            src={avatar(url)}
-            alt=""
-            width={size}
-            height={size}
-            className="shrink-0 rounded-full object-cover"
-            style={{ width: size, height: size }}
-        />
-    ) : (
-        <UserCircle size={size} className="shrink-0 text-gray-400" />
     );
 }

@@ -2,9 +2,10 @@ import type { components } from "@tea-pos/api-client";
 import { formatMoney, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { ActionButton } from "@tea-pos/ui/ActionButton";
+import { CopyButton } from "@tea-pos/ui/CopyButton";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useAccess } from "@tea-pos/shell/tenant";
-import { AlertTriangle, Check, Copy, X } from "lucide-react";
+import { AlertTriangle, Check, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
@@ -51,7 +52,6 @@ export function Payslip({ id }: { id: string }) {
     const [confirm, setConfirm] = useState<Confirm | null>(null);
     const [warningDismissed, setWarningDismissed] = useState(false);
     const [showProof, setShowProof] = useState(false);
-    const [copied, setCopied] = useState(false);
     const commission = usePayWrite(decisions.commission);
     const claim = usePayWrite(decisions.claim);
     const day = usePayWrite(decisions.day);
@@ -198,23 +198,15 @@ export function Payslip({ id }: { id: string }) {
                     {detail(t("pay.expectedPayout"), payDate(addDays(slip.end, 1), locale))}
                     <div className="flex justify-between items-center pt-1.5 border-t border-gray-100">
                         <span className="text-gray-500">{t("pay.payslipId")}</span>
-                        <button
-                            onClick={() => {
-                                void navigator.clipboard.writeText(slip.id);
-                                setCopied(true);
-                                setTimeout(() => setCopied(false), 2000);
-                            }}
+                        <CopyButton
+                            value={slip.id}
+                            size={13}
                             className="flex items-center gap-1 active:opacity-70"
                         >
                             <span className="font-mono text-xs text-gray-400">
                                 {slip.id.slice(0, 8)}…
                             </span>
-                            {copied ? (
-                                <Check size={13} className="text-green-500" />
-                            ) : (
-                                <Copy size={13} className="text-gray-400" />
-                            )}
-                        </button>
+                        </CopyButton>
                     </div>
                     {detail(
                         t("pay.paidOn"),

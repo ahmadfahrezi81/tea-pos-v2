@@ -4,9 +4,10 @@ import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { useTenant } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
+import { Avatar } from "@tea-pos/ui/Avatar";
 import { ChartNoAxesCombined, ReceiptText } from "lucide-react";
 
-import { OpenBadge, SellerAvatar } from "./StoreList";
+import { OpenBadge } from "./StoreList";
 import { ALL, useSalesHours, useStoreId, useStoresLive } from "./sales";
 
 const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
@@ -45,7 +46,7 @@ export function StorePage() {
                     </div>
                     {store.open && (
                         <div className="mt-2 flex items-center gap-2 text-gray-900">
-                            <SellerAvatar url={store.sellerAvatar} size={28} />
+                            <Avatar url={store.sellerAvatar} size={28} />
                             <span className="truncate">
                                 {t("store.isSelling").replace("{name}", store.sellerName ?? "")}
                             </span>

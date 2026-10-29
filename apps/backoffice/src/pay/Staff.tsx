@@ -2,12 +2,12 @@ import type { components } from "@tea-pos/api-client";
 import { formatMoney } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useT } from "@tea-pos/i18n/react";
-import { avatar } from "@tea-pos/shell/avatar";
+import { Avatar } from "@tea-pos/ui/Avatar";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
 import { useAccess } from "@tea-pos/shell/tenant";
 import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { Check, Pencil, Search, UserCircle, X } from "lucide-react";
+import { Check, Pencil, Search, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { useCommissionTypes, usePayStaff, usePayWrite, useSlug, writes } from "./pay";
@@ -20,24 +20,6 @@ const STATUS_TAG: Record<string, string> = {
     inactive: "bg-gray-100 text-gray-500",
     pending: "bg-amber-100 text-amber-700",
 };
-
-export function Avatar({ url, size = 36 }: { url?: string; size?: 36 | 56 }) {
-    const box = size === 56 ? "size-14 rounded-2xl" : "size-9 rounded-xl";
-    return url ? (
-        <img
-            src={avatar(url)}
-            alt=""
-            width={size}
-            height={size}
-            referrerPolicy="no-referrer"
-            className={`${box} object-cover shrink-0`}
-        />
-    ) : (
-        <span className={`${box} bg-brand/10 flex items-center justify-center shrink-0`}>
-            <UserCircle size={size === 56 ? 32 : 20} className="text-brand" />
-        </span>
-    );
-}
 
 /** The search box above a staff list, as the old app's. */
 export function SearchBox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -98,7 +80,7 @@ function StaffList({
                         <ListRow
                             key={s.id}
                             onClick={() => void navigate({ to: to(s.id) })}
-                            leading={<Avatar url={s.avatarUrl} />}
+                            leading={<Avatar url={s.avatarUrl} square />}
                             title={
                                 <span className="flex items-center gap-1.5 min-w-0">
                                     <span className="truncate">{s.name}</span>
@@ -147,7 +129,7 @@ export function StaffInfoList() {
 function Person({ s }: { s: Staff }) {
     return (
         <div className="bg-white rounded-xl p-4 flex items-center gap-4">
-            <Avatar url={s.avatarUrl} size={56} />
+            <Avatar url={s.avatarUrl} size={56} square />
             <div className="flex-1 min-w-0 space-y-0.5">
                 <p className="text-lg font-semibold text-gray-900 truncate">{s.name}</p>
                 <p className="text-sm text-gray-400 truncate">{s.email}</p>

@@ -2,7 +2,7 @@ import type { components } from "@tea-pos/api-client";
 import { formatMoney, formatTime } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { avatar } from "@tea-pos/shell/avatar";
+import { Avatar } from "@tea-pos/ui/Avatar";
 import {
     AlertTriangle,
     ArrowRightLeft,
@@ -15,7 +15,6 @@ import {
     Package,
     ShoppingCart,
     Trash2,
-    UserCircle,
     Wallet,
     type LucideIcon,
 } from "lucide-react";
@@ -266,20 +265,7 @@ export function DaySessions({ id }: { id: string }) {
                 <div key={s.id} className="bg-white rounded-2xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
-                            {s.avatarUrl ? (
-                                <img
-                                    src={avatar(s.avatarUrl)}
-                                    alt=""
-                                    width={36}
-                                    height={36}
-                                    referrerPolicy="no-referrer"
-                                    className="size-9 rounded-xl object-cover shrink-0"
-                                />
-                            ) : (
-                                <div className="size-9 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
-                                    <UserCircle size={20} className="text-brand" />
-                                </div>
-                            )}
+                            <Avatar url={s.avatarUrl} size={36} square />
                             <p className="font-bold text-gray-900">
                                 {s.userName || t("common.unknown")}
                             </p>

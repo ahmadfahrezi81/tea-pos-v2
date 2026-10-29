@@ -1,10 +1,10 @@
 import { formatRelative } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { avatar } from "@tea-pos/shell/avatar";
+import { Avatar } from "@tea-pos/ui/Avatar";
 import { useTenant } from "@tea-pos/shell/tenant";
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, UserCircle } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 import { useUac, type Person } from "./uac";
 
@@ -108,18 +108,7 @@ function Row({
 }) {
     return (
         <div className={`flex items-center gap-3 p-3 ${last ? "" : "border-b border-gray-100"}`}>
-            {avatarUrl ? (
-                <img
-                    src={avatar(avatarUrl)}
-                    alt=""
-                    width={36}
-                    height={36}
-                    referrerPolicy="no-referrer"
-                    className="size-9 shrink-0 rounded-full object-cover"
-                />
-            ) : (
-                <UserCircle size={36} className="shrink-0 text-gray-400" />
-            )}
+            <Avatar url={avatarUrl} size={36} />
             <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold text-gray-900">{name}</p>
                 <p className="truncate text-xs text-gray-500">{line}</p>

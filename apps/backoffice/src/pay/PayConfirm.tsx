@@ -4,11 +4,11 @@ import { formatMoney, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
 import { Callout } from "@tea-pos/ui/Callout";
+import { CopyButton } from "@tea-pos/ui/CopyButton";
 import { Field } from "@tea-pos/ui/form/Field";
 import { Textarea } from "@tea-pos/ui/form/Textarea";
 import { PhotoInput } from "@tea-pos/ui/PhotoInput";
 import { Link, useLocation, useRouter } from "@tanstack/react-router";
-import { Check, Copy } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { daysLeft, dayMonth } from "./dates";
@@ -17,30 +17,20 @@ import { usePayslip, usePayStaff, usePayWrite, useSlug } from "./pay";
 function Copyable({
     value,
     prefix,
-    className,
+    className = "text-base font-medium text-gray-900",
 }: {
     value: string;
     prefix?: string;
     className?: string;
 }) {
-    const [copied, setCopied] = useState(false);
     return (
-        <button
-            onClick={() => {
-                void navigator.clipboard.writeText(value);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-            }}
-            className={`flex items-center gap-1.5 active:opacity-70 ${className ?? "text-base font-medium text-gray-900"}`}
+        <CopyButton
+            value={value}
+            className={`flex items-center gap-1.5 active:opacity-70 ${className}`}
         >
             {prefix}
             {value}
-            {copied ? (
-                <Check size={14} className="text-green-500" />
-            ) : (
-                <Copy size={14} className="text-gray-400" />
-            )}
-        </button>
+        </CopyButton>
     );
 }
 

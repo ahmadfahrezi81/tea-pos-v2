@@ -1,7 +1,7 @@
 import type { components } from "@tea-pos/api-client";
 import { formatDate, formatDay, formatMoney, formatMonth, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { avatar } from "@tea-pos/shell/avatar";
+import { Avatar } from "@tea-pos/ui/Avatar";
 import { useTenant } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { Sheet } from "@tea-pos/ui/Sheet";
@@ -14,7 +14,6 @@ import {
     Info,
     MoreVertical,
     Receipt,
-    UserCircle,
     Users,
     X,
 } from "lucide-react";
@@ -397,20 +396,7 @@ export function Sellers({ sellers }: { sellers: Day["sellers"] }) {
                     key={s.userId}
                     className="flex items-center gap-2 bg-slate-100 rounded-xl p-1.5"
                 >
-                    {s.avatarUrl ? (
-                        <img
-                            src={avatar(s.avatarUrl)}
-                            alt=""
-                            width={28}
-                            height={28}
-                            referrerPolicy="no-referrer"
-                            className="size-7 rounded-lg object-cover shrink-0"
-                        />
-                    ) : (
-                        <div className="size-7 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
-                            <UserCircle size={18} className="text-brand" />
-                        </div>
-                    )}
+                    <Avatar url={s.avatarUrl} size={28} square />
                     <p className="text-base font-bold text-gray-900 truncate flex-1">
                         {s.name || t("common.unknown")}
                     </p>

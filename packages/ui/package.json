@@ -18,7 +18,13 @@
         "./weather": "./weather.ts",
         "./form/*": "./form/*.tsx",
         "./dot-grid": "./styles/dot-grid.ts",
-        "./globals.css": "./styles/globals.css"
+        "./globals.css": "./styles/globals.css",
+        "./Avatar": "./Avatar.tsx",
+        "./avatar": "./avatar.ts",
+        "./Skeleton": "./Skeleton.tsx",
+        "./ConfirmDialog": "./ConfirmDialog.tsx",
+        "./MonthStepper": "./MonthStepper.tsx",
+        "./CopyButton": "./CopyButton.tsx"
     },
     "scripts": {
         "lint": "eslint .",

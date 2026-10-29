@@ -1,11 +1,11 @@
 import type { MessageKey } from "@tea-pos/i18n";
 import { useT } from "@tea-pos/i18n/react";
-import { avatar } from "@tea-pos/shell/avatar";
+import { Avatar } from "@tea-pos/ui/Avatar";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
 import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
 import { useAccess, useTenant } from "@tea-pos/shell/tenant";
 import { useRouter } from "@tanstack/react-router";
-import { Check, UserCircle } from "lucide-react";
+import { Check } from "lucide-react";
 import { useState } from "react";
 
 import { useSetPerson, useUacPerson, type Change, type Person } from "./uac";
@@ -42,18 +42,7 @@ function PersonForm({ person: p }: { person: Person }) {
             <HeaderTitle>{p.name}</HeaderTitle>
 
             <div className="flex items-center gap-3 rounded-2xl bg-white p-4">
-                {p.avatarUrl ? (
-                    <img
-                        src={avatar(p.avatarUrl)}
-                        alt=""
-                        width={44}
-                        height={44}
-                        referrerPolicy="no-referrer"
-                        className="size-11 rounded-full object-cover"
-                    />
-                ) : (
-                    <UserCircle size={44} className="text-gray-400" />
-                )}
+                <Avatar url={p.avatarUrl} size={44} />
                 <div className="min-w-0 flex-1">
                     <p className="truncate text-sm text-gray-600">{p.email}</p>
                     <p
