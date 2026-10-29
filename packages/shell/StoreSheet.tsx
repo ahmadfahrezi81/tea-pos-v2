@@ -1,4 +1,5 @@
 import { useT } from "@tea-pos/i18n/react";
+import { Switch } from "@tea-pos/ui/form/Switch";
 import { Sheet } from "@tea-pos/ui/Sheet";
 import { Check, Eye, EyeOff } from "lucide-react";
 
@@ -24,28 +25,18 @@ export default function StoreSheet({ open, onClose }: { open: boolean; onClose: 
             title={t("shell.pickStore")}
             beside={
                 hideable && (
-                    <button
-                        type="button"
-                        role="switch"
-                        aria-checked={hideInactive}
-                        aria-label={t("shell.hideInactiveStores")}
-                        onClick={() => setHideInactive(!hideInactive)}
-                        className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
-                            hideInactive ? "bg-brand" : "bg-gray-300"
-                        }`}
-                    >
-                        <span
-                            className={`inline-flex h-7 w-9 items-center justify-center rounded-full bg-white shadow transform transition-transform ${
-                                hideInactive ? "translate-x-[18px]" : "translate-x-0.5"
-                            }`}
-                        >
-                            {hideInactive ? (
+                    <Switch
+                        on={hideInactive}
+                        onChange={setHideInactive}
+                        label={t("shell.hideInactiveStores")}
+                        icon={
+                            hideInactive ? (
                                 <EyeOff size={16} className="text-brand" />
                             ) : (
                                 <Eye size={16} className="text-gray-400" />
-                            )}
-                        </span>
-                    </button>
+                            )
+                        }
+                    />
                 )
             }
         >
