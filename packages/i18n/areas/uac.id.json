@@ -40,6 +40,7 @@
         "filterAdmin": "Admin backoffice",
         "filterGuest": "Tamu backoffice",
         "filterNone": "Tanpa akses",
-        "filterInactive": "Nonaktif"
+        "filterInactive": "Nonaktif",
+        "office": "Office"
     }
 }

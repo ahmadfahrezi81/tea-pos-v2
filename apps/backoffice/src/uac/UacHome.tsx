@@ -135,23 +135,23 @@ export function UacHome() {
     );
 }
 
-/** What someone reaches, one pill per app with its level: `Seller · Member`, `Backoffice · Admin`. */
+/** What someone reaches, one pill per app with its level: `Seller · Member`, `Office · Admin`. */
 function Pills({ person: p }: { person: Person }) {
     const t = useT();
     const level = (l: string) => t(`uac.${l}` as MessageKey);
-    if (!p.active) return <Pill tone="red">{t("uac.inactive")}</Pill>;
-    if (p.owner) return <Pill tone="dark">{t("uac.owner")}</Pill>;
+    if (!p.active) return <Pill>{t("uac.inactive")}</Pill>;
+    if (p.owner) return <Pill>{t("uac.owner")}</Pill>;
     if (!p.access.seller && !p.access.backoffice) return <Pill>{t("uac.noAccess")}</Pill>;
     return (
         <span className="flex flex-wrap gap-1.5 pt-1">
             {p.access.seller && (
-                <Pill tone="brand">
+                <Pill>
                     {t("uac.seller")} · {level(p.access.seller)}
                 </Pill>
             )}
             {p.access.backoffice && (
-                <Pill tone="blue">
-                    {t("uac.backoffice")} · {level(p.access.backoffice)}
+                <Pill>
+                    {t("uac.office")} · {level(p.access.backoffice)}
                 </Pill>
             )}
         </span>
