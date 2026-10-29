@@ -26,6 +26,7 @@ import {
     writes,
 } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { ICON } from "@tea-pos/ui/icon";
 
 type ClaimType = components["schemas"]["ClaimType"];
 type Frequency = ClaimType["frequency"];
@@ -51,7 +52,7 @@ function EditLink({ to }: { to: string }) {
     if (!useAccess().canWrite) return null;
     return (
         <Link to={to} className="p-2 -mr-2 text-brand active:opacity-70" aria-label={t("pay.edit")}>
-            <Pencil size={22} strokeWidth={2} />
+            <Pencil size={ICON} strokeWidth={2} />
         </Link>
     );
 }

@@ -8,6 +8,7 @@ import { ChevronRight, Layers } from "lucide-react";
 
 import { ALL, useStoresLive } from "./sales";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { ICON } from "@tea-pos/ui/icon";
 
 type Store = components["schemas"]["StoreLive"];
 
@@ -48,9 +49,9 @@ export function StoreList() {
                     params={{ tenant: slug, storeId: ALL }}
                     className="flex items-center gap-3 rounded-2xl bg-white p-4 active:scale-[0.99]"
                 >
-                    <Layers size={22} className="text-gray-900" />
+                    <Layers size={ICON} className="text-gray-900" />
                     <span className="flex-1 text-gray-900">{t("shell.allStores")}</span>
-                    <ChevronRight size={20} className="text-gray-400" />
+                    <ChevronRight size={ICON} className="text-gray-400" />
                 </Link>
             )}
         </div>
@@ -98,7 +99,7 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
                 <span className="font-semibold text-gray-900">
                     {formatMoney(s.sales)} · {s.cups} {t("store.cupsUnit")}
                 </span>
-                <ChevronRight size={20} className="text-gray-400" />
+                <ChevronRight size={ICON} className="text-gray-400" />
             </div>
         </Link>
     );

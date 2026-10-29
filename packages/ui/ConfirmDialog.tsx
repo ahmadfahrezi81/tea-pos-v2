@@ -1,6 +1,7 @@
 import { AlertTriangle, Info, X } from "lucide-react";
 
 import { Dialog } from "./Drawer";
+import { ICON } from "./icon";
 
 /** The old backoffice's "are you sure": a centred card over a dark page; a tap outside cancels. */
 export function ConfirmDialog({
@@ -37,7 +38,7 @@ export function ConfirmDialog({
             <div className="mb-4 flex items-center justify-between">
                 <div className="flex flex-1 items-center">
                     <Icon
-                        size={20}
+                        size={ICON}
                         className={`mr-2 shrink-0 ${warning ? "text-orange-500" : "text-blue-500"}`}
                     />
                     <h3 className="text-lg font-semibold">{title}</h3>
@@ -47,7 +48,7 @@ export function ConfirmDialog({
                     className="ml-2 shrink-0 rounded p-1 hover:bg-gray-100"
                     aria-label={cancelText}
                 >
-                    <X size={20} />
+                    <X size={ICON} />
                 </button>
             </div>
             {detailsLabel && (

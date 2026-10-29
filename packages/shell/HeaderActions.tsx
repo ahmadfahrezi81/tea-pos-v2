@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { useAccess } from "./tenant";
 
 import type { MessageKey } from "@tea-pos/i18n";
+import { ICON } from "@tea-pos/ui/icon";
 
 /** The header's right slot and title slot. Null until the shell has mounted. */
 export const HeaderSlotContext = createContext<HTMLElement | null>(null);
@@ -124,7 +125,7 @@ function MenuItem({ action, onDone }: { action: HeaderAction; onDone: () => void
         "flex w-full items-center gap-3 px-4 py-3 text-left text-gray-900 active:bg-gray-100";
     const content = (
         <>
-            <Icon size={20} />
+            <Icon size={ICON} />
             {t(labelKey)}
         </>
     );

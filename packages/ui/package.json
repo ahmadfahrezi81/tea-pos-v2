@@ -14,7 +14,8 @@
         "./globals.css": "./styles/globals.css",
         "./avatarUrl": "./avatarUrl.ts",
         "./motion": "./motion.ts",
-        "./*": "./*.tsx"
+        "./*": "./*.tsx",
+        "./icon": "./icon.ts"
     },
     "scripts": {
         "lint": "eslint .",

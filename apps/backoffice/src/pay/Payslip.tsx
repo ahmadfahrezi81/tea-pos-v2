@@ -12,6 +12,7 @@ import { daysLeft, dayMonth, shortDay, weeks } from "./dates";
 import { decisions, payDate, usePayslip, usePayWrite } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { Dialog, Drawer } from "@tea-pos/ui/Drawer";
+import { ICON } from "@tea-pos/ui/icon";
 
 type Slip = components["schemas"]["Payslip"];
 type Row = { id: string; date: string; status: string; amount: number };
@@ -135,7 +136,7 @@ export function Payslip({ id }: { id: string }) {
                                     ?.scrollIntoView({ behavior: "smooth", block: "start" })
                             }
                         >
-                            <AlertTriangle size={20} className="text-red-600" />
+                            <AlertTriangle size={ICON} className="text-red-600" />
                             <h3 className="font-semibold text-red-800">
                                 {t("pay.daysPending").replace("{n}", String(pendingDates.length))}
                             </h3>
@@ -145,7 +146,7 @@ export function Payslip({ id }: { id: string }) {
                             className="p-1 -mt-1 -mr-2 rounded-full text-red-600 active:opacity-60"
                             aria-label={t("common.close")}
                         >
-                            <X size={22} />
+                            <X size={ICON} />
                         </button>
                     </div>
                     <p className="text-sm text-red-800">{t("pay.daysPendingSub")}</p>
@@ -441,7 +442,7 @@ export function Payslip({ id }: { id: string }) {
                             {confirmTitle(t, confirm)}
                         </p>
                         <button onClick={() => setConfirm(null)} aria-label={t("common.close")}>
-                            <X size={20} className="text-gray-400" />
+                            <X size={ICON} className="text-gray-400" />
                         </button>
                     </div>
                     <div className="bg-gray-50 rounded-xl p-4">

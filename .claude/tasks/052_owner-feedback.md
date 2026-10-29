@@ -30,6 +30,8 @@ The owner's test round on staging (RFC: [Backoffice v2 refinement](https://app.n
 9. **Bebas Neue goes** (owner: a font for one title is not worth it): the weather sheet's title is Inter, the package leaves the backoffice
 10. **Location Feedback goes, for now** (owner: not a priority, maybe later): its screen, route, row, words and Leaflet leave the backoffice; More keeps Weather and Patch Notes. Go's `GET /feedbacks` stays until decided
 11. **UAC's home as v1's Staff Payroll Info list:** a search box, then everyone in a `ListCard` of `ListRow`s with square avatars (no "People (n)" heading); requests waiting stay on top under their heading. `SearchBox` moves to `packages/ui` (Pay's staff lists use it too)
+12. **Search box fuller:** taller (py-3.5), a 20 px magnifier, the clear X a 24 px grey circle
+13. **22 px is the content icon size:** `ICON` in `packages/ui/icon.ts`; menu rows (`rowIcon`), chevrons, field icons, list and card icons use it. The header, the tabs and small icons inside a line of text keep their own sizes
 
 ## Done when
 

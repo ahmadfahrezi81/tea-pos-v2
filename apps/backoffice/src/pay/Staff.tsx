@@ -13,6 +13,7 @@ import { useState, type ReactNode } from "react";
 
 import { useCommissionTypes, usePayStaff, usePayWrite, useSlug, writes } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { ICON } from "@tea-pos/ui/icon";
 
 type Staff = components["schemas"]["PayStaff"];
 
@@ -239,7 +240,7 @@ export function StaffCommission({ id }: { id: string }) {
                 <p className="text-base font-medium text-gray-900">{title}</p>
                 <p className={`text-sm text-gray-400 ${mono ? "font-mono" : ""}`}>{sub}</p>
             </div>
-            {selected === key && <Check size={20} className="text-brand shrink-0" />}
+            {selected === key && <Check size={ICON} className="text-brand shrink-0" />}
         </button>
     );
     const enabled = types.types.filter((ty) => ty.enabled);

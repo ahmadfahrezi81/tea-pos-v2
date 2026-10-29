@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
+import { ICON } from "@tea-pos/ui/icon";
 
 /**
  * The old apps' menu rows (More, Pay, the Store overview): an icon, a label, an orange chevron,
@@ -35,7 +36,11 @@ export function SettingsRow({
                 </div>
                 {dot && <span className="size-2 rounded-full bg-brand shrink-0" />}
                 {right ?? (
-                    <ChevronRight size={20} strokeWidth={2.5} className="text-brand/90 shrink-0" />
+                    <ChevronRight
+                        size={ICON}
+                        strokeWidth={2.5}
+                        className="text-brand/90 shrink-0"
+                    />
                 )}
             </div>
         </>
@@ -67,4 +72,4 @@ export function SettingsGroup({ title, children }: { title?: string; children: R
 }
 
 /** A row's icon, as the old apps draw them. */
-export const rowIcon = { size: 22, strokeWidth: 2, className: "text-gray-900" } as const;
+export const rowIcon = { size: ICON, strokeWidth: 2, className: "text-gray-900" } as const;

@@ -9,6 +9,7 @@ import { Check, ChevronLeft, ChevronRight, Settings } from "lucide-react";
 import { daysLeft, shortDay, weeks } from "./dates";
 import { payDate, usePayPeriodAt, useSlug } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { ICON } from "@tea-pos/ui/icon";
 
 type Person = components["schemas"]["Payout"];
 
@@ -60,7 +61,7 @@ export function PeriodHome({ start }: { start: string }) {
                         className={arrow}
                         aria-label="‹"
                     >
-                        <ChevronLeft size={22} />
+                        <ChevronLeft size={ICON} />
                     </Link>
                     <div className="text-center">
                         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -79,7 +80,7 @@ export function PeriodHome({ start }: { start: string }) {
                             className={arrow}
                             aria-label="›"
                         >
-                            <ChevronRight size={22} />
+                            <ChevronRight size={ICON} />
                         </Link>
                     ) : (
                         <span className="size-9" />
@@ -122,7 +123,7 @@ export function PeriodHome({ start }: { start: string }) {
                             ),
                         )}
                     </span>
-                    <ChevronRight size={20} />
+                    <ChevronRight size={ICON} />
                 </Link>
             )}
 
@@ -152,9 +153,9 @@ export function PeriodHome({ start }: { start: string }) {
                 params={{ tenant: slug }}
                 className="flex items-center gap-3 rounded-2xl bg-white p-4 active:scale-[0.99]"
             >
-                <Settings size={22} className="text-gray-900" />
+                <Settings size={ICON} className="text-gray-900" />
                 <span className="flex-1 text-gray-900">{t("pay.settingsTitle")}</span>
-                <ChevronRight size={20} className="text-gray-400" />
+                <ChevronRight size={ICON} className="text-gray-400" />
             </Link>
         </div>
     );

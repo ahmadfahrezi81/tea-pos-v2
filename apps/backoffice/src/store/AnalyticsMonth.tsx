@@ -21,6 +21,7 @@ import { useState } from "react";
 
 import { monthRange, useDays, useSalesDays, useStoreId } from "./sales";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { ICON } from "@tea-pos/ui/icon";
 
 type Day = components["schemas"]["Day"];
 
@@ -91,7 +92,7 @@ export function AnalyticsMonth({ month }: { month: string }) {
                                     ?.scrollIntoView({ behavior: "smooth", block: "start" })
                             }
                         >
-                            <AlertTriangle size={20} className="text-red-600" />
+                            <AlertTriangle size={ICON} className="text-red-600" />
                             <h3 className="font-semibold text-red-800">
                                 {unclosed.length} {t("analytics.unclosedWarning")}
                             </h3>
@@ -100,7 +101,7 @@ export function AnalyticsMonth({ month }: { month: string }) {
                             onClick={() => setWarningDismissed(true)}
                             className="p-1 -mt-1 -mr-2 rounded-full text-red-600 active:opacity-60"
                         >
-                            <X size={22} />
+                            <X size={ICON} />
                         </button>
                     </div>
                     <p className="text-sm text-red-800">{t("analytics.unclosedSub")}</p>
@@ -109,7 +110,7 @@ export function AnalyticsMonth({ month }: { month: string }) {
 
             <div className="bg-white p-4 rounded-2xl">
                 <div className="flex items-center gap-2 mb-3">
-                    <Receipt size={20} className="text-gray-600" />
+                    <Receipt size={ICON} className="text-gray-600" />
                     <h3 className="font-semibold text-gray-800">{t("analytics.monthlyTotals")}</h3>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
@@ -222,7 +223,7 @@ export function AnalyticsMonth({ month }: { month: string }) {
                             onClick={() => setActive(null)}
                             className={`w-full flex items-center gap-3 py-5 ${i < all.length - 1 ? "border-b" : ""}`}
                         >
-                            <item.icon size={20} strokeWidth={2} className="text-gray-900" />
+                            <item.icon size={ICON} strokeWidth={2} className="text-gray-900" />
                             <span className="text-lg text-gray-900">{item.label}</span>
                         </Link>
                     ))}
@@ -293,7 +294,7 @@ function DayCard({ day, storeName, onMenu }: { day: Day; storeName: boolean; onM
                         aria-label={t("store.dayMenu")}
                         className="size-8 shrink-0 flex items-center justify-center text-gray-500 active:opacity-60 rounded-lg"
                     >
-                        <MoreVertical size={22} strokeWidth={2.5} />
+                        <MoreVertical size={ICON} strokeWidth={2.5} />
                     </button>
                 </div>
 

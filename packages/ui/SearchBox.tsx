@@ -1,4 +1,5 @@
 import { Search, X } from "lucide-react";
+import { ICON } from "./icon";
 
 /** The old apps' search box above a list: a magnifier, the field, a clear button once typed. */
 export function SearchBox({
@@ -14,7 +15,7 @@ export function SearchBox({
 }) {
     return (
         <div className="flex items-center gap-2.5 bg-white rounded-xl px-3.5 py-3.5">
-            <Search size={20} className="text-gray-400 shrink-0" />
+            <Search size={ICON} className="text-gray-400 shrink-0" />
             <input
                 type="text"
                 value={value}

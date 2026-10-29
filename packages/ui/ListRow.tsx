@@ -1,6 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { Skeleton } from "./Skeleton";
+import { ICON } from "./icon";
 
 /**
  * A record in a list (a staff member, a claim type, a payout), as the old apps: the same
@@ -32,7 +33,7 @@ export function ListRow({
                 {trailing ??
                     (onClick && (
                         <ChevronRight
-                            size={20}
+                            size={ICON}
                             strokeWidth={2.5}
                             className="text-brand/90 shrink-0"
                         />

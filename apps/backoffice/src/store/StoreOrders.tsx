@@ -8,6 +8,7 @@ import { Calendar, CalendarDays, Receipt } from "lucide-react";
 
 import { useDayOrders, useSalesHours, useStoreId } from "./sales";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { ICON } from "@tea-pos/ui/icon";
 
 const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
 
@@ -50,7 +51,7 @@ export function StoreOrders({ date }: { date: string }) {
         <div className="flex flex-col gap-4">
             <div className="bg-white p-4 rounded-2xl">
                 <div className="flex items-center gap-2 mb-3">
-                    <Receipt size={20} className="text-gray-600" />
+                    <Receipt size={ICON} className="text-gray-600" />
                     <h3 className="font-semibold text-gray-800">{t("orders.dailySummary")}</h3>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
