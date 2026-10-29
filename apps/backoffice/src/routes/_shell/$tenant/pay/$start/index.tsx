@@ -1,12 +1,14 @@
-import { loadArea } from "@tea-pos/i18n";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { PeriodHome } from "../../../../../pay/Period";
-
+// A period is the Pay tab with ?period=, so ‹ › keeps the tab's header; this address (a payslip's
+// back) lands there.
 export const Route = createFileRoute("/_shell/$tenant/pay/$start/")({
-    loader: () => loadArea("pay"),
-    staticData: { shell: { titleKey: "nav.pay", parent: "..", refreshable: true } },
-    component: function Screen() {
-        return <PeriodHome start={Route.useParams().start} />;
+    beforeLoad: ({ params }) => {
+        throw redirect({
+            to: "/$tenant/pay",
+            params: { tenant: params.tenant },
+            search: { period: params.start },
+            replace: true,
+        });
     },
 });

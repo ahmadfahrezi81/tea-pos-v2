@@ -6,7 +6,7 @@ import { Avatar } from "@tea-pos/ui/Avatar";
 import { Link } from "@tanstack/react-router";
 import { Check, ChevronLeft, ChevronRight, Settings } from "lucide-react";
 
-import { daysLeft, shortDay } from "./dates";
+import { daysLeft, shortDay, weeks } from "./dates";
 import { payDate, usePayPeriodAt, useSlug } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 
@@ -53,21 +53,28 @@ export function PeriodHome({ start }: { start: string }) {
             <div className="rounded-2xl bg-white p-3">
                 <div className="flex items-center justify-between">
                     <Link
-                        to="/$tenant/pay/$start"
-                        params={{ tenant: slug, start: p.previous }}
+                        to="/$tenant/pay"
+                        params={{ tenant: slug }}
+                        search={{ period: p.previous }}
                         replace
                         className={arrow}
                         aria-label="‹"
                     >
                         <ChevronLeft size={22} />
                     </Link>
-                    <p className="text-lg font-bold text-gray-900">
-                        {shortDay(p.start, locale)} – {shortDay(p.end, locale)}
-                    </p>
+                    <div className="text-center">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            {weeks(p.start, p.end, t("pay.week"))}
+                        </p>
+                        <p className="text-lg font-bold text-gray-900">
+                            {shortDay(p.start, locale)} – {shortDay(p.end, locale)}
+                        </p>
+                    </div>
                     {p.next ? (
                         <Link
-                            to="/$tenant/pay/$start"
-                            params={{ tenant: slug, start: p.next }}
+                            to="/$tenant/pay"
+                            params={{ tenant: slug }}
+                            search={{ period: p.next }}
                             replace
                             className={arrow}
                             aria-label="›"
@@ -100,8 +107,9 @@ export function PeriodHome({ start }: { start: string }) {
 
             {before && before.people.some((x) => x.status === "pending" && x.total > 0) && (
                 <Link
-                    to="/$tenant/pay/$start"
-                    params={{ tenant: slug, start: before.start }}
+                    to="/$tenant/pay"
+                    params={{ tenant: slug }}
+                    search={{ period: before.start }}
                     className="flex items-center gap-3 rounded-2xl bg-amber-50 p-4 text-amber-800 active:opacity-80"
                 >
                     <span className="flex-1 text-sm font-semibold">
