@@ -1,6 +1,6 @@
 # Task 046 — Fake sales on staging, and the 500 KB limits
 
-**Status: merged 2026-10-28 (PR #50); first run on staging found two fixes: the script sets `ENV=staging` (Infisical has no `ENV`), and demo stores count too.**
+**Status: merged 2026-10-28 (PR #50); first run on staging found two fixes (PR #52): the script sets `ENV=staging` (Infisical has no `ENV`), and demo stores count too.**
 
 ## The goal
 
