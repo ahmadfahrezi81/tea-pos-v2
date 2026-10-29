@@ -185,9 +185,20 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
                 <p className="truncate text-lg font-bold text-gray-900">{s.name}</p>
                 <OpenBadge store={s} />
             </div>
-            {/* Until staging's API has `sellers`, an older one sends none. */}
             {s.sellers?.length ? (
                 <Sellers sellers={s.sellers} />
+            ) : s.open ? (
+                // An API without `sellers` yet: the seller on shift, as one row.
+                <Sellers
+                    sellers={[
+                        {
+                            userId: s.id,
+                            name: s.sellerName ?? "",
+                            avatarUrl: s.sellerAvatar,
+                            cups: s.cups,
+                        },
+                    ]}
+                />
             ) : (
                 <p className="text-sm text-gray-900">{closedLine(s, t, locale)}</p>
             )}
