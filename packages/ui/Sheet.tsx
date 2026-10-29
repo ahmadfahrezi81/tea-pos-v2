@@ -36,7 +36,9 @@ export function Sheet({
                     <X size={26} />
                 </button>
             </div>
-            <div className="max-h-[60vh] overflow-y-auto">{children}</div>
+            <div className="-mx-4 px-4 max-h-[60vh] overflow-y-auto overflow-x-hidden">
+                {children}
+            </div>
         </Drawer>
     );
 }

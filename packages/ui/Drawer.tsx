@@ -36,7 +36,7 @@ export function Drawer({
             <div
                 role="dialog"
                 aria-label={label}
-                className={`relative mx-auto w-full max-w-[480px] bg-white rounded-t-2xl ${leaving ? "animate-sheet-out" : "animate-sheet-in"} ${className}`}
+                className={`relative mx-auto w-full max-w-[480px] overflow-x-hidden bg-white rounded-t-2xl ${leaving ? "animate-sheet-out" : "animate-sheet-in"} ${className}`}
                 onClick={(e) => e.stopPropagation()}
             >
                 {children}
