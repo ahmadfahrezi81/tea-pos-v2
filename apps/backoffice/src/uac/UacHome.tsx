@@ -5,7 +5,7 @@ import { Avatar } from "@tea-pos/ui/Avatar";
 import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
 import { ChoiceList } from "@tea-pos/ui/ChoiceList";
 import { FilterButton } from "@tea-pos/ui/FilterButton";
-import { Pill } from "@tea-pos/ui/Pill";
+import { Badge } from "@tea-pos/ui/Badge";
 import { SearchBox } from "@tea-pos/ui/SearchBox";
 import { Sheet } from "@tea-pos/ui/Sheet";
 import { useTenant } from "@tea-pos/shell/tenant";
@@ -111,7 +111,7 @@ export function UacHome() {
                             }
                             leading={<Avatar url={p.avatarUrl} square />}
                             title={p.name}
-                            subtitle={<Pills person={p} />}
+                            subtitle={<Badges person={p} />}
                         />
                     ))
                 )}
@@ -135,24 +135,24 @@ export function UacHome() {
     );
 }
 
-/** What someone reaches, one pill per app with its level: `Seller · Member`, `Office · Admin`. */
-function Pills({ person: p }: { person: Person }) {
+/** What someone reaches, one badge per app with its level: `Seller · Member`, `Office · Admin`. */
+function Badges({ person: p }: { person: Person }) {
     const t = useT();
     const level = (l: string) => t(`uac.${l}` as MessageKey);
-    if (!p.active) return <Pill>{t("uac.inactive")}</Pill>;
-    if (p.owner) return <Pill>{t("uac.owner")}</Pill>;
-    if (!p.access.seller && !p.access.backoffice) return <Pill>{t("uac.noAccess")}</Pill>;
+    if (!p.active) return <Badge>{t("uac.inactive")}</Badge>;
+    if (p.owner) return <Badge>{t("uac.owner")}</Badge>;
+    if (!p.access.seller && !p.access.backoffice) return <Badge>{t("uac.noAccess")}</Badge>;
     return (
         <span className="flex flex-wrap gap-1.5 pt-1">
             {p.access.seller && (
-                <Pill>
+                <Badge>
                     {t("uac.seller")} · {level(p.access.seller)}
-                </Pill>
+                </Badge>
             )}
             {p.access.backoffice && (
-                <Pill>
+                <Badge>
                     {t("uac.office")} · {level(p.access.backoffice)}
-                </Pill>
+                </Badge>
             )}
         </span>
     );
