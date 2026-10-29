@@ -32,6 +32,7 @@
         "requestGone": "Permintaan ini sudah dijawab.",
         "search": "Cari orang...",
         "noStores": "Tidak ada toko",
-        "editTitle": "Ubah akses"
+        "editTitle": "Ubah akses",
+        "status": "Status"
     }
 }

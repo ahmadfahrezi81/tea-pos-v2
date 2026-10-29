@@ -32,6 +32,7 @@
         "requestGone": "This request was already answered.",
         "search": "Search people...",
         "noStores": "No stores",
-        "editTitle": "Edit access"
+        "editTitle": "Edit access",
+        "status": "Status"
     }
 }

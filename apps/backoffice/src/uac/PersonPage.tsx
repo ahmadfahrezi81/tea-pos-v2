@@ -34,21 +34,21 @@ export function PersonPage({ userId }: { userId: string }) {
 
             <div className="bg-white rounded-2xl p-4 flex items-center gap-4">
                 <Avatar url={p.avatarUrl} size={64} square />
-                <div className="flex-1 min-w-0 space-y-1">
+                <div className="flex-1 min-w-0">
                     <p className="text-xl font-semibold text-gray-900 leading-tight truncate">
                         {p.name}
                     </p>
-                    <div className="flex flex-wrap gap-1.5">
-                        <Badge tone={p.active ? "green" : "gray"}>
-                            {t(p.active ? "uac.active" : "uac.inactive")}
-                        </Badge>
-                        {p.owner && <Badge tone="brand">{t("uac.owner")}</Badge>}
-                    </div>
+                    {p.owner && <p className="text-sm text-gray-500">{t("uac.owner")}</p>}
                 </div>
             </div>
             {p.owner && <p className="px-1 text-sm text-gray-500">{t("uac.ownerNote")}</p>}
 
             <DetailList>
+                <DetailRow label={t("uac.status")}>
+                    <span className={p.active ? "text-green-600" : "text-gray-400"}>
+                        {p.active ? "●" : "○"} {t(p.active ? "uac.active" : "uac.inactive")}
+                    </span>
+                </DetailRow>
                 <DetailRow label={t("account.email")}>
                     <span className="break-all">{p.email}</span>
                 </DetailRow>
@@ -82,20 +82,6 @@ export function PersonPage({ userId }: { userId: string }) {
                 )}
             </SettingsGroup>
         </div>
-    );
-}
-
-const TONES = {
-    green: "bg-green-50 text-green-700",
-    gray: "bg-gray-100 text-gray-500",
-    brand: "bg-brand/10 text-brand",
-};
-
-function Badge({ tone, children }: { tone: keyof typeof TONES; children: string }) {
-    return (
-        <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${TONES[tone]}`}>
-            {children}
-        </span>
     );
 }
 
