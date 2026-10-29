@@ -1,6 +1,6 @@
 import { formatDateTime, formatDay, formatMoney, formatTime, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { useSlug, useTenant } from "@tea-pos/shell/tenant";
+import { useSlug } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { LoadMore } from "@tea-pos/ui/LoadMore";
 import { Link, useNavigate } from "@tanstack/react-router";

@@ -1,8 +1,8 @@
 import type { components } from "@tea-pos/api-client";
 import { formatDate, formatDay, formatMoney, formatMonth, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { Avatar } from "@tea-pos/ui/Avatar";
-import { useSlug, useTenant } from "@tea-pos/shell/tenant";
+
+import { useSlug } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { Sheet } from "@tea-pos/ui/Sheet";
 import { Link, useNavigate } from "@tanstack/react-router";

@@ -1,7 +1,7 @@
 import { formatDate, formatMoney } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { useSlug, useTenant } from "@tea-pos/shell/tenant";
+import { useSlug } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { BarChart } from "@tea-pos/ui/BarChart";
 import { useNavigate } from "@tanstack/react-router";

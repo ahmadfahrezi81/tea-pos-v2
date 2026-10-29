@@ -2,7 +2,7 @@ import { formatTime, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
-import { useSlug, useTenant } from "@tea-pos/shell/tenant";
+import { useSlug } from "@tea-pos/shell/tenant";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { ChartNoAxesCombined, ReceiptText, Store } from "lucide-react";
 
