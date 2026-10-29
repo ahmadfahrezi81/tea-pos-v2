@@ -85,7 +85,7 @@ export function PayConfirm({ id }: { id: string }) {
                     <p className="text-lg font-bold text-gray-900">
                         {t(slip.status === "skipped" ? "pay.alreadyClosed" : "pay.alreadyPaid")}
                     </p>
-                    <p className="text-sm text-gray-500">{t("pay.alreadySub")}</p>
+                    <p className="text-sm text-gray-900">{t("pay.alreadySub")}</p>
                 </div>
                 <Link
                     to={pathname.replace(/\/settle$/, "")}
@@ -104,7 +104,7 @@ export function PayConfirm({ id }: { id: string }) {
     const name = person?.name ?? slip.name;
     const row = (label: string, value: ReactNode) => (
         <div className="flex justify-between items-center">
-            <span className="text-gray-500">{label}</span>
+            <span className="text-gray-900">{label}</span>
             {typeof value === "string" ? (
                 <span className="font-medium text-gray-800">{value}</span>
             ) : (
@@ -115,7 +115,7 @@ export function PayConfirm({ id }: { id: string }) {
     return (
         <div className="space-y-4">
             <div className="bg-white rounded-xl p-4 space-y-1">
-                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+                <p className="text-xs text-gray-900 font-medium uppercase tracking-wide">
                     {t(isSkip ? "pay.amountOwed" : "pay.amountToPay")}
                 </p>
                 {isSkip ? (
@@ -127,7 +127,7 @@ export function PayConfirm({ id }: { id: string }) {
                         className="text-3xl font-bold text-gray-900"
                     />
                 )}
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-900">
                     {dayMonth(slip.start, locale)} – {dayMonth(slip.end, locale)}{" "}
                     {slip.end.slice(0, 4)}
                 </p>

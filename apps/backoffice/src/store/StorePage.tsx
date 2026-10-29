@@ -47,7 +47,7 @@ export function StorePage() {
                     </div>
                     {store.open && (
                         <div className="mt-2 flex items-center gap-2 text-gray-900">
-                            <Avatar url={store.sellerAvatar} size={28} />
+                            <Avatar url={store.sellerAvatar} size={28} square />
                             <span className="truncate">
                                 {t("store.isSelling").replace("{name}", store.sellerName ?? "")}
                             </span>

@@ -42,6 +42,7 @@ The owner's test round on staging (RFC: [Backoffice v2 refinement](https://app.n
 21. **No grey text inside a panel:** list subtitles, choice hints and panel labels turn black there (`in-[.panel]:`); a person's page drops its grey (owner line, owner note, inactive, None, no stores)
 22. **Empty states:** `EmptyState` (`packages/ui`): a white card, the dot grid, one shared emoji, the ghost from Iconify's Fluent Emoji set (`@iconify-json/fluent-emoji`, as v1's and the other six) (the only picture any empty state uses), a bold title and a line under it. Pay's period, a missing payslip, claim and commission types, What's new, UAC (nobody, or nobody matching), a store's orders and month, a day's activity and sessions, Weather, and no tenant use it
 23. **Pay:** Pay settings is a menu row (`SettingsGroup`, as More); `1 day left`, not `1 day(s) left`
+24. **Pay in the house style:** the period's people as v1's lists (`SettingsGroup` headings, `ListRow`s with square avatars, a badge for Paid, Skipped, Ready or what is waiting, the amount and the orange chevron); no grey text left in Pay's screens (labels, notes, section headings turn black, headings bold as the panels'); every avatar in the app is square, as v1's
 
 ## Done when
 

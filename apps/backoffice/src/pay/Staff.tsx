@@ -62,7 +62,7 @@ function StaffList({
                 {!data ? (
                     [1, 2, 3].map((i) => <ListRowSkeleton key={i} withLeading />)
                 ) : shown.length === 0 ? (
-                    <p className="py-4 text-sm text-gray-400">
+                    <p className="py-4 text-sm text-gray-900">
                         {t(search ? "pay.noStaffMatch" : "pay.noStaff")}
                     </p>
                 ) : (
@@ -122,14 +122,14 @@ function Person({ s }: { s: Staff }) {
             <Avatar url={s.avatarUrl} size={56} square />
             <div className="flex-1 min-w-0 space-y-0.5">
                 <p className="text-lg font-semibold text-gray-900 truncate">{s.name}</p>
-                <p className="text-sm text-gray-400 truncate">{s.email}</p>
+                <p className="text-sm text-gray-900 truncate">{s.email}</p>
             </div>
         </div>
     );
 }
 
 const Heading = ({ children }: { children: ReactNode }) => (
-    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide px-1">{children}</p>
+    <p className="text-xs font-bold text-gray-900 uppercase tracking-widest px-1">{children}</p>
 );
 
 function useStaffMember(id: string) {
@@ -143,13 +143,13 @@ export function StaffInfo({ id }: { id: string }) {
     const slug = useSlug();
     const { loaded, staff } = useStaffMember(id);
     if (!loaded) return <Skeleton className="h-40 rounded-xl" />;
-    if (!staff) return <p className="p-4 text-sm text-gray-400">{t("pay.staffNotFound")}</p>;
+    if (!staff) return <p className="p-4 text-sm text-gray-900">{t("pay.staffNotFound")}</p>;
     const type = staff.commissionType;
     const bank = staff.bank;
     const line = (label: string, value: string | undefined, mono = false, last = false) =>
         value && (
             <div className={`py-3.5 ${last ? "" : "border-b border-gray-100"}`}>
-                <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+                <p className="text-xs text-gray-900 mb-0.5">{label}</p>
                 <p className={`text-base font-medium text-gray-900 ${mono ? "font-mono" : ""}`}>
                     {value}
                 </p>
@@ -165,7 +165,7 @@ export function StaffInfo({ id }: { id: string }) {
                         <p className="text-base font-medium text-gray-900 truncate">
                             {type ? type.name : t("pay.none")}
                         </p>
-                        <p className="text-sm text-gray-400 font-mono">
+                        <p className="text-sm text-gray-900 font-mono">
                             {type
                                 ? t("pay.perCup").replace("{rate}", formatMoney(type.ratePerCup))
                                 : t("pay.noCommission")}
@@ -191,7 +191,7 @@ export function StaffInfo({ id }: { id: string }) {
                             {line(t("pay.accountHolder"), bank.accountHolder, false, true)}
                         </>
                     ) : (
-                        <p className="py-4 text-sm text-gray-400">{t("pay.noBank")}</p>
+                        <p className="py-4 text-sm text-gray-900">{t("pay.noBank")}</p>
                     )}
                 </div>
             </div>
@@ -210,7 +210,7 @@ export function StaffCommissionList() {
                 s.commissionType ? (
                     s.commissionType.name
                 ) : (
-                    <span className="text-gray-300">{t("pay.noCommission")}</span>
+                    <span className="text-gray-900">{t("pay.noCommission")}</span>
                 )
             }
         />
@@ -228,7 +228,7 @@ export function StaffCommission({ id }: { id: string }) {
     const save = usePayWrite(writes.setStaffCommission);
     const { canWrite } = useAccess();
     if (!loaded || !types) return <Skeleton className="h-40 rounded-xl" />;
-    if (!staff) return <p className="p-4 text-sm text-gray-400">{t("pay.staffNotFound")}</p>;
+    if (!staff) return <p className="p-4 text-sm text-gray-900">{t("pay.staffNotFound")}</p>;
     const selected = picked !== undefined ? picked : (staff.commissionType?.id ?? null);
     const option = (key: string | null, title: string, sub: string, mono = false) => (
         <button
@@ -238,7 +238,7 @@ export function StaffCommission({ id }: { id: string }) {
         >
             <div className="text-left">
                 <p className="text-base font-medium text-gray-900">{title}</p>
-                <p className={`text-sm text-gray-400 ${mono ? "font-mono" : ""}`}>{sub}</p>
+                <p className={`text-sm text-gray-900 ${mono ? "font-mono" : ""}`}>{sub}</p>
             </div>
             {selected === key && <Check size={ICON} className="text-brand shrink-0" />}
         </button>
@@ -251,7 +251,7 @@ export function StaffCommission({ id }: { id: string }) {
                 <Heading>{t("pay.commissionType")}</Heading>
                 {option(null, t("pay.none"), t("pay.noCommission"))}
                 {enabled.length === 0 ? (
-                    <p className="text-sm text-gray-400 px-1">{t("pay.noCommissionTypes")}</p>
+                    <p className="text-sm text-gray-900 px-1">{t("pay.noCommissionTypes")}</p>
                 ) : (
                     enabled.map((ty) =>
                         option(

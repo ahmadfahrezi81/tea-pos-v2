@@ -86,7 +86,7 @@ export function PaySchedule() {
                     <CalendarClock size={24} className="text-brand" />
                 </div>
                 <div className="min-w-0">
-                    <p className="text-xs font-medium text-gray-500">
+                    <p className="text-xs font-medium text-gray-900">
                         {t("pay.currentPeriod")} · {name(current)}
                     </p>
                     <p className="font-mono text-sm font-semibold text-gray-600">
@@ -126,10 +126,10 @@ export function PaySchedule() {
                                 >
                                     {name(f)}
                                 </p>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-gray-900">
                                     {t(`pay.cadenceSub.${f}` as MessageKey)}
                                 </p>
-                                <p className="font-mono text-xs text-gray-400 mt-0.5">
+                                <p className="font-mono text-xs text-gray-900 mt-0.5">
                                     {t("pay.next")}: {range(n.start, n.end, locale)}
                                     {!n.aligned && " ⚠"}
                                 </p>
@@ -139,7 +139,7 @@ export function PaySchedule() {
                     );
                 })}
             </div>
-            <p className="text-xs text-gray-400 px-1">{t("pay.scheduleNote")}</p>
+            <p className="text-xs text-gray-900 px-1">{t("pay.scheduleNote")}</p>
             {pending && (
                 <ConfirmSheet
                     title={t("pay.switchTo").replace("{name}", name(pending))}

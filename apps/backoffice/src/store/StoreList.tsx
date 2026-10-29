@@ -74,7 +74,7 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
             <div className="mt-1.5 flex min-w-0 items-center gap-2 text-sm text-gray-600">
                 {s.open ? (
                     <>
-                        <Avatar url={s.sellerAvatar} size={24} />
+                        <Avatar url={s.sellerAvatar} size={24} square />
                         <span className="truncate">
                             {t("store.sellerSince")
                                 .replace("{name}", s.sellerName ?? "")

@@ -111,7 +111,7 @@ function SlugField({ slug }: { slug: string }) {
     return (
         <Field label={t("pay.slug")}>
             <div className="flex items-center gap-2 p-4 px-3 border-2 border-gray-100 rounded-2xl bg-gray-50">
-                <p className="flex-1 font-mono text-base text-gray-500">{slug}</p>
+                <p className="flex-1 font-mono text-base text-gray-900">{slug}</p>
                 <CopyButton
                     value={slug}
                     size={16}
@@ -127,7 +127,7 @@ function SlugField({ slug }: { slug: string }) {
 
 function ReadOnly({ value }: { value: string }) {
     return (
-        <div className="p-4 px-3 border-2 border-gray-100 rounded-2xl bg-gray-50 text-base font-medium text-gray-500">
+        <div className="p-4 px-3 border-2 border-gray-100 rounded-2xl bg-gray-50 text-base font-medium text-gray-900">
             {value}
         </div>
     );
@@ -210,7 +210,7 @@ export function CommissionTypeEdit({ id }: { id: string }) {
     const update = usePayWrite(writes.updateCommissionType);
     if (!data) return <Skeleton className="h-60 rounded-xl" />;
     if (!type || !form)
-        return <p className="p-4 text-sm text-gray-400">{t("pay.commissionTypeNotFound")}</p>;
+        return <p className="p-4 text-sm text-gray-900">{t("pay.commissionTypeNotFound")}</p>;
     return (
         <div className="space-y-4">
             <Card>
@@ -426,7 +426,7 @@ export function ClaimTypeEdit({ id }: { id: string }) {
     const setEligible = usePayWrite(writes.setClaimEligible);
     if (!data) return <Skeleton className="h-60 rounded-xl" />;
     if (!type || !form)
-        return <p className="p-4 text-sm text-gray-400">{t("pay.claimTypeNotFound")}</p>;
+        return <p className="p-4 text-sm text-gray-900">{t("pay.claimTypeNotFound")}</p>;
     const current = picked ?? new Set(eligible?.userIds ?? []);
     const people = (staff?.staff ?? []).filter((s) => s.role !== "ADMIN");
     const shown = search.trim()
@@ -471,11 +471,11 @@ export function ClaimTypeEdit({ id }: { id: string }) {
             </Card>
             <SearchBox value={search} onChange={setSearch} />
             <div className="space-y-2">
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide px-1">
+                <p className="text-xs font-bold text-gray-900 uppercase tracking-widest px-1">
                     {t("pay.eligibility")}
                 </p>
                 {shown.length === 0 ? (
-                    <p className="text-sm text-gray-400 px-1">{t("pay.noStaff")}</p>
+                    <p className="text-sm text-gray-900 px-1">{t("pay.noStaff")}</p>
                 ) : (
                     shown.map((s) => (
                         <div

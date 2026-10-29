@@ -115,7 +115,7 @@ export function Payslip({ id }: { id: string }) {
     );
     const detail = (label: string, value: ReactNode) => (
         <div key={label} className="flex justify-between items-center">
-            <span className="text-gray-500">{label}</span>
+            <span className="text-gray-900">{label}</span>
             <span className="font-medium text-gray-800">{value}</span>
         </div>
     );
@@ -200,13 +200,13 @@ export function Payslip({ id }: { id: string }) {
                     )}
                     {detail(t("pay.expectedPayout"), payDate(addDays(slip.end, 1), locale))}
                     <div className="flex justify-between items-center pt-1.5 border-t border-gray-100">
-                        <span className="text-gray-500">{t("pay.payslipId")}</span>
+                        <span className="text-gray-900">{t("pay.payslipId")}</span>
                         <CopyButton
                             value={slip.id}
                             size={13}
                             className="flex items-center gap-1 active:opacity-70"
                         >
-                            <span className="font-mono text-xs text-gray-400">
+                            <span className="font-mono text-xs text-gray-900">
                                 {slip.id.slice(0, 8)}…
                             </span>
                         </CopyButton>
@@ -222,7 +222,7 @@ export function Payslip({ id }: { id: string }) {
                         <div className="pt-2.5 border-t border-gray-100 space-y-3">
                             {slip.paymentProofUrl && (
                                 <div className="space-y-1.5">
-                                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+                                    <p className="text-xs text-gray-900 font-medium uppercase tracking-wide">
                                         {t("pay.receipt")}
                                     </p>
                                     <button
@@ -239,7 +239,7 @@ export function Payslip({ id }: { id: string }) {
                             )}
                             {slip.notes && (
                                 <div className="space-y-1.5">
-                                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+                                    <p className="text-xs text-gray-900 font-medium uppercase tracking-wide">
                                         {t("pay.noteForStaff")}
                                     </p>
                                     <p className="text-sm text-gray-800 whitespace-pre-wrap bg-slate-50 rounded-xl p-3">
@@ -258,7 +258,7 @@ export function Payslip({ id }: { id: string }) {
                         {WEEKDAYS.map((d) => (
                             <span
                                 key={d}
-                                className="text-xs font-semibold text-gray-500 text-center"
+                                className="text-xs font-semibold text-gray-900 text-center"
                             >
                                 {t(`common.weekdays.${d}`)}
                             </span>
@@ -271,7 +271,7 @@ export function Payslip({ id }: { id: string }) {
                             {week.map((d) => (
                                 <div
                                     key={d}
-                                    className={`size-9 mx-auto flex items-center justify-center rounded-lg text-sm font-medium ${worked.has(d) ? "bg-blue-500 text-white font-semibold" : "bg-gray-100 text-gray-500"}`}
+                                    className={`size-9 mx-auto flex items-center justify-center rounded-lg text-sm font-medium ${worked.has(d) ? "bg-blue-500 text-white font-semibold" : "bg-gray-100 text-gray-900"}`}
                                 >
                                     {Number(d.slice(8))}
                                 </div>
@@ -445,7 +445,7 @@ export function Payslip({ id }: { id: string }) {
                             {confirmTitle(t, confirm)}
                         </p>
                         <button onClick={() => setConfirm(null)} aria-label={t("common.close")}>
-                            <X size={ICON} className="text-gray-400" />
+                            <X size={ICON} className="text-gray-900" />
                         </button>
                     </div>
                     <div className="bg-gray-50 rounded-xl p-4">
@@ -467,7 +467,7 @@ export function Payslip({ id }: { id: string }) {
                     </ActionButton>
                     <button
                         onClick={() => setConfirm(null)}
-                        className="w-full py-3 text-gray-500 text-sm font-medium"
+                        className="w-full py-3 text-gray-900 text-sm font-medium"
                     >
                         {t("common.cancel")}
                     </button>
