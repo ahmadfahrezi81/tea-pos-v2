@@ -1,7 +1,6 @@
 {
     "uac": {
         "waiting": "Waiting",
-        "people": "People",
         "askedAt": "asked {when}",
         "owner": "Owner",
         "inactive": "Inactive",
@@ -30,6 +29,7 @@
         "reject": "Reject",
         "block": "Block",
         "blockNote": "Reject: they can ask again. Block: their later asks are dropped, and they aren't told.",
-        "requestGone": "This request was already answered."
+        "requestGone": "This request was already answered.",
+        "search": "Search people..."
     }
 }

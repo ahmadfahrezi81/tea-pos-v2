@@ -1,7 +1,6 @@
 {
     "uac": {
         "waiting": "Menunggu",
-        "people": "Orang",
         "askedAt": "meminta {when}",
         "owner": "Pemilik",
         "inactive": "Nonaktif",
@@ -30,6 +29,7 @@
         "reject": "Tolak",
         "block": "Blokir",
         "blockNote": "Tolak: mereka bisa meminta lagi. Blokir: permintaan berikutnya diabaikan, tanpa pemberitahuan.",
-        "requestGone": "Permintaan ini sudah dijawab."
+        "requestGone": "Permintaan ini sudah dijawab.",
+        "search": "Cari orang..."
     }
 }

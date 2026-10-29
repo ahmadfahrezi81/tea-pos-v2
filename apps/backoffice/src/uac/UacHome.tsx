@@ -2,81 +2,80 @@ import { formatRelative } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
+import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
+import { SearchBox } from "@tea-pos/ui/SearchBox";
 import { useTenant } from "@tea-pos/shell/tenant";
-import { Link } from "@tanstack/react-router";
-import { ChevronRight } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 
 import { useUac, type Person } from "./uac";
-import { Skeleton } from "@tea-pos/ui/Skeleton";
 
-/** UAC's home: requests waiting on top, then everyone, with what each can reach. */
+/** UAC's home, as the old Staff Payroll Info list: requests waiting on top, then everyone, searchable. */
 export function UacHome() {
     const t = useT();
     const locale = useLocale();
+    const navigate = useNavigate();
     const slug = useTenant()?.tenant.slug ?? "";
     const { data } = useUac();
-    if (!data)
-        return (
-            <div className="space-y-3">
-                <Skeleton className="h-40 rounded-2xl" />
-            </div>
-        );
+    const [search, setSearch] = useState("");
+    const q = search.trim().toLowerCase();
+    const people = (data?.people ?? []).filter((p) => !q || p.name.toLowerCase().includes(q));
     return (
-        <div className="space-y-4">
-            {data.requests.length > 0 && (
+        <div className="space-y-3">
+            {data && data.requests.length > 0 && (
                 <section className="space-y-2">
-                    <p className="px-1 text-sm font-semibold text-gray-500">
+                    <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">
                         {t("uac.waiting")} ({data.requests.length})
                     </p>
-                    <div className="overflow-hidden rounded-2xl bg-white">
-                        {data.requests.map((r, i) => (
-                            <Link
+                    <ListCard>
+                        {data.requests.map((r) => (
+                            <ListRow
                                 key={r.id}
-                                to="/$tenant/uac/requests/$id"
-                                params={{ tenant: slug, id: r.id }}
-                                className="block active:bg-gray-50"
-                            >
-                                <Row
-                                    name={r.name}
-                                    avatarUrl={r.avatarUrl}
-                                    line={t("uac.askedAt").replace(
-                                        "{when}",
-                                        formatRelative(r.at, locale),
-                                    )}
-                                    last={i === data.requests.length - 1}
-                                    arrow
-                                />
-                            </Link>
+                                onClick={() =>
+                                    void navigate({
+                                        to: "/$tenant/uac/requests/$id",
+                                        params: { tenant: slug, id: r.id },
+                                    })
+                                }
+                                leading={<Avatar url={r.avatarUrl} square />}
+                                title={r.name}
+                                subtitle={t("uac.askedAt").replace(
+                                    "{when}",
+                                    formatRelative(r.at, locale),
+                                )}
+                            />
                         ))}
-                    </div>
+                    </ListCard>
                 </section>
             )}
-            <section className="space-y-2">
-                <p className="px-1 text-sm font-semibold text-gray-500">
-                    {t("uac.people")} ({data.people.length})
-                </p>
-                <div className="overflow-hidden rounded-2xl bg-white">
-                    {data.people.length === 0 && (
-                        <p className="p-6 text-center text-gray-400">{t("uac.noPeople")}</p>
-                    )}
-                    {data.people.map((p, i) => (
-                        <Link
+            <SearchBox
+                value={search}
+                onChange={setSearch}
+                placeholder={t("uac.search")}
+                clearLabel={t("common.close")}
+            />
+            <ListCard>
+                {!data ? (
+                    [1, 2, 3].map((i) => <ListRowSkeleton key={i} withLeading />)
+                ) : people.length === 0 ? (
+                    <p className="py-4 text-sm text-gray-400">{t("uac.noPeople")}</p>
+                ) : (
+                    people.map((p) => (
+                        <ListRow
                             key={p.id}
-                            to="/$tenant/uac/$userId"
-                            params={{ tenant: slug, userId: p.id }}
-                            className="block active:bg-gray-50"
-                        >
-                            <Row
-                                name={p.name}
-                                avatarUrl={p.avatarUrl}
-                                line={summary(p, t)}
-                                last={i === data.people.length - 1}
-                                arrow
-                            />
-                        </Link>
-                    ))}
-                </div>
-            </section>
+                            onClick={() =>
+                                void navigate({
+                                    to: "/$tenant/uac/$userId",
+                                    params: { tenant: slug, userId: p.id },
+                                })
+                            }
+                            leading={<Avatar url={p.avatarUrl} square />}
+                            title={p.name}
+                            subtitle={summary(p, t)}
+                        />
+                    ))
+                )}
+            </ListCard>
         </div>
     );
 }
@@ -92,29 +91,4 @@ function summary(p: Person, t: (k: MessageKey) => string): string {
             `${t("uac.backoffice")} ${t(`uac.${p.access.backoffice}` as MessageKey).toLowerCase()}`,
         );
     return parts.length > 0 ? parts.join(" · ") : t("uac.noAccess");
-}
-
-function Row({
-    name,
-    avatarUrl,
-    line,
-    last,
-    arrow,
-}: {
-    name: string;
-    avatarUrl?: string;
-    line: string;
-    last: boolean;
-    arrow?: boolean;
-}) {
-    return (
-        <div className={`flex items-center gap-3 p-3 ${last ? "" : "border-b border-gray-100"}`}>
-            <Avatar url={avatarUrl} size={36} />
-            <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold text-gray-900">{name}</p>
-                <p className="truncate text-xs text-gray-500">{line}</p>
-            </div>
-            {arrow && <ChevronRight size={20} className="shrink-0 text-gray-400" />}
-        </div>
-    );
 }

@@ -29,6 +29,7 @@ The owner's test round on staging (RFC: [Backoffice v2 refinement](https://app.n
 7. **Shared animations, no library** (v1 used vaul, Radix Dialog and two animation packages): `packages/ui/styles/motion.css` gives Tailwind utilities, transform and opacity only, off under reduced motion: `fade-in/out`, `sheet-in/out` (v1's drawer ease), `pop-in/out` (dialogs), `rise-in/out` (toasts), `drop-in` (menus). `usePresence` (`ui/motion.ts`) keeps a closing element until its exit plays. `Drawer` and `Dialog` (`ui/Drawer.tsx`) are the one bottom panel and centred card; Sheet, ConfirmDialog, the form footer's and refresh sheets, Weather, the payslip's decision sheet and receipt, and the day's photo viewer use them. Toasts rise in, the ⋯ menu drops in. `@tea-pos/ui` exports `./*`, so a new component needs no export line
 9. **Bebas Neue goes** (owner: a font for one title is not worth it): the weather sheet's title is Inter, the package leaves the backoffice
 10. **Location Feedback goes, for now** (owner: not a priority, maybe later): its screen, route, row, words and Leaflet leave the backoffice; More keeps Weather and Patch Notes. Go's `GET /feedbacks` stays until decided
+11. **UAC's home as v1's Staff Payroll Info list:** a search box, then everyone in a `ListCard` of `ListRow`s with square avatars (no "People (n)" heading); requests waiting stay on top under their heading. `SearchBox` moves to `packages/ui` (Pay's staff lists use it too)
 
 ## Done when
 

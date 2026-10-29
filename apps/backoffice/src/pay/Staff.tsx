@@ -6,8 +6,9 @@ import { Avatar } from "@tea-pos/ui/Avatar";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
 import { useAccess } from "@tea-pos/shell/tenant";
 import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
+import { SearchBox as UiSearchBox } from "@tea-pos/ui/SearchBox";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { Check, Pencil, Search, X } from "lucide-react";
+import { Check, Pencil } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { useCommissionTypes, usePayStaff, usePayWrite, useSlug, writes } from "./pay";
@@ -26,25 +27,12 @@ const STATUS_TAG: Record<string, string> = {
 export function SearchBox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
     const t = useT();
     return (
-        <div className="flex items-center gap-2 bg-white rounded-xl px-3 py-2.5">
-            <Search size={16} className="text-gray-400 shrink-0" />
-            <input
-                type="text"
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                placeholder={t("pay.searchStaff")}
-                className="flex-1 text-base text-gray-800 placeholder:text-gray-400 bg-transparent outline-none"
-            />
-            {value && (
-                <button
-                    onClick={() => onChange("")}
-                    className="text-gray-400 active:text-gray-600 shrink-0"
-                    aria-label={t("common.close")}
-                >
-                    <X size={16} />
-                </button>
-            )}
-        </div>
+        <UiSearchBox
+            value={value}
+            onChange={onChange}
+            placeholder={t("pay.searchStaff")}
+            clearLabel={t("common.close")}
+        />
     );
 }
 
