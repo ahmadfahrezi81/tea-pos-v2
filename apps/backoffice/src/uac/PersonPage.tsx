@@ -42,14 +42,14 @@ export function PersonPage({ userId }: { userId: string }) {
                     <p className="text-xl font-semibold text-gray-900 leading-tight truncate">
                         {p.name}
                     </p>
-                    {p.owner && <p className="text-sm text-gray-500">{t("uac.owner")}</p>}
+                    {p.owner && <p className="text-sm text-gray-900">{t("uac.owner")}</p>}
                 </div>
             </div>
-            {p.owner && <p className="px-1 text-sm text-gray-500">{t("uac.ownerNote")}</p>}
+            {p.owner && <p className="px-1 text-sm text-gray-900">{t("uac.ownerNote")}</p>}
 
             <DetailList>
                 <DetailRow label={t("uac.status")}>
-                    <span className={p.active ? "text-green-600" : "text-gray-400"}>
+                    <span className={p.active ? "text-green-600" : "text-gray-900"}>
                         {p.active ? "●" : "○"} {t(p.active ? "uac.active" : "uac.inactive")}
                     </span>
                 </DetailRow>
@@ -70,7 +70,7 @@ export function PersonPage({ userId }: { userId: string }) {
                             title={t(`uac.${app}`)}
                             trailing={
                                 <span
-                                    className={`text-base font-semibold ${p.access[app] ? "text-gray-900" : "text-gray-400"}`}
+                                    className={`text-base text-gray-900 ${p.access[app] ? "font-semibold" : "font-normal"}`}
                                 >
                                     {t(`uac.${p.access[app] || "none"}` as MessageKey)}
                                 </span>
@@ -83,7 +83,7 @@ export function PersonPage({ userId }: { userId: string }) {
             <Panel icon={<Store {...rowIcon} />} title={t("uac.stores")}>
                 {theirs.length === 0 ? (
                     <ListCard>
-                        <p className="py-4 text-gray-400">{t("uac.noStores")}</p>
+                        <p className="py-4 text-gray-900">{t("uac.noStores")}</p>
                     </ListCard>
                 ) : (
                     storeGroups(theirs).map((g) => (

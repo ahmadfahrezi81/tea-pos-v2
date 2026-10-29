@@ -28,6 +28,6 @@ export function Panel({
 /** A small heading over a card inside a Panel. */
 export function PanelLabel({ children }: { children: ReactNode }) {
     return (
-        <p className="pl-1 text-xs font-bold uppercase tracking-widest text-gray-700">{children}</p>
+        <p className="pl-1 text-xs font-bold uppercase tracking-widest text-gray-900">{children}</p>
     );
 }

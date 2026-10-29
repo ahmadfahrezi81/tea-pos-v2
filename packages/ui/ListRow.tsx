@@ -28,7 +28,11 @@ export function ListRow({
             <div className="flex-1 min-w-0 flex items-center gap-3 py-4 -mr-4 pr-4 border-b-2 border-slate-100 in-[.panel]:border-white group-last:border-b-0">
                 <div className="flex-1 min-w-0">
                     <div className="text-[17px] font-medium text-gray-900 truncate">{title}</div>
-                    {subtitle && <div className="text-sm text-gray-400 truncate">{subtitle}</div>}
+                    {subtitle && (
+                        <div className="text-sm text-gray-400 in-[.panel]:text-gray-900 truncate">
+                            {subtitle}
+                        </div>
+                    )}
                 </div>
                 {trailing ??
                     (onClick && (

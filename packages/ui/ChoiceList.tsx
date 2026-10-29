@@ -30,7 +30,11 @@ export function ChoiceList<T extends string>({
                     >
                         <div className={`text-left ${c.disabled ? "opacity-40" : ""}`}>
                             <p className="text-[17px] font-medium text-gray-900">{c.label}</p>
-                            {c.sublabel && <p className="text-sm text-gray-400">{c.sublabel}</p>}
+                            {c.sublabel && (
+                                <p className="text-sm text-gray-400 in-[.panel]:text-gray-900">
+                                    {c.sublabel}
+                                </p>
+                            )}
                         </div>
                         <span
                             className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${selected ? "border-brand/90 bg-brand/90" : "border-gray-300"}`}
