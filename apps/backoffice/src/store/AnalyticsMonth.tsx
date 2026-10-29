@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-import { monthRange, useDays, useSalesDays, useStoreId } from "./sales";
+import { ALL, monthRange, useDays, useSalesDays, useStoreId } from "./sales";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
@@ -62,7 +62,7 @@ export function AnalyticsMonth({ month }: { month: string }) {
     const navigate = useNavigate();
     const slug = useTenant()?.tenant.slug ?? "";
     const storeId = useStoreId();
-    const severalStores = !useTenant()?.store;
+    const severalStores = storeId === ALL;
     const [from, to] = monthRange(month);
     const days = useDays(month);
     const perDay = useSalesDays(from, to);

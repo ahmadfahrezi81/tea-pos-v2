@@ -2,6 +2,7 @@ import { loadArea } from "@tea-pos/i18n";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { DayDetail } from "../../../../../../../../store/DayDetail";
+import { StoreTitle } from "../../../../../../../../store/StoreTitle";
 
 export const Route = createFileRoute("/_shell/$tenant/store/$storeId/analytics/days/$dayId/")({
     // The Store screens\' words come with them, not on the first open.
@@ -10,6 +11,11 @@ export const Route = createFileRoute("/_shell/$tenant/store/$storeId/analytics/d
         shell: { titleKey: "nav.daySummaryDetails", parent: "../..", refreshable: true },
     },
     component: function Day() {
-        return <DayDetail id={Route.useParams().dayId} />;
+        return (
+            <>
+                <StoreTitle titleKey="nav.daySummaryDetails" />
+                <DayDetail id={Route.useParams().dayId} />
+            </>
+        );
     },
 });

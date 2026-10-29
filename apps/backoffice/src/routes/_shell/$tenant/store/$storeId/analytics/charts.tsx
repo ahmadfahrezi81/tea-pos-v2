@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { AnalyticsCharts } from "../../../../../../store/AnalyticsCharts";
 import { monthSearch } from "../../../../../../store/sales";
+import { StoreTitle } from "../../../../../../store/StoreTitle";
 
 export const Route = createFileRoute("/_shell/$tenant/store/$storeId/analytics/charts")({
     // The Store screens\' words come with them, not on the first open.
@@ -16,6 +17,11 @@ export const Route = createFileRoute("/_shell/$tenant/store/$storeId/analytics/c
         },
     },
     component: function Charts() {
-        return <AnalyticsCharts month={Route.useSearch().month} />;
+        return (
+            <>
+                <StoreTitle titleKey="nav.monthlyChart" />
+                <AnalyticsCharts month={Route.useSearch().month} />
+            </>
+        );
     },
 });

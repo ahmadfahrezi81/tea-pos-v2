@@ -6,7 +6,7 @@ import { LoadMore } from "@tea-pos/ui/LoadMore";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { CalendarDays, Receipt } from "lucide-react";
 
-import { useDayOrders, useSalesHours, useStoreId } from "./sales";
+import { ALL, useDayOrders, useSalesHours, useStoreId } from "./sales";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
@@ -42,7 +42,7 @@ export function StoreOrders({ date }: { date: string }) {
     const navigate = useNavigate();
     const slug = useTenant()?.tenant.slug ?? "";
     const storeId = useStoreId();
-    const severalStores = !useTenant()?.store;
+    const severalStores = storeId === ALL;
     const hours = useSalesHours(date);
     const orders = useDayOrders(date);
     const totals = hours.data;

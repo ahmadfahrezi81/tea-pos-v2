@@ -2,6 +2,7 @@ import { loadArea } from "@tea-pos/i18n";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { DaySessions } from "../../../../../../../../store/DayActivity";
+import { StoreTitle } from "../../../../../../../../store/StoreTitle";
 
 export const Route = createFileRoute(
     "/_shell/$tenant/store/$storeId/analytics/days/$dayId/sessions",
@@ -10,6 +11,11 @@ export const Route = createFileRoute(
     loader: () => loadArea("store"),
     staticData: { shell: { titleKey: "nav.daySessions", parent: "../../..", refreshable: true } },
     component: function Sessions() {
-        return <DaySessions id={Route.useParams().dayId} />;
+        return (
+            <>
+                <StoreTitle titleKey="nav.daySessions" />
+                <DaySessions id={Route.useParams().dayId} />
+            </>
+        );
     },
 });
