@@ -44,6 +44,7 @@ The owner's test round on staging (RFC: [Backoffice v2 refinement](https://app.n
 23. **Pay:** Pay settings is a menu row (`SettingsGroup`, as More); `1 day left`, not `1 day(s) left`
 24. **Pay in the house style:** the period's people as v1's lists (`SettingsGroup` headings, `ListRow`s with square avatars, a badge for Paid, Skipped, Ready or what is waiting, the amount and the orange chevron); no grey text left in Pay's screens (labels, notes, section headings turn black, headings bold as the panels'); every avatar in the app is square, as v1's
 25. **Bigger period arrows:** ‹ › are 44 px grey squares with a 26 px bold chevron (`STEP_ARROW`, `stepIcon` beside `MonthStepper`, which uses them too)
+26. **Store's home, real stores only:** demo and shut-down stores leave the list (they stay reachable through All stores' views and UAC); the "0 of 10 open" line goes; each card: name and an Open or Closed badge, the seller (or when it closed) in black, a divider, today's sales and cups, the orange chevron; All stores is a menu row; nothing to show is the empty state. `OpenBadge` is a `Badge` (Open, Closed, Demo, Shut down)
 
 ## Done when
 

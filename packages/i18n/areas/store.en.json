@@ -121,6 +121,8 @@
             "supply_request_created": "Supply requested",
             "incident_report_created": "Incident reported"
         },
-        "orderNumber": "Order #{n}"
+        "orderNumber": "Order #{n}",
+        "noStores": "No stores yet",
+        "inactive": "Shut down"
     }
 }
