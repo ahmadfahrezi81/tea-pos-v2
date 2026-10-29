@@ -1,5 +1,5 @@
 import { useMe } from "@tea-pos/api-client/me";
-import { useLocale, useT } from "@tea-pos/i18n/react";
+import { useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { ConfirmDialog } from "@tea-pos/ui/ConfirmDialog";
 import { useQueryClient } from "@tanstack/react-query";
@@ -17,7 +17,6 @@ import { APP_VERSION } from "./version";
  */
 export function AccountScreen() {
     const t = useT();
-    const locale = useLocale();
     const queryClient = useQueryClient();
     const me = useMe().data;
     const slug = useTenant()?.tenant.slug;
@@ -48,7 +47,6 @@ export function AccountScreen() {
                         to={`/${slug}/account/language`}
                         icon={<Globe {...rowIcon} />}
                         label={t("account.language")}
-                        sublabel={t(`language.${locale}`)}
                     />
                     <SettingsRow
                         to={`/${slug}/account/info`}
