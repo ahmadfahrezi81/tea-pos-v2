@@ -2,6 +2,9 @@ import type { MessageKey } from "@tea-pos/i18n";
 import { formatLongDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
+import { Callout } from "@tea-pos/ui/Callout";
+import { ChoiceList } from "@tea-pos/ui/ChoiceList";
+import { Switch } from "@tea-pos/ui/form/Switch";
 import { DetailList, DetailRow } from "@tea-pos/ui/DetailList";
 import { ListRow } from "@tea-pos/ui/ListRow";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
@@ -110,39 +113,34 @@ function PersonForm({ person: p }: { person: Person }) {
         JSON.stringify({ access: p.access, storeIds: p.storeIds, active: p.active });
 
     return (
-        <div className="space-y-4 pb-24">
+        <div className="space-y-4">
             <HeaderTitle>{p.name}</HeaderTitle>
+
+            <SettingsGroup title={t("uac.status")}>
+                <div className="flex items-center gap-3 py-5">
+                    <p className="flex-1 text-[17px] font-medium text-gray-900">
+                        {t("uac.active")}
+                    </p>
+                    <Switch
+                        on={change.active}
+                        label={t("uac.active")}
+                        onChange={(active) =>
+                            editable && set({ active, storeIds: active ? change.storeIds : [] })
+                        }
+                    />
+                </div>
+            </SettingsGroup>
+            {!change.active && <Callout>{t("uac.offNote")}</Callout>}
 
             <AccessFields change={change} set={set} disabled={!editable || !change.active} />
 
             {editable && (
-                <div className="space-y-2">
-                    <button
-                        onClick={() =>
-                            set({
-                                active: !change.active,
-                                storeIds: change.active ? [] : change.storeIds,
-                            })
-                        }
-                        className={`w-full rounded-xl py-3 font-semibold ${
-                            change.active ? "bg-red-50 text-red-600" : "bg-green-50 text-green-700"
-                        }`}
-                    >
-                        {t(change.active ? "uac.deactivate" : "uac.activate")}
-                    </button>
-                    {!change.active && (
-                        <p className="px-1 text-xs text-gray-500">{t("uac.offNote")}</p>
-                    )}
-                </div>
-            )}
-
-            {editable && changed && (
                 <FormFooter
                     label={t("uac.save")}
                     busyLabel={t("uac.saving")}
+                    disabled={!changed}
                     confirmTitle={t("uac.confirmTitle").replace("{name}", p.name)}
-                    confirmMessage={t("uac.confirmBody")}
-                    note={{ title: t("uac.apps"), body: t("uac.confirmBody") }}
+                    note={{ title: t("uac.noteTitle"), body: t("uac.confirmBody") }}
                     onSubmit={async () => {
                         await save.mutateAsync(change);
                         router.history.back();
@@ -152,6 +150,13 @@ function PersonForm({ person: p }: { person: Person }) {
         </div>
     );
 }
+
+const HINTS: Record<string, MessageKey> = {
+    "": "uac.noneHint",
+    member: "uac.memberHint",
+    guest: "uac.guestHint",
+    admin: "uac.adminHint",
+};
 
 /** The level in each app and the stores: the same fields for a person and for a request. */
 export function AccessFields({
@@ -167,39 +172,30 @@ export function AccessFields({
     const stores = useTenant()?.tenant.stores ?? [];
     return (
         <>
-            <section className="space-y-2">
-                <p className="px-1 text-sm font-semibold text-gray-500">{t("uac.apps")}</p>
-                <div className="space-y-3 rounded-2xl bg-white p-4">
-                    {(["seller", "backoffice"] as const).map((app) => (
-                        <div key={app} className="flex items-center justify-between gap-3">
-                            <span className="text-gray-900">{t(`uac.${app}`)}</span>
-                            <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
-                                {LEVELS[app].map((level) => (
-                                    <button
-                                        key={level}
-                                        disabled={disabled}
-                                        onClick={() =>
-                                            set({ access: { ...change.access, [app]: level } })
-                                        }
-                                        className={`rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-60 ${
-                                            change.access[app] === level
-                                                ? "bg-white text-gray-900 shadow-sm"
-                                                : "text-gray-500"
-                                        }`}
-                                    >
-                                        {t(`uac.${level || "none"}` as MessageKey)}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </section>
+            {(["seller", "backoffice"] as const).map((app) => (
+                <section key={app} className="space-y-2">
+                    <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">
+                        {t(app === "seller" ? "uac.seller" : "uac.office")}
+                    </p>
+                    <ChoiceList
+                        value={change.access[app]}
+                        onChange={(level) => set({ access: { ...change.access, [app]: level } })}
+                        choices={[...LEVELS[app]].reverse().map((level) => ({
+                            value: level,
+                            label: t(`uac.${level || "none"}` as MessageKey),
+                            sublabel: t(HINTS[level]!),
+                            disabled,
+                        }))}
+                    />
+                </section>
+            ))}
 
             <section className="space-y-2">
-                <p className="px-1 text-sm font-semibold text-gray-500">{t("uac.stores")}</p>
-                <div className="overflow-hidden rounded-2xl bg-white">
-                    {stores.map((s, i) => {
+                <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">
+                    {t("uac.stores")} ({change.storeIds.length})
+                </p>
+                <div className="bg-white rounded-2xl px-4 py-1">
+                    {stores.map((s) => {
                         const on = change.storeIds.includes(s.id);
                         return (
                             <button
@@ -212,18 +208,20 @@ export function AccessFields({
                                             : [...change.storeIds, s.id],
                                     })
                                 }
-                                className={`flex w-full items-center gap-3 p-3 text-left active:bg-gray-50 disabled:opacity-60 ${
-                                    i < stores.length - 1 ? "border-b border-gray-100" : ""
-                                }`}
+                                className="w-full flex items-center justify-between gap-3 py-5 border-b-2 last:border-b-0 border-slate-100 text-left active:bg-gray-50 disabled:opacity-40"
                             >
+                                <span className="text-[17px] font-medium text-gray-900">
+                                    {s.name}
+                                </span>
                                 <span
-                                    className={`flex size-5 items-center justify-center rounded border ${
-                                        on ? "border-brand bg-brand text-white" : "border-gray-300"
+                                    className={`flex size-6 shrink-0 items-center justify-center rounded-md border-2 ${
+                                        on
+                                            ? "border-brand/90 bg-brand/90 text-white"
+                                            : "border-gray-300"
                                     }`}
                                 >
-                                    {on && <Check size={14} strokeWidth={3} />}
+                                    {on && <Check size={16} strokeWidth={4} />}
                                 </span>
-                                <span className="text-gray-900">{s.name}</span>
                             </button>
                         );
                     })}

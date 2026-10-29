@@ -13,8 +13,6 @@
         "admin": "Admin",
         "stores": "Stores",
         "active": "Active",
-        "deactivate": "Deactivate",
-        "activate": "Activate",
         "save": "Save",
         "saving": "Saving...",
         "saved": "Saved",
@@ -53,6 +51,15 @@
         "helpInactive": "Inactive",
         "helpInactiveBody": "Out of every app in this business from their next tap.\nTheir stores are cleared.\nTurning them back on means picking their stores again.",
         "helpRequests": "Requests",
-        "helpRequestsBody": "Someone who opens an app here without access can ask to join.\nTheir request waits at the top of UAC.\nAn admin lets them in (with levels and stores) or rejects it."
+        "helpRequestsBody": "Someone who opens an app here without access can ask to join.\nTheir request waits at the top of UAC.\nAn admin lets them in (with levels and stores) or rejects it.",
+        "noneHint": "Cannot open it",
+        "memberHint": "Uses it in their stores",
+        "guestHint": "Sees everything, changes nothing",
+        "adminHint": "Sees and changes everything",
+        "noteTitle": "Takes effect at once",
+        "rejectTitle": "Reject {name}?",
+        "rejectBody": "They can ask again.",
+        "blockTitle": "Block {name}?",
+        "blockBody": "Their later asks are dropped, and they aren't told."
     }
 }

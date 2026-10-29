@@ -13,8 +13,6 @@
         "admin": "Admin",
         "stores": "Toko",
         "active": "Aktif",
-        "deactivate": "Nonaktifkan",
-        "activate": "Aktifkan",
         "save": "Simpan",
         "saving": "Menyimpan...",
         "saved": "Tersimpan",
@@ -53,6 +51,15 @@
         "helpInactive": "Nonaktif",
         "helpInactiveBody": "Keluar dari semua aplikasi di bisnis ini sejak ketukan berikutnya.\nTokonya dikosongkan.\nMengaktifkan lagi berarti memilih tokonya lagi.",
         "helpRequests": "Permintaan",
-        "helpRequestsBody": "Orang yang membuka aplikasi di sini tanpa akses bisa minta bergabung.\nPermintaannya menunggu di atas UAC.\nAdmin menerima (dengan level dan toko) atau menolaknya."
+        "helpRequestsBody": "Orang yang membuka aplikasi di sini tanpa akses bisa minta bergabung.\nPermintaannya menunggu di atas UAC.\nAdmin menerima (dengan level dan toko) atau menolaknya.",
+        "noneHint": "Tidak bisa membukanya",
+        "memberHint": "Memakainya di tokonya",
+        "guestHint": "Melihat semuanya, tidak mengubah apa pun",
+        "adminHint": "Melihat dan mengubah semuanya",
+        "noteTitle": "Langsung berlaku",
+        "rejectTitle": "Tolak {name}?",
+        "rejectBody": "Mereka bisa meminta lagi.",
+        "blockTitle": "Blokir {name}?",
+        "blockBody": "Permintaan berikutnya diabaikan, dan mereka tidak diberi tahu."
     }
 }
