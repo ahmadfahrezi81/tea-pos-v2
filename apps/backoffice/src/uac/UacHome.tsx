@@ -22,6 +22,7 @@ import {
 } from "./PeopleFilter";
 import { useUac, type Person } from "./uac";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
 /**
  * UAC's home, as the old Staff Payroll Info list: requests waiting on top, then everyone A to Z,
@@ -61,9 +62,9 @@ export function UacHome() {
         <div className="space-y-3">
             {data && data.requests.length > 0 && (
                 <section className="space-y-2">
-                    <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">
+                    <SectionLabel>
                         {t("uac.waiting")} ({data.requests.length})
-                    </p>
+                    </SectionLabel>
                     <ListCard>
                         {data.requests.map((r) => (
                             <ListRow

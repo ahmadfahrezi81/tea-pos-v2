@@ -15,6 +15,7 @@ import { dayMonth, daysLeft, daysLeftText } from "./dates";
 import { usePayslip, usePayStaff, usePayWrite } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { useSlug } from "@tea-pos/shell/tenant";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
 function Copyable({
     value,
@@ -116,9 +117,9 @@ export function PayConfirm({ id }: { id: string }) {
     return (
         <div className="space-y-4">
             <div className="bg-white rounded-xl p-4 space-y-1">
-                <p className="text-xs text-gray-900 font-medium uppercase tracking-wide">
+                <SectionLabel inset={false}>
                     {t(isSkip ? "pay.amountOwed" : "pay.amountToPay")}
-                </p>
+                </SectionLabel>
                 {isSkip ? (
                     <p className="text-3xl font-bold text-gray-900">{formatMoney(0)}</p>
                 ) : (

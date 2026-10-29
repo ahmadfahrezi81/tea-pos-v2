@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { SectionLabel } from "./SectionLabel";
 
 /**
  * A white card around related groups, with a heading of its own: everything inside is about one
@@ -31,7 +32,5 @@ export function Panel({
 
 /** A small heading over a card inside a Panel. */
 export function PanelLabel({ children }: { children: ReactNode }) {
-    return (
-        <p className="pl-1 text-xs font-bold uppercase tracking-widest text-gray-900">{children}</p>
-    );
+    return <SectionLabel inset={false}>{children}</SectionLabel>;
 }

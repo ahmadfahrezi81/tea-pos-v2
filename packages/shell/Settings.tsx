@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { ICON } from "@tea-pos/ui/icon";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
 /**
  * The old apps' menu rows (More, Pay, the Store overview): an icon, a label, an orange chevron,
@@ -61,11 +62,7 @@ export function SettingsRow({
 export function SettingsGroup({ title, children }: { title?: string; children: ReactNode }) {
     return (
         <section className="space-y-2">
-            {title && (
-                <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">
-                    {title}
-                </p>
-            )}
+            {title && <SectionLabel>{title}</SectionLabel>}
             <div className="bg-white rounded-2xl px-4 py-1">{children}</div>
         </section>
     );

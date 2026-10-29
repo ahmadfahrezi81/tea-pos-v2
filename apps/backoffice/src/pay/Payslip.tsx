@@ -15,6 +15,7 @@ import { Dialog, Drawer } from "@tea-pos/ui/Drawer";
 import { ICON } from "@tea-pos/ui/icon";
 import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
 import { Badge } from "@tea-pos/ui/Badge";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
 type Slip = components["schemas"]["Payslip"];
 type Row = { id: string; date: string; status: string; amount: number };
@@ -215,9 +216,7 @@ export function Payslip({ id }: { id: string }) {
                         <div className="pt-2.5 border-t border-gray-100 space-y-3">
                             {slip.paymentProofUrl && (
                                 <div className="space-y-1.5">
-                                    <p className="text-xs text-gray-900 font-medium uppercase tracking-wide">
-                                        {t("pay.receipt")}
-                                    </p>
+                                    <SectionLabel inset={false}>{t("pay.receipt")}</SectionLabel>
                                     <button
                                         onClick={() => setShowProof(true)}
                                         className="block size-20 rounded-lg overflow-hidden bg-gray-100 active:opacity-80"
@@ -232,9 +231,9 @@ export function Payslip({ id }: { id: string }) {
                             )}
                             {slip.notes && (
                                 <div className="space-y-1.5">
-                                    <p className="text-xs text-gray-900 font-medium uppercase tracking-wide">
+                                    <SectionLabel inset={false}>
                                         {t("pay.noteForStaff")}
-                                    </p>
+                                    </SectionLabel>
                                     <p className="text-sm text-gray-800 whitespace-pre-wrap bg-slate-50 rounded-xl p-3">
                                         {slip.notes}
                                     </p>
@@ -481,9 +480,7 @@ function confirmTitle(t: ReturnType<typeof useT>, c: Confirm): string {
 function Group({ title, children }: { title: string; children: ReactNode }) {
     return (
         <section className="space-y-2">
-            <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">
-                {title}
-            </p>
+            <SectionLabel>{title}</SectionLabel>
             {children}
         </section>
     );

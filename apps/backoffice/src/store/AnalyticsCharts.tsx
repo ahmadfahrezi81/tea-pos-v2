@@ -10,6 +10,7 @@ import type { ReactNode } from "react";
 
 import { MonthPicker } from "./AnalyticsMonth";
 import { monthRange, useSalesDays, useSalesProducts, useStoreId, useTeaWaste } from "./sales";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
 // Tea waste, as the old app judged it: up to 12 L a day is fine, and a litre costs Rp 1.000.
 const TARGET_LITRES = 12;
@@ -106,7 +107,7 @@ function Breakdown({
 }) {
     return (
         <div className="mt-4 rounded-xl bg-slate-50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{title}</p>
+            <SectionLabel inset={false}>{title}</SectionLabel>
             <dl className="mt-2 space-y-1.5 text-sm">
                 {rows.map((r) => (
                     <div

@@ -22,6 +22,7 @@ import { FilterButton } from "@tea-pos/ui/FilterButton";
 import { ChoiceList } from "@tea-pos/ui/ChoiceList";
 import { useState } from "react";
 import type { MessageKey } from "@tea-pos/i18n";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
 type Store = components["schemas"]["StoreLive"];
 
@@ -114,9 +115,7 @@ export function StoreList() {
             <Sheet open={filtering} onClose={() => setFiltering(false)} title={t("store.filter")}>
                 <div className="space-y-4">
                     <div className="-mx-4 space-y-2">
-                        <p className="pl-7 text-xs font-bold uppercase tracking-widest text-gray-900">
-                            {t("store.type")}
-                        </p>
+                        <SectionLabel>{t("store.type")}</SectionLabel>
                         <ChoiceList
                             value={filter.type}
                             onChange={(type) => setFilter({ ...filter, type })}

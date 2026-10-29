@@ -27,6 +27,7 @@ import {
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
 type ClaimType = components["schemas"]["ClaimType"];
 type Frequency = ClaimType["frequency"];
@@ -470,9 +471,7 @@ export function ClaimTypeEdit({ id }: { id: string }) {
             </Card>
             <SearchBox value={search} onChange={setSearch} />
             <div className="space-y-2">
-                <p className="text-xs font-bold text-gray-900 uppercase tracking-widest px-1">
-                    {t("pay.eligibility")}
-                </p>
+                <SectionLabel inset={false}>{t("pay.eligibility")}</SectionLabel>
                 {shown.length === 0 ? (
                     <p className="text-sm text-gray-900 px-1">{t("pay.noStaff")}</p>
                 ) : (

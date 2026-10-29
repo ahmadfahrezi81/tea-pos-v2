@@ -9,6 +9,7 @@ import { Sellers } from "./Sellers";
 import { useDay } from "./sales";
 import { Dialog } from "@tea-pos/ui/Drawer";
 import { Badge } from "@tea-pos/ui/Badge";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
 type Photo = components["schemas"]["DayPhoto"];
 
@@ -254,7 +255,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 function PhotoGroup({ title, children }: { title: string; children: ReactNode }) {
     return (
         <div className="space-y-1.5 pb-2">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{title}</p>
+            <SectionLabel inset={false}>{title}</SectionLabel>
             <div className="grid grid-cols-2 gap-2">{children}</div>
         </div>
     );

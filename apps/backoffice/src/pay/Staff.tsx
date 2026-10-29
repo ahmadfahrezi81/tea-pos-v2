@@ -15,6 +15,7 @@ import { useCommissionTypes, usePayStaff, usePayWrite, writes } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
 import { Badge } from "@tea-pos/ui/Badge";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
 type Staff = components["schemas"]["PayStaff"];
 
@@ -120,7 +121,7 @@ function Person({ s }: { s: Staff }) {
 }
 
 const Heading = ({ children }: { children: ReactNode }) => (
-    <p className="text-xs font-bold text-gray-900 uppercase tracking-widest px-1">{children}</p>
+    <SectionLabel inset={false}>{children}</SectionLabel>
 );
 
 function useStaffMember(id: string) {
