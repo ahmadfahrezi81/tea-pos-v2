@@ -10,6 +10,7 @@ import { useState } from "react";
 
 import { usePayPeriod, usePayWrite, writes } from "./pay";
 import { daysLeft } from "./dates";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
 
 type Frequency = "weekly" | "bi_weekly" | "four_weekly";
 const FREQUENCIES: Frequency[] = ["weekly", "bi_weekly", "four_weekly"];
@@ -53,7 +54,7 @@ export function PaySchedule() {
     const [pending, setPending] = useState<Frequency | null>(null);
     const save = usePayWrite(writes.setSchedule);
     const { canWrite } = useAccess();
-    if (!p) return <div className="h-40 bg-white rounded-2xl" />;
+    if (!p) return <Skeleton className="h-40 rounded-2xl" />;
     const current = p.frequency;
     const left = daysLeft(p.end, localDate());
     const name = (f: Frequency) => t(`pay.cadence.${f}` as MessageKey);

@@ -9,6 +9,7 @@ import { useState } from "react";
 
 import { AccessFields } from "./PersonPage";
 import { useApprove, useReject, useUacRequest, type Change } from "./uac";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
 
 /**
  * Someone asking to join: pick their levels and stores and let them in, or turn them down.
@@ -33,7 +34,7 @@ export function RequestPage({ id }: { id: string }) {
         return (
             <p className="rounded-2xl bg-white p-4 text-sm text-gray-700">{t("uac.requestGone")}</p>
         );
-    if (!data) return <div className="h-60 rounded-2xl bg-white" />;
+    if (!data) return <Skeleton className="h-60 rounded-2xl" />;
 
     const decline = async (block: boolean) => {
         await reject.mutateAsync({ block });

@@ -8,6 +8,7 @@ import { Check, ChevronLeft, ChevronRight, Settings } from "lucide-react";
 
 import { daysLeft, shortDay } from "./dates";
 import { payDate, usePayPeriodAt, useSlug } from "./pay";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
 
 type Person = components["schemas"]["Payout"];
 
@@ -33,8 +34,8 @@ export function PeriodHome({ start }: { start: string }) {
     if (!p)
         return (
             <div className="space-y-3">
-                <div className="h-24 rounded-2xl bg-white" />
-                <div className="h-40 rounded-2xl bg-white" />
+                <Skeleton className="h-24 rounded-2xl" />
+                <Skeleton className="h-40 rounded-2xl" />
             </div>
         );
 

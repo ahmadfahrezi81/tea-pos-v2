@@ -11,6 +11,7 @@ import { createPortal } from "react-dom";
 
 import { daysLeft, dayMonth, shortDay, weeks } from "./dates";
 import { decisions, payDate, usePayslip, usePayWrite } from "./pay";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
 
 type Slip = components["schemas"]["Payslip"];
 type Row = { id: string; date: string; status: string; amount: number };
@@ -59,7 +60,7 @@ export function Payslip({ id }: { id: string }) {
         return (
             <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-24 bg-white rounded-xl" />
+                    <Skeleton key={i} delay={i * 80} className="h-24 rounded-xl" />
                 ))}
             </div>
         );

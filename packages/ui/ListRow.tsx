@@ -1,5 +1,6 @@
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
+import { Skeleton } from "./Skeleton";
 
 /**
  * A record in a list (a staff member, a claim type, a payout), as the old apps: the same
@@ -60,12 +61,12 @@ export function ListRowSkeleton({ withLeading = false }: { withLeading?: boolean
         <div className="group w-full flex items-stretch gap-3">
             {withLeading && (
                 <span className="shrink-0 flex items-center py-4">
-                    <span className="size-9 rounded-xl bg-gray-100 animate-pulse" />
+                    <Skeleton className="size-9 rounded-xl" />
                 </span>
             )}
             <div className="flex-1 py-4 -mr-4 pr-4 border-b-2 border-slate-100 group-last:border-b-0 space-y-1.5">
-                <div className="h-4 w-36 bg-gray-100 rounded animate-pulse" />
-                <div className="h-3.5 w-20 bg-gray-100 rounded animate-pulse" />
+                <Skeleton className="h-4 w-36 rounded" />
+                <Skeleton className="h-3.5 w-20 rounded" />
             </div>
         </div>
     );

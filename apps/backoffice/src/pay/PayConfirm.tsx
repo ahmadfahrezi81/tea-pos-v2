@@ -13,6 +13,7 @@ import { useState, type ReactNode } from "react";
 
 import { daysLeft, dayMonth } from "./dates";
 import { usePayslip, usePayStaff, usePayWrite, useSlug } from "./pay";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
 
 function Copyable({
     value,
@@ -70,7 +71,7 @@ export function PayConfirm({ id }: { id: string }) {
         return (
             <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-24 bg-white rounded-xl" />
+                    <Skeleton key={i} delay={i * 80} className="h-24 rounded-xl" />
                 ))}
             </div>
         );

@@ -7,6 +7,7 @@ import { Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 
 import { useUac, type Person } from "./uac";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
 
 /** UAC's home: requests waiting on top, then everyone, with what each can reach. */
 export function UacHome() {
@@ -17,7 +18,7 @@ export function UacHome() {
     if (!data)
         return (
             <div className="space-y-3">
-                <div className="h-40 rounded-2xl bg-white" />
+                <Skeleton className="h-40 rounded-2xl" />
             </div>
         );
     return (

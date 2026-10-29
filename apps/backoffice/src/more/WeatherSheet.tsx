@@ -7,6 +7,7 @@ import { Cloud, X } from "lucide-react";
 import { createPortal } from "react-dom";
 
 import { useWeather } from "./more";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
 
 const nowInWib = () => {
     const d = new Date(Date.now() + 7 * 3_600_000);
@@ -74,8 +75,8 @@ export function WeatherSheet({ onClose }: { onClose: () => void }) {
                 </div>
                 {isPending ? (
                     <div className="space-y-3">
-                        <div className="h-24 rounded-2xl bg-gray-200 animate-pulse" />
-                        <div className="h-64 rounded-2xl bg-gray-200 animate-pulse" />
+                        <Skeleton className="h-24 rounded-2xl" />
+                        <Skeleton className="h-64 rounded-2xl" />
                     </div>
                 ) : shown.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-gray-400">

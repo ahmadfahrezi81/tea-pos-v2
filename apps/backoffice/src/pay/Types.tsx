@@ -25,6 +25,7 @@ import {
     useSlug,
     writes,
 } from "./pay";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
 
 type ClaimType = components["schemas"]["ClaimType"];
 type Frequency = ClaimType["frequency"];
@@ -207,7 +208,7 @@ export function CommissionTypeEdit({ id }: { id: string }) {
     if (type && form?.id !== type.id)
         setForm({ id: type.id, name: type.name, enabled: type.enabled, rate: type.ratePerCup });
     const update = usePayWrite(writes.updateCommissionType);
-    if (!data) return <div className="h-60 bg-white rounded-xl" />;
+    if (!data) return <Skeleton className="h-60 rounded-xl" />;
     if (!type || !form)
         return <p className="p-4 text-sm text-gray-400">{t("pay.commissionTypeNotFound")}</p>;
     return (
@@ -423,7 +424,7 @@ export function ClaimTypeEdit({ id }: { id: string }) {
     const [search, setSearch] = useState("");
     const update = usePayWrite(writes.updateClaimType);
     const setEligible = usePayWrite(writes.setClaimEligible);
-    if (!data) return <div className="h-60 bg-white rounded-xl" />;
+    if (!data) return <Skeleton className="h-60 rounded-xl" />;
     if (!type || !form)
         return <p className="p-4 text-sm text-gray-400">{t("pay.claimTypeNotFound")}</p>;
     const current = picked ?? new Set(eligible?.userIds ?? []);

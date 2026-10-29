@@ -9,6 +9,7 @@ import { Check } from "lucide-react";
 import { useState } from "react";
 
 import { useSetPerson, useUacPerson, type Change, type Person } from "./uac";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
 
 /** The levels each app offers (auth.Levels in Go); '' is no access. */
 const LEVELS = { seller: ["", "member"], backoffice: ["", "guest", "admin"] } as const;
@@ -16,7 +17,7 @@ const LEVELS = { seller: ["", "member"], backoffice: ["", "guest", "admin"] } as
 /** A person: their level in each app, their stores and whether they are on; saved at once. */
 export function PersonPage({ userId }: { userId: string }) {
     const { data } = useUacPerson(userId);
-    if (!data) return <div className="h-60 rounded-2xl bg-white" />;
+    if (!data) return <Skeleton className="h-60 rounded-2xl" />;
     // Keyed by what was saved, so a change from elsewhere starts the form again.
     return <PersonForm key={JSON.stringify(data)} person={data} />;
 }

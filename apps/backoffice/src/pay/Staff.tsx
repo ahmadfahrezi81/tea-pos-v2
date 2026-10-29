@@ -11,6 +11,7 @@ import { Check, Pencil, Search, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { useCommissionTypes, usePayStaff, usePayWrite, useSlug, writes } from "./pay";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
 
 type Staff = components["schemas"]["PayStaff"];
 
@@ -152,7 +153,7 @@ export function StaffInfo({ id }: { id: string }) {
     const t = useT();
     const slug = useSlug();
     const { loaded, staff } = useStaffMember(id);
-    if (!loaded) return <div className="h-40 bg-white rounded-xl" />;
+    if (!loaded) return <Skeleton className="h-40 rounded-xl" />;
     if (!staff) return <p className="p-4 text-sm text-gray-400">{t("pay.staffNotFound")}</p>;
     const type = staff.commissionType;
     const bank = staff.bank;
@@ -237,7 +238,7 @@ export function StaffCommission({ id }: { id: string }) {
     const [picked, setPicked] = useState<string | null | undefined>(undefined);
     const save = usePayWrite(writes.setStaffCommission);
     const { canWrite } = useAccess();
-    if (!loaded || !types) return <div className="h-40 bg-white rounded-xl" />;
+    if (!loaded || !types) return <Skeleton className="h-40 rounded-xl" />;
     if (!staff) return <p className="p-4 text-sm text-gray-400">{t("pay.staffNotFound")}</p>;
     const selected = picked !== undefined ? picked : (staff.commissionType?.id ?? null);
     const option = (key: string | null, title: string, sub: string, mono = false) => (

@@ -20,7 +20,7 @@
         "./dot-grid": "./styles/dot-grid.ts",
         "./globals.css": "./styles/globals.css",
         "./Avatar": "./Avatar.tsx",
-        "./avatar": "./avatar.ts",
+        "./avatarUrl": "./avatarUrl.ts",
         "./Skeleton": "./Skeleton.tsx",
         "./ConfirmDialog": "./ConfirmDialog.tsx",
         "./MonthStepper": "./MonthStepper.tsx",

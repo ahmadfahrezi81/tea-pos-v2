@@ -7,6 +7,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Calendar, CalendarDays, Receipt } from "lucide-react";
 
 import { useDayOrders, useSalesHours, useStoreId } from "./sales";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
 
 const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
 
@@ -70,7 +71,7 @@ export function StoreOrders({ date }: { date: string }) {
                                 {formatMoney(totals.sales)}
                             </p>
                         ) : (
-                            <div className="mx-auto mt-1 h-7 w-24 rounded bg-gray-100" />
+                            <Skeleton className="mx-auto mt-1 h-7 w-24 rounded" />
                         )}
                     </div>
                 </div>
@@ -109,7 +110,7 @@ export function StoreOrders({ date }: { date: string }) {
 
             {orders.isPending ? (
                 Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="h-24 bg-white rounded-2xl" />
+                    <Skeleton key={i} delay={i * 80} className="h-24 rounded-2xl" />
                 ))
             ) : list.length === 0 ? (
                 <div className="bg-white p-8 rounded-2xl text-center">

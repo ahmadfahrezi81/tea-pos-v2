@@ -16,8 +16,9 @@ The owner's test round on staging (RFC: [Backoffice v2 refinement](https://app.n
     - `form/SelectInput`, `form/ReadOnlyInput`
     - `ConfirmDialog` (v1 backoffice's ConfirmationPopup), `MonthStepper` (v1's MonthSelector, months as `YYYY-MM`)
     - `CopyButton` (v1 seller's CopyableField); the three copy buttons in Pay use it
-    - `Avatar`, one for every person (round in lists, `square` in v1's cards); replaces eight hand-made ones in Store, Pay and UAC. `avatar()` moves to `@tea-pos/ui/avatar` (`@tea-pos/shell/avatar` re-exports it)
+    - `Avatar`, one for every person (round in lists, `square` in v1's cards); replaces eight hand-made ones in Store, Pay and UAC. `avatar()` moves to `@tea-pos/ui/avatarUrl` (`@tea-pos/shell/avatar` re-exports it)
     - Not ported: ErrorSheet (v2 translates every error code instead), FeedbackHistory and SummaryDetailsCard (screens with their own data, they come with the seller's More and analytics), the weather sheet (already in backoffice More; moves to the shell when seller's More needs it)
+5. **Every loading placeholder is a `Skeleton`:** the plain white and grey boxes in Store, Pay, UAC and More, and `ListRowSkeleton`, sweep as v1's do; lists stagger by row
 
 ## Done when
 

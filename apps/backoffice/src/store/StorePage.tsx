@@ -9,6 +9,7 @@ import { ChartNoAxesCombined, ReceiptText } from "lucide-react";
 
 import { OpenBadge } from "./StoreList";
 import { ALL, useSalesHours, useStoreId, useStoresLive } from "./sales";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
 
 const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
 
@@ -62,7 +63,7 @@ export function StorePage() {
                         {formatMoney(totals.sales)}
                     </p>
                 ) : (
-                    <div className="mt-1 h-8 w-40 rounded bg-gray-100" />
+                    <Skeleton className="mt-1 h-8 w-40 rounded" />
                 )}
                 <div className="mt-2 flex gap-6 text-sm text-gray-700">
                     <span>

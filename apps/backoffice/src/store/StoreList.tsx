@@ -7,6 +7,7 @@ import { Link } from "@tanstack/react-router";
 import { ChevronRight, Layers } from "lucide-react";
 
 import { ALL, useStoresLive } from "./sales";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
 
 type Store = components["schemas"]["StoreLive"];
 
@@ -32,13 +33,13 @@ export function StoreList() {
                     · {formatMoney(sales)} {t("store.today")}
                 </p>
             ) : (
-                <div className="h-5 w-48 rounded bg-gray-200" />
+                <Skeleton className="h-5 w-48 rounded" />
             )}
 
             {stores
                 ? stores.map((s) => <StoreCard key={s.id} store={s} slug={slug} />)
                 : Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="h-28 rounded-2xl bg-white" />
+                      <Skeleton key={i} delay={i * 80} className="h-28 rounded-2xl" />
                   ))}
 
             {stores && stores.length > 1 && (

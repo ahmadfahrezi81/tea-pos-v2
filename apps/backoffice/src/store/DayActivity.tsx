@@ -22,6 +22,7 @@ import type { ReactNode } from "react";
 
 import { PhotoTile } from "./DayDetail";
 import { useDayActivity, useDaySessions } from "./sales";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
 
 type Event = components["schemas"]["DayEvent"];
 type Session = components["schemas"]["DaySession"];
@@ -74,7 +75,7 @@ function Row({
 export function DayActivity({ id }: { id: string }) {
     const t = useT();
     const { data } = useDayActivity(id);
-    if (!data) return <div className="h-64 bg-white rounded-2xl" />;
+    if (!data) return <Skeleton className="h-64 rounded-2xl" />;
     const events = data.events;
     if (events.length === 0)
         return (
@@ -234,7 +235,7 @@ export function DaySessions({ id }: { id: string }) {
     const t = useT();
     const locale = useLocale();
     const { data } = useDaySessions(id);
-    if (!data) return <div className="h-40 bg-white rounded-2xl" />;
+    if (!data) return <Skeleton className="h-40 rounded-2xl" />;
     const sessions = data.sessions;
     if (sessions.length === 0)
         return (

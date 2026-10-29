@@ -16,7 +16,7 @@ export function Skeleton({
     return (
         <div
             aria-hidden
-            className={`skeleton rounded-md ${className}`}
+            className={`skeleton ${className.includes("rounded") ? "" : "rounded-md "}${className}`}
             style={
                 delay ? ({ ...style, "--skeleton-delay": `${delay}ms` } as CSSProperties) : style
             }

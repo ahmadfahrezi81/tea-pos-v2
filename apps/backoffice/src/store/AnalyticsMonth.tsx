@@ -20,6 +20,7 @@ import {
 import { useState } from "react";
 
 import { monthRange, useDays, useSalesDays, useStoreId } from "./sales";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
 
 type Day = components["schemas"]["Day"];
 
@@ -129,7 +130,7 @@ export function AnalyticsMonth({ month }: { month: string }) {
                                 {formatMoney(total((d) => d.sales))}
                             </p>
                         ) : (
-                            <div className="mx-auto mt-1 h-7 w-24 rounded bg-gray-100" />
+                            <Skeleton className="mx-auto mt-1 h-7 w-24 rounded" />
                         )}
                     </div>
                 </div>
@@ -168,7 +169,7 @@ export function AnalyticsMonth({ month }: { month: string }) {
             <div className="space-y-3">
                 {!list ? (
                     Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="h-48 bg-white rounded-2xl" />
+                        <Skeleton key={i} delay={i * 80} className="h-48 rounded-2xl" />
                     ))
                 ) : list.length === 0 ? (
                     <div className="bg-white p-8 rounded-2xl text-center">

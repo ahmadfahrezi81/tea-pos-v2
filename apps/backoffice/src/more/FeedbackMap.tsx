@@ -9,6 +9,7 @@ import { Check, MessageSquare, Search, SlidersHorizontal, X } from "lucide-react
 import { useEffect, useRef, useState } from "react";
 
 import { useFeedbacks } from "./more";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
 
 type Feedback = components["schemas"]["Feedback"];
 // One empty list for every render, so the markers effect does not re-run without data.
@@ -173,7 +174,7 @@ export function FeedbackMap() {
             )}
             {isPending ? (
                 [1, 2, 3].map((i) => (
-                    <div key={i} className="h-24 bg-white rounded-2xl animate-pulse" />
+                    <Skeleton key={i} delay={i * 80} className="h-24 rounded-2xl" />
                 ))
             ) : feedbacks.length === 0 || shown.length === 0 ? (
                 <div className="bg-white rounded-2xl flex flex-col items-center justify-center py-16 text-gray-400 gap-2">
