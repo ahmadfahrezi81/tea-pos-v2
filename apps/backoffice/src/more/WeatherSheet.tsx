@@ -1,5 +1,3 @@
-import "@fontsource/bebas-neue/latin-400.css";
-
 import type { MessageKey } from "@tea-pos/i18n";
 import { useT } from "@tea-pos/i18n/react";
 import { Drawer, DrawerHandle } from "@tea-pos/ui/Drawer";
@@ -25,7 +23,7 @@ const fetchedAt = (iso: string) => {
     return `${h % 12 === 0 ? 12 : h % 12}:${String(d.getUTCMinutes()).padStart(2, "0")}${h >= 12 ? "pm" : "am"}`;
 };
 
-/** The old apps' weather sheet: the hour before now to six hours ahead, in the Bebas Neue title. */
+/** The old apps' weather sheet: the hour before now to six hours ahead. */
 export function WeatherSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
     const t = useT();
     const { data, isPending } = useWeather(open);
@@ -50,15 +48,12 @@ export function WeatherSheet({ open, onClose }: { open: boolean; onClose: () => 
             className="rounded-t-xl px-4 pt-5 pb-10 max-h-[90dvh] overflow-y-auto"
         >
             <DrawerHandle />
-            <div
-                className="flex items-center justify-between mb-3"
-                style={{ fontFamily: "'Bebas Neue', sans-serif" }}
-            >
+            <div className="flex items-center justify-between mb-3">
                 <div>
-                    <p className="text-2xl font-light text-gray-900">
+                    <p className="text-xl font-bold text-gray-900">
                         {data?.city || "Ciomas"}, {data?.region || "Bogor"}
                     </p>
-                    <p className="text-lg text-gray-500 -mt-2">
+                    <p className="text-sm text-gray-500">
                         {t("weather.asOf")}{" "}
                         {current?.fetchedAt ? fetchedAt(current.fetchedAt) : "—"}
                     </p>

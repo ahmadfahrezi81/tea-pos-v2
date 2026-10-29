@@ -27,6 +27,7 @@ The owner's test round on staging (RFC: [Backoffice v2 refinement](https://app.n
     - Account closes with an X, not back: `close` on the route (`ShellRoute`), as v1's inline header
     - More: General with the app's rows and Patch Notes (v1's name for What's new); the Account row goes (the avatar opens it, as v1)
 7. **Shared animations, no library** (v1 used vaul, Radix Dialog and two animation packages): `packages/ui/styles/motion.css` gives Tailwind utilities, transform and opacity only, off under reduced motion: `fade-in/out`, `sheet-in/out` (v1's drawer ease), `pop-in/out` (dialogs), `rise-in/out` (toasts), `drop-in` (menus). `usePresence` (`ui/motion.ts`) keeps a closing element until its exit plays. `Drawer` and `Dialog` (`ui/Drawer.tsx`) are the one bottom panel and centred card; Sheet, ConfirmDialog, the form footer's and refresh sheets, Weather, the payslip's decision sheet and receipt, and the day's photo viewer use them. Toasts rise in, the ⋯ menu drops in. `@tea-pos/ui` exports `./*`, so a new component needs no export line
+9. **Bebas Neue goes** (owner: a font for one title is not worth it): the weather sheet's title is Inter, the package leaves the backoffice
 
 ## Done when
 
