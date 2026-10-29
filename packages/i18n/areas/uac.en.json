@@ -30,6 +30,8 @@
         "block": "Block",
         "blockNote": "Reject: they can ask again. Block: their later asks are dropped, and they aren't told.",
         "requestGone": "This request was already answered.",
-        "search": "Search people..."
+        "search": "Search people...",
+        "noStores": "No stores",
+        "editTitle": "Edit access"
     }
 }

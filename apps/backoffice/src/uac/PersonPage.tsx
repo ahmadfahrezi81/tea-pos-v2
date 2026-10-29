@@ -1,8 +1,12 @@
 import type { MessageKey } from "@tea-pos/i18n";
-import { useT } from "@tea-pos/i18n/react";
+import { formatLongDate } from "@tea-pos/format";
+import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
+import { DetailList, DetailRow } from "@tea-pos/ui/DetailList";
+import { ListRow } from "@tea-pos/ui/ListRow";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
-import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
+import { HeaderActions, HeaderTitle } from "@tea-pos/shell/HeaderActions";
+import { SettingsGroup } from "@tea-pos/shell/Settings";
 import { useAccess, useTenant } from "@tea-pos/shell/tenant";
 import { useRouter } from "@tanstack/react-router";
 import { Check } from "lucide-react";
@@ -14,8 +18,89 @@ import { Skeleton } from "@tea-pos/ui/Skeleton";
 /** The levels each app offers (auth.Levels in Go); '' is no access. */
 const LEVELS = { seller: ["", "member"], backoffice: ["", "guest", "admin"] } as const;
 
-/** A person: their level in each app, their stores and whether they are on; saved at once. */
+/** A person, read only: who they are, the apps and stores they reach; Edit changes them. */
 export function PersonPage({ userId }: { userId: string }) {
+    const t = useT();
+    const locale = useLocale();
+    const { canWrite } = useAccess();
+    const stores = useTenant()?.tenant.stores ?? [];
+    const { data: p } = useUacPerson(userId);
+    if (!p) return <Skeleton className="h-60 rounded-2xl" />;
+    const theirs = stores.filter((s) => p.storeIds.includes(s.id));
+    return (
+        <div className="space-y-4">
+            <HeaderTitle>{p.name}</HeaderTitle>
+            {canWrite && !p.owner && <HeaderActions actions={[{ kind: "edit", to: "edit" }]} />}
+
+            <div className="bg-white rounded-2xl p-4 flex items-center gap-4">
+                <Avatar url={p.avatarUrl} size={64} square />
+                <div className="flex-1 min-w-0 space-y-1">
+                    <p className="text-xl font-semibold text-gray-900 leading-tight truncate">
+                        {p.name}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                        <Badge tone={p.active ? "green" : "gray"}>
+                            {t(p.active ? "uac.active" : "uac.inactive")}
+                        </Badge>
+                        {p.owner && <Badge tone="brand">{t("uac.owner")}</Badge>}
+                    </div>
+                </div>
+            </div>
+            {p.owner && <p className="px-1 text-sm text-gray-500">{t("uac.ownerNote")}</p>}
+
+            <DetailList>
+                <DetailRow label={t("account.email")}>
+                    <span className="break-all">{p.email}</span>
+                </DetailRow>
+                <DetailRow label={t("account.phoneNumber")}>{p.phone || "—"}</DetailRow>
+                <DetailRow label={t("account.memberSince")}>
+                    {p.since ? formatLongDate(p.since, locale) : "—"}
+                </DetailRow>
+            </DetailList>
+
+            <SettingsGroup title={t("uac.apps")}>
+                {(["seller", "backoffice"] as const).map((app) => (
+                    <ListRow
+                        key={app}
+                        title={t(`uac.${app}`)}
+                        trailing={
+                            <span
+                                className={`text-base font-semibold ${p.access[app] ? "text-gray-900" : "text-gray-400"}`}
+                            >
+                                {t(`uac.${p.access[app] || "none"}` as MessageKey)}
+                            </span>
+                        }
+                    />
+                ))}
+            </SettingsGroup>
+
+            <SettingsGroup title={t("uac.stores")}>
+                {theirs.length === 0 ? (
+                    <p className="py-4 text-gray-400">{t("uac.noStores")}</p>
+                ) : (
+                    theirs.map((s) => <ListRow key={s.id} title={s.name} />)
+                )}
+            </SettingsGroup>
+        </div>
+    );
+}
+
+const TONES = {
+    green: "bg-green-50 text-green-700",
+    gray: "bg-gray-100 text-gray-500",
+    brand: "bg-brand/10 text-brand",
+};
+
+function Badge({ tone, children }: { tone: keyof typeof TONES; children: string }) {
+    return (
+        <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${TONES[tone]}`}>
+            {children}
+        </span>
+    );
+}
+
+/** Editing a person: their level in each app, their stores and whether they are on; saved at once. */
+export function PersonEdit({ userId }: { userId: string }) {
     const { data } = useUacPerson(userId);
     if (!data) return <Skeleton className="h-60 rounded-2xl" />;
     // Keyed by what was saved, so a change from elsewhere starts the form again.
@@ -41,20 +126,6 @@ function PersonForm({ person: p }: { person: Person }) {
     return (
         <div className="space-y-4 pb-24">
             <HeaderTitle>{p.name}</HeaderTitle>
-
-            <div className="flex items-center gap-3 rounded-2xl bg-white p-4">
-                <Avatar url={p.avatarUrl} size={44} />
-                <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm text-gray-600">{p.email}</p>
-                    <p
-                        className={`text-sm font-semibold ${change.active ? "text-green-600" : "text-gray-400"}`}
-                    >
-                        {change.active ? `● ${t("uac.active")}` : `○ ${t("uac.inactive")}`}
-                        {p.owner && <span className="text-gray-900"> · {t("uac.owner")}</span>}
-                    </p>
-                </div>
-            </div>
-            {p.owner && <p className="px-1 text-sm text-gray-500">{t("uac.ownerNote")}</p>}
 
             <AccessFields change={change} set={set} disabled={!editable || !change.active} />
 

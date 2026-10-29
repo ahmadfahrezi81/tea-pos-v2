@@ -32,6 +32,7 @@ The owner's test round on staging (RFC: [Backoffice v2 refinement](https://app.n
 11. **UAC's home as v1's Staff Payroll Info list:** a search box, then everyone in a `ListCard` of `ListRow`s with square avatars (no "People (n)" heading); requests waiting stay on top under their heading. `SearchBox` moves to `packages/ui` (Pay's staff lists use it too)
 12. **Search box fuller:** taller (py-3.5), a 20 px magnifier, the clear X a 24 px grey circle
 13. **22 px is the content icon size:** `ICON` in `packages/ui/icon.ts`; menu rows (`rowIcon`), chevrons, field icons, list and card icons use it. The header, the tabs and small icons inside a line of text keep their own sizes
+14. **A person in UAC is read first, edited behind Edit:** `/uac/<userId>` shows the profile card (square avatar, name, Active or Inactive and Owner badges), the details (email, phone, member since: `phone` and `since` added to `UacPerson`), the apps with their levels, and the stores they have; Edit (hidden from guests and on the owner) opens `/uac/<userId>/edit`, the form as before. `DetailList` and `DetailRow` move to `packages/ui`; Personal details uses them too
 
 ## Done when
 

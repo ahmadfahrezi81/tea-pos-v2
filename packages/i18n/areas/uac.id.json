@@ -30,6 +30,8 @@
         "block": "Blokir",
         "blockNote": "Tolak: mereka bisa meminta lagi. Blokir: permintaan berikutnya diabaikan, tanpa pemberitahuan.",
         "requestGone": "Permintaan ini sudah dijawab.",
-        "search": "Cari orang..."
+        "search": "Cari orang...",
+        "noStores": "Tidak ada toko",
+        "editTitle": "Ubah akses"
     }
 }

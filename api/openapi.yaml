@@ -1775,6 +1775,12 @@ components:
           type: string
         owner:
           type: boolean
+        phone:
+          type: string
+        since:
+          description: When the account was made
+          format: date-time
+          type: string
         storeIds:
           items:
             type: string

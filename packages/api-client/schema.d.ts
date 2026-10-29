@@ -1574,6 +1574,12 @@ export interface components {
             id: string;
             name: string;
             owner: boolean;
+            phone?: string;
+            /**
+             * Format: date-time
+             * @description When the account was made
+             */
+            since?: string;
             storeIds: string[];
         };
         UacPersonChange: {

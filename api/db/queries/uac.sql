@@ -1,6 +1,7 @@
 -- name: ListTenantPeople :many
 -- Everyone in the tenant with what auth.LevelIn reads, and their stores here.
 SELECT u.id, u.full_name, u.email, COALESCE(u.avatar_url, '')::text AS avatar_url, u.role,
+    COALESCE(u.phone_number, '')::text AS phone, u.created_at,
     a.status, coalesce(t.owner_id = u.id, false)::bool AS is_owner,
     coalesce((SELECT x.access FROM user_app_access x WHERE x.tenant_id = a.tenant_id AND x.user_id = u.id AND x.app = 'seller'), '')::text AS seller_access,
     coalesce((SELECT x.access FROM user_app_access x WHERE x.tenant_id = a.tenant_id AND x.user_id = u.id AND x.app = 'backoffice'), '')::text AS backoffice_access,
