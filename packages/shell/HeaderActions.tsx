@@ -105,7 +105,7 @@ function Overflow({ actions }: { actions: HeaderAction[] }) {
                         tabIndex={-1}
                         onClick={() => setOpen(false)}
                     />
-                    <div className="absolute right-0 top-11 z-50 min-w-44 rounded-xl bg-white py-1 shadow-lg ring-1 ring-black/5">
+                    <div className="absolute right-0 top-11 z-50 min-w-44 origin-top-right rounded-xl bg-white py-1 shadow-lg ring-1 ring-black/5 animate-drop-in">
                         {actions.map((a) => (
                             <MenuItem key={a.kind} action={a} onDone={() => setOpen(false)} />
                         ))}

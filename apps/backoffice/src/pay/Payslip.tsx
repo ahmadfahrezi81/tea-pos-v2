@@ -7,11 +7,11 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { useAccess } from "@tea-pos/shell/tenant";
 import { AlertTriangle, Check, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 
 import { daysLeft, dayMonth, shortDay, weeks } from "./dates";
 import { decisions, payDate, usePayslip, usePayWrite } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { Dialog, Drawer } from "@tea-pos/ui/Drawer";
 
 type Slip = components["schemas"]["Payslip"];
 type Row = { id: string; date: string; status: string; amount: number };
@@ -422,71 +422,53 @@ export function Payslip({ id }: { id: string }) {
                 </div>
             )}
 
-            {showProof &&
-                createPortal(
-                    <div
-                        className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-                        onClick={() => setShowProof(false)}
-                    >
-                        <img
-                            src={slip.paymentProofUrl}
-                            alt={t("pay.receipt")}
-                            className="rounded-xl max-h-[80vh] w-auto object-contain"
-                        />
-                    </div>,
-                    document.body,
-                )}
+            <Dialog open={showProof} onClose={() => setShowProof(false)}>
+                <img
+                    src={slip.paymentProofUrl}
+                    alt={t("pay.receipt")}
+                    className="rounded-xl max-h-[80vh] w-auto object-contain"
+                />
+            </Dialog>
 
-            {confirm &&
-                createPortal(
-                    <div
-                        className="fixed inset-0 z-50 flex items-end bg-black/40"
-                        onClick={() => setConfirm(null)}
+            {confirm && (
+                <Drawer
+                    onClose={() => setConfirm(null)}
+                    dim="bg-black/40"
+                    className="p-5 pb-8 space-y-4"
+                >
+                    <div className="flex items-center justify-between">
+                        <p className="text-lg font-bold text-gray-900">
+                            {confirmTitle(t, confirm)}
+                        </p>
+                        <button onClick={() => setConfirm(null)} aria-label={t("common.close")}>
+                            <X size={20} className="text-gray-400" />
+                        </button>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                        <p className="text-base font-medium text-gray-800">{confirm.label}</p>
+                        <p className="text-2xl font-bold text-gray-900">
+                            {formatMoney(confirm.amount)}
+                        </p>
+                    </div>
+                    <ActionButton
+                        action={decide}
+                        onError={() => setConfirm(null)}
+                        resetOnSuccess
+                        busyLabel={t("pay.saving")}
+                        className={`w-full py-3.5 font-bold rounded-xl text-white active:opacity-80 disabled:opacity-40 flex items-center justify-center gap-2 ${
+                            confirm.status === "approved" ? "bg-green-600" : "bg-red-500"
+                        }`}
                     >
-                        <div
-                            className="mx-auto w-full max-w-[480px] bg-white rounded-t-2xl p-5 pb-8 space-y-4"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div className="flex items-center justify-between">
-                                <p className="text-lg font-bold text-gray-900">
-                                    {confirmTitle(t, confirm)}
-                                </p>
-                                <button
-                                    onClick={() => setConfirm(null)}
-                                    aria-label={t("common.close")}
-                                >
-                                    <X size={20} className="text-gray-400" />
-                                </button>
-                            </div>
-                            <div className="bg-gray-50 rounded-xl p-4">
-                                <p className="text-base font-medium text-gray-800">
-                                    {confirm.label}
-                                </p>
-                                <p className="text-2xl font-bold text-gray-900">
-                                    {formatMoney(confirm.amount)}
-                                </p>
-                            </div>
-                            <ActionButton
-                                action={decide}
-                                onError={() => setConfirm(null)}
-                                resetOnSuccess
-                                busyLabel={t("pay.saving")}
-                                className={`w-full py-3.5 font-bold rounded-xl text-white active:opacity-80 disabled:opacity-40 flex items-center justify-center gap-2 ${
-                                    confirm.status === "approved" ? "bg-green-600" : "bg-red-500"
-                                }`}
-                            >
-                                {t(confirm.status === "approved" ? "pay.approve" : "pay.reject")}
-                            </ActionButton>
-                            <button
-                                onClick={() => setConfirm(null)}
-                                className="w-full py-3 text-gray-500 text-sm font-medium"
-                            >
-                                {t("common.cancel")}
-                            </button>
-                        </div>
-                    </div>,
-                    document.body,
-                )}
+                        {t(confirm.status === "approved" ? "pay.approve" : "pay.reject")}
+                    </ActionButton>
+                    <button
+                        onClick={() => setConfirm(null)}
+                        className="w-full py-3 text-gray-500 text-sm font-medium"
+                    >
+                        {t("common.cancel")}
+                    </button>
+                </Drawer>
+            )}
         </div>
     );
 }

@@ -4,10 +4,10 @@ import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { ImageOff, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 
 import { Sellers } from "./AnalyticsMonth";
 import { useDay } from "./sales";
+import { Dialog } from "@tea-pos/ui/Drawer";
 
 type Photo = components["schemas"]["DayPhoto"];
 
@@ -293,26 +293,20 @@ export function PhotoTile({ photo, label }: { photo: Photo; label: string }) {
                     </p>
                 )}
             </div>
-            {open &&
-                createPortal(
-                    <div
-                        className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
-                        onClick={() => setOpen(false)}
-                    >
-                        <img
-                            src={photo.url}
-                            alt={label}
-                            className="max-h-full max-w-full object-contain"
-                        />
-                        <button
-                            className="absolute top-4 right-4 p-2 text-white"
-                            aria-label={label}
-                        >
-                            <X size={28} />
-                        </button>
-                    </div>,
-                    document.body,
-                )}
+            <Dialog open={open} onClose={() => setOpen(false)} dim="bg-black/90" label={label}>
+                <img
+                    src={photo.url}
+                    alt={label}
+                    className="max-h-[90dvh] max-w-full object-contain"
+                />
+                <button
+                    onClick={() => setOpen(false)}
+                    className="fixed top-4 right-4 p-2 text-white"
+                    aria-label={label}
+                >
+                    <X size={28} />
+                </button>
+            </Dialog>
         </div>
     );
 }

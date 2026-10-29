@@ -23,7 +23,7 @@ export function MoreRows() {
                 icon={<MapPin {...rowIcon} />}
                 label={t("moreRows.feedback")}
             />
-            {weather && <WeatherSheet onClose={() => setWeather(false)} />}
+            <WeatherSheet open={weather} onClose={() => setWeather(false)} />
         </>
     );
 }

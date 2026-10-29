@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { navProgress } from "./navProgress";
 import { refreshGate } from "./refreshGate";
 import { useAppUpdate } from "./AppUpdate";
+import { Drawer } from "@tea-pos/ui/Drawer";
 
 const INACTIVITY_LIMIT = 1000 * 60 * 20; // 20 minutes
 
@@ -91,50 +92,43 @@ export function RefreshSheet() {
     const { emoji, key } = COPY[reason];
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end bg-black/40" onClick={handleDismiss}>
-            <div
-                className="w-full bg-white rounded-t-2xl p-5 pb-8 space-y-4"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <div className="flex justify-center">
-                    <div className="w-8 h-1 rounded-full bg-gray-300" />
-                </div>
-
-                <div className="relative -mx-5 flex justify-center py-3">
-                    <div
-                        aria-hidden
-                        className="pointer-events-none absolute inset-0"
-                        style={DOT_GRID}
-                    />
-                    <Emoji name={emoji} size={88} className="relative" />
-                </div>
-
-                <div className="space-y-1 text-center">
-                    <p className="text-xl font-bold text-gray-900">{t(`${key}.title`)}</p>
-                    <p className="text-sm text-gray-600">{t(`${key}.body`)}</p>
-                </div>
-
-                <div className="flex items-start gap-3 rounded-xl bg-gray-50 p-4 text-left">
-                    <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-                        <Info size={18} className="text-blue-500" />
-                    </div>
-                    <div className="space-y-0.5">
-                        <p className="text-sm font-semibold text-gray-900">
-                            {t(`${key}.infoTitle`)}
-                        </p>
-                        <p className="text-sm text-gray-500">{t(`${key}.infoBody`)}</p>
-                    </div>
-                </div>
-
-                <button
-                    onClick={handleRefresh}
-                    disabled={isRefreshing}
-                    className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-brand text-white font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-60"
-                >
-                    <RefreshCw size={18} className={isRefreshing ? "animate-spin" : ""} />
-                    {t(isRefreshing ? "shell.refreshing" : "shell.refreshNow")}
-                </button>
+        <Drawer onClose={handleDismiss} dim="bg-black/40" className="p-5 pb-8 space-y-4">
+            <div className="flex justify-center">
+                <div className="w-8 h-1 rounded-full bg-gray-300" />
             </div>
-        </div>
+
+            <div className="relative -mx-5 flex justify-center py-3">
+                <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0"
+                    style={DOT_GRID}
+                />
+                <Emoji name={emoji} size={88} className="relative" />
+            </div>
+
+            <div className="space-y-1 text-center">
+                <p className="text-xl font-bold text-gray-900">{t(`${key}.title`)}</p>
+                <p className="text-sm text-gray-600">{t(`${key}.body`)}</p>
+            </div>
+
+            <div className="flex items-start gap-3 rounded-xl bg-gray-50 p-4 text-left">
+                <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                    <Info size={18} className="text-blue-500" />
+                </div>
+                <div className="space-y-0.5">
+                    <p className="text-sm font-semibold text-gray-900">{t(`${key}.infoTitle`)}</p>
+                    <p className="text-sm text-gray-500">{t(`${key}.infoBody`)}</p>
+                </div>
+            </div>
+
+            <button
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-brand text-white font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-60"
+            >
+                <RefreshCw size={18} className={isRefreshing ? "animate-spin" : ""} />
+                {t(isRefreshing ? "shell.refreshing" : "shell.refreshNow")}
+            </button>
+        </Drawer>
     );
 }
