@@ -2,6 +2,7 @@ import type { MessageKey } from "@tea-pos/i18n";
 import { formatLongDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
+import { Badge } from "@tea-pos/ui/Badge";
 import { Callout } from "@tea-pos/ui/Callout";
 import { ChoiceList } from "@tea-pos/ui/ChoiceList";
 import { Switch } from "@tea-pos/ui/form/Switch";
@@ -49,9 +50,7 @@ export function PersonPage({ userId }: { userId: string }) {
 
             <DetailList>
                 <DetailRow label={t("uac.status")}>
-                    <span className={p.active ? "text-green-600" : "text-gray-900"}>
-                        {p.active ? "●" : "○"} {t(p.active ? "uac.active" : "uac.inactive")}
-                    </span>
+                    <Badge>{t(p.active ? "uac.active" : "uac.inactive")}</Badge>
                 </DetailRow>
                 <DetailRow label={t("account.email")}>
                     <span className="break-all">{p.email}</span>
