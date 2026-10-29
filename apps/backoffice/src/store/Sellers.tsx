@@ -18,7 +18,7 @@ export function Sellers({ sellers }: { sellers: components["schemas"]["DaySeller
                         {s.name || t("common.unknown")}
                     </p>
                     <span className="text-sm font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-lg shrink-0">
-                        {s.cups} {t("analytics.cups")}
+                        {s.cups} {t("store.cupsUnit")}
                     </span>
                 </div>
             ))}
