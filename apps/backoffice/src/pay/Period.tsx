@@ -68,7 +68,7 @@ export function PeriodHome({ start }: { start: string }) {
                         <ChevronLeft {...stepIcon} />
                     </Link>
                     <div className="text-center">
-                        <p className="text-xs font-bold uppercase tracking-widest text-gray-900">
+                        <p className="font-mono text-xs font-bold uppercase tracking-widest text-gray-900">
                             {weeks(p.start, p.end, t("pay.week"))}
                         </p>
                         <p className="text-lg font-bold text-gray-900">
