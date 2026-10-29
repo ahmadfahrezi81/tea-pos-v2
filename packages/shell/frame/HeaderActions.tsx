@@ -4,7 +4,7 @@ import { CirclePlus, MoreHorizontal, Pencil, type LucideIcon } from "lucide-reac
 import { createContext, useContext, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { useAccess } from "./tenant";
+import { useAccess } from "../session/tenant";
 
 import type { MessageKey } from "@tea-pos/i18n";
 import { ICON } from "@tea-pos/ui/icon";

@@ -5,8 +5,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Outlet, useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import { useTenant } from "./tenant";
-import { useApiMutation } from "./useApiMutation";
+import { useTenant } from "../session/tenant";
+import { useApiMutation } from "../session/useApiMutation";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 
 /** Where `/` goes: the user's tenant (the last one used, else the first), or why there is none. */

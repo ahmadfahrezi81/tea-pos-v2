@@ -1,5 +1,5 @@
 import { Lock } from "lucide-react";
-import { ICON } from "../icon";
+import { ICON } from "../lib/icon";
 
 /** A value shown in a field's shell but locked: the padlock is TextInput's pencil, locked. */
 export function ReadOnlyInput({

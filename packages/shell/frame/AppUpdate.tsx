@@ -4,7 +4,7 @@ import { onAppTooOld } from "@tea-pos/api-client/status";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { registerSW } from "virtual:pwa-register";
 
-import { whenIdle } from "./idle";
+import { whenIdle } from "../lib/idle";
 
 /** Foreground can fire in bursts; one check a minute is plenty for a deploy. */
 const CHECK_THROTTLE_MS = 60_000;

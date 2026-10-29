@@ -1,5 +1,5 @@
 import { Search, X } from "lucide-react";
-import { ICON } from "./icon";
+import { ICON } from "../lib/icon";
 
 /** The old apps' search box above a list: a magnifier, the field, a clear button once typed. */
 export function SearchBox({

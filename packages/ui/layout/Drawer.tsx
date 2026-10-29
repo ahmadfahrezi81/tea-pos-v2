@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 
-import { usePresence } from "./motion";
+import { usePresence } from "../lib/motion";
 
 /**
  * A panel up from the bottom over a dimmed page; a tap outside closes it. It slides in and,

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { SectionLabel } from "../SectionLabel";
+import { SectionLabel } from "../layout/SectionLabel";
 
 /** A labelled form field, as the old apps: the label in small capitals, the control under it. */
 export function Field({

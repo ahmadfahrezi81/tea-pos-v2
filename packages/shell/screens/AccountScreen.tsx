@@ -5,11 +5,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Globe, Info, Pencil } from "lucide-react";
 import { useState } from "react";
 
-import { ConfirmSheet } from "./FormFooter";
-import { signOut } from "./session";
-import { rowIcon, SettingsRow } from "./Settings";
-import { useSlug } from "./tenant";
-import { APP_VERSION } from "./version";
+import { ConfirmSheet } from "../frame/FormFooter";
+import { signOut } from "../session/session";
+import { rowIcon, SettingsRow } from "../frame/Settings";
+import { useSlug } from "../session/tenant";
+import { APP_VERSION } from "../lib/version";
 
 /**
  * The old apps' Account: who is signed in, the settings rows (Personal details, Language, App info), then Log Out

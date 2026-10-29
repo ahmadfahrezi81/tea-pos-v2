@@ -3,8 +3,8 @@ import { Switch } from "@tea-pos/ui/form/Switch";
 import { Sheet } from "@tea-pos/ui/Sheet";
 import { Check, Eye, EyeOff } from "lucide-react";
 
-import { useApp } from "./AppContext";
-import { useTenant } from "./tenant";
+import { useApp } from "../session/AppContext";
+import { useTenant } from "../session/tenant";
 import { Badge } from "@tea-pos/ui/Badge";
 
 /** The old apps' store sheet: the eye switch hides demo and inactive stores (backoffice). */

@@ -2,9 +2,9 @@ import { useT } from "@tea-pos/i18n/react";
 import { ScrollText } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { rowIcon, SettingsGroup, SettingsRow } from "./Settings";
-import { useSlug } from "./tenant";
-import { LATEST, seen } from "./whatsNew";
+import { rowIcon, SettingsGroup, SettingsRow } from "../frame/Settings";
+import { useSlug } from "../session/tenant";
+import { LATEST, seen } from "../lib/whatsNew";
 
 /**
  * The More tab, as the old apps: General, the app's own rows first, then Patch Notes (What's new).

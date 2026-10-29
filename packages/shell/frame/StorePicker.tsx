@@ -2,8 +2,8 @@ import { useT } from "@tea-pos/i18n/react";
 import { ChevronsUpDown } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 
-import { useApp } from "./AppContext";
-import { useTenant } from "./tenant";
+import { useApp } from "../session/AppContext";
+import { useTenant } from "../session/tenant";
 
 // The sheet loads on the first tap: nothing of it is needed to draw the header.
 const StoreSheet = lazy(() => import("./StoreSheet"));

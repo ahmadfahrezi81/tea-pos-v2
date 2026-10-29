@@ -5,8 +5,8 @@ import { ChoiceList } from "@tea-pos/ui/ChoiceList";
 import { toast } from "@tea-pos/ui/toast";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useApp } from "./AppContext";
-import { errorMessage } from "./errors";
+import { useApp } from "../session/AppContext";
+import { errorMessage } from "../session/errors";
 
 // Every language the suite has, in the old seller app's order; an app offers only its own.
 const LANGUAGES: { locale: Locale; sublabel: string }[] = [

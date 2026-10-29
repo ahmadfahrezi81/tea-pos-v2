@@ -1,7 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
-import { Skeleton } from "./Skeleton";
-import { ICON } from "./icon";
+import { Skeleton } from "../feedback/Skeleton";
+import { ICON } from "../lib/icon";
 
 /**
  * A record in a list (a staff member, a claim type, a payout), as the old apps: the same

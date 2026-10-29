@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import { navProgress } from "./navProgress";
+import { navProgress } from "../frame/navProgress";
 
 /** Holds the loading bar until a new screen's first requests have answered. */
 export function trackFirstLoads(queryClient: QueryClient) {

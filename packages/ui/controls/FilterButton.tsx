@@ -1,6 +1,6 @@
 import { SlidersHorizontal } from "lucide-react";
 
-import { ICON } from "./icon";
+import { ICON } from "../lib/icon";
 
 /** The square button beside a search box that opens a list's filter; a dot while one is set. */
 export function FilterButton({

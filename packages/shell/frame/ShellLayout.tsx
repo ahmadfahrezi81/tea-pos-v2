@@ -8,15 +8,15 @@ import type { MessageKey } from "@tea-pos/i18n";
 import { ToastHost } from "@tea-pos/ui/toast";
 import { MoreHorizontal, type LucideIcon } from "lucide-react";
 
-import { avatar } from "./avatar";
-import { BootScreen } from "./BootScreen";
+import { avatar } from "@tea-pos/ui/avatarUrl";
+import { BootScreen } from "../screens/BootScreen";
 import { MobileShell } from "./MobileShell";
 import type { Tab } from "./routes";
-import { TenantProvider, useSlug } from "./tenant";
-import { LATEST, seen } from "./whatsNew";
-import { hideSplash } from "./splash";
+import { TenantProvider, useSlug } from "../session/tenant";
+import { LATEST, seen } from "../lib/whatsNew";
+import { hideSplash } from "../lib/splash";
 import { useHasPainted } from "./useHasPainted";
-import { useMeSync } from "./useMeSync";
+import { useMeSync } from "../session/useMeSync";
 
 /** One of an app's own tabs, under the tenant (`""` is the tenant's first screen); More is added last. */
 export interface AppTab {

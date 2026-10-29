@@ -1,4 +1,4 @@
-import { DOT_GRID } from "./styles/dot-grid";
+import { DOT_GRID } from "../styles/dot-grid";
 import { Emoji, type EmojiName } from "./Emoji";
 
 // One picture for every empty screen, so an empty state costs one small file at most.

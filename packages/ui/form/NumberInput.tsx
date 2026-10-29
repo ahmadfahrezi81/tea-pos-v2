@@ -1,6 +1,6 @@
 import { Pencil } from "lucide-react";
 import { useState } from "react";
-import { ICON } from "../icon";
+import { ICON } from "../lib/icon";
 
 const show = (v: number | null, raw: boolean) =>
     v === null ? "" : raw ? String(v) : v.toLocaleString("id-ID");

@@ -1,6 +1,6 @@
 # Task 052 — The owner's feedback round
 
-**Status: in progress 2026-10-29, on `feat/backoffice-feedback`; changes added as the owner gives them.**
+**Status: built 2026-10-29 on `feat/backoffice-feedback`; PR into `staging` next.**
 
 ## The goal
 
@@ -48,6 +48,11 @@ The owner's test round on staging (RFC: [Backoffice v2 refinement](https://app.n
 27. **A store's page in panels:** Right now (the Open or Closed badge in the heading; a grey tile with the seller, their photo and since when, or when it closed), Today (the sales large, Cups and Orders as two grey tiles, cups by hour in a grey tile or a no-sales line), then the Analytics and Orders rows. `Panel` gains `beside` for the heading's right. Store's words live in the core files' `store` section; Shut down and No stores yet moved there
 28. **Store's home, built for the day:** a Today panel on top over the stores shown (sales, Cups and Orders tiles, cups by hour from `sales/hours` with exactly those stores), then search and a filter (type: Real stores by default, Demo, Shut down, All; an Open only switch), then the stores. Each card shows who sold there today with their cups, as the analytics card does (`Sellers`, moved to `store/Sellers.tsx`), so a store with two sellers shows both. API: `stores/live` gains `sellers` per store (`StoresLiveSellers`; the seller on shift is in it before their first order)
 29. **The store in the title, not on every card:** a store's screens (Analytics, its charts, a day, its activity and sessions, Orders and its chart) title `Laladon STG · Analytics` (`All stores · …` together) through `StoreTitle`; the day cards and orders show a store's name only over several stores (they read the address now, not the old picker's store)
+30. **Review, three passes** (the owner's ask before staging):
+    - Bugs: UAC's and Store's search and filters live in the address (`useSearchParam`, `useSearchText`, `useSetSearch` in `shell/session/searchParam.ts`), so back and a shared link keep them; a day's title names its own store even from All stores; Log Out asks with the bottom sheet like every other action (`ConfirmDialog` goes); the store card's fallback seller has its own key; `useDay` no longer asks with an empty id
+    - Repetition: one `TodayPanel`; every tag is a `Badge`; one `SectionLabel` heading (Settings, Panel and Field use it); one `useSlug` (`shell/session/tenant`); lists inside a `Sheet` line up by themselves (`.sheet`), no more `-mx-4`; calendar days, `addDays` and `localHour` in `packages/format` (with tests), so no screen builds its own Intl formatter or WIB arithmetic
+    - Structure: `packages/shell` in `screens/`, `frame/`, `session/`, `lib/`; `packages/ui` in `layout/`, `feedback/`, `controls/`, `lib/`; both export each file by name, so no app import changed. `@tea-pos/shell/avatar` goes (use `@tea-pos/ui/avatarUrl`)
+    - Left: the unused `GET /feedbacks` and `POST /auth/logout-everywhere` (a backend PR); `ReadOnlyInput`, `SelectInput` and the Skeleton variants wait for the seller's screens
 
 ## Done when
 

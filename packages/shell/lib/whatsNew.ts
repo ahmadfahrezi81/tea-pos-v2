@@ -34,6 +34,6 @@ export function markSeen() {
 
 /** The entries themselves, loaded only when the screen opens. */
 export async function loadWhatsNew(app: string): Promise<WhatsNewEntry[]> {
-    const { default: all } = await import("./whats-new.json");
+    const { default: all } = await import("../whats-new.json");
     return (all as WhatsNewEntry[]).filter((e) => e.apps.includes(app));
 }

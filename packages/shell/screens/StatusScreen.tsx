@@ -1,7 +1,7 @@
 import { $api } from "@tea-pos/api-client";
 import { useT } from "@tea-pos/i18n/react";
 
-import { APP_COMMIT, APP_VERSION } from "./version";
+import { APP_COMMIT, APP_VERSION } from "../lib/version";
 
 /** Is the API reachable, and which build is running: Account's App info page. */
 export function StatusScreen() {

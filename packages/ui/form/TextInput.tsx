@@ -1,5 +1,5 @@
 import { Pencil } from "lucide-react";
-import { ICON } from "../icon";
+import { ICON } from "../lib/icon";
 
 /** The old apps' text field: a soft grey tile, a pencil once it holds a value (gone while typing). */
 export function TextInput({

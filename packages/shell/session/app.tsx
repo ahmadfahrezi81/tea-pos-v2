@@ -15,12 +15,12 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { AppContext } from "./AppContext";
-import { AppUpdateProvider } from "./AppUpdate";
-import { whenIdle } from "./idle";
+import { AppUpdateProvider } from "../frame/AppUpdate";
+import { whenIdle } from "../lib/idle";
 import { savedUser } from "./session";
-import { hideSplash } from "./splash";
-import { trackFirstLoads } from "./trackFirstLoads";
-import { API_CONTRACT } from "./version";
+import { hideSplash } from "../lib/splash";
+import { trackFirstLoads } from "../lib/trackFirstLoads";
+import { API_CONTRACT } from "../lib/version";
 
 const queryClient = createQueryClient();
 trackFirstLoads(queryClient);
@@ -34,7 +34,7 @@ export function createAppRouter<TRouteTree extends AnyRoute>(routeTree: TRouteTr
         scrollRestoration: true,
         scrollToTopSelectors: ["#shell-scroll"],
         // events.ts loads after the first screen, off the startup path.
-        defaultOnCatch: (error) => void import("./events").then((m) => m.reportError(error)),
+        defaultOnCatch: (error) => void import("../lib/events").then((m) => m.reportError(error)),
     });
 }
 
@@ -45,7 +45,7 @@ export async function startApp(router: ReturnType<typeof createAppRouter>, app: 
         offRendered();
         if (!router.state.matches.some((m) => m.staticData.holdsSplash)) hideSplash();
     });
-    whenIdle(() => void import("./events").then((m) => m.startEvents(router, APP_TAG)));
+    whenIdle(() => void import("../lib/events").then((m) => m.startEvents(router, APP_TAG)));
     whenIdle(() => void import("@tea-pos/api-client/live").then((m) => m.startLive(queryClient)));
     // index.html already picked it, to preload that file; the same rule as pickLocale.
     const locale =

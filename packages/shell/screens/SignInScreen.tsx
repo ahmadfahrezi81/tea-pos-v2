@@ -2,8 +2,8 @@ import type { MessageKey } from "@tea-pos/i18n";
 import { useT } from "@tea-pos/i18n/react";
 import { ActionButton } from "@tea-pos/ui/ActionButton";
 
-import { useApp } from "./AppContext";
-import { useApplyUpdateNow } from "./AppUpdate";
+import { useApp } from "../session/AppContext";
+import { useApplyUpdateNow } from "../frame/AppUpdate";
 
 // The codes the API sends back on /login?error=; anything else reads as a plain failure.
 const ERRORS: Record<string, MessageKey> = {

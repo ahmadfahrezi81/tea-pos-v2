@@ -1,6 +1,6 @@
 import { UserCircle } from "lucide-react";
 
-import { avatar } from "./avatarUrl";
+import { avatar } from "../lib/avatarUrl";
 
 /** A person's photo, or a placeholder; one look in every list (round) or card (square). */
 export function Avatar({

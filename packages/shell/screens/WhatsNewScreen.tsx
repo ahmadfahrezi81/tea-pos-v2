@@ -1,8 +1,8 @@
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { useEffect, useState } from "react";
 
-import { useApp } from "./AppContext";
-import { loadWhatsNew, markSeen, type WhatsNewEntry } from "./whatsNew";
+import { useApp } from "../session/AppContext";
+import { loadWhatsNew, markSeen, type WhatsNewEntry } from "../lib/whatsNew";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 
 /** Each release's changes a user can notice, in their language, newest first. */
