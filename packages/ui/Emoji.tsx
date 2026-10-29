@@ -1,5 +1,5 @@
 import alarmClock from "./emoji/alarm-clock.svg";
-import emptyNest from "./emoji/empty-nest.svg";
+import emptyNest from "./emoji/empty-nest.webp";
 import refresh from "./emoji/counterclockwise-arrows-button.svg";
 import floppyDisk from "./emoji/floppy-disk.svg";
 import moneyWithWings from "./emoji/money-with-wings.svg";
