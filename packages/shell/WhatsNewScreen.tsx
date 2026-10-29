@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 import { useApp } from "./AppContext";
 import { loadWhatsNew, markSeen, type WhatsNewEntry } from "./whatsNew";
+import { EmptyState } from "@tea-pos/ui/EmptyState";
 
 /** Each release's changes a user can notice, in their language, newest first. */
 export function WhatsNewScreen() {
@@ -17,10 +18,7 @@ export function WhatsNewScreen() {
     }, [id]);
 
     if (!entries) return null;
-    if (!entries.length)
-        return (
-            <p className="rounded-2xl bg-white p-4 text-sm text-gray-500">{t("whatsNew.empty")}</p>
-        );
+    if (!entries.length) return <EmptyState title={t("whatsNew.empty")} />;
     return (
         <div className="flex flex-col gap-3">
             {entries.map((e) => (

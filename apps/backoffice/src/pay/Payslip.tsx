@@ -8,7 +8,7 @@ import { useAccess } from "@tea-pos/shell/tenant";
 import { AlertTriangle, Check, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import { daysLeft, dayMonth, shortDay, weeks } from "./dates";
+import { dayMonth, daysLeft, daysLeftText, shortDay, weeks } from "./dates";
 import { decisions, payDate, usePayslip, usePayWrite } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { Dialog, Drawer } from "@tea-pos/ui/Drawer";
@@ -412,7 +412,7 @@ export function Payslip({ id }: { id: string }) {
                                 disabled
                                 className={`w-full py-3.5 text-white font-bold rounded-xl opacity-40 ${isSkip ? "bg-gray-700" : "bg-green-600"}`}
                             >
-                                {t("pay.daysLeftLong").replace("{n}", String(left))}
+                                {daysLeftText(t, left)}
                             </button>
                         ) : (
                             <Link

@@ -6,10 +6,12 @@ import { Avatar } from "@tea-pos/ui/Avatar";
 import { Link } from "@tanstack/react-router";
 import { Check, ChevronLeft, ChevronRight, Settings } from "lucide-react";
 
-import { daysLeft, shortDay, weeks } from "./dates";
+import { daysLeft, daysLeftText, shortDay, weeks } from "./dates";
 import { payDate, usePayPeriodAt, useSlug } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
+import { EmptyState } from "@tea-pos/ui/EmptyState";
+import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 
 type Person = components["schemas"]["Payout"];
 
@@ -90,9 +92,7 @@ export function PeriodHome({ start }: { start: string }) {
                     {left <= 0 && toPay > 0
                         ? t("pay.payDay").replace("{n}", String(toPay))
                         : `${t("pay.paysOn").replace("{date}", payDate(p.payoutDate, locale))}${
-                              left > 0
-                                  ? ` · ${t("pay.daysLeftLong").replace("{n}", String(left))}`
-                                  : ""
+                              left > 0 ? ` · ${daysLeftText(t, left)}` : ""
                           }`}
                 </p>
                 <p className="mt-1 text-center text-sm font-semibold text-gray-900">
@@ -128,7 +128,7 @@ export function PeriodHome({ start }: { start: string }) {
             )}
 
             {groups.length === 0 && (
-                <p className="py-10 text-center text-gray-400">{t("pay.noPeople")}</p>
+                <EmptyState title={t("pay.noPeople")} body={t("pay.noPeopleBody")} />
             )}
             {groups.map(({ g, rows }) => (
                 <section key={g} className="space-y-2">
@@ -148,15 +148,13 @@ export function PeriodHome({ start }: { start: string }) {
                 </section>
             ))}
 
-            <Link
-                to="/$tenant/pay/settings"
-                params={{ tenant: slug }}
-                className="flex items-center gap-3 rounded-2xl bg-white p-4 active:scale-[0.99]"
-            >
-                <Settings size={ICON} className="text-gray-900" />
-                <span className="flex-1 text-gray-900">{t("pay.settingsTitle")}</span>
-                <ChevronRight size={ICON} className="text-gray-400" />
-            </Link>
+            <SettingsGroup>
+                <SettingsRow
+                    to={`/${slug}/pay/settings`}
+                    icon={<Settings {...rowIcon} />}
+                    label={t("pay.settingsTitle")}
+                />
+            </SettingsGroup>
         </div>
     );
 }

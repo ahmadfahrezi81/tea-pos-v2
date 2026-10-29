@@ -32,3 +32,9 @@ export const shortDay = (date: string, locale: string) =>
         month: "short",
         timeZone: "UTC",
     }).format(new Date(`${date}T00:00:00Z`));
+
+/** `3 days left`, `1 day left`. */
+export const daysLeftText = (
+    t: (k: "pay.daysLeftLong" | "pay.dayLeftLong") => string,
+    n: number,
+) => (n === 1 ? t("pay.dayLeftLong") : t("pay.daysLeftLong").replace("{n}", String(n)));

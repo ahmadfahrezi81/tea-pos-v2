@@ -20,6 +20,7 @@ import {
     type PeopleFilter,
 } from "./PeopleFilter";
 import { useUac, type Person } from "./uac";
+import { EmptyState } from "@tea-pos/ui/EmptyState";
 
 /**
  * UAC's home, as the old Staff Payroll Info list: requests waiting on top, then everyone A to Z,
@@ -82,28 +83,32 @@ export function UacHome() {
                     onClick={() => setFiltering(true)}
                 />
             </div>
-            <ListCard>
-                {!data ? (
-                    [1, 2, 3].map((i) => <ListRowSkeleton key={i} withLeading />)
-                ) : people.length === 0 ? (
-                    <p className="py-4 text-sm text-gray-400">{t("uac.noPeople")}</p>
+            {data && people.length === 0 ? (
+                q || isFiltered(filter) ? (
+                    <EmptyState title={t("uac.noMatch")} body={t("uac.noMatchBody")} />
                 ) : (
-                    people.map((p) => (
-                        <ListRow
-                            key={p.id}
-                            onClick={() =>
-                                void navigate({
-                                    to: "/$tenant/uac/$userId",
-                                    params: { tenant: slug, userId: p.id },
-                                })
-                            }
-                            leading={<Avatar url={p.avatarUrl} square />}
-                            title={p.name}
-                            subtitle={<Badges person={p} />}
-                        />
-                    ))
-                )}
-            </ListCard>
+                    <EmptyState title={t("uac.noPeople")} />
+                )
+            ) : (
+                <ListCard>
+                    {!data
+                        ? [1, 2, 3].map((i) => <ListRowSkeleton key={i} withLeading />)
+                        : people.map((p) => (
+                              <ListRow
+                                  key={p.id}
+                                  onClick={() =>
+                                      void navigate({
+                                          to: "/$tenant/uac/$userId",
+                                          params: { tenant: slug, userId: p.id },
+                                      })
+                                  }
+                                  leading={<Avatar url={p.avatarUrl} square />}
+                                  title={p.name}
+                                  subtitle={<Badges person={p} />}
+                              />
+                          ))}
+                </ListCard>
+            )}
             <SettingsGroup>
                 <SettingsRow
                     to={`/${slug}/uac/help`}

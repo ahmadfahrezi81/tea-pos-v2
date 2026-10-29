@@ -27,6 +27,7 @@ import {
 } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
+import { EmptyState } from "@tea-pos/ui/EmptyState";
 
 type ClaimType = components["schemas"]["ClaimType"];
 type Frequency = ClaimType["frequency"];
@@ -68,15 +69,13 @@ function TypeList<T extends { id: string }>({
 }) {
     return (
         <div className="space-y-3">
-            <ListCard>
-                {!items ? (
-                    [1, 2].map((i) => <ListRowSkeleton key={i} />)
-                ) : items.length === 0 ? (
-                    <p className="py-4 text-sm text-gray-400">{empty}</p>
-                ) : (
-                    items.map(row)
-                )}
-            </ListCard>
+            {items?.length === 0 ? (
+                <EmptyState title={empty} />
+            ) : (
+                <ListCard>
+                    {!items ? [1, 2].map((i) => <ListRowSkeleton key={i} />) : items.map(row)}
+                </ListCard>
+            )}
         </div>
     );
 }

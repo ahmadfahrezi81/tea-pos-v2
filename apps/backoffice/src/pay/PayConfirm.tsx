@@ -11,7 +11,7 @@ import { PhotoInput } from "@tea-pos/ui/PhotoInput";
 import { Link, useLocation, useRouter } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 
-import { daysLeft, dayMonth } from "./dates";
+import { dayMonth, daysLeft, daysLeftText } from "./dates";
 import { usePayslip, usePayStaff, usePayWrite, useSlug } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 
@@ -200,7 +200,7 @@ export function PayConfirm({ id }: { id: string }) {
             <FormFooter
                 label={
                     locked
-                        ? t("pay.daysLeftLong").replace("{n}", String(left))
+                        ? daysLeftText(t, left)
                         : t(isSkip ? "pay.markSkipped" : "pay.confirmPayment")
                 }
                 busyLabel={t(isSkip ? "pay.closing" : "pay.confirming")}

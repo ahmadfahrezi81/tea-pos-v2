@@ -63,6 +63,8 @@
         "blockBody": "Their later asks are dropped, and they aren't told.",
         "storesActive": "Real stores",
         "storesFake": "Demo stores",
-        "storesInactive": "Shut down stores"
+        "storesInactive": "Shut down stores",
+        "noMatch": "Nobody matches",
+        "noMatchBody": "Try another name or clear the filter."
     }
 }

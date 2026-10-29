@@ -218,6 +218,8 @@
         "groupTypes": "Jenis",
         "groupSchedule": "Jadwal",
         "noPeople": "Tidak ada yang dibayar pada periode ini.",
-        "noPayslip": "Tidak ada untuk orang ini pada periode ini."
+        "noPayslip": "Tidak ada untuk orang ini pada periode ini.",
+        "noPeopleBody": "Slip gaji muncul di sini setelah penjual menutup hari di periode ini.",
+        "dayLeftLong": "1 hari lagi"
     }
 }

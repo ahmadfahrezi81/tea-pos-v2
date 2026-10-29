@@ -2,10 +2,11 @@ import type { MessageKey } from "@tea-pos/i18n";
 import { useT } from "@tea-pos/i18n/react";
 import { Drawer, DrawerHandle } from "@tea-pos/ui/Drawer";
 import { isNight, weatherOf } from "@tea-pos/ui/weather";
-import { Cloud, X } from "lucide-react";
+import { X } from "lucide-react";
 
 import { useWeather } from "./more";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { EmptyState } from "@tea-pos/ui/EmptyState";
 
 const nowInWib = () => {
     const d = new Date(Date.now() + 7 * 3_600_000);
@@ -72,10 +73,7 @@ export function WeatherSheet({ open, onClose }: { open: boolean; onClose: () => 
                     <Skeleton className="h-64 rounded-2xl" />
                 </div>
             ) : shown.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                    <Cloud className="size-10 mb-3" />
-                    <p className="text-sm">{t("weather.noData")}</p>
-                </div>
+                <EmptyState title={t("weather.noData")} />
             ) : (
                 <div className="space-y-1">
                     {shown.map((h) => {

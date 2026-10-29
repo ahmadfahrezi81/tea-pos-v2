@@ -7,6 +7,7 @@ import { useEffect } from "react";
 
 import { useTenant } from "./tenant";
 import { useApiMutation } from "./useApiMutation";
+import { EmptyState } from "@tea-pos/ui/EmptyState";
 
 /** Where `/` goes: the user's tenant (the last one used, else the first), or why there is none. */
 export function GoToTenant() {
@@ -18,7 +19,7 @@ export function GoToTenant() {
         if (slug) void navigate({ to: "/$tenant", params: { tenant: slug }, replace: true });
     }, [slug, navigate]);
     if (!me || slug) return null;
-    return <p className="rounded-2xl bg-white p-4 text-sm text-gray-700">{t("home.noTenant")}</p>;
+    return <EmptyState title={t("home.noTenant")} />;
 }
 
 /** Guards `/<tenant>/…`: a slug that is not one of the user's says so. */

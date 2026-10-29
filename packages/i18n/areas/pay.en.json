@@ -140,7 +140,7 @@
         "dailyBreakdown": "Daily Breakdown",
         "dayDone": "Done",
         "dayPending": "Pending",
-        "daysLeftLong": "{n} day(s) left",
+        "daysLeftLong": "{n} days left",
         "daysPending": "{n} day(s) pending review",
         "daysPendingSub": "All commissions and claims must be reviewed before payment can be confirmed.",
         "done": "Done",
@@ -218,6 +218,8 @@
         "groupTypes": "Types",
         "groupSchedule": "Schedule",
         "noPeople": "Nobody to pay in this period.",
-        "noPayslip": "Nothing for this person in this period."
+        "noPayslip": "Nothing for this person in this period.",
+        "noPeopleBody": "Payslips show here once a seller closes a day in this period.",
+        "dayLeftLong": "1 day left"
     }
 }

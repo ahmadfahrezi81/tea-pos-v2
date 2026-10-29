@@ -8,7 +8,6 @@ import { Sheet } from "@tea-pos/ui/Sheet";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
     AlertTriangle,
-    Calendar,
     CalendarDays,
     History,
     Info,
@@ -22,6 +21,7 @@ import { useState } from "react";
 import { monthRange, useDays, useSalesDays, useStoreId } from "./sales";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
+import { EmptyState } from "@tea-pos/ui/EmptyState";
 
 type Day = components["schemas"]["Day"];
 
@@ -173,10 +173,7 @@ export function AnalyticsMonth({ month }: { month: string }) {
                         <Skeleton key={i} delay={i * 80} className="h-48 rounded-2xl" />
                     ))
                 ) : list.length === 0 ? (
-                    <div className="bg-white p-8 rounded-2xl text-center">
-                        <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
-                        <p className="text-gray-600">{t("analytics.noSummary")}</p>
-                    </div>
+                    <EmptyState title={t("analytics.noSummary")} />
                 ) : (
                     list.map((day) => (
                         <DayCard

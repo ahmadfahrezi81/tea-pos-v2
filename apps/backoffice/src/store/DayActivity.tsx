@@ -23,6 +23,7 @@ import type { ReactNode } from "react";
 import { PhotoTile } from "./DayDetail";
 import { useDayActivity, useDaySessions } from "./sales";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { EmptyState } from "@tea-pos/ui/EmptyState";
 
 type Event = components["schemas"]["DayEvent"];
 type Session = components["schemas"]["DaySession"];
@@ -77,12 +78,7 @@ export function DayActivity({ id }: { id: string }) {
     const { data } = useDayActivity(id);
     if (!data) return <Skeleton className="h-64 rounded-2xl" />;
     const events = data.events;
-    if (events.length === 0)
-        return (
-            <div className="bg-white rounded-2xl p-8 text-center">
-                <p className="text-gray-400 text-sm">{t("daily.noActivity")}</p>
-            </div>
-        );
+    if (events.length === 0) return <EmptyState title={t("daily.noActivity")} />;
     return (
         <div className="bg-white rounded-2xl p-3">
             {events.map((e, i) =>
@@ -237,12 +233,7 @@ export function DaySessions({ id }: { id: string }) {
     const { data } = useDaySessions(id);
     if (!data) return <Skeleton className="h-40 rounded-2xl" />;
     const sessions = data.sessions;
-    if (sessions.length === 0)
-        return (
-            <div className="bg-white rounded-2xl p-8 text-center">
-                <p className="text-gray-400 text-sm">{t("daily.noSessions")}</p>
-            </div>
-        );
+    if (sessions.length === 0) return <EmptyState title={t("daily.noSessions")} />;
     const people = new Set(sessions.map((s) => s.userId)).size;
     const nameOf = new Map(sessions.map((s) => [s.id, s.userName]));
     return (

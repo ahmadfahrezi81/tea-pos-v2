@@ -4,11 +4,12 @@ import { useTenant } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { LoadMore } from "@tea-pos/ui/LoadMore";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Calendar, CalendarDays, Receipt } from "lucide-react";
+import { CalendarDays, Receipt } from "lucide-react";
 
 import { useDayOrders, useSalesHours, useStoreId } from "./sales";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
+import { EmptyState } from "@tea-pos/ui/EmptyState";
 
 const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
 
@@ -114,11 +115,7 @@ export function StoreOrders({ date }: { date: string }) {
                     <Skeleton key={i} delay={i * 80} className="h-24 rounded-2xl" />
                 ))
             ) : list.length === 0 ? (
-                <div className="bg-white p-8 rounded-2xl text-center">
-                    <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-600">{t("orders.noOrders")}</p>
-                    <p className="text-sm text-gray-500 mt-1">{t("orders.noOrdersForDate")}</p>
-                </div>
+                <EmptyState title={t("orders.noOrders")} body={t("orders.noOrdersForDate")} />
             ) : (
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">

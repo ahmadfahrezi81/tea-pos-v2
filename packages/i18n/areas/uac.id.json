@@ -63,6 +63,8 @@
         "blockBody": "Permintaan berikutnya diabaikan, dan mereka tidak diberi tahu.",
         "storesActive": "Toko asli",
         "storesFake": "Toko demo",
-        "storesInactive": "Toko berhenti"
+        "storesInactive": "Toko berhenti",
+        "noMatch": "Tidak ada yang cocok",
+        "noMatchBody": "Coba nama lain atau hapus saringan."
     }
 }
