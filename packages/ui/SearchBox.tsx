@@ -13,8 +13,8 @@ export function SearchBox({
     clearLabel: string;
 }) {
     return (
-        <div className="flex items-center gap-2 bg-white rounded-xl px-3 py-2.5">
-            <Search size={16} className="text-gray-400 shrink-0" />
+        <div className="flex items-center gap-2.5 bg-white rounded-xl px-3.5 py-3.5">
+            <Search size={20} className="text-gray-400 shrink-0" />
             <input
                 type="text"
                 value={value}
@@ -25,10 +25,10 @@ export function SearchBox({
             {value && (
                 <button
                     onClick={() => onChange("")}
-                    className="text-gray-400 active:text-gray-600 shrink-0"
+                    className="size-6 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center shrink-0 active:bg-gray-300"
                     aria-label={clearLabel}
                 >
-                    <X size={16} />
+                    <X size={14} strokeWidth={2.5} />
                 </button>
             )}
         </div>
