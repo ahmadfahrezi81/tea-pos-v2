@@ -41,18 +41,18 @@
         "reset": "Reset",
         "helpTitle": "How access works",
         "helpOneAccount": "One account, a level per app",
-        "helpOneAccountBody": "Everyone signs in with their own Google account. Each app gives them its own level: being in the seller app says nothing about the office.",
+        "helpOneAccountBody": "Everyone signs in with their own Google account.\nEach app gives them its own level.\nBeing in the seller app says nothing about the office.",
         "helpSeller": "Seller app",
-        "helpSellerBody": "Member: uses the seller app (POS, orders) in their stores. None: cannot open it.",
+        "helpSellerBody": "Member: uses the seller app (POS, orders) in their stores.\nNone: cannot open it.",
         "helpOffice": "Office (backoffice)",
-        "helpOfficeBody": "Admin: sees and changes everything, and gives others access. Guest: sees everything, changes nothing. None: cannot open it.",
+        "helpOfficeBody": "Admin: sees and changes everything, and gives others access.\nGuest: sees everything, changes nothing.\nNone: cannot open it.",
         "helpOwner": "Owner",
-        "helpOwnerBody": "Always an admin in every app. Nobody can turn the owner off or lower their levels.",
+        "helpOwnerBody": "Always an admin in every app.\nNobody can turn the owner off or lower their levels.",
         "helpStores": "Stores",
-        "helpStoresBody": "Which stores someone sees in the seller app. Set per person, apart from their levels.",
+        "helpStoresBody": "Which stores someone sees in the seller app.\nSet per person, apart from their levels.",
         "helpInactive": "Inactive",
-        "helpInactiveBody": "Turned off: out of every app in this business from their next tap, and their stores are cleared. Turning them back on means picking their stores again.",
+        "helpInactiveBody": "Out of every app in this business from their next tap.\nTheir stores are cleared.\nTurning them back on means picking their stores again.",
         "helpRequests": "Requests",
-        "helpRequestsBody": "Someone who opens an app here without access can ask to join. Their request waits at the top of UAC until an admin lets them in (with levels and stores) or rejects it."
+        "helpRequestsBody": "Someone who opens an app here without access can ask to join.\nTheir request waits at the top of UAC.\nAn admin lets them in (with levels and stores) or rejects it."
     }
 }

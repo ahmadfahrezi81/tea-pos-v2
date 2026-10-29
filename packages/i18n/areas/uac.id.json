@@ -41,18 +41,18 @@
         "reset": "Atur ulang",
         "helpTitle": "Cara kerja akses",
         "helpOneAccount": "Satu akun, satu level per aplikasi",
-        "helpOneAccountBody": "Setiap orang masuk dengan akun Google sendiri. Tiap aplikasi memberi level sendiri: ada di aplikasi penjual tidak berarti ada di office.",
+        "helpOneAccountBody": "Setiap orang masuk dengan akun Google sendiri.\nTiap aplikasi memberi level sendiri.\nAda di aplikasi penjual tidak berarti ada di office.",
         "helpSeller": "Aplikasi penjual",
-        "helpSellerBody": "Member: memakai aplikasi penjual (POS, pesanan) di tokonya. Tidak ada: tidak bisa membukanya.",
+        "helpSellerBody": "Member: memakai aplikasi penjual (POS, pesanan) di tokonya.\nTidak ada: tidak bisa membukanya.",
         "helpOffice": "Office (backoffice)",
-        "helpOfficeBody": "Admin: melihat dan mengubah semuanya, dan memberi akses ke orang lain. Tamu: melihat semuanya, tidak mengubah apa pun. Tidak ada: tidak bisa membukanya.",
+        "helpOfficeBody": "Admin: melihat dan mengubah semuanya, dan memberi akses ke orang lain.\nTamu: melihat semuanya, tidak mengubah apa pun.\nTidak ada: tidak bisa membukanya.",
         "helpOwner": "Pemilik",
-        "helpOwnerBody": "Selalu admin di setiap aplikasi. Tidak ada yang bisa menonaktifkan pemilik atau menurunkan levelnya.",
+        "helpOwnerBody": "Selalu admin di setiap aplikasi.\nTidak ada yang bisa menonaktifkan pemilik atau menurunkan levelnya.",
         "helpStores": "Toko",
-        "helpStoresBody": "Toko mana yang dilihat seseorang di aplikasi penjual. Diatur per orang, terpisah dari levelnya.",
+        "helpStoresBody": "Toko mana yang dilihat seseorang di aplikasi penjual.\nDiatur per orang, terpisah dari levelnya.",
         "helpInactive": "Nonaktif",
-        "helpInactiveBody": "Dinonaktifkan: keluar dari semua aplikasi di bisnis ini sejak ketukan berikutnya, dan tokonya dikosongkan. Mengaktifkan lagi berarti memilih tokonya lagi.",
+        "helpInactiveBody": "Keluar dari semua aplikasi di bisnis ini sejak ketukan berikutnya.\nTokonya dikosongkan.\nMengaktifkan lagi berarti memilih tokonya lagi.",
         "helpRequests": "Permintaan",
-        "helpRequestsBody": "Orang yang membuka aplikasi di sini tanpa akses bisa minta bergabung. Permintaannya menunggu di atas UAC sampai admin menerima (dengan level dan toko) atau menolaknya."
+        "helpRequestsBody": "Orang yang membuka aplikasi di sini tanpa akses bisa minta bergabung.\nPermintaannya menunggu di atas UAC.\nAdmin menerima (dengan level dan toko) atau menolaknya."
     }
 }
