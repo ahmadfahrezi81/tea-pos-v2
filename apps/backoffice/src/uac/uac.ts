@@ -1,3 +1,4 @@
+import type { MessageKey } from "@tea-pos/i18n";
 import { $api, api } from "@tea-pos/api-client";
 import { STALE } from "@tea-pos/api-client/query";
 import { useApiMutation } from "@tea-pos/shell/useApiMutation";
@@ -104,4 +105,18 @@ export function useReject(id: string) {
         },
         { onSuccess: () => refetchUac(queryClient) },
     );
+}
+
+type Store = { id: string; name: string; status: string };
+
+/** The tenant's stores by type, real ones first: active, demo (`fake`), then closed. */
+export function storeGroups<S extends Store>(stores: S[]): { key: MessageKey; stores: S[] }[] {
+    const groups: [string, MessageKey][] = [
+        ["active", "uac.storesActive"],
+        ["fake", "uac.storesFake"],
+        ["inactive", "uac.storesInactive"],
+    ];
+    return groups
+        .map(([status, key]) => ({ key, stores: stores.filter((s) => s.status === status) }))
+        .filter((g) => g.stores.length > 0);
 }

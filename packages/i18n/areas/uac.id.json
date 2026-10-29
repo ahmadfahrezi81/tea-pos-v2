@@ -60,6 +60,9 @@
         "rejectTitle": "Tolak {name}?",
         "rejectBody": "Mereka bisa meminta lagi.",
         "blockTitle": "Blokir {name}?",
-        "blockBody": "Permintaan berikutnya diabaikan, dan mereka tidak diberi tahu."
+        "blockBody": "Permintaan berikutnya diabaikan, dan mereka tidak diberi tahu.",
+        "storesActive": "Toko",
+        "storesFake": "Toko demo",
+        "storesInactive": "Toko tutup"
     }
 }

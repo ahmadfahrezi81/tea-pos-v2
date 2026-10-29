@@ -15,7 +15,7 @@ import { useRouter } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { useState } from "react";
 
-import { useSetPerson, useUacPerson, type Change, type Person } from "./uac";
+import { storeGroups, useSetPerson, useUacPerson, type Change, type Person } from "./uac";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 
 /** The levels each app offers (auth.Levels in Go); '' is no access. */
@@ -77,13 +77,19 @@ export function PersonPage({ userId }: { userId: string }) {
                 ))}
             </SettingsGroup>
 
-            <SettingsGroup title={t("uac.stores")}>
-                {theirs.length === 0 ? (
+            {theirs.length === 0 ? (
+                <SettingsGroup title={t("uac.stores")}>
                     <p className="py-4 text-gray-400">{t("uac.noStores")}</p>
-                ) : (
-                    theirs.map((s) => <ListRow key={s.id} title={s.name} />)
-                )}
-            </SettingsGroup>
+                </SettingsGroup>
+            ) : (
+                storeGroups(theirs).map((g) => (
+                    <SettingsGroup key={g.key} title={`${t(g.key)} (${g.stores.length})`}>
+                        {g.stores.map((s) => (
+                            <ListRow key={s.id} title={s.name} />
+                        ))}
+                    </SettingsGroup>
+                ))
+            )}
         </div>
     );
 }
@@ -190,43 +196,46 @@ export function AccessFields({
                 </section>
             ))}
 
-            <section className="space-y-2">
-                <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">
-                    {t("uac.stores")} ({change.storeIds.length})
-                </p>
-                <div className="bg-white rounded-2xl px-4 py-1">
-                    {stores.map((s) => {
-                        const on = change.storeIds.includes(s.id);
-                        return (
-                            <button
-                                key={s.id}
-                                disabled={disabled}
-                                onClick={() =>
-                                    set({
-                                        storeIds: on
-                                            ? change.storeIds.filter((id) => id !== s.id)
-                                            : [...change.storeIds, s.id],
-                                    })
-                                }
-                                className="w-full flex items-center justify-between gap-3 py-5 border-b-2 last:border-b-0 border-slate-100 text-left active:bg-gray-50 disabled:opacity-40"
-                            >
-                                <span className="text-[17px] font-medium text-gray-900">
-                                    {s.name}
-                                </span>
-                                <span
-                                    className={`flex size-6 shrink-0 items-center justify-center rounded-md border-2 ${
-                                        on
-                                            ? "border-brand/90 bg-brand/90 text-white"
-                                            : "border-gray-300"
-                                    }`}
+            {storeGroups(stores).map((g) => (
+                <section key={g.key} className="space-y-2">
+                    <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">
+                        {t(g.key)} ({g.stores.filter((s) => change.storeIds.includes(s.id)).length}/
+                        {g.stores.length})
+                    </p>
+                    <div className="bg-white rounded-2xl px-4 py-1">
+                        {g.stores.map((s) => {
+                            const on = change.storeIds.includes(s.id);
+                            return (
+                                <button
+                                    key={s.id}
+                                    disabled={disabled}
+                                    onClick={() =>
+                                        set({
+                                            storeIds: on
+                                                ? change.storeIds.filter((id) => id !== s.id)
+                                                : [...change.storeIds, s.id],
+                                        })
+                                    }
+                                    className="w-full flex items-center justify-between gap-3 py-5 border-b-2 last:border-b-0 border-slate-100 text-left active:bg-gray-50 disabled:opacity-40"
                                 >
-                                    {on && <Check size={16} strokeWidth={4} />}
-                                </span>
-                            </button>
-                        );
-                    })}
-                </div>
-            </section>
+                                    <span className="text-[17px] font-medium text-gray-900">
+                                        {s.name}
+                                    </span>
+                                    <span
+                                        className={`flex size-6 shrink-0 items-center justify-center rounded-md border-2 ${
+                                            on
+                                                ? "border-brand/90 bg-brand/90 text-white"
+                                                : "border-gray-300"
+                                        }`}
+                                    >
+                                        {on && <Check size={16} strokeWidth={4} />}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </section>
+            ))}
         </>
     );
 }

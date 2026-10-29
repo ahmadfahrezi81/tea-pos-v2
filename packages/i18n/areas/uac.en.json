@@ -60,6 +60,9 @@
         "rejectTitle": "Reject {name}?",
         "rejectBody": "They can ask again.",
         "blockTitle": "Block {name}?",
-        "blockBody": "Their later asks are dropped, and they aren't told."
+        "blockBody": "Their later asks are dropped, and they aren't told.",
+        "storesActive": "Stores",
+        "storesFake": "Demo stores",
+        "storesInactive": "Closed stores"
     }
 }
