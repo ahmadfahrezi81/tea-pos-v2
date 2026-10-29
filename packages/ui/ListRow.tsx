@@ -25,7 +25,7 @@ export function ListRow({
     const body = (
         <>
             {leading && <span className="shrink-0 flex items-center py-4">{leading}</span>}
-            <div className="flex-1 min-w-0 flex items-center gap-3 py-4 -mr-4 pr-4 border-b-2 border-slate-100 group-last:border-b-0">
+            <div className="flex-1 min-w-0 flex items-center gap-3 py-4 -mr-4 pr-4 border-b-2 border-slate-100 in-[.panel]:border-white group-last:border-b-0">
                 <div className="flex-1 min-w-0">
                     <div className="text-[17px] font-medium text-gray-900 truncate">{title}</div>
                     {subtitle && <div className="text-sm text-gray-400 truncate">{subtitle}</div>}
@@ -53,7 +53,11 @@ export function ListRow({
 
 /** The card ListRows sit in. */
 export function ListCard({ children }: { children: ReactNode }) {
-    return <div className="bg-white rounded-2xl px-4 py-1">{children}</div>;
+    return (
+        <div className="bg-white in-[.panel]:bg-slate-100 rounded-2xl in-[.panel]:rounded-xl px-4 py-1">
+            {children}
+        </div>
+    );
 }
 
 /** A row's placeholder at the same height, so the list does not jump on load. */

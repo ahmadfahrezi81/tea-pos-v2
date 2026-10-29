@@ -18,7 +18,7 @@ export function ChoiceList<T extends string>({
     onChange: (value: T) => void;
 }) {
     return (
-        <div className="bg-white rounded-2xl px-4 py-1">
+        <div className="bg-white in-[.panel]:bg-slate-100 rounded-2xl in-[.panel]:rounded-xl px-4 py-1">
             {choices.map((c) => {
                 const selected = c.value === value;
                 return (
@@ -26,7 +26,7 @@ export function ChoiceList<T extends string>({
                         key={c.value}
                         onClick={() => onChange(c.value)}
                         disabled={selected || c.disabled}
-                        className="w-full flex items-center justify-between gap-3 py-5 border-b-2 last:border-b-0 border-slate-100 active:bg-gray-50 disabled:active:bg-transparent"
+                        className="w-full flex items-center justify-between gap-3 py-5 border-b-2 last:border-b-0 border-slate-100 in-[.panel]:border-white active:bg-gray-50 disabled:active:bg-transparent"
                     >
                         <div className={`text-left ${c.disabled ? "opacity-40" : ""}`}>
                             <p className="text-[17px] font-medium text-gray-900">{c.label}</p>

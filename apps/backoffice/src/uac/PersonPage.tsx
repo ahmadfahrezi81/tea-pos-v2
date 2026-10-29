@@ -216,7 +216,7 @@ export function AccessFields({
                             {g.stores.filter((s) => change.storeIds.includes(s.id)).length}/
                             {g.stores.length})
                         </PanelLabel>
-                        <div className="bg-white rounded-2xl px-4 py-1">
+                        <div className="bg-slate-100 rounded-xl px-4 py-1">
                             {g.stores.map((s) => {
                                 const on = change.storeIds.includes(s.id);
                                 return (
@@ -230,7 +230,7 @@ export function AccessFields({
                                                     : [...change.storeIds, s.id],
                                             })
                                         }
-                                        className="w-full flex items-center justify-between gap-3 py-5 border-b-2 last:border-b-0 border-slate-100 text-left active:bg-gray-50 disabled:opacity-40"
+                                        className="w-full flex items-center justify-between gap-3 py-5 border-b-2 last:border-b-0 border-white text-left active:bg-gray-50 disabled:opacity-40"
                                     >
                                         <span className="text-[17px] font-medium text-gray-900">
                                             {s.name}
