@@ -77,14 +77,7 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
                         </span>
                     </>
                 ) : (
-                    <span className="truncate">
-                        {s.lastClosed
-                            ? t("store.closedAt").replace(
-                                  "{when}",
-                                  `${formatTime(s.lastClosed, locale)} ${formatDay(s.lastClosed, locale).toLowerCase()}`,
-                              )
-                            : t("store.notOpened")}
-                    </span>
+                    <span className="truncate">{closedLine(s, t, locale)}</span>
                 )}
             </div>
             <div className="flex items-center justify-between border-t-2 border-slate-100 pt-2">
@@ -112,4 +105,18 @@ export function OpenBadge({ store: s }: { store: Store }) {
               ? "store.open"
               : "store.closed";
     return <Badge>{t(key)}</Badge>;
+}
+
+/** `Closed 21:04 yesterday`, or `Not opened yet`. */
+export function closedLine(
+    s: Store,
+    t: ReturnType<typeof useT>,
+    locale: ReturnType<typeof useLocale>,
+): string {
+    return s.lastClosed
+        ? t("store.closedAt").replace(
+              "{when}",
+              `${formatTime(s.lastClosed, locale)} ${formatDay(s.lastClosed, locale).toLowerCase()}`,
+          )
+        : t("store.notOpened");
 }

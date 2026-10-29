@@ -260,8 +260,6 @@
     },
     "store": {
         "title": "Store",
-        "openCount": "{open} of {all} open",
-        "today": "today",
         "open": "Open",
         "closed": "Closed",
         "openSince": "Open since {time}",
@@ -270,7 +268,7 @@
         "closedAt": "Closed {when}",
         "notOpened": "Not opened yet",
         "demo": "Demo",
-        "inactive": "Inactive",
+        "inactive": "Shut down",
         "todayLabel": "Today",
         "byHour": "by hour",
         "noSalesToday": "No sales yet today",
@@ -280,6 +278,9 @@
         "sales": "Total Sales",
         "cups": "Cups",
         "orders": "Orders",
-        "cupsUnit": "cups"
+        "cupsUnit": "cups",
+        "noStores": "No stores yet",
+        "rightNow": "Right now",
+        "cupsByHour": "Cups by hour"
     }
 }

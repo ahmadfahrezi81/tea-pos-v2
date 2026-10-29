@@ -121,8 +121,6 @@
             "supply_request_created": "Permintaan stok",
             "incident_report_created": "Laporan insiden"
         },
-        "orderNumber": "Pesanan #{n}",
-        "noStores": "Belum ada toko",
-        "inactive": "Berhenti"
+        "orderNumber": "Pesanan #{n}"
     }
 }

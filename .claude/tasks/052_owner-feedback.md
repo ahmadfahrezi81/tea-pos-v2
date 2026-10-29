@@ -45,6 +45,7 @@ The owner's test round on staging (RFC: [Backoffice v2 refinement](https://app.n
 24. **Pay in the house style:** the period's people as v1's lists (`SettingsGroup` headings, `ListRow`s with square avatars, a badge for Paid, Skipped, Ready or what is waiting, the amount and the orange chevron); no grey text left in Pay's screens (labels, notes, section headings turn black, headings bold as the panels'); every avatar in the app is square, as v1's
 25. **Bigger period arrows:** ‹ › are 44 px grey squares with a 26 px bold chevron (`STEP_ARROW`, `stepIcon` beside `MonthStepper`, which uses them too)
 26. **Store's home, real stores only:** demo and shut-down stores leave the list (they stay reachable through All stores' views and UAC); the "0 of 10 open" line goes; each card: name and an Open or Closed badge, the seller (or when it closed) in black, a divider, today's sales and cups, the orange chevron; All stores is a menu row; nothing to show is the empty state. `OpenBadge` is a `Badge` (Open, Closed, Demo, Shut down)
+27. **A store's page in panels:** Right now (the Open or Closed badge in the heading; a grey tile with the seller, their photo and since when, or when it closed), Today (the sales large, Cups and Orders as two grey tiles, cups by hour in a grey tile or a no-sales line), then the Analytics and Orders rows. `Panel` gains `beside` for the heading's right. Store's words live in the core files' `store` section; Shut down and No stores yet moved there
 
 ## Done when
 

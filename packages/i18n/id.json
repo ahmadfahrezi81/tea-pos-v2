@@ -260,8 +260,6 @@
     },
     "store": {
         "title": "Toko",
-        "openCount": "{open} dari {all} buka",
-        "today": "hari ini",
         "open": "Buka",
         "closed": "Tutup",
         "openSince": "Buka sejak {time}",
@@ -270,7 +268,7 @@
         "closedAt": "Tutup {when}",
         "notOpened": "Belum pernah buka",
         "demo": "Demo",
-        "inactive": "Nonaktif",
+        "inactive": "Berhenti",
         "todayLabel": "Hari ini",
         "byHour": "per jam",
         "noSalesToday": "Belum ada penjualan hari ini",
@@ -280,6 +278,9 @@
         "sales": "Total Penjualan",
         "cups": "Cups",
         "orders": "Pesanan",
-        "cupsUnit": "Cups"
+        "cupsUnit": "Cups",
+        "noStores": "Belum ada toko",
+        "rightNow": "Saat ini",
+        "cupsByHour": "Gelas per jam"
     }
 }
