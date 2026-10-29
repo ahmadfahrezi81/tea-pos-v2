@@ -61,8 +61,8 @@
         "rejectBody": "Mereka bisa meminta lagi.",
         "blockTitle": "Blokir {name}?",
         "blockBody": "Permintaan berikutnya diabaikan, dan mereka tidak diberi tahu.",
-        "storesActive": "Toko",
+        "storesActive": "Toko asli",
         "storesFake": "Toko demo",
-        "storesInactive": "Toko tutup"
+        "storesInactive": "Toko berhenti"
     }
 }

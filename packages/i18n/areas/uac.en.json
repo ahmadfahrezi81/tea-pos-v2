@@ -61,8 +61,8 @@
         "rejectBody": "They can ask again.",
         "blockTitle": "Block {name}?",
         "blockBody": "Their later asks are dropped, and they aren't told.",
-        "storesActive": "Stores",
+        "storesActive": "Real stores",
         "storesFake": "Demo stores",
-        "storesInactive": "Closed stores"
+        "storesInactive": "Shut down stores"
     }
 }
