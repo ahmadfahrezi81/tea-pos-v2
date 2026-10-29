@@ -10,6 +10,7 @@ import { ALL, useDayOrders, useSalesHours, useStoreId } from "./sales";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
+import { Badge } from "@tea-pos/ui/Badge";
 
 const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
 
@@ -138,11 +139,7 @@ export function StoreOrders({ date }: { date: string }) {
                                                 String((totals?.orders ?? list.length) - i),
                                             )}
                                         </p>
-                                        {order.paymentMethod === "qris" && (
-                                            <span className="bg-blue-600 text-white px-2.5 py-0.5 rounded-full text-xs font-bold">
-                                                QRIS
-                                            </span>
-                                        )}
+                                        {order.paymentMethod === "qris" && <Badge>QRIS</Badge>}
                                     </div>
                                     <span className="text-sm text-gray-500">
                                         {formatTime(order.at, locale)}

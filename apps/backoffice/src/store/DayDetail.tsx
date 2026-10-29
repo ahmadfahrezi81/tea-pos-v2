@@ -8,6 +8,7 @@ import { useState, type ReactNode } from "react";
 import { Sellers } from "./Sellers";
 import { useDay } from "./sales";
 import { Dialog } from "@tea-pos/ui/Drawer";
+import { Badge } from "@tea-pos/ui/Badge";
 
 type Photo = components["schemas"]["DayPhoto"];
 
@@ -67,13 +68,9 @@ export function DayDetail({ id }: { id: string }) {
                     <h3 className="font-bold text-xl text-gray-800 leading-tight">
                         {longDate(day.date, locale)}
                     </h3>
-                    <span
-                        className={`shrink-0 px-2 py-0.5 rounded-full text-sm font-medium ${
-                            day.closedAt ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"
-                        }`}
-                    >
+                    <Badge>
                         {t(day.closedAt ? "analytics.statusClosed" : "analytics.statusOpen")}
-                    </span>
+                    </Badge>
                 </div>
                 <div className="text-sm space-y-1.5">
                     {row(t("daily.store"), day.storeName)}

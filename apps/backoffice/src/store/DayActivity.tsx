@@ -24,6 +24,7 @@ import { PhotoTile } from "./DayDetail";
 import { useDayActivity, useDaySessions } from "./sales";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
+import { Badge } from "@tea-pos/ui/Badge";
 
 type Event = components["schemas"]["DayEvent"];
 type Session = components["schemas"]["DaySession"];
@@ -120,11 +121,7 @@ function OrderRow({ event, last }: { event: Event; last: boolean }) {
                             {cups} {t("orders.cups")}
                         </span>
                     )}
-                    {method && (
-                        <span className="text-xs bg-slate-100 text-gray-500 px-1.5 py-0.5 rounded-md capitalize">
-                            {method}
-                        </span>
-                    )}
+                    {method && <Badge>{method}</Badge>}
                 </div>
                 <span className="text-xs text-gray-400 shrink-0">
                     {formatTime(event.at, locale)}

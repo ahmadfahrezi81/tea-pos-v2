@@ -14,17 +14,12 @@ import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { Dialog, Drawer } from "@tea-pos/ui/Drawer";
 import { ICON } from "@tea-pos/ui/icon";
 import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
+import { Badge } from "@tea-pos/ui/Badge";
 
 type Slip = components["schemas"]["Payslip"];
 type Row = { id: string; date: string; status: string; amount: number };
 
 const WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
-const PILL: Record<string, string> = {
-    pending: "bg-yellow-100 text-yellow-700",
-    paid: "bg-green-100 text-green-700",
-    skipped: "bg-gray-200 text-gray-600",
-};
-
 type Confirm = {
     kind: "commission" | "claim" | "day";
     /** The row, or for a day the date. */
@@ -159,9 +154,7 @@ export function Payslip({ id }: { id: string }) {
                     <h3 className="font-semibold text-gray-800">
                         {weeks(slip.start, slip.end, t("pay.week"))}
                     </h3>
-                    <span
-                        className={`px-2 py-0.5 rounded-full text-sm font-medium ${PILL[slip.status] ?? PILL.pending}`}
-                    >
+                    <Badge>
                         {t(
                             slip.status === "pending"
                                 ? "pay.ongoing"
@@ -169,7 +162,7 @@ export function Payslip({ id }: { id: string }) {
                                   ? "pay.paid"
                                   : "pay.skipped",
                         )}
-                    </span>
+                    </Badge>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                     <div className="text-center">
@@ -304,11 +297,9 @@ export function Payslip({ id }: { id: string }) {
                                         <p className="text-base font-bold text-gray-900">
                                             {shortDay(d, locale)}
                                         </p>
-                                        <span
-                                            className={`text-xs font-medium px-2 py-0.5 rounded-full ${allDone ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}
-                                        >
+                                        <Badge>
                                             {t(allDone ? "pay.dayDone" : "pay.dayPending")}
-                                        </span>
+                                        </Badge>
                                     </div>
                                     <p className="text-base font-bold text-gray-900">
                                         {formatMoney(approvedTotal)}

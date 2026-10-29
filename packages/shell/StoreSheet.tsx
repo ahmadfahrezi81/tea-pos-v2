@@ -5,6 +5,7 @@ import { Check, Eye, EyeOff } from "lucide-react";
 
 import { useApp } from "./AppContext";
 import { useTenant } from "./tenant";
+import { Badge } from "@tea-pos/ui/Badge";
 
 /** The old apps' store sheet: the eye switch hides demo and inactive stores (backoffice). */
 export default function StoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -60,15 +61,9 @@ export default function StoreSheet({ open, onClose }: { open: boolean; onClose: 
                                 >
                                     {option.name}
                                 </span>
-                                {option.status === "fake" && (
-                                    <span className="text-[10px] font-semibold px-1.5 py-0.5 mt-0.5 rounded bg-red-100 text-red-600">
-                                        {t("shell.demo")}
-                                    </span>
-                                )}
+                                {option.status === "fake" && <Badge>{t("shell.demo")}</Badge>}
                                 {option.status === "inactive" && (
-                                    <span className="text-[10px] font-semibold px-1.5 py-0.5 mt-0.5 rounded bg-gray-100 text-gray-500">
-                                        {t("shell.inactive")}
-                                    </span>
+                                    <Badge>{t("shell.inactive")}</Badge>
                                 )}
                             </div>
                             <span

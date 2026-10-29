@@ -23,6 +23,7 @@ import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { Sellers } from "./Sellers";
+import { Badge } from "@tea-pos/ui/Badge";
 
 type Day = components["schemas"]["Day"];
 
@@ -269,19 +270,13 @@ function DayCard({ day, storeName, onMenu }: { day: Day; storeName: boolean; onM
                             <h3 className="text-xl font-bold text-gray-800">
                                 {formatDay(day.date, locale)}
                             </h3>
-                            <span
-                                className={`px-2 py-0.5 rounded-full text-sm font-medium ${
-                                    day.closedAt
-                                        ? "bg-red-100 text-red-800"
-                                        : "bg-green-100 text-green-800"
-                                }`}
-                            >
+                            <Badge>
                                 {t(
                                     day.closedAt
                                         ? "analytics.statusClosed"
                                         : "analytics.statusOpen",
                                 )}
-                            </span>
+                            </Badge>
                         </div>
                         {storeName && (
                             <p className="text-sm text-gray-500 truncate">{day.storeName}</p>

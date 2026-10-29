@@ -204,7 +204,7 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
                 <Sellers
                     sellers={[
                         {
-                            userId: s.id,
+                            userId: `${s.id}-seller`,
                             name: s.sellerName ?? "",
                             avatarUrl: s.sellerAvatar,
                             cups: s.cups,

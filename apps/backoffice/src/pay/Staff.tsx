@@ -14,15 +14,12 @@ import { useState, type ReactNode } from "react";
 import { useCommissionTypes, usePayStaff, usePayWrite, useSlug, writes } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
+import { Badge } from "@tea-pos/ui/Badge";
 
 type Staff = components["schemas"]["PayStaff"];
 
 // Only the account states worth interrupting for; active is every row's assumption.
-const STATUS_TAG: Record<string, string> = {
-    suspended: "bg-red-100 text-red-600",
-    inactive: "bg-gray-100 text-gray-500",
-    pending: "bg-amber-100 text-amber-700",
-};
+const FLAGGED = new Set(["suspended", "inactive", "pending"]);
 
 /** The search box above a staff list, as the old app's. */
 export function SearchBox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -94,13 +91,7 @@ export function StaffInfoList() {
         <StaffList
             to={(id) => `/${slug}/pay/settings/staff/${id}`}
             tag={(s) =>
-                STATUS_TAG[s.status] && (
-                    <span
-                        className={`shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase ${STATUS_TAG[s.status]}`}
-                    >
-                        {t(`pay.status.${s.status}` as MessageKey)}
-                    </span>
-                )
+                FLAGGED.has(s.status) && <Badge>{t(`pay.status.${s.status}` as MessageKey)}</Badge>
             }
             subtitle={(s) => (
                 <>
