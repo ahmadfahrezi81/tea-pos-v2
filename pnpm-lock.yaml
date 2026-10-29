@@ -240,6 +240,9 @@ importers:
       '@tea-pos/api-client':
         specifier: workspace:*
         version: link:../api-client
+      '@tea-pos/format':
+        specifier: workspace:*
+        version: link:../format
       '@tea-pos/i18n':
         specifier: workspace:*
         version: link:../i18n

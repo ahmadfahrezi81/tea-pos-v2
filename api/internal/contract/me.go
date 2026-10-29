@@ -19,6 +19,8 @@ type MeUser struct {
 	Role      string `json:"role" example:"USER"`
 	AvatarURL string `json:"avatarUrl,omitempty"`
 	Language  string `json:"language" example:"id" doc:"The profile's language; the app keeps a copy"`
+	Phone     string `json:"phone,omitempty"`
+	Since     string `json:"since,omitempty" format:"date-time" doc:"When the account was made"`
 }
 
 type MeTenant struct {

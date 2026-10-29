@@ -20,7 +20,10 @@ The owner's test round on staging (RFC: [Backoffice v2 refinement](https://app.n
     - Not ported: ErrorSheet (v2 translates every error code instead), FeedbackHistory and SummaryDetailsCard (screens with their own data, they come with the seller's More and analytics), the weather sheet (already in backoffice More; moves to the shell when seller's More needs it)
 5. **Every loading placeholder is a `Skeleton`:** the plain white and grey boxes in Store, Pay, UAC and More, and `ListRowSkeleton`, sweep as v1's do; lists stagger by row
 6. **Account and More stay v1's** (owner: screens that already existed keep their look):
-    - Account: the profile card (square avatar, name, email), the settings rows (Language, opening a sheet), an App info row (opens a sheet with the API status, versions and commits: `StatusScreen`), then at the bottom the red Log Out (confirmed with `ConfirmDialog`) and the version pill. Sign out on every phone leaves the screen (its API stays)
+    - Account: the profile card (square avatar, name, email), the rows Personal details, Language and App info (each its own page under `/account/`), then at the bottom the red Log Out (confirmed with `ConfirmDialog`) and the version pill. Sign out on every phone leaves the screen (its API stays)
+    - Personal details: v1 seller's page, read only: email, user ID (copy), first and last name, phone, member since. `/me` gains `phone` and `since` for it; `formatLongDate` in `packages/format`
+    - Language: v1 seller's list; every language shown, the ones the app does not offer greyed (backoffice: English only)
+    - App info: the API status, versions and commits (`StatusScreen`)
     - Account closes with an X, not back: `close` on the route (`ShellRoute`), as v1's inline header
     - More: General with the app's rows and Patch Notes (v1's name for What's new); the Account row goes (the avatar opens it, as v1)
 

@@ -4,8 +4,10 @@ import (
 	"context"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
@@ -50,6 +52,8 @@ func registerMe(api huma.API, d Deps) {
 				Role:      me.Role,
 				AvatarURL: me.AvatarUrl.String,
 				Language:  me.PreferredLanguage,
+				Phone:     me.PhoneNumber.String,
+				Since:     since(me.CreatedAt),
 			},
 			Tenants: make([]contract.MeTenant, 0, len(tenants)),
 			Flags:   d.Flags.All(caller.UserID.String(), auth.FlagProps(caller)),
@@ -120,4 +124,12 @@ func listStores(ctx context.Context, q *store.Queries, caller auth.Caller) ([]st
 		out[i] = store.ListAssignedStoresRow(r)
 	}
 	return out, err
+}
+
+// users.created_at has no zone; the database writes it in UTC.
+func since(t pgtype.Timestamp) string {
+	if !t.Valid {
+		return ""
+	}
+	return t.Time.UTC().Format(time.RFC3339)
 }

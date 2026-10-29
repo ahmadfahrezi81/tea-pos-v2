@@ -12,7 +12,7 @@ import (
 )
 
 const getMe = `-- name: GetMe :one
-SELECT id, email, full_name, role, avatar_url, preferred_language FROM users WHERE id = $1
+SELECT id, email, full_name, role, avatar_url, preferred_language, phone_number, created_at FROM users WHERE id = $1
 `
 
 type GetMeRow struct {
@@ -22,6 +22,8 @@ type GetMeRow struct {
 	Role              string
 	AvatarUrl         pgtype.Text
 	PreferredLanguage string
+	PhoneNumber       pgtype.Text
+	CreatedAt         pgtype.Timestamp
 }
 
 func (q *Queries) GetMe(ctx context.Context, id pgtype.UUID) (GetMeRow, error) {
@@ -34,6 +36,8 @@ func (q *Queries) GetMe(ctx context.Context, id pgtype.UUID) (GetMeRow, error) {
 		&i.Role,
 		&i.AvatarUrl,
 		&i.PreferredLanguage,
+		&i.PhoneNumber,
+		&i.CreatedAt,
 	)
 	return i, err
 }

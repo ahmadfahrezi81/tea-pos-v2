@@ -1167,8 +1167,14 @@ export interface components {
              * @example id
              */
             language: string;
+            phone?: string;
             /** @example USER */
             role: string;
+            /**
+             * Format: date-time
+             * @description When the account was made
+             */
+            since?: string;
         };
         Order: {
             /** Format: date-time */

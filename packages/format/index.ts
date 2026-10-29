@@ -55,6 +55,13 @@ export function formatTime(value: DateInput, locale: Locale): string {
 }
 
 /** `22 Oct, 14:05`. */
+/** `29 October 2026`: a date with its year, always. */
+export function formatLongDate(value: DateInput, locale: Locale): string {
+    return dateFormat(locale, { day: "numeric", month: "long", year: "numeric" }).format(
+        toDate(value),
+    );
+}
+
 export function formatDateTime(
     value: DateInput,
     locale: Locale,

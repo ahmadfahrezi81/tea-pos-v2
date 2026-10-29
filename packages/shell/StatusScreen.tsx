@@ -3,7 +3,7 @@ import { useT } from "@tea-pos/i18n/react";
 
 import { APP_COMMIT, APP_VERSION } from "./version";
 
-/** Is the API reachable, and which build is running: Account's App info sheet. */
+/** Is the API reachable, and which build is running: Account's App info page. */
 export function StatusScreen() {
     const t = useT();
     const health = $api.useQuery("get", "/health");
@@ -18,7 +18,7 @@ export function StatusScreen() {
     ];
 
     return (
-        <div className="divide-y divide-gray-100">
+        <div className="rounded-2xl bg-white px-4 py-1 divide-y divide-gray-100">
             {rows.map(([label, value]) => (
                 <div key={label} className="flex justify-between py-3 text-sm">
                     <span className="text-gray-500">{label}</span>

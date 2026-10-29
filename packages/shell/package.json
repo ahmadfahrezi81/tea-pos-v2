@@ -37,6 +37,7 @@
     },
     "dependencies": {
         "@tea-pos/api-client": "workspace:*",
+        "@tea-pos/format": "workspace:*",
         "@tea-pos/i18n": "workspace:*",
         "@tea-pos/ui": "workspace:*",
         "lucide-react": "1.61.0"
