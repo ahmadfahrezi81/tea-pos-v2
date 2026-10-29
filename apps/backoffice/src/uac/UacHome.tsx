@@ -3,40 +3,28 @@ import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
-import { ChoiceList } from "@tea-pos/ui/ChoiceList";
 import { FilterButton } from "@tea-pos/ui/FilterButton";
 import { Badge } from "@tea-pos/ui/Badge";
 import { SearchBox } from "@tea-pos/ui/SearchBox";
-import { Sheet } from "@tea-pos/ui/Sheet";
+import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { useTenant } from "@tea-pos/shell/tenant";
 import { useNavigate } from "@tanstack/react-router";
+import { CircleHelp } from "lucide-react";
 import { useState } from "react";
 
+import {
+    isFiltered,
+    matches,
+    NO_FILTER,
+    PeopleFilterSheet,
+    type PeopleFilter,
+} from "./PeopleFilter";
 import { useUac, type Person } from "./uac";
-
-type Filter = "all" | "seller" | "admin" | "guest" | "none" | "inactive";
-
-const FILTERS: Record<Filter, (p: Person) => boolean> = {
-    all: () => true,
-    seller: (p) => p.active && (p.owner || p.access.seller !== ""),
-    admin: (p) => p.active && (p.owner || p.access.backoffice === "admin"),
-    guest: (p) => p.active && p.access.backoffice === "guest",
-    none: (p) => p.active && !p.owner && !p.access.seller && !p.access.backoffice,
-    inactive: (p) => !p.active,
-};
-
-const FILTER_KEYS: Record<Filter, MessageKey> = {
-    all: "uac.filterAll",
-    seller: "uac.filterSeller",
-    admin: "uac.filterAdmin",
-    guest: "uac.filterGuest",
-    none: "uac.filterNone",
-    inactive: "uac.filterInactive",
-};
 
 /**
  * UAC's home, as the old Staff Payroll Info list: requests waiting on top, then everyone A to Z,
- * searchable and filtered; each row says what the person reaches in each app.
+ * searchable and filtered by app and level; each row says what the person reaches in each app;
+ * How access works at the bottom.
  */
 export function UacHome() {
     const t = useT();
@@ -45,11 +33,11 @@ export function UacHome() {
     const slug = useTenant()?.tenant.slug ?? "";
     const { data } = useUac();
     const [search, setSearch] = useState("");
-    const [filter, setFilter] = useState<Filter>("all");
+    const [filter, setFilter] = useState<PeopleFilter>(NO_FILTER);
     const [filtering, setFiltering] = useState(false);
     const q = search.trim().toLowerCase();
     const people = (data?.people ?? [])
-        .filter((p) => FILTERS[filter](p) && (!q || p.name.toLowerCase().includes(q)))
+        .filter((p) => matches(filter, p) && (!q || p.name.toLowerCase().includes(q)))
         .sort((a, b) => a.name.localeCompare(b.name, locale));
     return (
         <div className="space-y-3">
@@ -89,7 +77,7 @@ export function UacHome() {
                     />
                 </div>
                 <FilterButton
-                    active={filter !== "all"}
+                    active={isFiltered(filter)}
                     label={t("uac.filter")}
                     onClick={() => setFiltering(true)}
                 />
@@ -116,21 +104,19 @@ export function UacHome() {
                     ))
                 )}
             </ListCard>
-            <Sheet open={filtering} onClose={() => setFiltering(false)} title={t("uac.filter")}>
-                <div className="-mx-4">
-                    <ChoiceList
-                        value={filter}
-                        onChange={(f) => {
-                            setFilter(f);
-                            setFiltering(false);
-                        }}
-                        choices={(Object.keys(FILTERS) as Filter[]).map((f) => ({
-                            value: f,
-                            label: t(FILTER_KEYS[f]),
-                        }))}
-                    />
-                </div>
-            </Sheet>
+            <SettingsGroup>
+                <SettingsRow
+                    to={`/${slug}/uac/help`}
+                    icon={<CircleHelp {...rowIcon} />}
+                    label={t("uac.helpTitle")}
+                />
+            </SettingsGroup>
+            <PeopleFilterSheet
+                open={filtering}
+                value={filter}
+                onChange={setFilter}
+                onClose={() => setFiltering(false)}
+            />
         </div>
     );
 }
