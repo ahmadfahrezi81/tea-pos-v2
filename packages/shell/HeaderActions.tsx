@@ -43,7 +43,7 @@ const button =
     "w-10 h-10 rounded-xl flex items-center justify-center text-gray-900 active:scale-95";
 // Words, not icons: "Add" and "Edit" read at a glance.
 const labelButton =
-    "rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white active:scale-95";
+    "rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white active:scale-95";
 
 /**
  * A screen's actions in the header's right slot: at most two show, more go
