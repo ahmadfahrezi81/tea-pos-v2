@@ -12,7 +12,8 @@
         "./useHasPainted": "./useHasPainted.ts",
         "./trackFirstLoads": "./trackFirstLoads.ts",
         "./version": "./version.ts",
-        "./session": "./session.ts"
+        "./session": "./session.ts",
+        "./searchParam": "./searchParam.ts"
     },
     "scripts": {
         "lint": "eslint .",

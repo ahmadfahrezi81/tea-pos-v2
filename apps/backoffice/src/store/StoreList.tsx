@@ -2,6 +2,7 @@ import type { components } from "@tea-pos/api-client";
 import { formatDay, formatMoney, formatTime } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
+import { useSearchParam, useSearchText, useSetSearch } from "@tea-pos/shell/searchParam";
 import { useTenant } from "@tea-pos/shell/tenant";
 import { Link } from "@tanstack/react-router";
 import { Banknote, ChevronRight, Layers } from "lucide-react";
@@ -44,8 +45,19 @@ export function StoreList() {
     const t = useT();
     const slug = useTenant()?.tenant.slug ?? "";
     const { data } = useStoresLive();
-    const [search, setSearch] = useState("");
-    const [filter, setFilter] = useState<StoreFilter>(NO_FILTER);
+    const [search, setSearch] = useSearchText();
+    const [type] = useSearchParam("type");
+    const [open] = useSearchParam("open");
+    const setSearchParams = useSetSearch();
+    const filter: StoreFilter = {
+        type: (type || NO_FILTER.type) as StoreType,
+        openOnly: open === "1",
+    };
+    const setFilter = (f: StoreFilter) =>
+        setSearchParams({
+            type: f.type === NO_FILTER.type ? "" : f.type,
+            open: f.openOnly ? "1" : "",
+        });
     const [filtering, setFiltering] = useState(false);
     const q = search.trim().toLowerCase();
     const stores = data?.stores.filter(

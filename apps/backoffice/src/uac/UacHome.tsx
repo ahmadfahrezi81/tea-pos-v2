@@ -7,6 +7,7 @@ import { FilterButton } from "@tea-pos/ui/FilterButton";
 import { Badge } from "@tea-pos/ui/Badge";
 import { SearchBox } from "@tea-pos/ui/SearchBox";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
+import { useSearchParam, useSearchText, useSetSearch } from "@tea-pos/shell/searchParam";
 import { useTenant } from "@tea-pos/shell/tenant";
 import { useNavigate } from "@tanstack/react-router";
 import { CircleHelp } from "lucide-react";
@@ -33,8 +34,24 @@ export function UacHome() {
     const navigate = useNavigate();
     const slug = useTenant()?.tenant.slug ?? "";
     const { data } = useUac();
-    const [search, setSearch] = useState("");
-    const [filter, setFilter] = useState<PeopleFilter>(NO_FILTER);
+    const [search, setSearch] = useSearchText();
+    const [seller] = useSearchParam("seller");
+    const [office] = useSearchParam("office");
+    const [inactive] = useSearchParam("inactive");
+    const setSearchParams = useSetSearch();
+    // In the address '' is "any"; no access is spelt `none`.
+    const level = (v: string, any: string) => (v === "none" ? "" : v || any);
+    const filter: PeopleFilter = {
+        seller: level(seller, NO_FILTER.seller) as PeopleFilter["seller"],
+        backoffice: level(office, NO_FILTER.backoffice) as PeopleFilter["backoffice"],
+        inactive: inactive !== "0",
+    };
+    const setFilter = (f: PeopleFilter) =>
+        setSearchParams({
+            seller: f.seller === "any" ? "" : f.seller || "none",
+            office: f.backoffice === "any" ? "" : f.backoffice || "none",
+            inactive: f.inactive ? "" : "0",
+        });
     const [filtering, setFiltering] = useState(false);
     const q = search.trim().toLowerCase();
     const people = (data?.people ?? [])

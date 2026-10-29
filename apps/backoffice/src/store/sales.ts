@@ -70,7 +70,7 @@ export function useDay(id: string) {
         "get",
         "/tenants/{tenant}/days/{id}",
         { params: { path: { tenant, id } } },
-        { enabled: !!tenant, staleTime: STALE.COLD },
+        { enabled: !!tenant && !!id, staleTime: STALE.COLD },
     );
 }
 

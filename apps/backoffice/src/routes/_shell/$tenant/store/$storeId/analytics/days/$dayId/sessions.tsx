@@ -13,7 +13,7 @@ export const Route = createFileRoute(
     component: function Sessions() {
         return (
             <>
-                <StoreTitle titleKey="nav.daySessions" />
+                <StoreTitle titleKey="nav.daySessions" dayId={Route.useParams().dayId} />
                 <DaySessions id={Route.useParams().dayId} />
             </>
         );

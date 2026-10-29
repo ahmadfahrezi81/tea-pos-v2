@@ -1,11 +1,11 @@
 import { useMe } from "@tea-pos/api-client/me";
 import { useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
-import { ConfirmDialog } from "@tea-pos/ui/ConfirmDialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { Globe, Info, Pencil } from "lucide-react";
 import { useState } from "react";
 
+import { ConfirmSheet } from "./FormFooter";
 import { signOut } from "./session";
 import { rowIcon, SettingsRow } from "./Settings";
 import { useTenant } from "./tenant";
@@ -68,18 +68,16 @@ export function AccountScreen() {
                 </span>
             </div>
 
-            <ConfirmDialog
+            <ConfirmSheet
                 open={confirm}
-                type="warning"
-                title={t("common.logout")}
-                message={t("account.logoutConfirm")}
-                confirmText={t("common.logout")}
-                cancelText={t("common.cancel")}
+                title={t("account.logoutConfirm")}
+                label={t("common.logout")}
+                busyLabel={t("account.signingOut")}
+                tone="orange"
+                emoji="refresh"
+                onConfirm={() => signOut(queryClient)}
+                onError={() => setConfirm(false)}
                 onCancel={() => setConfirm(false)}
-                onConfirm={() => {
-                    setConfirm(false);
-                    void signOut(queryClient);
-                }}
             />
         </div>
     );
