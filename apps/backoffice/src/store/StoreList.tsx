@@ -4,40 +4,93 @@ import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { useTenant } from "@tea-pos/shell/tenant";
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, Layers } from "lucide-react";
+import { Banknote, ChevronRight, Layers } from "lucide-react";
 
-import { ALL, useStoresLive } from "./sales";
+import { ALL, useStoresLive, useTodayHoursFor } from "./sales";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { Badge } from "@tea-pos/ui/Badge";
+import { Sellers } from "./Sellers";
+import { Sheet } from "@tea-pos/ui/Sheet";
+import { SearchBox } from "@tea-pos/ui/SearchBox";
+import { Panel, PanelLabel } from "@tea-pos/ui/Panel";
+import { Switch } from "@tea-pos/ui/form/Switch";
+import { FilterButton } from "@tea-pos/ui/FilterButton";
+import { ChoiceList } from "@tea-pos/ui/ChoiceList";
+import { AreaChart } from "@tea-pos/ui/AreaChart";
+import { useState } from "react";
+import type { MessageKey } from "@tea-pos/i18n";
 
 type Store = components["schemas"]["StoreLive"];
 
+type StoreType = "active" | "fake" | "inactive" | "all";
+type StoreFilter = { type: StoreType; openOnly: boolean };
+const NO_FILTER: StoreFilter = { type: "active", openOnly: false };
+
+const TYPE_KEYS: Record<StoreType, MessageKey> = {
+    active: "store.real",
+    fake: "store.demoStores",
+    inactive: "store.shutDown",
+    all: "store.allTypes",
+};
+
 /**
- * The Store tab's home: the real stores right now (demo and closed-down ones stay out), open
- * first, with who is selling and today's sales; a card opens that store. All stores at the bottom.
+ * The Store tab's home: today's sales over the stores shown, then each store (real ones by
+ * default; search and the filter change which), open first, with who sold and their cups.
  */
 export function StoreList() {
     const t = useT();
     const slug = useTenant()?.tenant.slug ?? "";
     const { data } = useStoresLive();
-    const stores = data?.stores.filter((s) => s.status === "active");
+    const [search, setSearch] = useState("");
+    const [filter, setFilter] = useState<StoreFilter>(NO_FILTER);
+    const [filtering, setFiltering] = useState(false);
+    const q = search.trim().toLowerCase();
+    const stores = data?.stores.filter(
+        (s) =>
+            (filter.type === "all" || s.status === filter.type) &&
+            (!filter.openOnly || s.open) &&
+            (!q || s.name.toLowerCase().includes(q)),
+    );
+    const filtered = filter.type !== NO_FILTER.type || filter.openOnly;
 
     return (
         <div className="flex flex-col gap-3">
+            <TodayPanel stores={stores} />
+
+            <div className="flex gap-2">
+                <div className="flex-1 min-w-0">
+                    <SearchBox
+                        value={search}
+                        onChange={setSearch}
+                        placeholder={t("store.search")}
+                        clearLabel={t("common.close")}
+                    />
+                </div>
+                <FilterButton
+                    active={filtered}
+                    label={t("store.filter")}
+                    onClick={() => setFiltering(true)}
+                />
+            </div>
+
             {!stores ? (
                 Array.from({ length: 3 }).map((_, i) => (
                     <Skeleton key={i} delay={i * 80} className="h-28 rounded-2xl" />
                 ))
             ) : stores.length === 0 ? (
-                <EmptyState title={t("store.noStores")} />
+                q || filtered ? (
+                    <EmptyState title={t("store.noMatch")} body={t("store.noMatchBody")} />
+                ) : (
+                    <EmptyState title={t("store.noStores")} />
+                )
             ) : (
                 stores.map((s) => <StoreCard key={s.id} store={s} slug={slug} />)
             )}
 
-            {stores && stores.length > 1 && (
+            {data && data.stores.length > 1 && (
                 <SettingsGroup>
                     <SettingsRow
                         to={`/${slug}/store/${ALL}`}
@@ -46,7 +99,76 @@ export function StoreList() {
                     />
                 </SettingsGroup>
             )}
+
+            <Sheet open={filtering} onClose={() => setFiltering(false)} title={t("store.filter")}>
+                <div className="space-y-4">
+                    <div className="-mx-4 space-y-2">
+                        <p className="pl-7 text-xs font-bold uppercase tracking-widest text-gray-900">
+                            {t("store.type")}
+                        </p>
+                        <ChoiceList
+                            value={filter.type}
+                            onChange={(type) => setFilter({ ...filter, type })}
+                            choices={(Object.keys(TYPE_KEYS) as StoreType[]).map((v) => ({
+                                value: v,
+                                label: t(TYPE_KEYS[v]),
+                            }))}
+                        />
+                    </div>
+                    <div className="flex items-center gap-3 rounded-2xl bg-slate-100 px-4 py-4">
+                        <p className="flex-1 text-[17px] font-medium text-gray-900">
+                            {t("store.openOnly")}
+                        </p>
+                        <Switch
+                            on={filter.openOnly}
+                            onChange={(openOnly) => setFilter({ ...filter, openOnly })}
+                            label={t("store.openOnly")}
+                        />
+                    </div>
+                </div>
+            </Sheet>
         </div>
+    );
+}
+
+/** Today over the stores shown: sales, cups and orders, and cups by hour. */
+function TodayPanel({ stores }: { stores: Store[] | undefined }) {
+    const t = useT();
+    const hours = useTodayHoursFor((stores ?? []).map((s) => s.id));
+    const sum = (k: "sales" | "cups" | "orders") => (stores ?? []).reduce((n, s) => n + s[k], 0);
+    const tile = "rounded-xl bg-slate-100 p-3";
+    return (
+        <Panel icon={<Banknote {...rowIcon} />} title={t("store.todayLabel")}>
+            {stores ? (
+                <p className="px-1 text-3xl font-bold text-gray-900">{formatMoney(sum("sales"))}</p>
+            ) : (
+                <Skeleton className="h-9 w-44 rounded" />
+            )}
+            <div className="grid grid-cols-2 gap-2">
+                {(["cups", "orders"] as const).map((k) => (
+                    <div key={k} className={tile}>
+                        <p className="text-sm text-gray-900">{t(`store.${k}`)}</p>
+                        <p className="text-xl font-bold text-gray-900">{stores ? sum(k) : "–"}</p>
+                    </div>
+                ))}
+            </div>
+            {hours.data && hours.data.hours.length > 0 && (
+                <div className={tile}>
+                    <PanelLabel>{t("store.cupsByHour")}</PanelLabel>
+                    <div className="-mx-2 mt-2">
+                        <AreaChart
+                            points={hours.data.hours.map((h) => ({
+                                key: String(h.hour),
+                                label: `${String(h.hour).padStart(2, "0")}:00`,
+                                value: h.cups,
+                            }))}
+                            unit={t("store.cupsUnit")}
+                            height={120}
+                        />
+                    </div>
+                </div>
+            )}
+        </Panel>
     );
 }
 
@@ -57,29 +179,18 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
         <Link
             to="/$tenant/store/$storeId"
             params={{ tenant: slug, storeId: s.id }}
-            className="block rounded-2xl bg-white p-4 space-y-2 active:scale-[0.99]"
+            className="block rounded-2xl bg-white p-4 space-y-3 active:scale-[0.99]"
         >
             <div className="flex items-center justify-between gap-2">
                 <p className="truncate text-lg font-bold text-gray-900">{s.name}</p>
                 <OpenBadge store={s} />
             </div>
-            <div className="flex min-w-0 items-center gap-2 text-sm text-gray-900">
-                {s.open ? (
-                    <>
-                        <Avatar url={s.sellerAvatar} size={24} square />
-                        <span className="truncate">
-                            {t("store.sellerSince")
-                                .replace("{name}", s.sellerName ?? "")
-                                .replace(
-                                    "{time}",
-                                    s.openSince ? formatTime(s.openSince, locale) : "",
-                                )}
-                        </span>
-                    </>
-                ) : (
-                    <span className="truncate">{closedLine(s, t, locale)}</span>
-                )}
-            </div>
+            {/* Until staging's API has `sellers`, an older one sends none. */}
+            {s.sellers?.length ? (
+                <Sellers sellers={s.sellers} />
+            ) : (
+                <p className="text-sm text-gray-900">{closedLine(s, t, locale)}</p>
+            )}
             <div className="flex items-center justify-between border-t-2 border-slate-100 pt-2">
                 <span className="text-base font-bold text-gray-900">
                     {formatMoney(s.sales)}

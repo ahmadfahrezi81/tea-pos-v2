@@ -95,6 +95,7 @@ func (q *Queries) SalesDays(ctx context.Context, arg SalesDaysParams) ([]SalesDa
 const storesLive = `-- name: StoresLive :many
 SELECT s.id, s.name, s.status,
     ss.started_at AS open_since,
+    ss.user_id AS seller_id,
     COALESCE(u.full_name, '')::text AS seller_name,
     COALESCE(u.avatar_url, '')::text AS seller_avatar,
     (SELECT max(d.closed_at) FROM store_daily_summaries d WHERE d.store_id = s.id)::timestamp AS last_closed,
@@ -130,6 +131,7 @@ type StoresLiveRow struct {
 	Name         string
 	Status       string
 	OpenSince    pgtype.Timestamptz
+	SellerID     pgtype.UUID
 	SellerName   string
 	SellerAvatar string
 	LastClosed   pgtype.Timestamp
@@ -154,11 +156,67 @@ func (q *Queries) StoresLive(ctx context.Context, arg StoresLiveParams) ([]Store
 			&i.Name,
 			&i.Status,
 			&i.OpenSince,
+			&i.SellerID,
 			&i.SellerName,
 			&i.SellerAvatar,
 			&i.LastClosed,
 			&i.Orders,
 			&i.Sales,
+			&i.Cups,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const storesLiveSellers = `-- name: StoresLiveSellers :many
+SELECT o.store_id, o.user_id,
+    COALESCE(u.full_name, '')::text AS name,
+    COALESCE(u.avatar_url, '')::text AS avatar_url,
+    COALESCE(sum(i.quantity), 0)::bigint AS cups
+FROM store_orders o
+JOIN stores s ON s.id = o.store_id
+LEFT JOIN store_order_items i ON i.order_id = o.id
+LEFT JOIN users u ON u.id = o.user_id
+WHERE s.tenant_id = $1 AND o.created_at >= $2 AND o.created_at < $3
+GROUP BY o.store_id, o.user_id, u.full_name, u.avatar_url
+ORDER BY cups DESC, name
+`
+
+type StoresLiveSellersParams struct {
+	TenantID pgtype.UUID
+	DayStart pgtype.Timestamp
+	DayEnd   pgtype.Timestamp
+}
+
+type StoresLiveSellersRow struct {
+	StoreID   pgtype.UUID
+	UserID    pgtype.UUID
+	Name      string
+	AvatarUrl string
+	Cups      int64
+}
+
+// Who sold at each store today (day_start to day_end) and their cups, the most first.
+func (q *Queries) StoresLiveSellers(ctx context.Context, arg StoresLiveSellersParams) ([]StoresLiveSellersRow, error) {
+	rows, err := q.db.Query(ctx, storesLiveSellers, arg.TenantID, arg.DayStart, arg.DayEnd)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []StoresLiveSellersRow
+	for rows.Next() {
+		var i StoresLiveSellersRow
+		if err := rows.Scan(
+			&i.StoreID,
+			&i.UserID,
+			&i.Name,
+			&i.AvatarUrl,
 			&i.Cups,
 		); err != nil {
 			return nil, err

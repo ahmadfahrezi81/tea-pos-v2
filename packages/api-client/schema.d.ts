@@ -1534,6 +1534,8 @@ export interface components {
             /** @description The seller's Google photo address */
             sellerAvatar?: string;
             sellerName?: string;
+            /** @description Who sold here today and their cups, the most first; the seller on shift is in it even before their first order */
+            sellers: components["schemas"]["DaySeller"][];
             /**
              * @description The store itself: active, fake (a demo) or inactive
              * @example active

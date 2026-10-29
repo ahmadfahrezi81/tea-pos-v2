@@ -48,4 +48,5 @@ type StoreLive struct {
 	Orders       int64      `json:"orders"`
 	Cups         int64      `json:"cups"`
 	Sales        int64      `json:"sales"`
+	Sellers      []DaySeller `json:"sellers" nullable:"false" doc:"Who sold here today and their cups, the most first; the seller on shift is in it even before their first order"`
 }

@@ -195,3 +195,19 @@ export function useStoresLive() {
         },
     );
 }
+
+/** Today's cups by hour over exactly these stores (the Store list's filtered ones). */
+export function useTodayHoursFor(storeIds: string[]) {
+    const tenant = useTenantSlug();
+    return $api.useQuery(
+        "get",
+        "/tenants/{tenant}/sales/hours",
+        { params: { path: { tenant }, query: { date: localDate(), storeId: storeIds } } },
+        {
+            enabled: !!tenant && storeIds.length > 0,
+            staleTime: STALE.WARM,
+            refetchInterval: 60_000,
+            meta: { live: ["order"] },
+        },
+    );
+}

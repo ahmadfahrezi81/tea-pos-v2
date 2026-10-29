@@ -5,7 +5,7 @@ import { useLocale, useT } from "@tea-pos/i18n/react";
 import { ImageOff, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import { Sellers } from "./AnalyticsMonth";
+import { Sellers } from "./Sellers";
 import { useDay } from "./sales";
 import { Dialog } from "@tea-pos/ui/Drawer";
 

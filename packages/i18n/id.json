@@ -281,6 +281,16 @@
         "cupsUnit": "Cups",
         "noStores": "Belum ada toko",
         "rightNow": "Saat ini",
-        "cupsByHour": "Gelas per jam"
+        "cupsByHour": "Gelas per jam",
+        "search": "Cari toko...",
+        "filter": "Saring",
+        "type": "Jenis",
+        "real": "Toko asli",
+        "demoStores": "Toko demo",
+        "shutDown": "Toko berhenti",
+        "allTypes": "Semua toko",
+        "openOnly": "Hanya yang buka",
+        "noMatch": "Tidak ada toko yang cocok",
+        "noMatchBody": "Coba nama lain atau hapus saringan."
     }
 }

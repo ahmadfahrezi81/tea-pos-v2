@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -35,6 +36,15 @@ func registerSales(api huma.API, d Deps) {
 		if err != nil {
 			return nil, err
 		}
+		sold, err := d.Queries.StoresLiveSellers(ctx, store.StoresLiveSellersParams{TenantID: caller.TenantID, DayStart: start, DayEnd: end})
+		if err != nil {
+			return nil, err
+		}
+		sellers := map[string][]contract.DaySeller{}
+		for _, r := range sold {
+			id := r.StoreID.String()
+			sellers[id] = append(sellers[id], contract.DaySeller{UserID: r.UserID.String(), Name: r.Name, AvatarURL: r.AvatarUrl, Cups: r.Cups})
+		}
 		out := &contract.StoresLiveOutput{}
 		out.Body.Date = today
 		out.Body.Stores = make([]contract.StoreLive, len(rows))
@@ -42,9 +52,17 @@ func registerSales(api huma.API, d Deps) {
 			s := contract.StoreLive{
 				ID: r.ID.String(), Name: r.Name, Status: r.Status, Open: r.OpenSince.Valid,
 				Orders: r.Orders, Cups: r.Cups, Sales: r.Sales,
+				Sellers: sellers[r.ID.String()],
+			}
+			if s.Sellers == nil {
+				s.Sellers = []contract.DaySeller{}
 			}
 			if s.Open {
 				s.OpenSince, s.SellerName, s.SellerAvatar = &r.OpenSince.Time, r.SellerName, r.SellerAvatar
+				// The seller on shift shows before their first order too.
+				if r.SellerID.Valid && !slices.ContainsFunc(s.Sellers, func(x contract.DaySeller) bool { return x.UserID == r.SellerID.String() }) {
+					s.Sellers = append(s.Sellers, contract.DaySeller{UserID: r.SellerID.String(), Name: r.SellerName, AvatarURL: r.SellerAvatar})
+				}
 			} else if r.LastClosed.Valid {
 				// The old tables hold UTC without a zone.
 				at := r.LastClosed.Time.UTC()

@@ -281,6 +281,16 @@
         "cupsUnit": "cups",
         "noStores": "No stores yet",
         "rightNow": "Right now",
-        "cupsByHour": "Cups by hour"
+        "cupsByHour": "Cups by hour",
+        "search": "Search stores...",
+        "filter": "Filter",
+        "type": "Type",
+        "real": "Real stores",
+        "demoStores": "Demo stores",
+        "shutDown": "Shut down stores",
+        "allTypes": "All stores",
+        "openOnly": "Open only",
+        "noMatch": "No stores match",
+        "noMatchBody": "Try another name or clear the filter."
     }
 }

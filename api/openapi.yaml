@@ -1686,6 +1686,11 @@ components:
           type: string
         sellerName:
           type: string
+        sellers:
+          description: Who sold here today and their cups, the most first; the seller on shift is in it even before their first order
+          items:
+            $ref: "#/components/schemas/DaySeller"
+          type: array
         status:
           description: "The store itself: active, fake (a demo) or inactive"
           examples:
@@ -1699,6 +1704,7 @@ components:
         - orders
         - cups
         - sales
+        - sellers
       type: object
     StoresLiveOutputBody:
       additionalProperties: false
