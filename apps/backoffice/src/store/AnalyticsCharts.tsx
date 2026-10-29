@@ -1,7 +1,7 @@
 import { formatDate, formatMoney } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { useTenant } from "@tea-pos/shell/tenant";
+import { useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { BarChart } from "@tea-pos/ui/BarChart";
 import { useNavigate } from "@tanstack/react-router";
@@ -30,7 +30,7 @@ const WEEK = [
 
 /** The old seller app's charts page for the picked stores: daily sales, tea waste, day of week, products. */
 export function AnalyticsCharts({ month }: { month: string }) {
-    const slug = useTenant()?.tenant.slug ?? "";
+    const slug = useSlug();
     const storeId = useStoreId();
     const navigate = useNavigate();
     const [from, to] = monthRange(month);

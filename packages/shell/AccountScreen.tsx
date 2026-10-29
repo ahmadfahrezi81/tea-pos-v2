@@ -8,7 +8,7 @@ import { useState } from "react";
 import { ConfirmSheet } from "./FormFooter";
 import { signOut } from "./session";
 import { rowIcon, SettingsRow } from "./Settings";
-import { useTenant } from "./tenant";
+import { useSlug } from "./tenant";
 import { APP_VERSION } from "./version";
 
 /**
@@ -19,7 +19,7 @@ export function AccountScreen() {
     const t = useT();
     const queryClient = useQueryClient();
     const me = useMe().data;
-    const slug = useTenant()?.tenant.slug;
+    const slug = useSlug();
     const [confirm, setConfirm] = useState(false);
     if (!me || !slug) return null;
     const { user } = me;

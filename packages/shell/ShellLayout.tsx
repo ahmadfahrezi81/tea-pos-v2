@@ -12,7 +12,7 @@ import { avatar } from "./avatar";
 import { BootScreen } from "./BootScreen";
 import { MobileShell } from "./MobileShell";
 import type { Tab } from "./routes";
-import { TenantProvider, useTenant } from "./tenant";
+import { TenantProvider, useSlug } from "./tenant";
 import { LATEST, seen } from "./whatsNew";
 import { hideSplash } from "./splash";
 import { useHasPainted } from "./useHasPainted";
@@ -63,7 +63,7 @@ function Frame({
     ready: boolean;
     avatarUrl?: string;
 }) {
-    const slug = useTenant()?.tenant.slug;
+    const slug = useSlug();
     const navigate = useNavigate();
     const unseen = LATEST !== "" && seen() !== LATEST;
     const root = slug ? `/${slug}` : "/";

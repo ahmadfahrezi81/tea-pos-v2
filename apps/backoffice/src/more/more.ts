@@ -1,8 +1,6 @@
 import { $api } from "@tea-pos/api-client";
 import { STALE } from "@tea-pos/api-client/query";
-import { useTenant } from "@tea-pos/shell/tenant";
-
-const useSlug = () => useTenant()?.tenant.slug ?? "";
+import { useSlug } from "@tea-pos/shell/tenant";
 
 export function useWeather(enabled: boolean) {
     const tenant = useSlug();

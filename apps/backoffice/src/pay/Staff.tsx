@@ -4,14 +4,14 @@ import type { MessageKey } from "@tea-pos/i18n";
 import { useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
-import { useAccess } from "@tea-pos/shell/tenant";
+import { useAccess, useSlug } from "@tea-pos/shell/tenant";
 import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
 import { SearchBox as UiSearchBox } from "@tea-pos/ui/SearchBox";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { Check, Pencil } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import { useCommissionTypes, usePayStaff, usePayWrite, useSlug, writes } from "./pay";
+import { useCommissionTypes, usePayStaff, usePayWrite, writes } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
 import { Badge } from "@tea-pos/ui/Badge";

@@ -12,8 +12,9 @@ import { Link, useLocation, useRouter } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 
 import { dayMonth, daysLeft, daysLeftText } from "./dates";
-import { usePayslip, usePayStaff, usePayWrite, useSlug } from "./pay";
+import { usePayslip, usePayStaff, usePayWrite } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { useSlug } from "@tea-pos/shell/tenant";
 
 function Copyable({
     value,

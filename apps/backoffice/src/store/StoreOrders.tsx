@@ -1,6 +1,6 @@
 import { formatDateTime, formatDay, formatMoney, formatTime, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { useTenant } from "@tea-pos/shell/tenant";
+import { useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { LoadMore } from "@tea-pos/ui/LoadMore";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -41,7 +41,7 @@ export function StoreOrders({ date }: { date: string }) {
     const t = useT();
     const locale = useLocale();
     const navigate = useNavigate();
-    const slug = useTenant()?.tenant.slug ?? "";
+    const slug = useSlug();
     const storeId = useStoreId();
     const severalStores = storeId === ALL;
     const hours = useSalesHours(date);
@@ -249,7 +249,7 @@ function Figure({
 export function OrdersChart({ date }: { date: string }) {
     const t = useT();
     const navigate = useNavigate();
-    const slug = useTenant()?.tenant.slug ?? "";
+    const slug = useSlug();
     const storeId = useStoreId();
     const { data } = useSalesHours(date);
     return (

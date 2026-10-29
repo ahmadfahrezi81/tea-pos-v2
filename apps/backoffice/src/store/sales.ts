@@ -2,7 +2,7 @@ import { $api, api } from "@tea-pos/api-client";
 import { useInfiniteList } from "@tea-pos/api-client/list";
 import { STALE } from "@tea-pos/api-client/query";
 import { localDate } from "@tea-pos/format";
-import { useTenant } from "@tea-pos/shell/tenant";
+import { useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { useParams, type SearchSchemaInput } from "@tanstack/react-router";
 
 /** The store in the address (`/store/<storeId>/…`); `all` is every store of the tenant together. */
@@ -59,13 +59,9 @@ export function useDays(month: string) {
     );
 }
 
-function useTenantSlug() {
-    return useTenant()?.tenant.slug ?? "";
-}
-
 /** One day's detail; its photo addresses last ten minutes, so it is fetched again after five. */
 export function useDay(id: string) {
-    const tenant = useTenantSlug();
+    const tenant = useSlug();
     return $api.useQuery(
         "get",
         "/tenants/{tenant}/days/{id}",
@@ -75,7 +71,7 @@ export function useDay(id: string) {
 }
 
 export function useDayActivity(id: string) {
-    const tenant = useTenantSlug();
+    const tenant = useSlug();
     return $api.useQuery(
         "get",
         "/tenants/{tenant}/days/{id}/activity",
@@ -85,7 +81,7 @@ export function useDayActivity(id: string) {
 }
 
 export function useDaySessions(id: string) {
-    const tenant = useTenantSlug();
+    const tenant = useSlug();
     return $api.useQuery(
         "get",
         "/tenants/{tenant}/days/{id}/sessions",
@@ -182,7 +178,7 @@ export function useDayOrders(date: string) {
 
 /** Every store right now. v1 writes without telling the hub, so it refetches every minute while on screen. */
 export function useStoresLive() {
-    const tenant = useTenantSlug();
+    const tenant = useSlug();
     return $api.useQuery(
         "get",
         "/tenants/{tenant}/stores/live",
@@ -198,7 +194,7 @@ export function useStoresLive() {
 
 /** Today's cups by hour over exactly these stores (the Store list's filtered ones). */
 export function useTodayHoursFor(storeIds: string[]) {
-    const tenant = useTenantSlug();
+    const tenant = useSlug();
     return $api.useQuery(
         "get",
         "/tenants/{tenant}/sales/hours",

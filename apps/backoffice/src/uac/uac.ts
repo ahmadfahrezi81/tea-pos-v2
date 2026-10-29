@@ -2,14 +2,12 @@ import type { MessageKey } from "@tea-pos/i18n";
 import { $api, api } from "@tea-pos/api-client";
 import { STALE } from "@tea-pos/api-client/query";
 import { useApiMutation } from "@tea-pos/shell/useApiMutation";
-import { useTenant } from "@tea-pos/shell/tenant";
+import { useSlug } from "@tea-pos/shell/tenant";
 import { useQueryClient } from "@tanstack/react-query";
 import type { components } from "@tea-pos/api-client";
 
 export type Person = components["schemas"]["UacPerson"];
 export type Change = components["schemas"]["UacPersonChange"];
-
-const useSlug = () => useTenant()?.tenant.slug ?? "";
 
 /** Requests waiting and everyone in the tenant; refetched when anyone's access changes. */
 export function useUac() {

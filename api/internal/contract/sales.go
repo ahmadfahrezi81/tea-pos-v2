@@ -41,12 +41,12 @@ type StoreLive struct {
 	Status string `json:"status" example:"active" doc:"The store itself: active, fake (a demo) or inactive"`
 	Open   bool   `json:"open" doc:"Someone is selling there now"`
 	// When open: since when and who; when closed: when it last closed.
-	OpenSince    *time.Time `json:"openSince,omitempty"`
-	SellerName   string     `json:"sellerName,omitempty"`
-	SellerAvatar string     `json:"sellerAvatar,omitempty" doc:"The seller's Google photo address"`
-	LastClosed   *time.Time `json:"lastClosed,omitempty"`
-	Orders       int64      `json:"orders"`
-	Cups         int64      `json:"cups"`
-	Sales        int64      `json:"sales"`
+	OpenSince    *time.Time  `json:"openSince,omitempty"`
+	SellerName   string      `json:"sellerName,omitempty"`
+	SellerAvatar string      `json:"sellerAvatar,omitempty" doc:"The seller's Google photo address"`
+	LastClosed   *time.Time  `json:"lastClosed,omitempty"`
+	Orders       int64       `json:"orders"`
+	Cups         int64       `json:"cups"`
+	Sales        int64       `json:"sales"`
 	Sellers      []DaySeller `json:"sellers" nullable:"false" doc:"Who sold here today and their cups, the most first; the seller on shift is in it even before their first order"`
 }

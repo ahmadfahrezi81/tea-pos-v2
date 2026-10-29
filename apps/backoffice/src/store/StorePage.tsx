@@ -2,7 +2,7 @@ import { formatTime, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
-import { useTenant } from "@tea-pos/shell/tenant";
+import { useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { ChartNoAxesCombined, ReceiptText, Store } from "lucide-react";
 
@@ -18,7 +18,7 @@ import { Panel } from "@tea-pos/ui/Panel";
 export function StorePage() {
     const t = useT();
     const locale = useLocale();
-    const slug = useTenant()?.tenant.slug ?? "";
+    const slug = useSlug();
     const storeId = useStoreId();
     const live = useStoresLive();
     const hours = useSalesHours(localDate());

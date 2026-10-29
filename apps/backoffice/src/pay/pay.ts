@@ -1,11 +1,9 @@
 import { $api, api } from "@tea-pos/api-client";
 import { STALE } from "@tea-pos/api-client/query";
 import { useApiMutation } from "@tea-pos/shell/useApiMutation";
-import { useTenant } from "@tea-pos/shell/tenant";
+import { useSlug } from "@tea-pos/shell/tenant";
 import { useQueryClient } from "@tanstack/react-query";
 import type { SearchSchemaInput } from "@tanstack/react-router";
-
-export const useSlug = () => useTenant()?.tenant.slug ?? "";
 
 /** Pay's `?period=2026-10-27` (a period's first day); absent means the current one. */
 export function periodSearch(search: { period?: unknown } & SearchSchemaInput): {

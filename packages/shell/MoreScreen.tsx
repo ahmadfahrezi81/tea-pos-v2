@@ -3,7 +3,7 @@ import { ScrollText } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { rowIcon, SettingsGroup, SettingsRow } from "./Settings";
-import { useTenant } from "./tenant";
+import { useSlug } from "./tenant";
 import { LATEST, seen } from "./whatsNew";
 
 /**
@@ -12,7 +12,7 @@ import { LATEST, seen } from "./whatsNew";
  */
 export function MoreScreen({ rows }: { rows?: ReactNode }) {
     const t = useT();
-    const slug = useTenant()?.tenant.slug;
+    const slug = useSlug();
     if (!slug) return null;
     const unseen = LATEST !== "" && seen() !== LATEST;
     return (

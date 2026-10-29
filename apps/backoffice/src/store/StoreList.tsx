@@ -3,7 +3,7 @@ import { formatDay, formatMoney, formatTime } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { useSearchParam, useSearchText, useSetSearch } from "@tea-pos/shell/searchParam";
-import { useTenant } from "@tea-pos/shell/tenant";
+import { useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, Layers } from "lucide-react";
 
@@ -42,7 +42,7 @@ const TYPE_KEYS: Record<StoreType, MessageKey> = {
  */
 export function StoreList() {
     const t = useT();
-    const slug = useTenant()?.tenant.slug ?? "";
+    const slug = useSlug();
     const { data } = useStoresLive();
     const [search, setSearch] = useSearchText();
     const [type] = useSearchParam("type");

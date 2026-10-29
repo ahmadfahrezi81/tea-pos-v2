@@ -7,7 +7,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Settings } from "lucide-react";
 
 import { daysLeft, daysLeftText, shortDay, weeks } from "./dates";
-import { payDate, usePayPeriodAt, useSlug } from "./pay";
+import { payDate, usePayPeriodAt } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
@@ -15,6 +15,7 @@ import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { ListRow } from "@tea-pos/ui/ListRow";
 import { Badge } from "@tea-pos/ui/Badge";
 import { STEP_ARROW, stepIcon } from "@tea-pos/ui/MonthStepper";
+import { useSlug } from "@tea-pos/shell/tenant";
 
 type Person = components["schemas"]["Payout"];
 

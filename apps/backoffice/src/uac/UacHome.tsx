@@ -8,7 +8,7 @@ import { Badge } from "@tea-pos/ui/Badge";
 import { SearchBox } from "@tea-pos/ui/SearchBox";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { useSearchParam, useSearchText, useSetSearch } from "@tea-pos/shell/searchParam";
-import { useTenant } from "@tea-pos/shell/tenant";
+import { useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { useNavigate } from "@tanstack/react-router";
 import { CircleHelp } from "lucide-react";
 import { useState } from "react";
@@ -32,7 +32,7 @@ export function UacHome() {
     const t = useT();
     const locale = useLocale();
     const navigate = useNavigate();
-    const slug = useTenant()?.tenant.slug ?? "";
+    const slug = useSlug();
     const { data } = useUac();
     const [search, setSearch] = useSearchText();
     const [seller] = useSearchParam("seller");

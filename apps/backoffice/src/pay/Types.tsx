@@ -3,7 +3,7 @@ import { formatMoney } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useT } from "@tea-pos/i18n/react";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
-import { useAccess } from "@tea-pos/shell/tenant";
+import { useAccess, useSlug } from "@tea-pos/shell/tenant";
 import { CopyButton } from "@tea-pos/ui/CopyButton";
 import { Field } from "@tea-pos/ui/form/Field";
 import { NumberInput } from "@tea-pos/ui/form/NumberInput";
@@ -22,7 +22,6 @@ import {
     useCommissionTypes,
     usePayStaff,
     usePayWrite,
-    useSlug,
     writes,
 } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";

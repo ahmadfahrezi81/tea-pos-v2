@@ -114,6 +114,11 @@ export function useFlag(key: string): boolean {
  * The user's level in this app here, and whether it lets them change things: a guest only
  * looks. The screen hides what they cannot do; Go refuses it anyway (auth.App on every route).
  */
+/** The tenant in the address, as its slug ('' before it is known). */
+export function useSlug(): string {
+    return useTenant()?.tenant.slug ?? "";
+}
+
 export function useAccess(): { level: string; canWrite: boolean; owner: boolean } {
     const { id } = useApp();
     const tenant = useTenant()?.tenant;
