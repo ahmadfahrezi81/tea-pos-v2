@@ -1,5 +1,6 @@
 /* The theme every app shares. The brand colour comes from each app's app.config.ts. */
 @import "tailwindcss";
+@import "./motion.css";
 
 /* Tailwind scans the app by default; the shared packages hold classes too. */
 @source "../**/*.tsx";

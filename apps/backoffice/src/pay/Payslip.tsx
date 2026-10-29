@@ -1,26 +1,26 @@
 import type { components } from "@tea-pos/api-client";
-import { formatMoney, localDate } from "@tea-pos/format";
+import { addDays, formatCalendarDay, formatMoney, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { ActionButton } from "@tea-pos/ui/ActionButton";
+import { CopyButton } from "@tea-pos/ui/CopyButton";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useAccess } from "@tea-pos/shell/tenant";
-import { AlertTriangle, Check, Copy, X } from "lucide-react";
+import { AlertTriangle, Check, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 
-import { daysLeft, dayMonth, shortDay, weeks } from "./dates";
+import { daysLeft, daysLeftText, weeks } from "./dates";
 import { decisions, payDate, usePayslip, usePayWrite } from "./pay";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { Dialog, Drawer } from "@tea-pos/ui/Drawer";
+import { ICON } from "@tea-pos/ui/icon";
+import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
+import { Badge } from "@tea-pos/ui/Badge";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
 type Slip = components["schemas"]["Payslip"];
 type Row = { id: string; date: string; status: string; amount: number };
 
 const WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
-const PILL: Record<string, string> = {
-    pending: "bg-yellow-100 text-yellow-700",
-    paid: "bg-green-100 text-green-700",
-    skipped: "bg-gray-200 text-gray-600",
-};
-
 type Confirm = {
     kind: "commission" | "claim" | "day";
     /** The row, or for a day the date. */
@@ -29,12 +29,6 @@ type Confirm = {
     label: string;
     amount: number;
     count?: number;
-};
-
-const addDays = (d: string, n: number) => {
-    const x = new Date(`${d}T12:00:00Z`);
-    x.setUTCDate(x.getUTCDate() + n);
-    return x.toISOString().slice(0, 10);
 };
 
 /**
@@ -51,7 +45,6 @@ export function Payslip({ id }: { id: string }) {
     const [confirm, setConfirm] = useState<Confirm | null>(null);
     const [warningDismissed, setWarningDismissed] = useState(false);
     const [showProof, setShowProof] = useState(false);
-    const [copied, setCopied] = useState(false);
     const commission = usePayWrite(decisions.commission);
     const claim = usePayWrite(decisions.claim);
     const day = usePayWrite(decisions.day);
@@ -59,7 +52,7 @@ export function Payslip({ id }: { id: string }) {
         return (
             <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-24 bg-white rounded-xl" />
+                    <Skeleton key={i} delay={i * 80} className="h-24 rounded-xl" />
                 ))}
             </div>
         );
@@ -112,7 +105,7 @@ export function Payslip({ id }: { id: string }) {
     );
     const detail = (label: string, value: ReactNode) => (
         <div key={label} className="flex justify-between items-center">
-            <span className="text-gray-500">{label}</span>
+            <span className="text-gray-900">{label}</span>
             <span className="font-medium text-gray-800">{value}</span>
         </div>
     );
@@ -122,7 +115,7 @@ export function Payslip({ id }: { id: string }) {
     );
 
     return (
-        <div className="space-y-3 pb-32">
+        <div className="space-y-3">
             {pendingDates.length > 0 && !warningDismissed && (
                 <div className="bg-red-100 p-3.5 rounded-xl">
                     <div className="flex items-start justify-between mb-2">
@@ -134,7 +127,7 @@ export function Payslip({ id }: { id: string }) {
                                     ?.scrollIntoView({ behavior: "smooth", block: "start" })
                             }
                         >
-                            <AlertTriangle size={20} className="text-red-600" />
+                            <AlertTriangle size={ICON} className="text-red-600" />
                             <h3 className="font-semibold text-red-800">
                                 {t("pay.daysPending").replace("{n}", String(pendingDates.length))}
                             </h3>
@@ -144,7 +137,7 @@ export function Payslip({ id }: { id: string }) {
                             className="p-1 -mt-1 -mr-2 rounded-full text-red-600 active:opacity-60"
                             aria-label={t("common.close")}
                         >
-                            <X size={22} />
+                            <X size={ICON} />
                         </button>
                     </div>
                     <p className="text-sm text-red-800">{t("pay.daysPendingSub")}</p>
@@ -156,9 +149,7 @@ export function Payslip({ id }: { id: string }) {
                     <h3 className="font-semibold text-gray-800">
                         {weeks(slip.start, slip.end, t("pay.week"))}
                     </h3>
-                    <span
-                        className={`px-2 py-0.5 rounded-full text-sm font-medium ${PILL[slip.status] ?? PILL.pending}`}
-                    >
+                    <Badge>
                         {t(
                             slip.status === "pending"
                                 ? "pay.ongoing"
@@ -166,7 +157,7 @@ export function Payslip({ id }: { id: string }) {
                                   ? "pay.paid"
                                   : "pay.skipped",
                         )}
-                    </span>
+                    </Badge>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                     <div className="text-center">
@@ -197,29 +188,21 @@ export function Payslip({ id }: { id: string }) {
                     )}
                     {detail(t("pay.expectedPayout"), payDate(addDays(slip.end, 1), locale))}
                     <div className="flex justify-between items-center pt-1.5 border-t border-gray-100">
-                        <span className="text-gray-500">{t("pay.payslipId")}</span>
-                        <button
-                            onClick={() => {
-                                void navigator.clipboard.writeText(slip.id);
-                                setCopied(true);
-                                setTimeout(() => setCopied(false), 2000);
-                            }}
+                        <span className="text-gray-900">{t("pay.payslipId")}</span>
+                        <CopyButton
+                            value={slip.id}
+                            size={13}
                             className="flex items-center gap-1 active:opacity-70"
                         >
-                            <span className="font-mono text-xs text-gray-400">
+                            <span className="font-mono text-xs text-gray-900">
                                 {slip.id.slice(0, 8)}…
                             </span>
-                            {copied ? (
-                                <Check size={13} className="text-green-500" />
-                            ) : (
-                                <Copy size={13} className="text-gray-400" />
-                            )}
-                        </button>
+                        </CopyButton>
                     </div>
                     {detail(
                         t("pay.paidOn"),
                         slip.paidAt
-                            ? `${dayMonth(slip.paidAt.slice(0, 10), locale)} ${slip.paidAt.slice(0, 4)}`
+                            ? formatCalendarDay(localDate(slip.paidAt), locale, "full")
                             : "—",
                     )}
                     {detail(t("pay.paidBy"), slip.paidBy || "—")}
@@ -227,9 +210,7 @@ export function Payslip({ id }: { id: string }) {
                         <div className="pt-2.5 border-t border-gray-100 space-y-3">
                             {slip.paymentProofUrl && (
                                 <div className="space-y-1.5">
-                                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-                                        {t("pay.receipt")}
-                                    </p>
+                                    <SectionLabel inset={false}>{t("pay.receipt")}</SectionLabel>
                                     <button
                                         onClick={() => setShowProof(true)}
                                         className="block size-20 rounded-lg overflow-hidden bg-gray-100 active:opacity-80"
@@ -244,9 +225,9 @@ export function Payslip({ id }: { id: string }) {
                             )}
                             {slip.notes && (
                                 <div className="space-y-1.5">
-                                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+                                    <SectionLabel inset={false}>
                                         {t("pay.noteForStaff")}
-                                    </p>
+                                    </SectionLabel>
                                     <p className="text-sm text-gray-800 whitespace-pre-wrap bg-slate-50 rounded-xl p-3">
                                         {slip.notes}
                                     </p>
@@ -263,7 +244,7 @@ export function Payslip({ id }: { id: string }) {
                         {WEEKDAYS.map((d) => (
                             <span
                                 key={d}
-                                className="text-xs font-semibold text-gray-500 text-center"
+                                className="text-xs font-semibold text-gray-900 text-center"
                             >
                                 {t(`common.weekdays.${d}`)}
                             </span>
@@ -276,7 +257,7 @@ export function Payslip({ id }: { id: string }) {
                             {week.map((d) => (
                                 <div
                                     key={d}
-                                    className={`size-9 mx-auto flex items-center justify-center rounded-lg text-sm font-medium ${worked.has(d) ? "bg-blue-500 text-white font-semibold" : "bg-gray-100 text-gray-500"}`}
+                                    className={`size-9 mx-auto flex items-center justify-center rounded-lg text-sm font-medium ${worked.has(d) ? "bg-blue-500 text-white font-semibold" : "bg-gray-100 text-gray-900"}`}
                                 >
                                     {Number(d.slice(8))}
                                 </div>
@@ -307,13 +288,11 @@ export function Payslip({ id }: { id: string }) {
                                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                                     <div className="flex items-center gap-2">
                                         <p className="text-base font-bold text-gray-900">
-                                            {shortDay(d, locale)}
+                                            {formatCalendarDay(d, locale, "short")}
                                         </p>
-                                        <span
-                                            className={`text-xs font-medium px-2 py-0.5 rounded-full ${allDone ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}
-                                        >
+                                        <Badge>
                                             {t(allDone ? "pay.dayDone" : "pay.dayPending")}
-                                        </span>
+                                        </Badge>
                                     </div>
                                     <p className="text-base font-bold text-gray-900">
                                         {formatMoney(approvedTotal)}
@@ -378,7 +357,11 @@ export function Payslip({ id }: { id: string }) {
                                                         kind: "day",
                                                         id: d,
                                                         status: s,
-                                                        label: shortDay(d, locale),
+                                                        label: formatCalendarDay(
+                                                            d,
+                                                            locale,
+                                                            "short",
+                                                        ),
                                                         amount: pendingTotal,
                                                         count: pending.length,
                                                     })
@@ -410,90 +393,74 @@ export function Payslip({ id }: { id: string }) {
             </Group>
 
             {slip.status === "pending" && slip.pending === 0 && canWrite && (
-                <div className="fixed bottom-0 inset-x-0 mx-auto max-w-[480px] p-4 pb-8 bg-white border-t border-gray-100 z-10">
-                    {left > 0 ? (
-                        <button
-                            disabled
-                            className={`w-full py-3.5 text-white font-bold rounded-xl opacity-40 ${isSkip ? "bg-gray-700" : "bg-green-600"}`}
-                        >
-                            {t("pay.daysLeftLong").replace("{n}", String(left))}
-                        </button>
-                    ) : (
-                        <Link
-                            to={pathname.concat("/settle")}
-                            className={`block text-center w-full py-3.5 text-white font-bold rounded-xl active:opacity-80 ${isSkip ? "bg-gray-700" : "bg-green-600"}`}
-                        >
-                            {t(isSkip ? "pay.skip" : "pay.pay")}
-                        </Link>
-                    )}
-                </div>
+                <FooterSlot>
+                    <div className="bg-white border-t border-gray-200 p-4">
+                        {left > 0 ? (
+                            <button
+                                disabled
+                                className={`w-full py-3.5 text-white font-bold rounded-xl opacity-40 ${isSkip ? "bg-gray-700" : "bg-green-600"}`}
+                            >
+                                {daysLeftText(t, left)}
+                            </button>
+                        ) : (
+                            <Link
+                                to={pathname.concat("/settle")}
+                                className={`block text-center w-full py-3.5 text-white font-bold rounded-xl active:opacity-80 ${isSkip ? "bg-gray-700" : "bg-green-600"}`}
+                            >
+                                {t(isSkip ? "pay.skip" : "pay.pay")}
+                            </Link>
+                        )}
+                    </div>
+                </FooterSlot>
             )}
 
-            {showProof &&
-                createPortal(
-                    <div
-                        className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-                        onClick={() => setShowProof(false)}
-                    >
-                        <img
-                            src={slip.paymentProofUrl}
-                            alt={t("pay.receipt")}
-                            className="rounded-xl max-h-[80vh] w-auto object-contain"
-                        />
-                    </div>,
-                    document.body,
-                )}
+            <Dialog open={showProof} onClose={() => setShowProof(false)}>
+                <img
+                    src={slip.paymentProofUrl}
+                    alt={t("pay.receipt")}
+                    className="rounded-xl max-h-[80vh] w-auto object-contain"
+                />
+            </Dialog>
 
-            {confirm &&
-                createPortal(
-                    <div
-                        className="fixed inset-0 z-50 flex items-end bg-black/40"
-                        onClick={() => setConfirm(null)}
+            {confirm && (
+                <Drawer
+                    onClose={() => setConfirm(null)}
+                    dim="bg-black/40"
+                    className="p-5 space-y-4"
+                >
+                    <div className="flex items-center justify-between">
+                        <p className="text-lg font-bold text-gray-900">
+                            {confirmTitle(t, confirm)}
+                        </p>
+                        <button onClick={() => setConfirm(null)} aria-label={t("common.close")}>
+                            <X size={ICON} className="text-gray-900" />
+                        </button>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                        <p className="text-base font-medium text-gray-800">{confirm.label}</p>
+                        <p className="text-2xl font-bold text-gray-900">
+                            {formatMoney(confirm.amount)}
+                        </p>
+                    </div>
+                    <ActionButton
+                        action={decide}
+                        onError={() => setConfirm(null)}
+                        resetOnSuccess
+                        busyLabel={t("pay.saving")}
+                        className={`w-full py-3.5 font-bold rounded-xl text-white active:opacity-80 disabled:opacity-40 flex items-center justify-center gap-2 ${
+                            confirm.status === "approved" ? "bg-green-600" : "bg-red-500"
+                        }`}
                     >
-                        <div
-                            className="mx-auto w-full max-w-[480px] bg-white rounded-t-2xl p-5 pb-8 space-y-4"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div className="flex items-center justify-between">
-                                <p className="text-lg font-bold text-gray-900">
-                                    {confirmTitle(t, confirm)}
-                                </p>
-                                <button
-                                    onClick={() => setConfirm(null)}
-                                    aria-label={t("common.close")}
-                                >
-                                    <X size={20} className="text-gray-400" />
-                                </button>
-                            </div>
-                            <div className="bg-gray-50 rounded-xl p-4">
-                                <p className="text-base font-medium text-gray-800">
-                                    {confirm.label}
-                                </p>
-                                <p className="text-2xl font-bold text-gray-900">
-                                    {formatMoney(confirm.amount)}
-                                </p>
-                            </div>
-                            <ActionButton
-                                action={decide}
-                                onError={() => setConfirm(null)}
-                                resetOnSuccess
-                                busyLabel={t("pay.saving")}
-                                className={`w-full py-3.5 font-bold rounded-xl text-white active:opacity-80 disabled:opacity-40 flex items-center justify-center gap-2 ${
-                                    confirm.status === "approved" ? "bg-green-600" : "bg-red-500"
-                                }`}
-                            >
-                                {t(confirm.status === "approved" ? "pay.approve" : "pay.reject")}
-                            </ActionButton>
-                            <button
-                                onClick={() => setConfirm(null)}
-                                className="w-full py-3 text-gray-500 text-sm font-medium"
-                            >
-                                {t("common.cancel")}
-                            </button>
-                        </div>
-                    </div>,
-                    document.body,
-                )}
+                        {t(confirm.status === "approved" ? "pay.approve" : "pay.reject")}
+                    </ActionButton>
+                    <button
+                        onClick={() => setConfirm(null)}
+                        className="w-full py-3 text-gray-900 text-sm font-medium"
+                    >
+                        {t("common.cancel")}
+                    </button>
+                </Drawer>
+            )}
         </div>
     );
 }
@@ -511,9 +478,7 @@ function confirmTitle(t: ReturnType<typeof useT>, c: Confirm): string {
 function Group({ title, children }: { title: string; children: ReactNode }) {
     return (
         <section className="space-y-2">
-            <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">
-                {title}
-            </p>
+            <SectionLabel>{title}</SectionLabel>
             {children}
         </section>
     );

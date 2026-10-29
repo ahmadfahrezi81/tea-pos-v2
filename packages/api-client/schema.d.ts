@@ -1167,8 +1167,14 @@ export interface components {
              * @example id
              */
             language: string;
+            phone?: string;
             /** @example USER */
             role: string;
+            /**
+             * Format: date-time
+             * @description When the account was made
+             */
+            since?: string;
         };
         Order: {
             /** Format: date-time */
@@ -1528,6 +1534,8 @@ export interface components {
             /** @description The seller's Google photo address */
             sellerAvatar?: string;
             sellerName?: string;
+            /** @description Who sold here today and their cups, the most first; the seller on shift is in it even before their first order */
+            sellers: components["schemas"]["DaySeller"][];
             /**
              * @description The store itself: active, fake (a demo) or inactive
              * @example active
@@ -1568,6 +1576,12 @@ export interface components {
             id: string;
             name: string;
             owner: boolean;
+            phone?: string;
+            /**
+             * Format: date-time
+             * @description When the account was made
+             */
+            since?: string;
             storeIds: string[];
         };
         UacPersonChange: {

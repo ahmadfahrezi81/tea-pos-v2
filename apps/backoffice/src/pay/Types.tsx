@@ -3,7 +3,8 @@ import { formatMoney } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useT } from "@tea-pos/i18n/react";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
-import { useAccess } from "@tea-pos/shell/tenant";
+import { useAccess, useSlug } from "@tea-pos/shell/tenant";
+import { CopyButton } from "@tea-pos/ui/CopyButton";
 import { Field } from "@tea-pos/ui/form/Field";
 import { NumberInput } from "@tea-pos/ui/form/NumberInput";
 import { Switch } from "@tea-pos/ui/form/Switch";
@@ -11,7 +12,7 @@ import { TextInput } from "@tea-pos/ui/form/TextInput";
 import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
 import { toast } from "@tea-pos/ui/toast";
 import { Link, useRouter } from "@tanstack/react-router";
-import { Check, Copy, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { SearchBox } from "./Staff";
@@ -21,9 +22,12 @@ import {
     useCommissionTypes,
     usePayStaff,
     usePayWrite,
-    useSlug,
     writes,
 } from "./pay";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { ICON } from "@tea-pos/ui/icon";
+import { EmptyState } from "@tea-pos/ui/EmptyState";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
 type ClaimType = components["schemas"]["ClaimType"];
 type Frequency = ClaimType["frequency"];
@@ -49,7 +53,7 @@ function EditLink({ to }: { to: string }) {
     if (!useAccess().canWrite) return null;
     return (
         <Link to={to} className="p-2 -mr-2 text-brand active:opacity-70" aria-label={t("pay.edit")}>
-            <Pencil size={22} strokeWidth={2} />
+            <Pencil size={ICON} strokeWidth={2} />
         </Link>
     );
 }
@@ -65,15 +69,13 @@ function TypeList<T extends { id: string }>({
 }) {
     return (
         <div className="space-y-3">
-            <ListCard>
-                {!items ? (
-                    [1, 2].map((i) => <ListRowSkeleton key={i} />)
-                ) : items.length === 0 ? (
-                    <p className="py-4 text-sm text-gray-400">{empty}</p>
-                ) : (
-                    items.map(row)
-                )}
-            </ListCard>
+            {items?.length === 0 ? (
+                <EmptyState title={empty} />
+            ) : (
+                <ListCard>
+                    {!items ? [1, 2].map((i) => <ListRowSkeleton key={i} />) : items.map(row)}
+                </ListCard>
+            )}
         </div>
     );
 }
@@ -106,28 +108,18 @@ export function CommissionTypeList() {
 /** The slug, fixed once made, with a copy button. */
 function SlugField({ slug }: { slug: string }) {
     const t = useT();
-    const [copied, setCopied] = useState(false);
     return (
         <Field label={t("pay.slug")}>
             <div className="flex items-center gap-2 p-4 px-3 border-2 border-gray-100 rounded-2xl bg-gray-50">
-                <p className="flex-1 font-mono text-base text-gray-500">{slug}</p>
-                <button
-                    onClick={() =>
-                        void navigator.clipboard.writeText(slug).then(
-                            () => {
-                                setCopied(true);
-                                toast(t("pay.slugCopied"));
-                                setTimeout(() => setCopied(false), 3000);
-                            },
-                            () => toast(t("pay.slugNotCopied")),
-                        )
-                    }
-                    disabled={copied}
-                    className={`p-1 active:scale-90 ${copied ? "text-green-500 opacity-50" : "text-gray-400"}`}
-                    aria-label={t("pay.copySlug")}
-                >
-                    {copied ? <Check size={16} /> : <Copy size={16} />}
-                </button>
+                <p className="flex-1 font-mono text-base text-gray-900">{slug}</p>
+                <CopyButton
+                    value={slug}
+                    size={16}
+                    label={t("pay.copySlug")}
+                    className="p-1 active:scale-90"
+                    onCopied={() => toast(t("pay.slugCopied"))}
+                    onFailed={() => toast(t("pay.slugNotCopied"))}
+                />
             </div>
         </Field>
     );
@@ -135,7 +127,7 @@ function SlugField({ slug }: { slug: string }) {
 
 function ReadOnly({ value }: { value: string }) {
     return (
-        <div className="p-4 px-3 border-2 border-gray-100 rounded-2xl bg-gray-50 text-base font-medium text-gray-500">
+        <div className="p-4 px-3 border-2 border-gray-100 rounded-2xl bg-gray-50 text-base font-medium text-gray-900">
             {value}
         </div>
     );
@@ -216,9 +208,9 @@ export function CommissionTypeEdit({ id }: { id: string }) {
     if (type && form?.id !== type.id)
         setForm({ id: type.id, name: type.name, enabled: type.enabled, rate: type.ratePerCup });
     const update = usePayWrite(writes.updateCommissionType);
-    if (!data) return <div className="h-60 bg-white rounded-xl" />;
+    if (!data) return <Skeleton className="h-60 rounded-xl" />;
     if (!type || !form)
-        return <p className="p-4 text-sm text-gray-400">{t("pay.commissionTypeNotFound")}</p>;
+        return <p className="p-4 text-sm text-gray-900">{t("pay.commissionTypeNotFound")}</p>;
     return (
         <div className="space-y-4">
             <Card>
@@ -432,9 +424,9 @@ export function ClaimTypeEdit({ id }: { id: string }) {
     const [search, setSearch] = useState("");
     const update = usePayWrite(writes.updateClaimType);
     const setEligible = usePayWrite(writes.setClaimEligible);
-    if (!data) return <div className="h-60 bg-white rounded-xl" />;
+    if (!data) return <Skeleton className="h-60 rounded-xl" />;
     if (!type || !form)
-        return <p className="p-4 text-sm text-gray-400">{t("pay.claimTypeNotFound")}</p>;
+        return <p className="p-4 text-sm text-gray-900">{t("pay.claimTypeNotFound")}</p>;
     const current = picked ?? new Set(eligible?.userIds ?? []);
     const people = (staff?.staff ?? []).filter((s) => s.role !== "ADMIN");
     const shown = search.trim()
@@ -479,11 +471,9 @@ export function ClaimTypeEdit({ id }: { id: string }) {
             </Card>
             <SearchBox value={search} onChange={setSearch} />
             <div className="space-y-2">
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide px-1">
-                    {t("pay.eligibility")}
-                </p>
+                <SectionLabel inset={false}>{t("pay.eligibility")}</SectionLabel>
                 {shown.length === 0 ? (
-                    <p className="text-sm text-gray-400 px-1">{t("pay.noStaff")}</p>
+                    <p className="text-sm text-gray-900 px-1">{t("pay.noStaff")}</p>
                 ) : (
                     shown.map((s) => (
                         <div

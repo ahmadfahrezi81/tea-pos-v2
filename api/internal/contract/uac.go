@@ -23,6 +23,8 @@ type UacPerson struct {
 	Name      string   `json:"name"`
 	Email     string   `json:"email"`
 	AvatarURL string   `json:"avatarUrl,omitempty"`
+	Phone     string   `json:"phone,omitempty"`
+	Since     string   `json:"since,omitempty" format:"date-time" doc:"When the account was made"`
 	Active    bool     `json:"active"`
 	Owner     bool     `json:"owner"`
 	Access    MeAccess `json:"access"`

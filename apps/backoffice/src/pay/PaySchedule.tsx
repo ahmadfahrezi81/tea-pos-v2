@@ -1,4 +1,4 @@
-import { localDate } from "@tea-pos/format";
+import { addDays, formatCalendarDay, localDate } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { ConfirmSheet } from "@tea-pos/shell/FormFooter";
@@ -10,16 +10,12 @@ import { useState } from "react";
 
 import { usePayPeriod, usePayWrite, writes } from "./pay";
 import { daysLeft } from "./dates";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
+import type { Locale } from "@tea-pos/i18n";
 
 type Frequency = "weekly" | "bi_weekly" | "four_weekly";
 const FREQUENCIES: Frequency[] = ["weekly", "bi_weekly", "four_weekly"];
 const WEEKS: Record<Frequency, number> = { weekly: 1, bi_weekly: 2, four_weekly: 4 };
-
-const addDays = (d: string, n: number) => {
-    const x = new Date(`${d}T12:00:00Z`);
-    x.setUTCDate(x.getUTCDate() + n);
-    return x.toISOString().slice(0, 10);
-};
 
 /** The period a day falls in, as Go and the old app count it (shown before switching, never saved). */
 function windowOf(date: string, f: Frequency): [string, string] {
@@ -34,15 +30,10 @@ function windowOf(date: string, f: Frequency): [string, string] {
     return [start, addDays(start, days - 1)];
 }
 
-function range(start: string, end: string, locale: string) {
-    const f = (d: string, o: Intl.DateTimeFormatOptions) =>
-        new Intl.DateTimeFormat(locale === "id" ? "id-ID" : "en-GB", {
-            ...o,
-            timeZone: "UTC",
-        }).format(new Date(`${d}T00:00:00Z`));
+function range(start: string, end: string, locale: Locale) {
     return start.slice(0, 7) === end.slice(0, 7)
-        ? `${f(start, { day: "numeric" })}–${f(end, { day: "numeric", month: "short" })}`
-        : `${f(start, { day: "numeric", month: "short" })} – ${f(end, { day: "numeric", month: "short" })}`;
+        ? `${formatCalendarDay(start, locale, "day")}–${formatCalendarDay(end, locale)}`
+        : `${formatCalendarDay(start, locale)} – ${formatCalendarDay(end, locale)}`;
 }
 
 /** The tenant's pay frequency: safe to change only on a period's last day, or before anything is counted into it. */
@@ -53,7 +44,7 @@ export function PaySchedule() {
     const [pending, setPending] = useState<Frequency | null>(null);
     const save = usePayWrite(writes.setSchedule);
     const { canWrite } = useAccess();
-    if (!p) return <div className="h-40 bg-white rounded-2xl" />;
+    if (!p) return <Skeleton className="h-40 rounded-2xl" />;
     const current = p.frequency;
     const left = daysLeft(p.end, localDate());
     const name = (f: Frequency) => t(`pay.cadence.${f}` as MessageKey);
@@ -85,7 +76,7 @@ export function PaySchedule() {
                     <CalendarClock size={24} className="text-brand" />
                 </div>
                 <div className="min-w-0">
-                    <p className="text-xs font-medium text-gray-500">
+                    <p className="text-xs font-medium text-gray-900">
                         {t("pay.currentPeriod")} · {name(current)}
                     </p>
                     <p className="font-mono text-sm font-semibold text-gray-600">
@@ -125,10 +116,10 @@ export function PaySchedule() {
                                 >
                                     {name(f)}
                                 </p>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-gray-900">
                                     {t(`pay.cadenceSub.${f}` as MessageKey)}
                                 </p>
-                                <p className="font-mono text-xs text-gray-400 mt-0.5">
+                                <p className="font-mono text-xs text-gray-900 mt-0.5">
                                     {t("pay.next")}: {range(n.start, n.end, locale)}
                                     {!n.aligned && " ⚠"}
                                 </p>
@@ -138,7 +129,7 @@ export function PaySchedule() {
                     );
                 })}
             </div>
-            <p className="text-xs text-gray-400 px-1">{t("pay.scheduleNote")}</p>
+            <p className="text-xs text-gray-900 px-1">{t("pay.scheduleNote")}</p>
             {pending && (
                 <ConfirmSheet
                     title={t("pay.switchTo").replace("{name}", name(pending))}

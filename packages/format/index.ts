@@ -55,6 +55,13 @@ export function formatTime(value: DateInput, locale: Locale): string {
 }
 
 /** `22 Oct, 14:05`. */
+/** `29 October 2026`: a date with its year, always. */
+export function formatLongDate(value: DateInput, locale: Locale): string {
+    return dateFormat(locale, { day: "numeric", month: "long", year: "numeric" }).format(
+        toDate(value),
+    );
+}
+
 export function formatDateTime(
     value: DateInput,
     locale: Locale,
@@ -126,4 +133,39 @@ const money = new Intl.NumberFormat("id-ID", {
 /** `Rp 15.000`. Rupiah in Indonesian style whatever the language. */
 export function formatMoney(amount: number): string {
     return money.format(amount).replace(/^Rp\s*/, "Rp ");
+}
+
+/** `2026-10-22` plus `n` days (negative goes back), as a calendar day. */
+export function addDays(date: string, n: number): string {
+    const d = new Date(`${date}T12:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+}
+
+/** The store's clock hour now (0–23). */
+export function localHour(value: DateInput = new Date()): number {
+    return Number(dateFormat("en", { hour: "2-digit", hourCycle: "h23" }).format(toDate(value)));
+}
+
+const DAY_STYLES = {
+    /** `22` */
+    day: { day: "numeric" },
+    /** `22 Oct` */
+    dayMonth: { day: "numeric", month: "short" },
+    /** `Thu 22 Oct` */
+    short: { weekday: "short", day: "numeric", month: "short" },
+    /** `Thu, 22 Oct 2026` */
+    full: { weekday: "short", day: "numeric", month: "short", year: "numeric" },
+    /** `Thursday 22 October 2026` */
+    long: { weekday: "long", day: "numeric", month: "long", year: "numeric" },
+} satisfies Record<string, Intl.DateTimeFormatOptions>;
+
+/** A calendar day (`2026-10-22`, no time) in one of the shared styles. */
+export function formatCalendarDay(
+    date: string,
+    locale: Locale,
+    style: keyof typeof DAY_STYLES = "dayMonth",
+): string {
+    // Noon in the store's zone is that day whatever the phone's own zone.
+    return dateFormat(locale, DAY_STYLES[style]).format(new Date(`${date}T12:00:00+07:00`));
 }

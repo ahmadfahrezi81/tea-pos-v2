@@ -1,26 +1,29 @@
 import type { components } from "@tea-pos/api-client";
 import { formatDate, formatDay, formatMoney, formatMonth, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { avatar } from "@tea-pos/shell/avatar";
-import { useTenant } from "@tea-pos/shell/tenant";
+
+import { useSlug } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { Sheet } from "@tea-pos/ui/Sheet";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
     AlertTriangle,
-    Calendar,
     CalendarDays,
     History,
     Info,
     MoreVertical,
     Receipt,
-    UserCircle,
     Users,
     X,
 } from "lucide-react";
 import { useState } from "react";
 
-import { monthRange, useDays, useSalesDays, useStoreId } from "./sales";
+import { ALL, monthRange, useDays, useSalesDays, useStoreId } from "./sales";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { ICON } from "@tea-pos/ui/icon";
+import { EmptyState } from "@tea-pos/ui/EmptyState";
+import { Sellers } from "./Sellers";
+import { Badge } from "@tea-pos/ui/Badge";
 
 type Day = components["schemas"]["Day"];
 
@@ -58,9 +61,9 @@ export function AnalyticsMonth({ month }: { month: string }) {
     const t = useT();
     const locale = useLocale();
     const navigate = useNavigate();
-    const slug = useTenant()?.tenant.slug ?? "";
+    const slug = useSlug();
     const storeId = useStoreId();
-    const severalStores = !useTenant()?.store;
+    const severalStores = storeId === ALL;
     const [from, to] = monthRange(month);
     const days = useDays(month);
     const perDay = useSalesDays(from, to);
@@ -91,7 +94,7 @@ export function AnalyticsMonth({ month }: { month: string }) {
                                     ?.scrollIntoView({ behavior: "smooth", block: "start" })
                             }
                         >
-                            <AlertTriangle size={20} className="text-red-600" />
+                            <AlertTriangle size={ICON} className="text-red-600" />
                             <h3 className="font-semibold text-red-800">
                                 {unclosed.length} {t("analytics.unclosedWarning")}
                             </h3>
@@ -100,7 +103,7 @@ export function AnalyticsMonth({ month }: { month: string }) {
                             onClick={() => setWarningDismissed(true)}
                             className="p-1 -mt-1 -mr-2 rounded-full text-red-600 active:opacity-60"
                         >
-                            <X size={22} />
+                            <X size={ICON} />
                         </button>
                     </div>
                     <p className="text-sm text-red-800">{t("analytics.unclosedSub")}</p>
@@ -109,7 +112,7 @@ export function AnalyticsMonth({ month }: { month: string }) {
 
             <div className="bg-white p-4 rounded-2xl">
                 <div className="flex items-center gap-2 mb-3">
-                    <Receipt size={20} className="text-gray-600" />
+                    <Receipt size={ICON} className="text-gray-600" />
                     <h3 className="font-semibold text-gray-800">{t("analytics.monthlyTotals")}</h3>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
@@ -130,7 +133,7 @@ export function AnalyticsMonth({ month }: { month: string }) {
                                 {formatMoney(total((d) => d.sales))}
                             </p>
                         ) : (
-                            <div className="mx-auto mt-1 h-7 w-24 rounded bg-gray-100" />
+                            <Skeleton className="mx-auto mt-1 h-7 w-24 rounded" />
                         )}
                     </div>
                 </div>
@@ -169,13 +172,10 @@ export function AnalyticsMonth({ month }: { month: string }) {
             <div className="space-y-3">
                 {!list ? (
                     Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="h-48 bg-white rounded-2xl" />
+                        <Skeleton key={i} delay={i * 80} className="h-48 rounded-2xl" />
                     ))
                 ) : list.length === 0 ? (
-                    <div className="bg-white p-8 rounded-2xl text-center">
-                        <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
-                        <p className="text-gray-600">{t("analytics.noSummary")}</p>
-                    </div>
+                    <EmptyState title={t("analytics.noSummary")} />
                 ) : (
                     list.map((day) => (
                         <DayCard
@@ -222,7 +222,7 @@ export function AnalyticsMonth({ month }: { month: string }) {
                             onClick={() => setActive(null)}
                             className={`w-full flex items-center gap-3 py-5 ${i < all.length - 1 ? "border-b" : ""}`}
                         >
-                            <item.icon size={20} strokeWidth={2} className="text-gray-900" />
+                            <item.icon size={ICON} strokeWidth={2} className="text-gray-900" />
                             <span className="text-lg text-gray-900">{item.label}</span>
                         </Link>
                     ))}
@@ -270,19 +270,13 @@ function DayCard({ day, storeName, onMenu }: { day: Day; storeName: boolean; onM
                             <h3 className="text-xl font-bold text-gray-800">
                                 {formatDay(day.date, locale)}
                             </h3>
-                            <span
-                                className={`px-2 py-0.5 rounded-full text-sm font-medium ${
-                                    day.closedAt
-                                        ? "bg-red-100 text-red-800"
-                                        : "bg-green-100 text-green-800"
-                                }`}
-                            >
+                            <Badge>
                                 {t(
                                     day.closedAt
                                         ? "analytics.statusClosed"
                                         : "analytics.statusOpen",
                                 )}
-                            </span>
+                            </Badge>
                         </div>
                         {storeName && (
                             <p className="text-sm text-gray-500 truncate">{day.storeName}</p>
@@ -293,7 +287,7 @@ function DayCard({ day, storeName, onMenu }: { day: Day; storeName: boolean; onM
                         aria-label={t("store.dayMenu")}
                         className="size-8 shrink-0 flex items-center justify-center text-gray-500 active:opacity-60 rounded-lg"
                     >
-                        <MoreVertical size={22} strokeWidth={2.5} />
+                        <MoreVertical size={ICON} strokeWidth={2.5} />
                     </button>
                 </div>
 
@@ -382,43 +376,6 @@ function DayCard({ day, storeName, onMenu }: { day: Day; storeName: boolean; onM
                     </div>
                 )}
             </div>
-        </div>
-    );
-}
-
-/** Who worked the day and the cups each sold; the same rows on the day's detail. */
-export function Sellers({ sellers }: { sellers: Day["sellers"] }) {
-    const t = useT();
-    if (sellers.length === 0) return null;
-    return (
-        <div className="flex flex-col gap-1.5">
-            {sellers.map((s) => (
-                <div
-                    key={s.userId}
-                    className="flex items-center gap-2 bg-slate-100 rounded-xl p-1.5"
-                >
-                    {s.avatarUrl ? (
-                        <img
-                            src={avatar(s.avatarUrl)}
-                            alt=""
-                            width={28}
-                            height={28}
-                            referrerPolicy="no-referrer"
-                            className="size-7 rounded-lg object-cover shrink-0"
-                        />
-                    ) : (
-                        <div className="size-7 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
-                            <UserCircle size={18} className="text-brand" />
-                        </div>
-                    )}
-                    <p className="text-base font-bold text-gray-900 truncate flex-1">
-                        {s.name || t("common.unknown")}
-                    </p>
-                    <span className="text-sm font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-lg shrink-0">
-                        {s.cups} {t("analytics.cups")}
-                    </span>
-                </div>
-            ))}
         </div>
     );
 }

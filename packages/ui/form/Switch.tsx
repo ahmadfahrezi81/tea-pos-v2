@@ -1,12 +1,16 @@
-/** The old apps' on/off switch. */
+import type { ReactNode } from "react";
+
+/** The old seller app's big switch: a wide knob that slides; `icon` sits inside the knob. */
 export function Switch({
     on,
     onChange,
     label,
+    icon,
 }: {
     on: boolean;
     onChange: (on: boolean) => void;
     label: string;
+    icon?: ReactNode;
 }) {
     return (
         <button
@@ -15,11 +19,13 @@ export function Switch({
             aria-checked={on}
             aria-label={label}
             onClick={() => onChange(!on)}
-            className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${on ? "bg-brand" : "bg-gray-200"}`}
+            className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors ${on ? "bg-brand" : "bg-gray-300"}`}
         >
             <span
-                className={`absolute top-0.5 left-0.5 size-5 bg-white rounded-full shadow transition-transform ${on ? "translate-x-5" : "translate-x-0"}`}
-            />
+                className={`inline-flex h-7 w-9 items-center justify-center rounded-full bg-white shadow transition-transform ${on ? "translate-x-[18px]" : "translate-x-0.5"}`}
+            >
+                {icon}
+            </span>
         </button>
     );
 }

@@ -1,22 +1,112 @@
 import type { MessageKey } from "@tea-pos/i18n";
-import { useT } from "@tea-pos/i18n/react";
-import { avatar } from "@tea-pos/shell/avatar";
+import { formatLongDate } from "@tea-pos/format";
+import { useLocale, useT } from "@tea-pos/i18n/react";
+import { Avatar } from "@tea-pos/ui/Avatar";
+import { Badge } from "@tea-pos/ui/Badge";
+import { Callout } from "@tea-pos/ui/Callout";
+import { ChoiceList } from "@tea-pos/ui/ChoiceList";
+import { Switch } from "@tea-pos/ui/form/Switch";
+import { DetailList, DetailRow } from "@tea-pos/ui/DetailList";
+import { ListCard, ListRow } from "@tea-pos/ui/ListRow";
+import { Panel, PanelLabel } from "@tea-pos/ui/Panel";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
-import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
+import { HeaderActions, HeaderTitle } from "@tea-pos/shell/HeaderActions";
+import { rowIcon, SettingsGroup } from "@tea-pos/shell/Settings";
 import { useAccess, useTenant } from "@tea-pos/shell/tenant";
 import { useRouter } from "@tanstack/react-router";
-import { Check, UserCircle } from "lucide-react";
+import { Check, LayoutGrid, Store } from "lucide-react";
 import { useState } from "react";
 
-import { useSetPerson, useUacPerson, type Change, type Person } from "./uac";
+import { storeGroups, useSetPerson, useUacPerson, type Change, type Person } from "./uac";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
 
 /** The levels each app offers (auth.Levels in Go); '' is no access. */
 const LEVELS = { seller: ["", "member"], backoffice: ["", "guest", "admin"] } as const;
 
-/** A person: their level in each app, their stores and whether they are on; saved at once. */
+/** A person, read only: who they are, the apps and stores they reach; Edit changes them. */
 export function PersonPage({ userId }: { userId: string }) {
+    const t = useT();
+    const locale = useLocale();
+    const { canWrite } = useAccess();
+    const stores = useTenant()?.tenant.stores ?? [];
+    const { data: p } = useUacPerson(userId);
+    if (!p) return <Skeleton className="h-60 rounded-2xl" />;
+    const theirs = stores.filter((s) => p.storeIds.includes(s.id));
+    return (
+        <div className="space-y-4">
+            <HeaderTitle>{p.name}</HeaderTitle>
+            {canWrite && !p.owner && <HeaderActions actions={[{ kind: "edit", to: "edit" }]} />}
+
+            <div className="bg-white rounded-2xl p-4 flex items-center gap-4">
+                <Avatar url={p.avatarUrl} size={64} square />
+                <div className="flex-1 min-w-0">
+                    <p className="text-xl font-semibold text-gray-900 leading-tight truncate">
+                        {p.name}
+                    </p>
+                    {p.owner && <p className="text-sm text-gray-900">{t("uac.owner")}</p>}
+                </div>
+            </div>
+            {p.owner && <p className="px-1 text-sm text-gray-900">{t("uac.ownerNote")}</p>}
+
+            <DetailList>
+                <DetailRow label={t("uac.status")}>
+                    <Badge>{t(p.active ? "uac.active" : "uac.inactive")}</Badge>
+                </DetailRow>
+                <DetailRow label={t("account.email")}>
+                    <span className="break-all">{p.email}</span>
+                </DetailRow>
+                <DetailRow label={t("account.phoneNumber")}>{p.phone || "—"}</DetailRow>
+                <DetailRow label={t("account.memberSince")}>
+                    {p.since ? formatLongDate(p.since, locale) : "—"}
+                </DetailRow>
+            </DetailList>
+
+            <Panel icon={<LayoutGrid {...rowIcon} />} title={t("uac.apps")}>
+                <ListCard>
+                    {(["seller", "backoffice"] as const).map((app) => (
+                        <ListRow
+                            key={app}
+                            title={t(`uac.${app}`)}
+                            trailing={
+                                <span
+                                    className={`text-base text-gray-900 ${p.access[app] ? "font-semibold" : "font-normal"}`}
+                                >
+                                    {t(`uac.${p.access[app] || "none"}` as MessageKey)}
+                                </span>
+                            }
+                        />
+                    ))}
+                </ListCard>
+            </Panel>
+
+            <Panel icon={<Store {...rowIcon} />} title={t("uac.stores")}>
+                {theirs.length === 0 ? (
+                    <ListCard>
+                        <p className="py-4 text-gray-900">{t("uac.noStores")}</p>
+                    </ListCard>
+                ) : (
+                    storeGroups(theirs).map((g) => (
+                        <div key={g.key} className="space-y-2">
+                            <PanelLabel>
+                                {t(g.key)} ({g.stores.length})
+                            </PanelLabel>
+                            <ListCard>
+                                {g.stores.map((s) => (
+                                    <ListRow key={s.id} title={s.name} />
+                                ))}
+                            </ListCard>
+                        </div>
+                    ))
+                )}
+            </Panel>
+        </div>
+    );
+}
+
+/** Editing a person: their level in each app, their stores and whether they are on; saved at once. */
+export function PersonEdit({ userId }: { userId: string }) {
     const { data } = useUacPerson(userId);
-    if (!data) return <div className="h-60 rounded-2xl bg-white" />;
+    if (!data) return <Skeleton className="h-60 rounded-2xl" />;
     // Keyed by what was saved, so a change from elsewhere starts the form again.
     return <PersonForm key={JSON.stringify(data)} person={data} />;
 }
@@ -38,64 +128,34 @@ function PersonForm({ person: p }: { person: Person }) {
         JSON.stringify({ access: p.access, storeIds: p.storeIds, active: p.active });
 
     return (
-        <div className="space-y-4 pb-24">
+        <div className="space-y-4">
             <HeaderTitle>{p.name}</HeaderTitle>
 
-            <div className="flex items-center gap-3 rounded-2xl bg-white p-4">
-                {p.avatarUrl ? (
-                    <img
-                        src={avatar(p.avatarUrl)}
-                        alt=""
-                        width={44}
-                        height={44}
-                        referrerPolicy="no-referrer"
-                        className="size-11 rounded-full object-cover"
-                    />
-                ) : (
-                    <UserCircle size={44} className="text-gray-400" />
-                )}
-                <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm text-gray-600">{p.email}</p>
-                    <p
-                        className={`text-sm font-semibold ${change.active ? "text-green-600" : "text-gray-400"}`}
-                    >
-                        {change.active ? `● ${t("uac.active")}` : `○ ${t("uac.inactive")}`}
-                        {p.owner && <span className="text-gray-900"> · {t("uac.owner")}</span>}
+            <SettingsGroup title={t("uac.status")}>
+                <div className="flex items-center gap-3 py-5">
+                    <p className="flex-1 text-[17px] font-medium text-gray-900">
+                        {t("uac.active")}
                     </p>
+                    <Switch
+                        on={change.active}
+                        label={t("uac.active")}
+                        onChange={(active) =>
+                            editable && set({ active, storeIds: active ? change.storeIds : [] })
+                        }
+                    />
                 </div>
-            </div>
-            {p.owner && <p className="px-1 text-sm text-gray-500">{t("uac.ownerNote")}</p>}
+            </SettingsGroup>
+            {!change.active && <Callout>{t("uac.offNote")}</Callout>}
 
             <AccessFields change={change} set={set} disabled={!editable || !change.active} />
 
             {editable && (
-                <div className="space-y-2">
-                    <button
-                        onClick={() =>
-                            set({
-                                active: !change.active,
-                                storeIds: change.active ? [] : change.storeIds,
-                            })
-                        }
-                        className={`w-full rounded-xl py-3 font-semibold ${
-                            change.active ? "bg-red-50 text-red-600" : "bg-green-50 text-green-700"
-                        }`}
-                    >
-                        {t(change.active ? "uac.deactivate" : "uac.activate")}
-                    </button>
-                    {!change.active && (
-                        <p className="px-1 text-xs text-gray-500">{t("uac.offNote")}</p>
-                    )}
-                </div>
-            )}
-
-            {editable && changed && (
                 <FormFooter
                     label={t("uac.save")}
                     busyLabel={t("uac.saving")}
+                    disabled={!changed}
                     confirmTitle={t("uac.confirmTitle").replace("{name}", p.name)}
-                    confirmMessage={t("uac.confirmBody")}
-                    note={{ title: t("uac.apps"), body: t("uac.confirmBody") }}
+                    note={{ title: t("uac.noteTitle"), body: t("uac.confirmBody") }}
                     onSubmit={async () => {
                         await save.mutateAsync(change);
                         router.history.back();
@@ -105,6 +165,13 @@ function PersonForm({ person: p }: { person: Person }) {
         </div>
     );
 }
+
+const HINTS: Record<string, MessageKey> = {
+    "": "uac.noneHint",
+    member: "uac.memberHint",
+    guest: "uac.guestHint",
+    admin: "uac.adminHint",
+};
 
 /** The level in each app and the stores: the same fields for a person and for a request. */
 export function AccessFields({
@@ -120,68 +187,69 @@ export function AccessFields({
     const stores = useTenant()?.tenant.stores ?? [];
     return (
         <>
-            <section className="space-y-2">
-                <p className="px-1 text-sm font-semibold text-gray-500">{t("uac.apps")}</p>
-                <div className="space-y-3 rounded-2xl bg-white p-4">
-                    {(["seller", "backoffice"] as const).map((app) => (
-                        <div key={app} className="flex items-center justify-between gap-3">
-                            <span className="text-gray-900">{t(`uac.${app}`)}</span>
-                            <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
-                                {LEVELS[app].map((level) => (
+            <Panel icon={<LayoutGrid {...rowIcon} />} title={t("uac.apps")}>
+                {(["seller", "backoffice"] as const).map((app) => (
+                    <section key={app} className="space-y-2">
+                        <PanelLabel>{t(app === "seller" ? "uac.seller" : "uac.office")}</PanelLabel>
+                        <ChoiceList
+                            value={change.access[app]}
+                            onChange={(level) =>
+                                set({ access: { ...change.access, [app]: level } })
+                            }
+                            choices={[...LEVELS[app]].reverse().map((level) => ({
+                                value: level,
+                                label: t(`uac.${level || "none"}` as MessageKey),
+                                sublabel: t(HINTS[level]!),
+                                disabled,
+                            }))}
+                        />
+                    </section>
+                ))}
+            </Panel>
+
+            <Panel icon={<Store {...rowIcon} />} title={t("uac.stores")}>
+                {storeGroups(stores).map((g) => (
+                    <section key={g.key} className="space-y-2">
+                        <PanelLabel>
+                            {t(g.key)} (
+                            {g.stores.filter((s) => change.storeIds.includes(s.id)).length}/
+                            {g.stores.length})
+                        </PanelLabel>
+                        <div className="bg-slate-100 rounded-xl px-4 py-1">
+                            {g.stores.map((s) => {
+                                const on = change.storeIds.includes(s.id);
+                                return (
                                     <button
-                                        key={level}
+                                        key={s.id}
                                         disabled={disabled}
                                         onClick={() =>
-                                            set({ access: { ...change.access, [app]: level } })
+                                            set({
+                                                storeIds: on
+                                                    ? change.storeIds.filter((id) => id !== s.id)
+                                                    : [...change.storeIds, s.id],
+                                            })
                                         }
-                                        className={`rounded-lg px-3 py-1.5 text-sm font-medium disabled:opacity-60 ${
-                                            change.access[app] === level
-                                                ? "bg-white text-gray-900 shadow-sm"
-                                                : "text-gray-500"
-                                        }`}
+                                        className="w-full flex items-center justify-between gap-3 py-5 border-b-2 last:border-b-0 border-white text-left active:bg-gray-50 disabled:opacity-40"
                                     >
-                                        {t(`uac.${level || "none"}` as MessageKey)}
+                                        <span className="text-[17px] font-medium text-gray-900">
+                                            {s.name}
+                                        </span>
+                                        <span
+                                            className={`flex size-6 shrink-0 items-center justify-center rounded-md border-2 ${
+                                                on
+                                                    ? "border-brand/90 bg-brand/90 text-white"
+                                                    : "border-gray-300 bg-white"
+                                            }`}
+                                        >
+                                            {on && <Check size={16} strokeWidth={4} />}
+                                        </span>
                                     </button>
-                                ))}
-                            </div>
+                                );
+                            })}
                         </div>
-                    ))}
-                </div>
-            </section>
-
-            <section className="space-y-2">
-                <p className="px-1 text-sm font-semibold text-gray-500">{t("uac.stores")}</p>
-                <div className="overflow-hidden rounded-2xl bg-white">
-                    {stores.map((s, i) => {
-                        const on = change.storeIds.includes(s.id);
-                        return (
-                            <button
-                                key={s.id}
-                                disabled={disabled}
-                                onClick={() =>
-                                    set({
-                                        storeIds: on
-                                            ? change.storeIds.filter((id) => id !== s.id)
-                                            : [...change.storeIds, s.id],
-                                    })
-                                }
-                                className={`flex w-full items-center gap-3 p-3 text-left active:bg-gray-50 disabled:opacity-60 ${
-                                    i < stores.length - 1 ? "border-b border-gray-100" : ""
-                                }`}
-                            >
-                                <span
-                                    className={`flex size-5 items-center justify-center rounded border ${
-                                        on ? "border-brand bg-brand text-white" : "border-gray-300"
-                                    }`}
-                                >
-                                    {on && <Check size={14} strokeWidth={3} />}
-                                </span>
-                                <span className="text-gray-900">{s.name}</span>
-                            </button>
-                        );
-                    })}
-                </div>
-            </section>
+                    </section>
+                ))}
+            </Panel>
         </>
     );
 }

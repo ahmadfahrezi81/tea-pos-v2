@@ -1,5 +1,5 @@
 -- name: GetMe :one
-SELECT id, email, full_name, role, avatar_url, preferred_language FROM users WHERE id = $1;
+SELECT id, email, full_name, role, avatar_url, preferred_language, phone_number, created_at FROM users WHERE id = $1;
 
 -- name: ListUserTenants :many
 -- The tenants the user is an active member of, with what auth.LevelIn reads.

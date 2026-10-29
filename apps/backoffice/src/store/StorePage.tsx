@@ -1,15 +1,15 @@
-import { formatMoney, formatTime, localDate } from "@tea-pos/format";
+import { formatTime, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
-import { useTenant } from "@tea-pos/shell/tenant";
-import { AreaChart } from "@tea-pos/ui/AreaChart";
-import { ChartNoAxesCombined, ReceiptText } from "lucide-react";
+import { useSlug } from "@tea-pos/shell/tenant";
+import { Avatar } from "@tea-pos/ui/Avatar";
+import { ChartNoAxesCombined, ReceiptText, Store } from "lucide-react";
 
-import { OpenBadge, SellerAvatar } from "./StoreList";
+import { closedLine, OpenBadge } from "./StoreList";
+import { TodayPanel } from "./TodayPanel";
 import { ALL, useSalesHours, useStoreId, useStoresLive } from "./sales";
-
-const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
+import { Panel } from "@tea-pos/ui/Panel";
 
 /**
  * One store today (or every store together): who is on, sales so far and by hour, then its
@@ -18,7 +18,7 @@ const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
 export function StorePage() {
     const t = useT();
     const locale = useLocale();
-    const slug = useTenant()?.tenant.slug ?? "";
+    const slug = useSlug();
     const storeId = useStoreId();
     const live = useStoresLive();
     const hours = useSalesHours(localDate());
@@ -26,70 +26,46 @@ export function StorePage() {
     const all = storeId === ALL;
     const totals = hours.data;
 
+    const tile = "rounded-xl bg-slate-100 p-3";
     return (
         <div className="flex flex-col gap-3">
             <HeaderTitle>{all ? t("shell.allStores") : (store?.name ?? "")}</HeaderTitle>
 
             {store && (
-                <div className="rounded-2xl bg-white p-4">
-                    <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm text-gray-600">
-                            {store.open && store.openSince
-                                ? t("store.openSince").replace(
-                                      "{time}",
-                                      formatTime(store.openSince, locale),
-                                  )
-                                : null}
-                        </span>
-                        <OpenBadge store={store} />
+                <Panel
+                    icon={<Store {...rowIcon} />}
+                    title={t("store.rightNow")}
+                    beside={<OpenBadge store={store} />}
+                >
+                    <div className={`${tile} flex items-center gap-3`}>
+                        {store.open ? (
+                            <>
+                                <Avatar url={store.sellerAvatar} size={40} square />
+                                <div className="min-w-0">
+                                    <p className="truncate font-semibold text-gray-900">
+                                        {t("store.isSelling").replace(
+                                            "{name}",
+                                            store.sellerName ?? "",
+                                        )}
+                                    </p>
+                                    {store.openSince && (
+                                        <p className="text-sm text-gray-900">
+                                            {t("store.openSince").replace(
+                                                "{time}",
+                                                formatTime(store.openSince, locale),
+                                            )}
+                                        </p>
+                                    )}
+                                </div>
+                            </>
+                        ) : (
+                            <p className="text-gray-900">{closedLine(store, t, locale)}</p>
+                        )}
                     </div>
-                    {store.open && (
-                        <div className="mt-2 flex items-center gap-2 text-gray-900">
-                            <SellerAvatar url={store.sellerAvatar} size={28} />
-                            <span className="truncate">
-                                {t("store.isSelling").replace("{name}", store.sellerName ?? "")}
-                            </span>
-                        </div>
-                    )}
-                </div>
+                </Panel>
             )}
 
-            <div className="rounded-2xl bg-white p-4">
-                <p className="text-sm text-gray-500">{t("store.todayLabel")}</p>
-                {totals ? (
-                    <p className="mt-0.5 text-2xl font-bold text-gray-900">
-                        {formatMoney(totals.sales)}
-                    </p>
-                ) : (
-                    <div className="mt-1 h-8 w-40 rounded bg-gray-100" />
-                )}
-                <div className="mt-2 flex gap-6 text-sm text-gray-700">
-                    <span>
-                        {t("store.cups")} <b>{totals?.cups ?? "–"}</b>
-                    </span>
-                    <span>
-                        {t("store.orders")} <b>{totals?.orders ?? "–"}</b>
-                    </span>
-                </div>
-                {totals && totals.hours.length > 0 ? (
-                    <div className="mt-3 -mx-2">
-                        <AreaChart
-                            points={totals.hours.map((h) => ({
-                                key: String(h.hour),
-                                label: hourLabel(h.hour),
-                                value: h.cups,
-                            }))}
-                            unit={t("store.cupsUnit")}
-                            height={120}
-                        />
-                        <p className="px-2 text-xs text-gray-400">{t("store.byHour")}</p>
-                    </div>
-                ) : (
-                    totals && (
-                        <p className="mt-3 text-sm text-gray-500">{t("store.noSalesToday")}</p>
-                    )
-                )}
-            </div>
+            <TodayPanel totals={totals} hours={totals?.hours} />
 
             <SettingsGroup>
                 <SettingsRow

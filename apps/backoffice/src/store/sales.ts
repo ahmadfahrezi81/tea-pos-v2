@@ -2,7 +2,7 @@ import { $api, api } from "@tea-pos/api-client";
 import { useInfiniteList } from "@tea-pos/api-client/list";
 import { STALE } from "@tea-pos/api-client/query";
 import { localDate } from "@tea-pos/format";
-import { useTenant } from "@tea-pos/shell/tenant";
+import { useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { useParams, type SearchSchemaInput } from "@tanstack/react-router";
 
 /** The store in the address (`/store/<storeId>/…`); `all` is every store of the tenant together. */
@@ -59,23 +59,19 @@ export function useDays(month: string) {
     );
 }
 
-function useTenantSlug() {
-    return useTenant()?.tenant.slug ?? "";
-}
-
 /** One day's detail; its photo addresses last ten minutes, so it is fetched again after five. */
 export function useDay(id: string) {
-    const tenant = useTenantSlug();
+    const tenant = useSlug();
     return $api.useQuery(
         "get",
         "/tenants/{tenant}/days/{id}",
         { params: { path: { tenant, id } } },
-        { enabled: !!tenant, staleTime: STALE.COLD },
+        { enabled: !!tenant && !!id, staleTime: STALE.COLD },
     );
 }
 
 export function useDayActivity(id: string) {
-    const tenant = useTenantSlug();
+    const tenant = useSlug();
     return $api.useQuery(
         "get",
         "/tenants/{tenant}/days/{id}/activity",
@@ -85,7 +81,7 @@ export function useDayActivity(id: string) {
 }
 
 export function useDaySessions(id: string) {
-    const tenant = useTenantSlug();
+    const tenant = useSlug();
     return $api.useQuery(
         "get",
         "/tenants/{tenant}/days/{id}/sessions",
@@ -182,13 +178,29 @@ export function useDayOrders(date: string) {
 
 /** Every store right now. v1 writes without telling the hub, so it refetches every minute while on screen. */
 export function useStoresLive() {
-    const tenant = useTenantSlug();
+    const tenant = useSlug();
     return $api.useQuery(
         "get",
         "/tenants/{tenant}/stores/live",
         { params: { path: { tenant } } },
         {
             enabled: !!tenant,
+            staleTime: STALE.WARM,
+            refetchInterval: 60_000,
+            meta: { live: ["order"] },
+        },
+    );
+}
+
+/** Today's cups by hour over exactly these stores (the Store list's filtered ones). */
+export function useTodayHoursFor(storeIds: string[]) {
+    const tenant = useSlug();
+    return $api.useQuery(
+        "get",
+        "/tenants/{tenant}/sales/hours",
+        { params: { path: { tenant }, query: { date: localDate(), storeId: storeIds } } },
+        {
+            enabled: !!tenant && storeIds.length > 0,
             staleTime: STALE.WARM,
             refetchInterval: 60_000,
             meta: { live: ["order"] },

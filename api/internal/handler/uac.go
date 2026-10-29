@@ -278,6 +278,7 @@ func uacPerson(p store.ListTenantPeopleRow) contract.UacPerson {
 	}
 	out := contract.UacPerson{
 		ID: p.ID.String(), Name: p.FullName, Email: p.Email, AvatarURL: p.AvatarUrl,
+		Phone: p.Phone, Since: since(p.CreatedAt),
 		Active: p.Status == "active", Owner: p.IsOwner,
 		Access:   contract.MeAccess{Seller: level("seller", p.SellerAccess), Backoffice: level("backoffice", p.BackofficeAccess)},
 		StoreIDs: make([]string, len(p.StoreIds)),

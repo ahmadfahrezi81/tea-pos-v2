@@ -2,7 +2,7 @@ import type { components } from "@tea-pos/api-client";
 import { formatMoney, formatTime } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { avatar } from "@tea-pos/shell/avatar";
+import { Avatar } from "@tea-pos/ui/Avatar";
 import {
     AlertTriangle,
     ArrowRightLeft,
@@ -15,7 +15,6 @@ import {
     Package,
     ShoppingCart,
     Trash2,
-    UserCircle,
     Wallet,
     type LucideIcon,
 } from "lucide-react";
@@ -23,6 +22,9 @@ import type { ReactNode } from "react";
 
 import { PhotoTile } from "./DayDetail";
 import { useDayActivity, useDaySessions } from "./sales";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { EmptyState } from "@tea-pos/ui/EmptyState";
+import { Badge } from "@tea-pos/ui/Badge";
 
 type Event = components["schemas"]["DayEvent"];
 type Session = components["schemas"]["DaySession"];
@@ -75,14 +77,9 @@ function Row({
 export function DayActivity({ id }: { id: string }) {
     const t = useT();
     const { data } = useDayActivity(id);
-    if (!data) return <div className="h-64 bg-white rounded-2xl" />;
+    if (!data) return <Skeleton className="h-64 rounded-2xl" />;
     const events = data.events;
-    if (events.length === 0)
-        return (
-            <div className="bg-white rounded-2xl p-8 text-center">
-                <p className="text-gray-400 text-sm">{t("daily.noActivity")}</p>
-            </div>
-        );
+    if (events.length === 0) return <EmptyState title={t("daily.noActivity")} />;
     return (
         <div className="bg-white rounded-2xl p-3">
             {events.map((e, i) =>
@@ -124,11 +121,7 @@ function OrderRow({ event, last }: { event: Event; last: boolean }) {
                             {cups} {t("orders.cups")}
                         </span>
                     )}
-                    {method && (
-                        <span className="text-xs bg-slate-100 text-gray-500 px-1.5 py-0.5 rounded-md capitalize">
-                            {method}
-                        </span>
-                    )}
+                    {method && <Badge>{method}</Badge>}
                 </div>
                 <span className="text-xs text-gray-400 shrink-0">
                     {formatTime(event.at, locale)}
@@ -235,18 +228,13 @@ export function DaySessions({ id }: { id: string }) {
     const t = useT();
     const locale = useLocale();
     const { data } = useDaySessions(id);
-    if (!data) return <div className="h-40 bg-white rounded-2xl" />;
+    if (!data) return <Skeleton className="h-40 rounded-2xl" />;
     const sessions = data.sessions;
-    if (sessions.length === 0)
-        return (
-            <div className="bg-white rounded-2xl p-8 text-center">
-                <p className="text-gray-400 text-sm">{t("daily.noSessions")}</p>
-            </div>
-        );
+    if (sessions.length === 0) return <EmptyState title={t("daily.noSessions")} />;
     const people = new Set(sessions.map((s) => s.userId)).size;
     const nameOf = new Map(sessions.map((s) => [s.id, s.userName]));
     return (
-        <div className="flex flex-col gap-3 pb-8">
+        <div className="flex flex-col gap-3">
             <div className="bg-white rounded-2xl px-4 py-3 flex items-center gap-4 text-sm">
                 <div>
                     <span className="font-bold text-gray-900">{sessions.length}</span>
@@ -266,20 +254,7 @@ export function DaySessions({ id }: { id: string }) {
                 <div key={s.id} className="bg-white rounded-2xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
-                            {s.avatarUrl ? (
-                                <img
-                                    src={avatar(s.avatarUrl)}
-                                    alt=""
-                                    width={36}
-                                    height={36}
-                                    referrerPolicy="no-referrer"
-                                    className="size-9 rounded-xl object-cover shrink-0"
-                                />
-                            ) : (
-                                <div className="size-9 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
-                                    <UserCircle size={20} className="text-brand" />
-                                </div>
-                            )}
+                            <Avatar url={s.avatarUrl} size={36} square />
                             <p className="font-bold text-gray-900">
                                 {s.userName || t("common.unknown")}
                             </p>

@@ -1,46 +1,39 @@
 import { api } from "@tea-pos/api-client";
 import { uploadPhoto } from "@tea-pos/api-client/files";
-import { formatMoney, localDate } from "@tea-pos/format";
+import { formatCalendarDay, formatMoney, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
 import { Callout } from "@tea-pos/ui/Callout";
+import { CopyButton } from "@tea-pos/ui/CopyButton";
 import { Field } from "@tea-pos/ui/form/Field";
 import { Textarea } from "@tea-pos/ui/form/Textarea";
 import { PhotoInput } from "@tea-pos/ui/PhotoInput";
 import { Link, useLocation, useRouter } from "@tanstack/react-router";
-import { Check, Copy } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import { daysLeft, dayMonth } from "./dates";
-import { usePayslip, usePayStaff, usePayWrite, useSlug } from "./pay";
+import { daysLeft, daysLeftText } from "./dates";
+import { usePayslip, usePayStaff, usePayWrite } from "./pay";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { useSlug } from "@tea-pos/shell/tenant";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
 function Copyable({
     value,
     prefix,
-    className,
+    className = "text-base font-medium text-gray-900",
 }: {
     value: string;
     prefix?: string;
     className?: string;
 }) {
-    const [copied, setCopied] = useState(false);
     return (
-        <button
-            onClick={() => {
-                void navigator.clipboard.writeText(value);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-            }}
-            className={`flex items-center gap-1.5 active:opacity-70 ${className ?? "text-base font-medium text-gray-900"}`}
+        <CopyButton
+            value={value}
+            className={`flex items-center gap-1.5 active:opacity-70 ${className}`}
         >
             {prefix}
             {value}
-            {copied ? (
-                <Check size={14} className="text-green-500" />
-            ) : (
-                <Copy size={14} className="text-gray-400" />
-            )}
-        </button>
+        </CopyButton>
     );
 }
 
@@ -80,7 +73,7 @@ export function PayConfirm({ id }: { id: string }) {
         return (
             <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-24 bg-white rounded-xl" />
+                    <Skeleton key={i} delay={i * 80} className="h-24 rounded-xl" />
                 ))}
             </div>
         );
@@ -94,7 +87,7 @@ export function PayConfirm({ id }: { id: string }) {
                     <p className="text-lg font-bold text-gray-900">
                         {t(slip.status === "skipped" ? "pay.alreadyClosed" : "pay.alreadyPaid")}
                     </p>
-                    <p className="text-sm text-gray-500">{t("pay.alreadySub")}</p>
+                    <p className="text-sm text-gray-900">{t("pay.alreadySub")}</p>
                 </div>
                 <Link
                     to={pathname.replace(/\/settle$/, "")}
@@ -113,7 +106,7 @@ export function PayConfirm({ id }: { id: string }) {
     const name = person?.name ?? slip.name;
     const row = (label: string, value: ReactNode) => (
         <div className="flex justify-between items-center">
-            <span className="text-gray-500">{label}</span>
+            <span className="text-gray-900">{label}</span>
             {typeof value === "string" ? (
                 <span className="font-medium text-gray-800">{value}</span>
             ) : (
@@ -124,9 +117,9 @@ export function PayConfirm({ id }: { id: string }) {
     return (
         <div className="space-y-4">
             <div className="bg-white rounded-xl p-4 space-y-1">
-                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+                <SectionLabel inset={false}>
                     {t(isSkip ? "pay.amountOwed" : "pay.amountToPay")}
-                </p>
+                </SectionLabel>
                 {isSkip ? (
                     <p className="text-3xl font-bold text-gray-900">{formatMoney(0)}</p>
                 ) : (
@@ -136,8 +129,8 @@ export function PayConfirm({ id }: { id: string }) {
                         className="text-3xl font-bold text-gray-900"
                     />
                 )}
-                <p className="text-sm text-gray-500">
-                    {dayMonth(slip.start, locale)} – {dayMonth(slip.end, locale)}{" "}
+                <p className="text-sm text-gray-900">
+                    {formatCalendarDay(slip.start, locale)} – {formatCalendarDay(slip.end, locale)}{" "}
                     {slip.end.slice(0, 4)}
                 </p>
             </div>
@@ -209,7 +202,7 @@ export function PayConfirm({ id }: { id: string }) {
             <FormFooter
                 label={
                     locked
-                        ? t("pay.daysLeftLong").replace("{n}", String(left))
+                        ? daysLeftText(t, left)
                         : t(isSkip ? "pay.markSkipped" : "pay.confirmPayment")
                 }
                 busyLabel={t(isSkip ? "pay.closing" : "pay.confirming")}

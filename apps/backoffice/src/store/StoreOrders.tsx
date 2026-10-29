@@ -1,12 +1,16 @@
 import { formatDateTime, formatDay, formatMoney, formatTime, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { useTenant } from "@tea-pos/shell/tenant";
+import { useSlug } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { LoadMore } from "@tea-pos/ui/LoadMore";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Calendar, CalendarDays, Receipt } from "lucide-react";
+import { CalendarDays, Receipt } from "lucide-react";
 
-import { useDayOrders, useSalesHours, useStoreId } from "./sales";
+import { ALL, useDayOrders, useSalesHours, useStoreId } from "./sales";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { ICON } from "@tea-pos/ui/icon";
+import { EmptyState } from "@tea-pos/ui/EmptyState";
+import { Badge } from "@tea-pos/ui/Badge";
 
 const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
 
@@ -37,9 +41,9 @@ export function StoreOrders({ date }: { date: string }) {
     const t = useT();
     const locale = useLocale();
     const navigate = useNavigate();
-    const slug = useTenant()?.tenant.slug ?? "";
+    const slug = useSlug();
     const storeId = useStoreId();
-    const severalStores = !useTenant()?.store;
+    const severalStores = storeId === ALL;
     const hours = useSalesHours(date);
     const orders = useDayOrders(date);
     const totals = hours.data;
@@ -49,7 +53,7 @@ export function StoreOrders({ date }: { date: string }) {
         <div className="flex flex-col gap-4">
             <div className="bg-white p-4 rounded-2xl">
                 <div className="flex items-center gap-2 mb-3">
-                    <Receipt size={20} className="text-gray-600" />
+                    <Receipt size={ICON} className="text-gray-600" />
                     <h3 className="font-semibold text-gray-800">{t("orders.dailySummary")}</h3>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
@@ -70,7 +74,7 @@ export function StoreOrders({ date }: { date: string }) {
                                 {formatMoney(totals.sales)}
                             </p>
                         ) : (
-                            <div className="mx-auto mt-1 h-7 w-24 rounded bg-gray-100" />
+                            <Skeleton className="mx-auto mt-1 h-7 w-24 rounded" />
                         )}
                     </div>
                 </div>
@@ -109,14 +113,10 @@ export function StoreOrders({ date }: { date: string }) {
 
             {orders.isPending ? (
                 Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="h-24 bg-white rounded-2xl" />
+                    <Skeleton key={i} delay={i * 80} className="h-24 rounded-2xl" />
                 ))
             ) : list.length === 0 ? (
-                <div className="bg-white p-8 rounded-2xl text-center">
-                    <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-600">{t("orders.noOrders")}</p>
-                    <p className="text-sm text-gray-500 mt-1">{t("orders.noOrdersForDate")}</p>
-                </div>
+                <EmptyState title={t("orders.noOrders")} body={t("orders.noOrdersForDate")} />
             ) : (
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -139,11 +139,7 @@ export function StoreOrders({ date }: { date: string }) {
                                                 String((totals?.orders ?? list.length) - i),
                                             )}
                                         </p>
-                                        {order.paymentMethod === "qris" && (
-                                            <span className="bg-blue-600 text-white px-2.5 py-0.5 rounded-full text-xs font-bold">
-                                                QRIS
-                                            </span>
-                                        )}
+                                        {order.paymentMethod === "qris" && <Badge>QRIS</Badge>}
                                     </div>
                                     <span className="text-sm text-gray-500">
                                         {formatTime(order.at, locale)}
@@ -253,7 +249,7 @@ function Figure({
 export function OrdersChart({ date }: { date: string }) {
     const t = useT();
     const navigate = useNavigate();
-    const slug = useTenant()?.tenant.slug ?? "";
+    const slug = useSlug();
     const storeId = useStoreId();
     const { data } = useSalesHours(date);
     return (

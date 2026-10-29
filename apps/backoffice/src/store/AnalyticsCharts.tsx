@@ -1,7 +1,7 @@
 import { formatDate, formatMoney } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { useTenant } from "@tea-pos/shell/tenant";
+import { useSlug } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { BarChart } from "@tea-pos/ui/BarChart";
 import { useNavigate } from "@tanstack/react-router";
@@ -10,6 +10,7 @@ import type { ReactNode } from "react";
 
 import { MonthPicker } from "./AnalyticsMonth";
 import { monthRange, useSalesDays, useSalesProducts, useStoreId, useTeaWaste } from "./sales";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
 // Tea waste, as the old app judged it: up to 12 L a day is fine, and a litre costs Rp 1.000.
 const TARGET_LITRES = 12;
@@ -30,7 +31,7 @@ const WEEK = [
 
 /** The old seller app's charts page for the picked stores: daily sales, tea waste, day of week, products. */
 export function AnalyticsCharts({ month }: { month: string }) {
-    const slug = useTenant()?.tenant.slug ?? "";
+    const slug = useSlug();
     const storeId = useStoreId();
     const navigate = useNavigate();
     const [from, to] = monthRange(month);
@@ -106,7 +107,7 @@ function Breakdown({
 }) {
     return (
         <div className="mt-4 rounded-xl bg-slate-50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{title}</p>
+            <SectionLabel inset={false}>{title}</SectionLabel>
             <dl className="mt-2 space-y-1.5 text-sm">
                 {rows.map((r) => (
                     <div

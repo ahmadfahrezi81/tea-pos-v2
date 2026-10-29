@@ -1,5 +1,6 @@
 import { Pencil } from "lucide-react";
 import { useState } from "react";
+import { ICON } from "../lib/icon";
 
 const show = (v: number | null, raw: boolean) =>
     v === null ? "" : raw ? String(v) : v.toLocaleString("id-ID");
@@ -63,7 +64,7 @@ export function NumberInput({
             </div>
             {text !== "" && (
                 <Pencil
-                    size={20}
+                    size={ICON}
                     strokeWidth={2.5}
                     className="text-gray-400 shrink-0 group-focus-within:hidden"
                 />

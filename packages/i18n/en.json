@@ -88,10 +88,7 @@
         "searchBank": "Search bank...",
         "accountHolderPlaceholder": "As printed on the account",
         "title": "Account",
-        "signOut": "Sign out",
-        "signOutEverywhere": "Sign out on every phone",
-        "signingOut": "Signing out…",
-        "app": "App"
+        "signingOut": "Signing out…"
     },
     "more": {
         "workDays": "Work Days",
@@ -106,9 +103,7 @@
         "locationFeedback": "Location Feedback",
         "patchNotes": "Patch Notes",
         "noStores": "No stores assigned yet.",
-        "default": "Default",
-        "account": "Account",
-        "whatsNew": "What's new"
+        "default": "Default"
     },
     "whatsNew": {
         "title": "What's New",
@@ -160,7 +155,6 @@
         "account": "Account",
         "add": "Add",
         "edit": "Edit",
-        "settings": "Settings",
         "moreActions": "More actions",
         "refreshNow": "Refresh Now",
         "refreshing": "Refreshing...",
@@ -209,13 +203,13 @@
         }
     },
     "status": {
-        "title": "Status",
+        "title": "App info",
         "api": "API",
-        "version": "Version",
         "commit": "Commit",
         "app": "App",
         "ok": "Connected",
-        "down": "Unreachable"
+        "down": "Unreachable",
+        "version": "Version"
     },
     "errors": {
         "account_inactive": "This account isn't active. Ask the owner.",
@@ -266,8 +260,6 @@
     },
     "store": {
         "title": "Store",
-        "openCount": "{open} of {all} open",
-        "today": "today",
         "open": "Open",
         "closed": "Closed",
         "openSince": "Open since {time}",
@@ -276,7 +268,7 @@
         "closedAt": "Closed {when}",
         "notOpened": "Not opened yet",
         "demo": "Demo",
-        "inactive": "Inactive",
+        "inactive": "Shut down",
         "todayLabel": "Today",
         "byHour": "by hour",
         "noSalesToday": "No sales yet today",
@@ -286,6 +278,19 @@
         "sales": "Total Sales",
         "cups": "Cups",
         "orders": "Orders",
-        "cupsUnit": "cups"
+        "cupsUnit": "cups",
+        "noStores": "No stores yet",
+        "rightNow": "Right now",
+        "cupsByHour": "Cups by hour",
+        "search": "Search stores...",
+        "filter": "Filter",
+        "type": "Type",
+        "real": "Real stores",
+        "demoStores": "Demo stores",
+        "shutDown": "Shut down stores",
+        "allTypes": "All stores",
+        "openOnly": "Open only",
+        "noMatch": "No stores match",
+        "noMatchBody": "Try another name or clear the filter."
     }
 }

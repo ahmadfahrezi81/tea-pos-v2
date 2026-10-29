@@ -1,130 +1,168 @@
 import { formatRelative } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { avatar } from "@tea-pos/shell/avatar";
-import { useTenant } from "@tea-pos/shell/tenant";
-import { Link } from "@tanstack/react-router";
-import { ChevronRight, UserCircle } from "lucide-react";
+import { Avatar } from "@tea-pos/ui/Avatar";
+import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
+import { FilterButton } from "@tea-pos/ui/FilterButton";
+import { Badge } from "@tea-pos/ui/Badge";
+import { SearchBox } from "@tea-pos/ui/SearchBox";
+import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
+import { useSearchParam, useSearchText, useSetSearch } from "@tea-pos/shell/searchParam";
+import { useSlug } from "@tea-pos/shell/tenant";
+import { useNavigate } from "@tanstack/react-router";
+import { CircleHelp } from "lucide-react";
+import { useState } from "react";
 
+import {
+    isFiltered,
+    matches,
+    NO_FILTER,
+    PeopleFilterSheet,
+    type PeopleFilter,
+} from "./PeopleFilter";
 import { useUac, type Person } from "./uac";
+import { EmptyState } from "@tea-pos/ui/EmptyState";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
-/** UAC's home: requests waiting on top, then everyone, with what each can reach. */
+/**
+ * UAC's home, as the old Staff Payroll Info list: requests waiting on top, then everyone A to Z,
+ * searchable and filtered by app and level; each row says what the person reaches in each app;
+ * How access works at the bottom.
+ */
 export function UacHome() {
     const t = useT();
     const locale = useLocale();
-    const slug = useTenant()?.tenant.slug ?? "";
+    const navigate = useNavigate();
+    const slug = useSlug();
     const { data } = useUac();
-    if (!data)
-        return (
-            <div className="space-y-3">
-                <div className="h-40 rounded-2xl bg-white" />
-            </div>
-        );
+    const [search, setSearch] = useSearchText();
+    const [seller] = useSearchParam("seller");
+    const [office] = useSearchParam("office");
+    const [inactive] = useSearchParam("inactive");
+    const setSearchParams = useSetSearch();
+    // In the address '' is "any"; no access is spelt `none`.
+    const level = (v: string, any: string) => (v === "none" ? "" : v || any);
+    const filter: PeopleFilter = {
+        seller: level(seller, NO_FILTER.seller) as PeopleFilter["seller"],
+        backoffice: level(office, NO_FILTER.backoffice) as PeopleFilter["backoffice"],
+        inactive: inactive !== "0",
+    };
+    const setFilter = (f: PeopleFilter) =>
+        setSearchParams({
+            seller: f.seller === "any" ? "" : f.seller || "none",
+            office: f.backoffice === "any" ? "" : f.backoffice || "none",
+            inactive: f.inactive ? "" : "0",
+        });
+    const [filtering, setFiltering] = useState(false);
+    const q = search.trim().toLowerCase();
+    const people = (data?.people ?? [])
+        .filter((p) => matches(filter, p) && (!q || p.name.toLowerCase().includes(q)))
+        .sort((a, b) => a.name.localeCompare(b.name, locale));
     return (
-        <div className="space-y-4">
-            {data.requests.length > 0 && (
+        <div className="space-y-3">
+            {data && data.requests.length > 0 && (
                 <section className="space-y-2">
-                    <p className="px-1 text-sm font-semibold text-gray-500">
+                    <SectionLabel>
                         {t("uac.waiting")} ({data.requests.length})
-                    </p>
-                    <div className="overflow-hidden rounded-2xl bg-white">
-                        {data.requests.map((r, i) => (
-                            <Link
+                    </SectionLabel>
+                    <ListCard>
+                        {data.requests.map((r) => (
+                            <ListRow
                                 key={r.id}
-                                to="/$tenant/uac/requests/$id"
-                                params={{ tenant: slug, id: r.id }}
-                                className="block active:bg-gray-50"
-                            >
-                                <Row
-                                    name={r.name}
-                                    avatarUrl={r.avatarUrl}
-                                    line={t("uac.askedAt").replace(
-                                        "{when}",
-                                        formatRelative(r.at, locale),
-                                    )}
-                                    last={i === data.requests.length - 1}
-                                    arrow
-                                />
-                            </Link>
+                                onClick={() =>
+                                    void navigate({
+                                        to: "/$tenant/uac/requests/$id",
+                                        params: { tenant: slug, id: r.id },
+                                    })
+                                }
+                                leading={<Avatar url={r.avatarUrl} square />}
+                                title={r.name}
+                                subtitle={t("uac.askedAt").replace(
+                                    "{when}",
+                                    formatRelative(r.at, locale),
+                                )}
+                            />
                         ))}
-                    </div>
+                    </ListCard>
                 </section>
             )}
-            <section className="space-y-2">
-                <p className="px-1 text-sm font-semibold text-gray-500">
-                    {t("uac.people")} ({data.people.length})
-                </p>
-                <div className="overflow-hidden rounded-2xl bg-white">
-                    {data.people.length === 0 && (
-                        <p className="p-6 text-center text-gray-400">{t("uac.noPeople")}</p>
-                    )}
-                    {data.people.map((p, i) => (
-                        <Link
-                            key={p.id}
-                            to="/$tenant/uac/$userId"
-                            params={{ tenant: slug, userId: p.id }}
-                            className="block active:bg-gray-50"
-                        >
-                            <Row
-                                name={p.name}
-                                avatarUrl={p.avatarUrl}
-                                line={summary(p, t)}
-                                last={i === data.people.length - 1}
-                                arrow
-                            />
-                        </Link>
-                    ))}
+            <div className="flex gap-2">
+                <div className="flex-1 min-w-0">
+                    <SearchBox
+                        value={search}
+                        onChange={setSearch}
+                        placeholder={t("uac.search")}
+                        clearLabel={t("common.close")}
+                    />
                 </div>
-            </section>
+                <FilterButton
+                    active={isFiltered(filter)}
+                    label={t("uac.filter")}
+                    onClick={() => setFiltering(true)}
+                />
+            </div>
+            {data && people.length === 0 ? (
+                q || isFiltered(filter) ? (
+                    <EmptyState title={t("uac.noMatch")} body={t("uac.noMatchBody")} />
+                ) : (
+                    <EmptyState title={t("uac.noPeople")} />
+                )
+            ) : (
+                <ListCard>
+                    {!data
+                        ? [1, 2, 3].map((i) => <ListRowSkeleton key={i} withLeading />)
+                        : people.map((p) => (
+                              <ListRow
+                                  key={p.id}
+                                  onClick={() =>
+                                      void navigate({
+                                          to: "/$tenant/uac/$userId",
+                                          params: { tenant: slug, userId: p.id },
+                                      })
+                                  }
+                                  leading={<Avatar url={p.avatarUrl} square />}
+                                  title={p.name}
+                                  subtitle={<Badges person={p} />}
+                              />
+                          ))}
+                </ListCard>
+            )}
+            <SettingsGroup>
+                <SettingsRow
+                    to={`/${slug}/uac/help`}
+                    icon={<CircleHelp {...rowIcon} />}
+                    label={t("uac.helpTitle")}
+                />
+            </SettingsGroup>
+            <PeopleFilterSheet
+                open={filtering}
+                value={filter}
+                onChange={setFilter}
+                onClose={() => setFiltering(false)}
+            />
         </div>
     );
 }
 
-/** `Seller · Admin`, `Owner`, `Inactive`: the apps someone reaches, in a few words. */
-function summary(p: Person, t: (k: MessageKey) => string): string {
-    if (!p.active) return t("uac.inactive");
-    if (p.owner) return t("uac.owner");
-    const parts = [];
-    if (p.access.seller) parts.push(t("uac.seller"));
-    if (p.access.backoffice)
-        parts.push(
-            `${t("uac.backoffice")} ${t(`uac.${p.access.backoffice}` as MessageKey).toLowerCase()}`,
-        );
-    return parts.length > 0 ? parts.join(" · ") : t("uac.noAccess");
-}
-
-function Row({
-    name,
-    avatarUrl,
-    line,
-    last,
-    arrow,
-}: {
-    name: string;
-    avatarUrl?: string;
-    line: string;
-    last: boolean;
-    arrow?: boolean;
-}) {
+/** What someone reaches, one badge per app with its level: `Seller · Member`, `Office · Admin`. */
+function Badges({ person: p }: { person: Person }) {
+    const t = useT();
+    const level = (l: string) => t(`uac.${l}` as MessageKey);
+    if (!p.active) return <Badge>{t("uac.inactive")}</Badge>;
+    if (p.owner) return <Badge>{t("uac.owner")}</Badge>;
+    if (!p.access.seller && !p.access.backoffice) return <Badge>{t("uac.noAccess")}</Badge>;
     return (
-        <div className={`flex items-center gap-3 p-3 ${last ? "" : "border-b border-gray-100"}`}>
-            {avatarUrl ? (
-                <img
-                    src={avatar(avatarUrl)}
-                    alt=""
-                    width={36}
-                    height={36}
-                    referrerPolicy="no-referrer"
-                    className="size-9 shrink-0 rounded-full object-cover"
-                />
-            ) : (
-                <UserCircle size={36} className="shrink-0 text-gray-400" />
+        <span className="flex flex-wrap gap-1.5 pt-1">
+            {p.access.seller && (
+                <Badge>
+                    {t("uac.seller")} · {level(p.access.seller)}
+                </Badge>
             )}
-            <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold text-gray-900">{name}</p>
-                <p className="truncate text-xs text-gray-500">{line}</p>
-            </div>
-            {arrow && <ChevronRight size={20} className="shrink-0 text-gray-400" />}
-        </div>
+            {p.access.backoffice && (
+                <Badge>
+                    {t("uac.office")} · {level(p.access.backoffice)}
+                </Badge>
+            )}
+        </span>
     );
 }

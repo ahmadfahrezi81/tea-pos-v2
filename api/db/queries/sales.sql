@@ -26,6 +26,7 @@ ORDER BY s.date;
 -- and today's (day_start to day_end, UTC as the old tables hold it) orders, cups and sales.
 SELECT s.id, s.name, s.status,
     ss.started_at AS open_since,
+    ss.user_id AS seller_id,
     COALESCE(u.full_name, '')::text AS seller_name,
     COALESCE(u.avatar_url, '')::text AS seller_avatar,
     (SELECT max(d.closed_at) FROM store_daily_summaries d WHERE d.store_id = s.id)::timestamp AS last_closed,
@@ -48,3 +49,17 @@ LEFT JOIN LATERAL (
 ) c ON true
 WHERE s.tenant_id = @tenant_id
 ORDER BY ss.started_at IS NULL, s.name;
+
+-- name: StoresLiveSellers :many
+-- Who sold at each store today (day_start to day_end) and their cups, the most first.
+SELECT o.store_id, o.user_id,
+    COALESCE(u.full_name, '')::text AS name,
+    COALESCE(u.avatar_url, '')::text AS avatar_url,
+    COALESCE(sum(i.quantity), 0)::bigint AS cups
+FROM store_orders o
+JOIN stores s ON s.id = o.store_id
+LEFT JOIN store_order_items i ON i.order_id = o.id
+LEFT JOIN users u ON u.id = o.user_id
+WHERE s.tenant_id = @tenant_id AND o.created_at >= @day_start AND o.created_at < @day_end
+GROUP BY o.store_id, o.user_id, u.full_name, u.avatar_url
+ORDER BY cups DESC, name;

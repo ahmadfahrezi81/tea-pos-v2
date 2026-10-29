@@ -40,7 +40,7 @@ export function ToastHost() {
             {list.map((t) => (
                 <p
                     key={t.id}
-                    className="max-w-sm rounded-xl bg-gray-900/90 px-4 py-3 text-sm text-white shadow-lg"
+                    className="max-w-sm rounded-xl bg-gray-900/90 px-4 py-3 text-sm text-white shadow-lg animate-rise-in"
                 >
                     {t.text}
                 </p>

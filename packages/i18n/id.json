@@ -88,10 +88,7 @@
         "searchBank": "Cari bank...",
         "accountHolderPlaceholder": "Sesuai yang tertera di rekening",
         "title": "Akun",
-        "signOut": "Keluar",
-        "signOutEverywhere": "Keluar dari semua ponsel",
-        "signingOut": "Sedang keluar…",
-        "app": "Aplikasi"
+        "signingOut": "Sedang keluar…"
     },
     "more": {
         "workDays": "Hari Kerja",
@@ -106,9 +103,7 @@
         "locationFeedback": "Feedback Lokasi",
         "patchNotes": "Catatan Rilis",
         "noStores": "Belum ada toko yang ditugaskan.",
-        "default": "Utama",
-        "account": "Akun",
-        "whatsNew": "Yang baru"
+        "default": "Utama"
     },
     "whatsNew": {
         "title": "Yang Baru",
@@ -160,7 +155,6 @@
         "account": "Akun",
         "add": "Tambah",
         "edit": "Ubah",
-        "settings": "Pengaturan",
         "moreActions": "Aksi lainnya",
         "refreshNow": "Muat Ulang Sekarang",
         "refreshing": "Memuat ulang...",
@@ -209,13 +203,13 @@
         }
     },
     "status": {
-        "title": "Status",
+        "title": "Info aplikasi",
         "api": "API",
-        "version": "Versi",
         "commit": "Commit",
         "app": "Aplikasi",
         "ok": "Terhubung",
-        "down": "Tidak terjangkau"
+        "down": "Tidak terjangkau",
+        "version": "Versi"
     },
     "errors": {
         "account_inactive": "Akun ini tidak aktif. Hubungi pemilik.",
@@ -266,8 +260,6 @@
     },
     "store": {
         "title": "Toko",
-        "openCount": "{open} dari {all} buka",
-        "today": "hari ini",
         "open": "Buka",
         "closed": "Tutup",
         "openSince": "Buka sejak {time}",
@@ -276,7 +268,7 @@
         "closedAt": "Tutup {when}",
         "notOpened": "Belum pernah buka",
         "demo": "Demo",
-        "inactive": "Nonaktif",
+        "inactive": "Berhenti",
         "todayLabel": "Hari ini",
         "byHour": "per jam",
         "noSalesToday": "Belum ada penjualan hari ini",
@@ -286,6 +278,19 @@
         "sales": "Total Penjualan",
         "cups": "Cups",
         "orders": "Pesanan",
-        "cupsUnit": "Cups"
+        "cupsUnit": "Cups",
+        "noStores": "Belum ada toko",
+        "rightNow": "Saat ini",
+        "cupsByHour": "Gelas per jam",
+        "search": "Cari toko...",
+        "filter": "Saring",
+        "type": "Jenis",
+        "real": "Toko asli",
+        "demoStores": "Toko demo",
+        "shutDown": "Toko berhenti",
+        "allTypes": "Semua toko",
+        "openOnly": "Hanya yang buka",
+        "noMatch": "Tidak ada toko yang cocok",
+        "noMatchBody": "Coba nama lain atau hapus saringan."
     }
 }

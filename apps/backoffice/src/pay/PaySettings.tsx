@@ -1,8 +1,7 @@
 import { useT } from "@tea-pos/i18n/react";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { CalendarClock, Coins, IdCard, Percent, ReceiptText } from "lucide-react";
-
-import { useSlug } from "./pay";
+import { useSlug } from "@tea-pos/shell/tenant";
 
 /** ⚙ Pay settings: the setup, in three short groups, out of the Pay home's way. */
 export function PaySettings() {

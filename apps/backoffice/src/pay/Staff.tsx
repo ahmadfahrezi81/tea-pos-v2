@@ -2,66 +2,36 @@ import type { components } from "@tea-pos/api-client";
 import { formatMoney } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useT } from "@tea-pos/i18n/react";
-import { avatar } from "@tea-pos/shell/avatar";
+import { Avatar } from "@tea-pos/ui/Avatar";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
-import { useAccess } from "@tea-pos/shell/tenant";
+import { useAccess, useSlug } from "@tea-pos/shell/tenant";
 import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
+import { SearchBox as UiSearchBox } from "@tea-pos/ui/SearchBox";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { Check, Pencil, Search, UserCircle, X } from "lucide-react";
+import { Check, Pencil } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import { useCommissionTypes, usePayStaff, usePayWrite, useSlug, writes } from "./pay";
+import { useCommissionTypes, usePayStaff, usePayWrite, writes } from "./pay";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { ICON } from "@tea-pos/ui/icon";
+import { Badge } from "@tea-pos/ui/Badge";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
 type Staff = components["schemas"]["PayStaff"];
 
 // Only the account states worth interrupting for; active is every row's assumption.
-const STATUS_TAG: Record<string, string> = {
-    suspended: "bg-red-100 text-red-600",
-    inactive: "bg-gray-100 text-gray-500",
-    pending: "bg-amber-100 text-amber-700",
-};
-
-export function Avatar({ url, size = 36 }: { url?: string; size?: 36 | 56 }) {
-    const box = size === 56 ? "size-14 rounded-2xl" : "size-9 rounded-xl";
-    return url ? (
-        <img
-            src={avatar(url)}
-            alt=""
-            width={size}
-            height={size}
-            referrerPolicy="no-referrer"
-            className={`${box} object-cover shrink-0`}
-        />
-    ) : (
-        <span className={`${box} bg-brand/10 flex items-center justify-center shrink-0`}>
-            <UserCircle size={size === 56 ? 32 : 20} className="text-brand" />
-        </span>
-    );
-}
+const FLAGGED = new Set(["suspended", "inactive", "pending"]);
 
 /** The search box above a staff list, as the old app's. */
 export function SearchBox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
     const t = useT();
     return (
-        <div className="flex items-center gap-2 bg-white rounded-xl px-3 py-2.5">
-            <Search size={16} className="text-gray-400 shrink-0" />
-            <input
-                type="text"
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                placeholder={t("pay.searchStaff")}
-                className="flex-1 text-base text-gray-800 placeholder:text-gray-400 bg-transparent outline-none"
-            />
-            {value && (
-                <button
-                    onClick={() => onChange("")}
-                    className="text-gray-400 active:text-gray-600 shrink-0"
-                    aria-label={t("common.close")}
-                >
-                    <X size={16} />
-                </button>
-            )}
-        </div>
+        <UiSearchBox
+            value={value}
+            onChange={onChange}
+            placeholder={t("pay.searchStaff")}
+            clearLabel={t("common.close")}
+        />
     );
 }
 
@@ -90,7 +60,7 @@ function StaffList({
                 {!data ? (
                     [1, 2, 3].map((i) => <ListRowSkeleton key={i} withLeading />)
                 ) : shown.length === 0 ? (
-                    <p className="py-4 text-sm text-gray-400">
+                    <p className="py-4 text-sm text-gray-900">
                         {t(search ? "pay.noStaffMatch" : "pay.noStaff")}
                     </p>
                 ) : (
@@ -98,7 +68,7 @@ function StaffList({
                         <ListRow
                             key={s.id}
                             onClick={() => void navigate({ to: to(s.id) })}
-                            leading={<Avatar url={s.avatarUrl} />}
+                            leading={<Avatar url={s.avatarUrl} square />}
                             title={
                                 <span className="flex items-center gap-1.5 min-w-0">
                                     <span className="truncate">{s.name}</span>
@@ -122,13 +92,7 @@ export function StaffInfoList() {
         <StaffList
             to={(id) => `/${slug}/pay/settings/staff/${id}`}
             tag={(s) =>
-                STATUS_TAG[s.status] && (
-                    <span
-                        className={`shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase ${STATUS_TAG[s.status]}`}
-                    >
-                        {t(`pay.status.${s.status}` as MessageKey)}
-                    </span>
-                )
+                FLAGGED.has(s.status) && <Badge>{t(`pay.status.${s.status}` as MessageKey)}</Badge>
             }
             subtitle={(s) => (
                 <>
@@ -147,17 +111,17 @@ export function StaffInfoList() {
 function Person({ s }: { s: Staff }) {
     return (
         <div className="bg-white rounded-xl p-4 flex items-center gap-4">
-            <Avatar url={s.avatarUrl} size={56} />
+            <Avatar url={s.avatarUrl} size={56} square />
             <div className="flex-1 min-w-0 space-y-0.5">
                 <p className="text-lg font-semibold text-gray-900 truncate">{s.name}</p>
-                <p className="text-sm text-gray-400 truncate">{s.email}</p>
+                <p className="text-sm text-gray-900 truncate">{s.email}</p>
             </div>
         </div>
     );
 }
 
 const Heading = ({ children }: { children: ReactNode }) => (
-    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide px-1">{children}</p>
+    <SectionLabel inset={false}>{children}</SectionLabel>
 );
 
 function useStaffMember(id: string) {
@@ -170,14 +134,14 @@ export function StaffInfo({ id }: { id: string }) {
     const t = useT();
     const slug = useSlug();
     const { loaded, staff } = useStaffMember(id);
-    if (!loaded) return <div className="h-40 bg-white rounded-xl" />;
-    if (!staff) return <p className="p-4 text-sm text-gray-400">{t("pay.staffNotFound")}</p>;
+    if (!loaded) return <Skeleton className="h-40 rounded-xl" />;
+    if (!staff) return <p className="p-4 text-sm text-gray-900">{t("pay.staffNotFound")}</p>;
     const type = staff.commissionType;
     const bank = staff.bank;
     const line = (label: string, value: string | undefined, mono = false, last = false) =>
         value && (
             <div className={`py-3.5 ${last ? "" : "border-b border-gray-100"}`}>
-                <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+                <p className="text-xs text-gray-900 mb-0.5">{label}</p>
                 <p className={`text-base font-medium text-gray-900 ${mono ? "font-mono" : ""}`}>
                     {value}
                 </p>
@@ -193,7 +157,7 @@ export function StaffInfo({ id }: { id: string }) {
                         <p className="text-base font-medium text-gray-900 truncate">
                             {type ? type.name : t("pay.none")}
                         </p>
-                        <p className="text-sm text-gray-400 font-mono">
+                        <p className="text-sm text-gray-900 font-mono">
                             {type
                                 ? t("pay.perCup").replace("{rate}", formatMoney(type.ratePerCup))
                                 : t("pay.noCommission")}
@@ -219,7 +183,7 @@ export function StaffInfo({ id }: { id: string }) {
                             {line(t("pay.accountHolder"), bank.accountHolder, false, true)}
                         </>
                     ) : (
-                        <p className="py-4 text-sm text-gray-400">{t("pay.noBank")}</p>
+                        <p className="py-4 text-sm text-gray-900">{t("pay.noBank")}</p>
                     )}
                 </div>
             </div>
@@ -238,7 +202,7 @@ export function StaffCommissionList() {
                 s.commissionType ? (
                     s.commissionType.name
                 ) : (
-                    <span className="text-gray-300">{t("pay.noCommission")}</span>
+                    <span className="text-gray-900">{t("pay.noCommission")}</span>
                 )
             }
         />
@@ -255,8 +219,8 @@ export function StaffCommission({ id }: { id: string }) {
     const [picked, setPicked] = useState<string | null | undefined>(undefined);
     const save = usePayWrite(writes.setStaffCommission);
     const { canWrite } = useAccess();
-    if (!loaded || !types) return <div className="h-40 bg-white rounded-xl" />;
-    if (!staff) return <p className="p-4 text-sm text-gray-400">{t("pay.staffNotFound")}</p>;
+    if (!loaded || !types) return <Skeleton className="h-40 rounded-xl" />;
+    if (!staff) return <p className="p-4 text-sm text-gray-900">{t("pay.staffNotFound")}</p>;
     const selected = picked !== undefined ? picked : (staff.commissionType?.id ?? null);
     const option = (key: string | null, title: string, sub: string, mono = false) => (
         <button
@@ -266,9 +230,9 @@ export function StaffCommission({ id }: { id: string }) {
         >
             <div className="text-left">
                 <p className="text-base font-medium text-gray-900">{title}</p>
-                <p className={`text-sm text-gray-400 ${mono ? "font-mono" : ""}`}>{sub}</p>
+                <p className={`text-sm text-gray-900 ${mono ? "font-mono" : ""}`}>{sub}</p>
             </div>
-            {selected === key && <Check size={20} className="text-brand shrink-0" />}
+            {selected === key && <Check size={ICON} className="text-brand shrink-0" />}
         </button>
     );
     const enabled = types.types.filter((ty) => ty.enabled);
@@ -279,7 +243,7 @@ export function StaffCommission({ id }: { id: string }) {
                 <Heading>{t("pay.commissionType")}</Heading>
                 {option(null, t("pay.none"), t("pay.noCommission"))}
                 {enabled.length === 0 ? (
-                    <p className="text-sm text-gray-400 px-1">{t("pay.noCommissionTypes")}</p>
+                    <p className="text-sm text-gray-900 px-1">{t("pay.noCommissionTypes")}</p>
                 ) : (
                     enabled.map((ty) =>
                         option(

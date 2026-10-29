@@ -1,10 +1,19 @@
 import { $api, api } from "@tea-pos/api-client";
 import { STALE } from "@tea-pos/api-client/query";
 import { useApiMutation } from "@tea-pos/shell/useApiMutation";
-import { useTenant } from "@tea-pos/shell/tenant";
+import { useSlug } from "@tea-pos/shell/tenant";
 import { useQueryClient } from "@tanstack/react-query";
+import type { SearchSchemaInput } from "@tanstack/react-router";
+import { formatCalendarDay } from "@tea-pos/format";
+import type { Locale } from "@tea-pos/i18n";
 
-export const useSlug = () => useTenant()?.tenant.slug ?? "";
+/** Pay's `?period=2026-10-27` (a period's first day); absent means the current one. */
+export function periodSearch(search: { period?: unknown } & SearchSchemaInput): {
+    period?: string;
+} {
+    const ok = typeof search.period === "string" && /^\d{4}-\d{2}-\d{2}$/.test(search.period);
+    return ok ? { period: search.period as string } : {};
+}
 
 const path = (tenant: string) => ({ params: { path: { tenant } } });
 
@@ -174,15 +183,7 @@ export const writes = {
 };
 
 /** `Mon, 26 Oct 2026`, as the old Pay screens write a pay date. */
-export function payDate(date: string, locale: string): string {
-    return new Intl.DateTimeFormat(locale === "id" ? "id-ID" : "en-GB", {
-        weekday: "short",
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-        timeZone: "UTC",
-    }).format(new Date(`${date}T00:00:00Z`));
-}
+export const payDate = (date: string, locale: Locale) => formatCalendarDay(date, locale, "full");
 
 export function usePayslip(id: string) {
     const tenant = useSlug();

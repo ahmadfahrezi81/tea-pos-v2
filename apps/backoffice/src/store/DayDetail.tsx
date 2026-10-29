@@ -1,13 +1,15 @@
 import type { components } from "@tea-pos/api-client";
-import { formatDateTime, formatMoney } from "@tea-pos/format";
+import { formatCalendarDay, formatDateTime, formatMoney } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { ImageOff, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 
-import { Sellers } from "./AnalyticsMonth";
+import { Sellers } from "./Sellers";
 import { useDay } from "./sales";
+import { Dialog } from "@tea-pos/ui/Drawer";
+import { Badge } from "@tea-pos/ui/Badge";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
 type Photo = components["schemas"]["DayPhoto"];
 
@@ -19,15 +21,6 @@ const CLOSING = [
     "closing:cups",
     "closing:tea",
 ] as const;
-
-const longDate = (date: string, locale: string) =>
-    new Intl.DateTimeFormat(locale === "id" ? "id-ID" : "en-GB", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        timeZone: "UTC",
-    }).format(new Date(`${date}T00:00:00Z`));
 
 /** One store's day, as the old seller app's Details: cash, expenses, who worked, notes, photos, products. */
 export function DayDetail({ id }: { id: string }) {
@@ -61,19 +54,15 @@ export function DayDetail({ id }: { id: string }) {
     );
 
     return (
-        <div className="space-y-4 pb-8">
+        <div className="space-y-4">
             <div className="bg-white rounded-2xl p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                     <h3 className="font-bold text-xl text-gray-800 leading-tight">
-                        {longDate(day.date, locale)}
+                        {formatCalendarDay(day.date, locale, "long")}
                     </h3>
-                    <span
-                        className={`shrink-0 px-2 py-0.5 rounded-full text-sm font-medium ${
-                            day.closedAt ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"
-                        }`}
-                    >
+                    <Badge>
                         {t(day.closedAt ? "analytics.statusClosed" : "analytics.statusOpen")}
-                    </span>
+                    </Badge>
                 </div>
                 <div className="text-sm space-y-1.5">
                     {row(t("daily.store"), day.storeName)}
@@ -257,7 +246,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 function PhotoGroup({ title, children }: { title: string; children: ReactNode }) {
     return (
         <div className="space-y-1.5 pb-2">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{title}</p>
+            <SectionLabel inset={false}>{title}</SectionLabel>
             <div className="grid grid-cols-2 gap-2">{children}</div>
         </div>
     );
@@ -293,26 +282,20 @@ export function PhotoTile({ photo, label }: { photo: Photo; label: string }) {
                     </p>
                 )}
             </div>
-            {open &&
-                createPortal(
-                    <div
-                        className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
-                        onClick={() => setOpen(false)}
-                    >
-                        <img
-                            src={photo.url}
-                            alt={label}
-                            className="max-h-full max-w-full object-contain"
-                        />
-                        <button
-                            className="absolute top-4 right-4 p-2 text-white"
-                            aria-label={label}
-                        >
-                            <X size={28} />
-                        </button>
-                    </div>,
-                    document.body,
-                )}
+            <Dialog open={open} onClose={() => setOpen(false)} dim="bg-black/90" label={label}>
+                <img
+                    src={photo.url}
+                    alt={label}
+                    className="max-h-[90dvh] max-w-full object-contain"
+                />
+                <button
+                    onClick={() => setOpen(false)}
+                    className="fixed top-4 right-4 p-2 text-white"
+                    aria-label={label}
+                >
+                    <X size={28} />
+                </button>
+            </Dialog>
         </div>
     );
 }
