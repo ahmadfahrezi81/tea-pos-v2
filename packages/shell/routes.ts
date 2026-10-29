@@ -15,6 +15,8 @@ export type ShellRoute = {
     footerCtaKey?: MessageKey;
     /** Overrides the scroll region's bottom padding. */
     scrollPaddingBottom?: string;
+    /** An X instead of back: a page you close (Account), as the old apps. */
+    close?: boolean;
     /** Pull down at the top to refetch. Opt-in: a refetch can reset a form seeded from fetched data. */
     refreshable?: boolean;
 };

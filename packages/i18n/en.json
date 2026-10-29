@@ -88,10 +88,8 @@
         "searchBank": "Search bank...",
         "accountHolderPlaceholder": "As printed on the account",
         "title": "Account",
-        "signOut": "Sign out",
         "signOutEverywhere": "Sign out on every phone",
-        "signingOut": "Signing out…",
-        "app": "App"
+        "signingOut": "Signing out…"
     },
     "more": {
         "workDays": "Work Days",
@@ -106,9 +104,7 @@
         "locationFeedback": "Location Feedback",
         "patchNotes": "Patch Notes",
         "noStores": "No stores assigned yet.",
-        "default": "Default",
-        "account": "Account",
-        "whatsNew": "What's new"
+        "default": "Default"
     },
     "whatsNew": {
         "title": "What's New",
@@ -208,13 +204,7 @@
         }
     },
     "status": {
-        "title": "Status",
-        "api": "API",
-        "version": "Version",
-        "commit": "Commit",
-        "app": "App",
-        "ok": "Connected",
-        "down": "Unreachable"
+        "version": "Version"
     },
     "errors": {
         "account_inactive": "This account isn't active. Ask the owner.",

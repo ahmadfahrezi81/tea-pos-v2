@@ -1,5 +1,5 @@
 import { useT } from "@tea-pos/i18n/react";
-import { ScrollText, UserRound } from "lucide-react";
+import { ScrollText } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { rowIcon, SettingsGroup, SettingsRow } from "./Settings";
@@ -7,8 +7,8 @@ import { useTenant } from "./tenant";
 import { LATEST, seen } from "./whatsNew";
 
 /**
- * The More tab, as the old apps: General (the app's own rows first, then What's new, the old
- * Patch Notes), and the account.
+ * The More tab, as the old apps: General, the app's own rows first, then Patch Notes (What's new).
+ * Account is the avatar's, not a row here.
  */
 export function MoreScreen({ rows }: { rows?: ReactNode }) {
     const t = useT();
@@ -22,15 +22,8 @@ export function MoreScreen({ rows }: { rows?: ReactNode }) {
                 <SettingsRow
                     to={`/${slug}/whats-new`}
                     icon={<ScrollText {...rowIcon} />}
-                    label={t("more.whatsNew")}
+                    label={t("more.patchNotes")}
                     dot={unseen}
-                />
-            </SettingsGroup>
-            <SettingsGroup>
-                <SettingsRow
-                    to={`/${slug}/account`}
-                    icon={<UserRound {...rowIcon} />}
-                    label={t("more.account")}
                 />
             </SettingsGroup>
         </div>

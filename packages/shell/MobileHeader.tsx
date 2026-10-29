@@ -1,9 +1,11 @@
 import { useT } from "@tea-pos/i18n/react";
-import { ArrowLeft, UserCircle } from "lucide-react";
+import { ArrowLeft, UserCircle, X } from "lucide-react";
 
 interface MobileHeaderProps {
     title: string;
     isSubPage: boolean;
+    /** An X in place of the back arrow. */
+    close: boolean;
     avatarUrl: string | null;
     showAccountIcon: boolean;
     onBack: () => void;
@@ -21,6 +23,7 @@ interface MobileHeaderProps {
 export function MobileHeader({
     title,
     isSubPage,
+    close,
     avatarUrl,
     showAccountIcon,
     onBack,
@@ -42,9 +45,13 @@ export function MobileHeader({
                     <button
                         onClick={onBack}
                         className="shrink-0 text-gray-900 active:scale-95 py-1"
-                        aria-label={t("common.back")}
+                        aria-label={t(close ? "common.close" : "common.back")}
                     >
-                        <ArrowLeft size={30} strokeWidth={2.5} />
+                        {close ? (
+                            <X size={30} strokeWidth={2.5} />
+                        ) : (
+                            <ArrowLeft size={30} strokeWidth={2.5} />
+                        )}
                     </button>
                     <h1 className="group min-w-0 flex-1 truncate text-2xl font-semibold tracking-tight text-gray-900">
                         {titleText}

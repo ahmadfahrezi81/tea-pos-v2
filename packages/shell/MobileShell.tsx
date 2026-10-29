@@ -381,6 +381,7 @@ export function MobileShell({
                             <MobileHeader
                                 title={title}
                                 isSubPage={currentIsSubPage}
+                                close={route?.close ?? false}
                                 avatarUrl={avatarUrl ?? null}
                                 showAccountIcon={showAccountIcon}
                                 onBack={goBack}

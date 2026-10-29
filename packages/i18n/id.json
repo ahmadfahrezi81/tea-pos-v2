@@ -88,10 +88,8 @@
         "searchBank": "Cari bank...",
         "accountHolderPlaceholder": "Sesuai yang tertera di rekening",
         "title": "Akun",
-        "signOut": "Keluar",
         "signOutEverywhere": "Keluar dari semua ponsel",
-        "signingOut": "Sedang keluar…",
-        "app": "Aplikasi"
+        "signingOut": "Sedang keluar…"
     },
     "more": {
         "workDays": "Hari Kerja",
@@ -106,9 +104,7 @@
         "locationFeedback": "Feedback Lokasi",
         "patchNotes": "Catatan Rilis",
         "noStores": "Belum ada toko yang ditugaskan.",
-        "default": "Utama",
-        "account": "Akun",
-        "whatsNew": "Yang baru"
+        "default": "Utama"
     },
     "whatsNew": {
         "title": "Yang Baru",
@@ -208,13 +204,7 @@
         }
     },
     "status": {
-        "title": "Status",
-        "api": "API",
-        "version": "Versi",
-        "commit": "Commit",
-        "app": "Aplikasi",
-        "ok": "Terhubung",
-        "down": "Tidak terjangkau"
+        "version": "Versi"
     },
     "errors": {
         "account_inactive": "Akun ini tidak aktif. Hubungi pemilik.",
