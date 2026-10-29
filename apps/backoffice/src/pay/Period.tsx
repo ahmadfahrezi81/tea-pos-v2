@@ -14,6 +14,7 @@ import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { ListRow } from "@tea-pos/ui/ListRow";
 import { Badge } from "@tea-pos/ui/Badge";
+import { STEP_ARROW, stepIcon } from "@tea-pos/ui/MonthStepper";
 
 type Person = components["schemas"]["Payout"];
 
@@ -51,7 +52,6 @@ export function PeriodHome({ start }: { start: string }) {
         .map((g) => ({ g, rows: people.filter((x) => group(x) === g) }))
         .filter((x) => x.rows.length > 0);
     const toPay = people.filter((x) => group(x) === "ready").length;
-    const arrow = "size-9 flex items-center justify-center rounded-xl active:bg-slate-100";
 
     return (
         <div className="space-y-4">
@@ -62,10 +62,10 @@ export function PeriodHome({ start }: { start: string }) {
                         params={{ tenant: slug }}
                         search={{ period: p.previous }}
                         replace
-                        className={arrow}
+                        className={STEP_ARROW}
                         aria-label="‹"
                     >
-                        <ChevronLeft size={ICON} />
+                        <ChevronLeft {...stepIcon} />
                     </Link>
                     <div className="text-center">
                         <p className="text-xs font-bold uppercase tracking-widest text-gray-900">
@@ -81,13 +81,13 @@ export function PeriodHome({ start }: { start: string }) {
                             params={{ tenant: slug }}
                             search={{ period: p.next }}
                             replace
-                            className={arrow}
+                            className={STEP_ARROW}
                             aria-label="›"
                         >
-                            <ChevronRight size={ICON} />
+                            <ChevronRight {...stepIcon} />
                         </Link>
                     ) : (
-                        <span className="size-9" />
+                        <span className="size-11 shrink-0" />
                     )}
                 </div>
                 <p className="mt-1 text-center text-sm text-gray-900">
