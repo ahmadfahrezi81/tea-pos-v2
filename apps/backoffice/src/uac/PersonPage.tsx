@@ -6,13 +6,14 @@ import { Callout } from "@tea-pos/ui/Callout";
 import { ChoiceList } from "@tea-pos/ui/ChoiceList";
 import { Switch } from "@tea-pos/ui/form/Switch";
 import { DetailList, DetailRow } from "@tea-pos/ui/DetailList";
-import { ListRow } from "@tea-pos/ui/ListRow";
+import { ListCard, ListRow } from "@tea-pos/ui/ListRow";
+import { Panel, PanelLabel } from "@tea-pos/ui/Panel";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
 import { HeaderActions, HeaderTitle } from "@tea-pos/shell/HeaderActions";
-import { SettingsGroup } from "@tea-pos/shell/Settings";
+import { rowIcon, SettingsGroup } from "@tea-pos/shell/Settings";
 import { useAccess, useTenant } from "@tea-pos/shell/tenant";
 import { useRouter } from "@tanstack/react-router";
-import { Check } from "lucide-react";
+import { Check, LayoutGrid, Store } from "lucide-react";
 import { useState } from "react";
 
 import { storeGroups, useSetPerson, useUacPerson, type Change, type Person } from "./uac";
@@ -61,35 +62,44 @@ export function PersonPage({ userId }: { userId: string }) {
                 </DetailRow>
             </DetailList>
 
-            <SettingsGroup title={t("uac.apps")}>
-                {(["seller", "backoffice"] as const).map((app) => (
-                    <ListRow
-                        key={app}
-                        title={t(`uac.${app}`)}
-                        trailing={
-                            <span
-                                className={`text-base font-semibold ${p.access[app] ? "text-gray-900" : "text-gray-400"}`}
-                            >
-                                {t(`uac.${p.access[app] || "none"}` as MessageKey)}
-                            </span>
-                        }
-                    />
-                ))}
-            </SettingsGroup>
+            <Panel icon={<LayoutGrid {...rowIcon} />} title={t("uac.apps")}>
+                <ListCard>
+                    {(["seller", "backoffice"] as const).map((app) => (
+                        <ListRow
+                            key={app}
+                            title={t(`uac.${app}`)}
+                            trailing={
+                                <span
+                                    className={`text-base font-semibold ${p.access[app] ? "text-gray-900" : "text-gray-400"}`}
+                                >
+                                    {t(`uac.${p.access[app] || "none"}` as MessageKey)}
+                                </span>
+                            }
+                        />
+                    ))}
+                </ListCard>
+            </Panel>
 
-            {theirs.length === 0 ? (
-                <SettingsGroup title={t("uac.stores")}>
-                    <p className="py-4 text-gray-400">{t("uac.noStores")}</p>
-                </SettingsGroup>
-            ) : (
-                storeGroups(theirs).map((g) => (
-                    <SettingsGroup key={g.key} title={`${t(g.key)} (${g.stores.length})`}>
-                        {g.stores.map((s) => (
-                            <ListRow key={s.id} title={s.name} />
-                        ))}
-                    </SettingsGroup>
-                ))
-            )}
+            <Panel icon={<Store {...rowIcon} />} title={t("uac.stores")}>
+                {theirs.length === 0 ? (
+                    <ListCard>
+                        <p className="py-4 text-gray-400">{t("uac.noStores")}</p>
+                    </ListCard>
+                ) : (
+                    storeGroups(theirs).map((g) => (
+                        <div key={g.key} className="space-y-2">
+                            <PanelLabel>
+                                {t(g.key)} ({g.stores.length})
+                            </PanelLabel>
+                            <ListCard>
+                                {g.stores.map((s) => (
+                                    <ListRow key={s.id} title={s.name} />
+                                ))}
+                            </ListCard>
+                        </div>
+                    ))
+                )}
+            </Panel>
         </div>
     );
 }
@@ -178,64 +188,69 @@ export function AccessFields({
     const stores = useTenant()?.tenant.stores ?? [];
     return (
         <>
-            {(["seller", "backoffice"] as const).map((app) => (
-                <section key={app} className="space-y-2">
-                    <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">
-                        {t(app === "seller" ? "uac.seller" : "uac.office")}
-                    </p>
-                    <ChoiceList
-                        value={change.access[app]}
-                        onChange={(level) => set({ access: { ...change.access, [app]: level } })}
-                        choices={[...LEVELS[app]].reverse().map((level) => ({
-                            value: level,
-                            label: t(`uac.${level || "none"}` as MessageKey),
-                            sublabel: t(HINTS[level]!),
-                            disabled,
-                        }))}
-                    />
-                </section>
-            ))}
+            <Panel icon={<LayoutGrid {...rowIcon} />} title={t("uac.apps")}>
+                {(["seller", "backoffice"] as const).map((app) => (
+                    <section key={app} className="space-y-2">
+                        <PanelLabel>{t(app === "seller" ? "uac.seller" : "uac.office")}</PanelLabel>
+                        <ChoiceList
+                            value={change.access[app]}
+                            onChange={(level) =>
+                                set({ access: { ...change.access, [app]: level } })
+                            }
+                            choices={[...LEVELS[app]].reverse().map((level) => ({
+                                value: level,
+                                label: t(`uac.${level || "none"}` as MessageKey),
+                                sublabel: t(HINTS[level]!),
+                                disabled,
+                            }))}
+                        />
+                    </section>
+                ))}
+            </Panel>
 
-            {storeGroups(stores).map((g) => (
-                <section key={g.key} className="space-y-2">
-                    <p className="pl-3 text-xs font-bold uppercase tracking-widest text-gray-700">
-                        {t(g.key)} ({g.stores.filter((s) => change.storeIds.includes(s.id)).length}/
-                        {g.stores.length})
-                    </p>
-                    <div className="bg-white rounded-2xl px-4 py-1">
-                        {g.stores.map((s) => {
-                            const on = change.storeIds.includes(s.id);
-                            return (
-                                <button
-                                    key={s.id}
-                                    disabled={disabled}
-                                    onClick={() =>
-                                        set({
-                                            storeIds: on
-                                                ? change.storeIds.filter((id) => id !== s.id)
-                                                : [...change.storeIds, s.id],
-                                        })
-                                    }
-                                    className="w-full flex items-center justify-between gap-3 py-5 border-b-2 last:border-b-0 border-slate-100 text-left active:bg-gray-50 disabled:opacity-40"
-                                >
-                                    <span className="text-[17px] font-medium text-gray-900">
-                                        {s.name}
-                                    </span>
-                                    <span
-                                        className={`flex size-6 shrink-0 items-center justify-center rounded-md border-2 ${
-                                            on
-                                                ? "border-brand/90 bg-brand/90 text-white"
-                                                : "border-gray-300"
-                                        }`}
+            <Panel icon={<Store {...rowIcon} />} title={t("uac.stores")}>
+                {storeGroups(stores).map((g) => (
+                    <section key={g.key} className="space-y-2">
+                        <PanelLabel>
+                            {t(g.key)} (
+                            {g.stores.filter((s) => change.storeIds.includes(s.id)).length}/
+                            {g.stores.length})
+                        </PanelLabel>
+                        <div className="bg-white rounded-2xl px-4 py-1">
+                            {g.stores.map((s) => {
+                                const on = change.storeIds.includes(s.id);
+                                return (
+                                    <button
+                                        key={s.id}
+                                        disabled={disabled}
+                                        onClick={() =>
+                                            set({
+                                                storeIds: on
+                                                    ? change.storeIds.filter((id) => id !== s.id)
+                                                    : [...change.storeIds, s.id],
+                                            })
+                                        }
+                                        className="w-full flex items-center justify-between gap-3 py-5 border-b-2 last:border-b-0 border-slate-100 text-left active:bg-gray-50 disabled:opacity-40"
                                     >
-                                        {on && <Check size={16} strokeWidth={4} />}
-                                    </span>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </section>
-            ))}
+                                        <span className="text-[17px] font-medium text-gray-900">
+                                            {s.name}
+                                        </span>
+                                        <span
+                                            className={`flex size-6 shrink-0 items-center justify-center rounded-md border-2 ${
+                                                on
+                                                    ? "border-brand/90 bg-brand/90 text-white"
+                                                    : "border-gray-300"
+                                            }`}
+                                        >
+                                            {on && <Check size={16} strokeWidth={4} />}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </section>
+                ))}
+            </Panel>
         </>
     );
 }

@@ -37,6 +37,7 @@ The owner's test round on staging (RFC: [Backoffice v2 refinement](https://app.n
 16. **Editing a person, clearer:** Status (an Active switch, the note when off), then Seller and Office each as v1's pick-one list with a hint per level, then Stores (a count, roomy rows, the tick on the right). Save sits in the footer always, greyed until something changes, and asks first. Every backoffice write now asks first: Reject and Block on a request gain the confirm sheet (they were the only ones without)
 17. **Bottom gap once, never twice:** the phone's home bar gap comes from one place each: the shell's footer (`pb-[env(safe-area-inset-bottom)]`) for anything in the footer, `Drawer` for every sheet. So `FormFooter`'s bar is `p-4` (was `pb-8` on top of the footer's gap), sheets drop their `pb-8`/`pb-10`, the payslip's Pay bar moves from its own fixed bar into the footer slot (and its page's `pb-32` goes), and pages lose the extra `pb-8`/`pb-24` the scroll area's padding already gives
 18. **Stores split by type, real ones first:** Stores, Demo stores (`fake`), Closed stores (`inactive`), each its own group with a count (`2/5` while editing), on the person's page, their edit and a request (`storeGroups` in `uac/uac.ts`)
+19. **Apps and Stores each in their own block:** `Panel` (`packages/ui`), a tinted rounded block with an icon and a bold heading, holds the groups about one thing; `PanelLabel` heads a card inside it. A person's page and its edit (and a request) show an Apps panel (Seller, Office) and a Stores panel (by type)
 
 ## Done when
 
