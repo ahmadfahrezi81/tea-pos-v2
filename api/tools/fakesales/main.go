@@ -4,7 +4,7 @@
 // seller on shift. It tops each store up to -orders, so running it twice adds nothing.
 // Refuses anything but staging.
 //
-//	cd api && infisical run --env=staging --path=/app -- go run ./tools/fakesales
+//	pnpm --filter @tea-pos/api fake-sales
 package main
 
 import (
