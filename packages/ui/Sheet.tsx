@@ -5,7 +5,8 @@ import { Drawer, DrawerHandle } from "./Drawer";
 
 /**
  * The old apps' bottom sheet: a pull tab, a bold title (and what sits beside it), a close
- * button, the content scrolling below.
+ * button, the content scrolling below. Lists inside (`.sheet`) drop their card padding, so they
+ * line up with the title.
  */
 export function Sheet({
     open,
@@ -36,7 +37,7 @@ export function Sheet({
                     <X size={26} />
                 </button>
             </div>
-            <div className="-mx-4 px-4 max-h-[60vh] overflow-y-auto overflow-x-hidden">
+            <div className="sheet -mx-4 px-4 max-h-[60vh] overflow-y-auto overflow-x-hidden">
                 {children}
             </div>
         </Drawer>

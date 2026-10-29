@@ -18,7 +18,7 @@ export function ChoiceList<T extends string>({
     onChange: (value: T) => void;
 }) {
     return (
-        <div className="bg-white in-[.panel]:bg-slate-100 rounded-2xl in-[.panel]:rounded-xl px-4 py-1">
+        <div className="bg-white in-[.panel]:bg-slate-100 rounded-2xl in-[.panel]:rounded-xl px-4 py-1 in-[.sheet]:p-0">
             {choices.map((c) => {
                 const selected = c.value === value;
                 return (

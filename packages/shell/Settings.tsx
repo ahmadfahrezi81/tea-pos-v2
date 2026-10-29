@@ -63,7 +63,7 @@ export function SettingsGroup({ title, children }: { title?: string; children: R
     return (
         <section className="space-y-2">
             {title && <SectionLabel>{title}</SectionLabel>}
-            <div className="bg-white rounded-2xl px-4 py-1">{children}</div>
+            <div className="bg-white rounded-2xl px-4 py-1 in-[.sheet]:p-0">{children}</div>
         </section>
     );
 }

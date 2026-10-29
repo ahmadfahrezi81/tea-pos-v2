@@ -114,7 +114,7 @@ export function StoreList() {
 
             <Sheet open={filtering} onClose={() => setFiltering(false)} title={t("store.filter")}>
                 <div className="space-y-4">
-                    <div className="-mx-4 space-y-2">
+                    <div className="space-y-2">
                         <SectionLabel>{t("store.type")}</SectionLabel>
                         <ChoiceList
                             value={filter.type}

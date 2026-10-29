@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 export function SectionLabel({ children, inset = true }: { children: ReactNode; inset?: boolean }) {
     return (
         <p
-            className={`text-xs font-bold uppercase tracking-widest text-gray-900 ${inset ? "pl-3" : ""}`}
+            className={`text-xs font-bold uppercase tracking-widest text-gray-900 ${inset ? "pl-3 in-[.sheet]:pl-0" : ""}`}
         >
             {children}
         </p>

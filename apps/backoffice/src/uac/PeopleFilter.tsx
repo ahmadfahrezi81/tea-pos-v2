@@ -70,7 +70,7 @@ export function PeopleFilterSheet({
                         <ChevronLeft {...rowIcon} />
                         {t("uac.filter")}
                     </button>
-                    <div className="-mx-4">
+                    <div>
                         <ChoiceList
                             value={value[app]}
                             onChange={(level) => {
@@ -86,7 +86,7 @@ export function PeopleFilterSheet({
                 </div>
             ) : (
                 <div className="space-y-4">
-                    <div className="-mx-4">
+                    <div>
                         <SettingsGroup>
                             {(["seller", "backoffice"] as const).map((a) => (
                                 <SettingsRow
