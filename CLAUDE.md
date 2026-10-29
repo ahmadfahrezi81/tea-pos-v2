@@ -15,7 +15,7 @@ supabase migration new <name>   # migrations live only here; never name one by h
 
 Go, against the staging database: `cd api && infisical run --env=staging --path=/app -- go run ./cmd/api` (needs `infisical login` once).
 
-Apps, against the staging API: `infisical run --env=staging --path=/app -- pnpm --filter @tea-pos/seller dev` (or `backoffice`); add `API_ORIGIN=http://localhost:8080` to use a local Go instead. Vite proxies `/api` to staging the way the Pages forwarder does, adding `EDGE_SECRET`. `pnpm bundle-size` (after `pnpm build`) checks each app's first screen against its budget in `scripts/bundle-size.mjs`; until v1 retires both budgets are 500 KB, so no step stops to trim; they come back down after the migration. `pnpm bench <url>` runs the RFC's benchmark (20× CPU, Slow 4G, signed in, medians of 3 reopens and 3 first visits); `pnpm bench --sign-in <url>` once per app first.
+Apps, against the staging API: `pnpm seller` or `pnpm backoffice` (each app's `dev` runs Vite inside `infisical run`); `API_ORIGIN=http://localhost:8080 pnpm backoffice` uses a local Go instead. Vite proxies `/api` to staging the way the Pages forwarder does, adding `EDGE_SECRET`. `pnpm bundle-size` (after `pnpm build`) checks each app's first screen against its budget in `scripts/bundle-size.mjs`; until v1 retires both budgets are 500 KB, so no step stops to trim; they come back down after the migration. `pnpm bench <url>` runs the RFC's benchmark (20× CPU, Slow 4G, signed in, medians of 3 reopens and 3 first visits); `pnpm bench --sign-in <url>` once per app first.
 
 Database:
 
