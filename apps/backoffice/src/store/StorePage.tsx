@@ -1,18 +1,15 @@
-import { formatMoney, formatTime, localDate } from "@tea-pos/format";
+import { formatTime, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { useTenant } from "@tea-pos/shell/tenant";
-import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { Avatar } from "@tea-pos/ui/Avatar";
-import { Banknote, ChartNoAxesCombined, ReceiptText, Store } from "lucide-react";
+import { ChartNoAxesCombined, ReceiptText, Store } from "lucide-react";
 
 import { closedLine, OpenBadge } from "./StoreList";
+import { TodayPanel } from "./TodayPanel";
 import { ALL, useSalesHours, useStoreId, useStoresLive } from "./sales";
-import { Skeleton } from "@tea-pos/ui/Skeleton";
-import { Panel, PanelLabel } from "@tea-pos/ui/Panel";
-
-const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
+import { Panel } from "@tea-pos/ui/Panel";
 
 /**
  * One store today (or every store together): who is on, sales so far and by hour, then its
@@ -68,47 +65,7 @@ export function StorePage() {
                 </Panel>
             )}
 
-            <Panel icon={<Banknote {...rowIcon} />} title={t("store.todayLabel")}>
-                {totals ? (
-                    <p className="px-1 text-3xl font-bold text-gray-900">
-                        {formatMoney(totals.sales)}
-                    </p>
-                ) : (
-                    <Skeleton className="h-9 w-44 rounded" />
-                )}
-                <div className="grid grid-cols-2 gap-2">
-                    {(
-                        [
-                            ["store.cups", totals?.cups],
-                            ["store.orders", totals?.orders],
-                        ] as const
-                    ).map(([key, value]) => (
-                        <div key={key} className={tile}>
-                            <p className="text-sm text-gray-900">{t(key)}</p>
-                            <p className="text-xl font-bold text-gray-900">{value ?? "–"}</p>
-                        </div>
-                    ))}
-                </div>
-                {totals &&
-                    (totals.hours.length > 0 ? (
-                        <div className={tile}>
-                            <PanelLabel>{t("store.cupsByHour")}</PanelLabel>
-                            <div className="-mx-2 mt-2">
-                                <AreaChart
-                                    points={totals.hours.map((h) => ({
-                                        key: String(h.hour),
-                                        label: hourLabel(h.hour),
-                                        value: h.cups,
-                                    }))}
-                                    unit={t("store.cupsUnit")}
-                                    height={120}
-                                />
-                            </div>
-                        </div>
-                    ) : (
-                        <p className={`${tile} text-sm text-gray-900`}>{t("store.noSalesToday")}</p>
-                    ))}
-            </Panel>
+            <TodayPanel totals={totals} hours={totals?.hours} />
 
             <SettingsGroup>
                 <SettingsRow

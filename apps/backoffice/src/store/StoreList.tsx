@@ -5,7 +5,7 @@ import { Avatar } from "@tea-pos/ui/Avatar";
 import { useSearchParam, useSearchText, useSetSearch } from "@tea-pos/shell/searchParam";
 import { useTenant } from "@tea-pos/shell/tenant";
 import { Link } from "@tanstack/react-router";
-import { Banknote, ChevronRight, Layers } from "lucide-react";
+import { ChevronRight, Layers } from "lucide-react";
 
 import { ALL, useStoresLive, useTodayHoursFor } from "./sales";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
@@ -14,13 +14,12 @@ import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { Badge } from "@tea-pos/ui/Badge";
 import { Sellers } from "./Sellers";
+import { TodayPanel } from "./TodayPanel";
 import { Sheet } from "@tea-pos/ui/Sheet";
 import { SearchBox } from "@tea-pos/ui/SearchBox";
-import { Panel, PanelLabel } from "@tea-pos/ui/Panel";
 import { Switch } from "@tea-pos/ui/form/Switch";
 import { FilterButton } from "@tea-pos/ui/FilterButton";
 import { ChoiceList } from "@tea-pos/ui/ChoiceList";
-import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { useState } from "react";
 import type { MessageKey } from "@tea-pos/i18n";
 
@@ -70,7 +69,7 @@ export function StoreList() {
 
     return (
         <div className="flex flex-col gap-3">
-            <TodayPanel stores={stores} />
+            <TodayOver stores={stores} />
 
             <div className="flex gap-2">
                 <div className="flex-1 min-w-0">
@@ -143,45 +142,12 @@ export function StoreList() {
     );
 }
 
-/** Today over the stores shown: sales, cups and orders, and cups by hour. */
-function TodayPanel({ stores }: { stores: Store[] | undefined }) {
-    const t = useT();
+/** Today over the stores shown. */
+function TodayOver({ stores }: { stores: Store[] | undefined }) {
     const hours = useTodayHoursFor((stores ?? []).map((s) => s.id));
     const sum = (k: "sales" | "cups" | "orders") => (stores ?? []).reduce((n, s) => n + s[k], 0);
-    const tile = "rounded-xl bg-slate-100 p-3";
-    return (
-        <Panel icon={<Banknote {...rowIcon} />} title={t("store.todayLabel")}>
-            {stores ? (
-                <p className="px-1 text-3xl font-bold text-gray-900">{formatMoney(sum("sales"))}</p>
-            ) : (
-                <Skeleton className="h-9 w-44 rounded" />
-            )}
-            <div className="grid grid-cols-2 gap-2">
-                {(["cups", "orders"] as const).map((k) => (
-                    <div key={k} className={tile}>
-                        <p className="text-sm text-gray-900">{t(`store.${k}`)}</p>
-                        <p className="text-xl font-bold text-gray-900">{stores ? sum(k) : "–"}</p>
-                    </div>
-                ))}
-            </div>
-            {hours.data && hours.data.hours.length > 0 && (
-                <div className={tile}>
-                    <PanelLabel>{t("store.cupsByHour")}</PanelLabel>
-                    <div className="-mx-2 mt-2">
-                        <AreaChart
-                            points={hours.data.hours.map((h) => ({
-                                key: String(h.hour),
-                                label: `${String(h.hour).padStart(2, "0")}:00`,
-                                value: h.cups,
-                            }))}
-                            unit={t("store.cupsUnit")}
-                            height={120}
-                        />
-                    </div>
-                </div>
-            )}
-        </Panel>
-    );
+    const totals = stores && { sales: sum("sales"), cups: sum("cups"), orders: sum("orders") };
+    return <TodayPanel totals={totals} hours={stores?.length ? hours.data?.hours : []} />;
 }
 
 function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
