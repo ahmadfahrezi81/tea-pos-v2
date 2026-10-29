@@ -41,6 +41,9 @@ function useHref(to: string | undefined): string | undefined {
 
 const button =
     "w-10 h-10 rounded-xl flex items-center justify-center text-gray-900 active:scale-95";
+// Words, not icons: "Add" and "Edit" read at a glance.
+const labelButton =
+    "rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white active:scale-95";
 
 /**
  * A screen's actions in the header's right slot: at most two show, more go
@@ -65,28 +68,19 @@ export function HeaderActions({ actions: all }: { actions: HeaderAction[] }) {
     );
 }
 
-function Action({ action, onDone }: { action: HeaderAction; onDone?: () => void }) {
+function Action({ action }: { action: HeaderAction }) {
     const t = useT();
-    const { icon: Icon, labelKey } = KINDS[action.kind];
     const href = useHref(action.to);
-    const label = t(labelKey);
-    const icon = <Icon size={26} strokeWidth={2.25} />;
+    const label = t(KINDS[action.kind].labelKey);
     if (href !== undefined)
         return (
-            <Link to={href} className={button} aria-label={label} onClick={onDone}>
-                {icon}
+            <Link to={href} className={labelButton}>
+                {label}
             </Link>
         );
     return (
-        <button
-            onClick={() => {
-                onDone?.();
-                action.onClick?.();
-            }}
-            className={button}
-            aria-label={label}
-        >
-            {icon}
+        <button onClick={action.onClick} className={labelButton}>
+            {label}
         </button>
     );
 }
