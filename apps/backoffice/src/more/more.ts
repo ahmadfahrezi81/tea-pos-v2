@@ -13,13 +13,3 @@ export function useWeather(enabled: boolean) {
         { enabled: !!tenant && enabled, staleTime: STALE.WARM },
     );
 }
-
-export function useFeedbacks() {
-    const tenant = useSlug();
-    return $api.useQuery(
-        "get",
-        "/tenants/{tenant}/feedbacks",
-        { params: { path: { tenant }, query: { limit: 100 } } },
-        { enabled: !!tenant, staleTime: STALE.COOL },
-    );
-}
