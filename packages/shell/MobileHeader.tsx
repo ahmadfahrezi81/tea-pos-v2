@@ -16,8 +16,7 @@ interface MobileHeaderProps {
 
 /**
  * A tab's home: the big title on the left, the avatar (Account) on the right; actions live in the page.
- * A screen under it: back on the left, the title centred on one line, the actions
- * on the right (equal sides keep the title centred).
+ * A screen under it: back, then the title on one line, the actions on the right.
  */
 export function MobileHeader({
     title,
@@ -39,20 +38,21 @@ export function MobileHeader({
     return (
         <header className="shrink-0 bg-slate-100 px-4 py-3 pt-[calc(0.75rem_+_env(safe-area-inset-top))]">
             {isSubPage ? (
-                <div className="grid grid-cols-[5.25rem_minmax(0,1fr)_5.25rem] items-center gap-1">
-                    <div className="flex justify-start">
-                        <button
-                            onClick={onBack}
-                            className="text-gray-900 active:scale-95 py-1"
-                            aria-label={t("common.back")}
-                        >
-                            <ArrowLeft size={30} strokeWidth={2.5} />
-                        </button>
-                    </div>
-                    <h1 className="group truncate text-center text-2xl font-semibold tracking-tight text-gray-900">
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={onBack}
+                        className="shrink-0 text-gray-900 active:scale-95 py-1"
+                        aria-label={t("common.back")}
+                    >
+                        <ArrowLeft size={30} strokeWidth={2.5} />
+                    </button>
+                    <h1 className="group min-w-0 flex-1 truncate text-2xl font-semibold tracking-tight text-gray-900">
                         {titleText}
                     </h1>
-                    <div ref={actionsRef} className="flex items-center justify-end gap-1" />
+                    <div
+                        ref={actionsRef}
+                        className="flex shrink-0 items-center justify-end gap-1"
+                    />
                 </div>
             ) : (
                 <div className="flex items-center gap-2">

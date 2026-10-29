@@ -8,7 +8,7 @@ The owner's test round on staging (RFC: [Backoffice v2 refinement](https://app.n
 
 ## The changes
 
-1. **The header, back to v1's on a tab's home:** the big title on the left, the avatar (Account) on the right, nothing else; a tab home's actions live in the page. A screen under a tab keeps 047a's bar: back on the left, the title centred on one line, the actions on the right. `packages/shell/MobileHeader.tsx`, so both apps get it
+1. **The header, back to v1's on a tab's home:** the big title on the left, the avatar (Account) on the right, nothing else; a tab home's actions live in the page. A screen under a tab: back, then its title beside it on one line (text-2xl, semibold), the actions on the right. `packages/shell/MobileHeader.tsx`, so both apps get it
 2. **⚙ leaves the header:** Pay settings is a row at the bottom of the Pay home (as All stores on Store); `settings` leaves `HeaderActions`' kinds, which keep add and edit for screens under a tab
 
 ## Done when
