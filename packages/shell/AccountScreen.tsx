@@ -7,13 +7,14 @@ import { ConfirmDialog } from "@tea-pos/ui/ConfirmDialog";
 import { Sheet } from "@tea-pos/ui/Sheet";
 import { toast } from "@tea-pos/ui/toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { Globe } from "lucide-react";
+import { Globe, Info } from "lucide-react";
 import { useState } from "react";
 
 import { useApp } from "./AppContext";
 import { errorMessage } from "./errors";
-import { signOut, signOutEverywhere } from "./session";
+import { signOut } from "./session";
 import { rowIcon, SettingsRow } from "./Settings";
+import { StatusScreen } from "./StatusScreen";
 import { APP_VERSION } from "./version";
 
 /**
@@ -28,6 +29,7 @@ export function AccountScreen() {
     const me = useMe().data;
     const [language, setLanguageOpen] = useState(false);
     const [confirm, setConfirm] = useState(false);
+    const [info, setInfo] = useState(false);
     if (!me) return null;
     const { user } = me;
 
@@ -60,16 +62,21 @@ export function AccountScreen() {
                     </div>
                 </div>
 
-                {locales.length > 1 && (
-                    <div className="bg-white rounded-2xl px-4 py-1">
+                <div className="bg-white rounded-2xl px-4 py-1">
+                    {locales.length > 1 && (
                         <SettingsRow
                             icon={<Globe {...rowIcon} />}
                             label={t("account.language")}
                             sublabel={t(`language.${locale}`)}
                             onClick={() => setLanguageOpen(true)}
                         />
-                    </div>
-                )}
+                    )}
+                    <SettingsRow
+                        icon={<Info {...rowIcon} />}
+                        label={t("status.title")}
+                        onClick={() => setInfo(true)}
+                    />
+                </div>
             </div>
 
             <div className="mt-auto pt-4 flex flex-col items-center gap-3">
@@ -79,13 +86,6 @@ export function AccountScreen() {
                 >
                     {t("common.logout")}
                 </button>
-                <ActionButton
-                    action={() => signOutEverywhere(queryClient)}
-                    busyLabel={t("account.signingOut")}
-                    className="text-sm text-gray-500 underline"
-                >
-                    {t("account.signOutEverywhere")}
-                </ActionButton>
                 <span className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 font-mono text-xs text-gray-700">
                     {t("status.version")}: v{APP_VERSION}
                 </span>
@@ -108,6 +108,10 @@ export function AccountScreen() {
                         </ActionButton>
                     ))}
                 </div>
+            </Sheet>
+
+            <Sheet open={info} onClose={() => setInfo(false)} title={t("status.title")}>
+                {info && <StatusScreen />}
             </Sheet>
 
             <ConfirmDialog

@@ -88,7 +88,6 @@
         "searchBank": "Cari bank...",
         "accountHolderPlaceholder": "Sesuai yang tertera di rekening",
         "title": "Akun",
-        "signOutEverywhere": "Keluar dari semua ponsel",
         "signingOut": "Sedang keluar…"
     },
     "more": {
@@ -204,6 +203,12 @@
         }
     },
     "status": {
+        "title": "Info aplikasi",
+        "api": "API",
+        "commit": "Commit",
+        "app": "Aplikasi",
+        "ok": "Terhubung",
+        "down": "Tidak terjangkau",
         "version": "Versi"
     },
     "errors": {

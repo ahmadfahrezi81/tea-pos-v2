@@ -88,7 +88,6 @@
         "searchBank": "Search bank...",
         "accountHolderPlaceholder": "As printed on the account",
         "title": "Account",
-        "signOutEverywhere": "Sign out on every phone",
         "signingOut": "Signing out…"
     },
     "more": {
@@ -204,6 +203,12 @@
         }
     },
     "status": {
+        "title": "App info",
+        "api": "API",
+        "commit": "Commit",
+        "app": "App",
+        "ok": "Connected",
+        "down": "Unreachable",
         "version": "Version"
     },
     "errors": {

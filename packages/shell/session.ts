@@ -28,12 +28,6 @@ export async function signOut(queryClient: QueryClient) {
     await leave(queryClient);
 }
 
-/** Ends every session of the user, in every app; their other phones go to sign-in at once (017b). */
-export async function signOutEverywhere(queryClient: QueryClient) {
-    await api.POST("/auth/logout-everywhere");
-    await leave(queryClient);
-}
-
 async function leave(queryClient: QueryClient) {
     await clearCache(queryClient);
     rememberUser(undefined);

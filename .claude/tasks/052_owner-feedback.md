@@ -20,7 +20,7 @@ The owner's test round on staging (RFC: [Backoffice v2 refinement](https://app.n
     - Not ported: ErrorSheet (v2 translates every error code instead), FeedbackHistory and SummaryDetailsCard (screens with their own data, they come with the seller's More and analytics), the weather sheet (already in backoffice More; moves to the shell when seller's More needs it)
 5. **Every loading placeholder is a `Skeleton`:** the plain white and grey boxes in Store, Pay, UAC and More, and `ListRowSkeleton`, sweep as v1's do; lists stagger by row
 6. **Account and More stay v1's** (owner: screens that already existed keep their look):
-    - Account: the profile card (square avatar, name, email), the settings rows (Language, opening a sheet), then at the bottom the red Log Out (confirmed with `ConfirmDialog`), Sign out on every phone as a small link, and the version pill. The API status card goes (`StatusScreen` and its words removed)
+    - Account: the profile card (square avatar, name, email), the settings rows (Language, opening a sheet), an App info row (opens a sheet with the API status, versions and commits: `StatusScreen`), then at the bottom the red Log Out (confirmed with `ConfirmDialog`) and the version pill. Sign out on every phone leaves the screen (its API stays)
     - Account closes with an X, not back: `close` on the route (`ShellRoute`), as v1's inline header
     - More: General with the app's rows and Patch Notes (v1's name for What's new); the Account row goes (the avatar opens it, as v1)
 
