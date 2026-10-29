@@ -12,7 +12,7 @@ import (
 )
 
 const getMe = `-- name: GetMe :one
-SELECT id, email, full_name, role, avatar_url, preferred_language FROM users WHERE id = $1
+SELECT id, email, full_name, role, avatar_url, preferred_language, phone_number, created_at FROM users WHERE id = $1
 `
 
 type GetMeRow struct {
@@ -22,6 +22,8 @@ type GetMeRow struct {
 	Role              string
 	AvatarUrl         pgtype.Text
 	PreferredLanguage string
+	PhoneNumber       pgtype.Text
+	CreatedAt         pgtype.Timestamp
 }
 
 func (q *Queries) GetMe(ctx context.Context, id pgtype.UUID) (GetMeRow, error) {
@@ -34,8 +36,39 @@ func (q *Queries) GetMe(ctx context.Context, id pgtype.UUID) (GetMeRow, error) {
 		&i.Role,
 		&i.AvatarUrl,
 		&i.PreferredLanguage,
+		&i.PhoneNumber,
+		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const listAskedTenants = `-- name: ListAskedTenants :many
+SELECT DISTINCT t.slug
+FROM tenant_access_requests r
+JOIN tenants t ON t.id = r.tenant_id
+WHERE r.user_id = $1 AND r.status IN ('pending', 'blocked')
+ORDER BY t.slug
+`
+
+// The tenants the user asked to join and is still waiting on (blocked looks the same to them).
+func (q *Queries) ListAskedTenants(ctx context.Context, userID pgtype.UUID) ([]string, error) {
+	rows, err := q.db.Query(ctx, listAskedTenants, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var slug string
+		if err := rows.Scan(&slug); err != nil {
+			return nil, err
+		}
+		items = append(items, slug)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listAssignedStores = `-- name: ListAssignedStores :many
@@ -138,20 +171,38 @@ func (q *Queries) ListTenantStores(ctx context.Context, userID pgtype.UUID) ([]L
 }
 
 const listUserTenants = `-- name: ListUserTenants :many
-SELECT t.id, t.slug, t.name, t.pay_frequency
+SELECT t.id, t.slug, t.name, t.pay_frequency, a.status,
+    coalesce(t.owner_id = a.user_id, false)::bool AS is_owner,
+    coalesce((
+        SELECT x.access FROM user_app_access x
+        WHERE x.tenant_id = t.id AND x.user_id = a.user_id AND x.app = 'seller'
+    ), '')::text AS seller_access,
+    coalesce((
+        SELECT x.access FROM user_app_access x
+        WHERE x.tenant_id = t.id AND x.user_id = a.user_id AND x.app = 'backoffice'
+    ), '')::text AS backoffice_access,
+    EXISTS (
+        SELECT 1 FROM user_app_access x WHERE x.tenant_id = t.id AND x.user_id = a.user_id
+    ) AS has_levels
 FROM tenants t
 JOIN user_tenant_assignments a ON a.tenant_id = t.id
-WHERE a.user_id = $1
+WHERE a.user_id = $1 AND a.status = 'active'
 ORDER BY t.name
 `
 
 type ListUserTenantsRow struct {
-	ID           pgtype.UUID
-	Slug         string
-	Name         string
-	PayFrequency string
+	ID               pgtype.UUID
+	Slug             string
+	Name             string
+	PayFrequency     string
+	Status           string
+	IsOwner          bool
+	SellerAccess     string
+	BackofficeAccess string
+	HasLevels        bool
 }
 
+// The tenants the user is an active member of, with what auth.LevelIn reads.
 func (q *Queries) ListUserTenants(ctx context.Context, userID pgtype.UUID) ([]ListUserTenantsRow, error) {
 	rows, err := q.db.Query(ctx, listUserTenants, userID)
 	if err != nil {
@@ -166,6 +217,11 @@ func (q *Queries) ListUserTenants(ctx context.Context, userID pgtype.UUID) ([]Li
 			&i.Slug,
 			&i.Name,
 			&i.PayFrequency,
+			&i.Status,
+			&i.IsOwner,
+			&i.SellerAccess,
+			&i.BackofficeAccess,
+			&i.HasLevels,
 		); err != nil {
 			return nil, err
 		}
@@ -175,4 +231,18 @@ func (q *Queries) ListUserTenants(ctx context.Context, userID pgtype.UUID) ([]Li
 		return nil, err
 	}
 	return items, nil
+}
+
+const setUserLanguage = `-- name: SetUserLanguage :exec
+UPDATE users SET preferred_language = $2 WHERE id = $1
+`
+
+type SetUserLanguageParams struct {
+	ID                pgtype.UUID
+	PreferredLanguage string
+}
+
+func (q *Queries) SetUserLanguage(ctx context.Context, arg SetUserLanguageParams) error {
+	_, err := q.db.Exec(ctx, setUserLanguage, arg.ID, arg.PreferredLanguage)
+	return err
 }

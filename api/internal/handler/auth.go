@@ -2,18 +2,20 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
-	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/httpx"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/middleware"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/realtime"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
 )
 
@@ -44,7 +46,7 @@ func registerAuth(api huma.API, d Deps) {
 	}, auth.Public.RateLimit(), func(ctx context.Context, _ *struct{}) (*contract.Redirect, error) {
 		origin := middleware.AppOrigin(ctx)
 		if origin == "" || middleware.App(ctx) == "" {
-			return nil, httpx.New(http.StatusBadRequest, "unknown_app", "Open sign-in from the app")
+			return nil, errUnknownApp
 		}
 		verifier, challenge := auth.NewPKCE()
 		return &contract.Redirect{
@@ -97,10 +99,24 @@ func registerAuth(api huma.API, d Deps) {
 			return fail("sign_in_failed", "bad user id")
 		}
 		row, err := d.Queries.GetUserForSignIn(ctx, id)
-		if err != nil {
-			return fail("not_allowed", "no tea-pos user for this Google account")
+		if errors.Is(err, pgx.ErrNoRows) {
+			// Someone new gets an empty account: they can only ask a tenant to let them in.
+			name := user.Metadata.FullName
+			if name == "" {
+				name = user.Email
+			}
+			err = d.Queries.CreatePendingUser(ctx, store.CreatePendingUserParams{
+				ID: id, Email: user.Email, FullName: name,
+				AvatarUrl: pgtype.Text{String: user.Metadata.AvatarURL, Valid: user.Metadata.AvatarURL != ""},
+			})
+			if err == nil {
+				row, err = d.Queries.GetUserForSignIn(ctx, id)
+			}
 		}
-		if !auth.Allowed(app, row.Role, row.Status) {
+		if err != nil {
+			return fail("sign_in_failed", "user: "+err.Error())
+		}
+		if !auth.Allowed(app, row.Role, row.Status, row.Apps) {
 			if row.Status != "active" {
 				return fail("account_inactive", "status "+row.Status)
 			}
@@ -126,13 +142,41 @@ func registerAuth(api huma.API, d Deps) {
 		Summary:       "Sign out of this app on this phone",
 		Tags:          []string{"auth"},
 		DefaultStatus: http.StatusNoContent,
-	}, auth.SignedIn, func(ctx context.Context, _ *struct{}) (*contract.LogoutOutput, error) {
+	}, auth.SignedIn.Repeatable(), func(ctx context.Context, _ *struct{}) (*contract.LogoutOutput, error) {
 		caller, _ := auth.CallerFrom(ctx)
 		if err := d.Sessions.Delete(ctx, caller.Token()); err != nil {
 			return nil, err
 		}
-		return &contract.LogoutOutput{
-			SetCookie: []http.Cookie{auth.Cookie("", 0, auth.Secure(middleware.AppOrigin(ctx)))},
-		}, nil
+		return signedOut(ctx, d, caller)
 	})
+
+	route(api, huma.Operation{
+		OperationID:   "logoutEverywhere",
+		Method:        http.MethodPost,
+		Path:          "/auth/logout-everywhere",
+		Summary:       "Sign out of every app on every phone",
+		Tags:          []string{"auth"},
+		DefaultStatus: http.StatusNoContent,
+	}, auth.SignedIn.Repeatable(), func(ctx context.Context, _ *struct{}) (*contract.LogoutOutput, error) {
+		caller, _ := auth.CallerFrom(ctx)
+		if err := d.Sessions.DeleteAll(ctx, caller.UserID); err != nil {
+			return nil, err
+		}
+		return signedOut(ctx, d, caller)
+	})
+}
+
+// signedOut clears this phone's cookie and tells the hub, which closes the ended sessions'
+// sockets; the user's other phones check they are still signed in.
+func signedOut(ctx context.Context, d Deps, caller auth.Caller) (*contract.LogoutOutput, error) {
+	err := realtime.Announce(ctx, d.Queries, realtime.Event{
+		Topic: realtime.UserTopic(caller.UserID.String()), Kind: realtime.SignedOut,
+	})
+	if err != nil {
+		// Signing out still worked; the other phones find out on their next request.
+		slog.WarnContext(ctx, "announce sign-out", "err", err)
+	}
+	return &contract.LogoutOutput{
+		SetCookie: []http.Cookie{auth.Cookie("", 0, auth.Secure(middleware.AppOrigin(ctx)))},
+	}, nil
 }

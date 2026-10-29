@@ -1,9 +1,743 @@
 components:
   schemas:
+    AccessRequest:
+      additionalProperties: false
+      properties:
+        at:
+          format: date-time
+          type: string
+        avatarUrl:
+          type: string
+        email:
+          type: string
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        userId:
+          format: uuid
+          type: string
+      required:
+        - id
+        - userId
+        - name
+        - email
+        - at
+      type: object
+    AppEvent:
+      additionalProperties: false
+      properties:
+        at:
+          description: The phone's clock; Go uses its own when this is far off
+          format: date-time
+          type: string
+        chunks:
+          additionalProperties:
+            type: string
+          type: object
+        message:
+          maxLength: 2000
+          type: string
+        name:
+          examples:
+            - TypeError
+          maxLength: 200
+          type: string
+        path:
+          examples:
+            - /test-a/home
+          maxLength: 300
+          type: string
+        ready:
+          $ref: "#/components/schemas/AppReady"
+        stack:
+          maxLength: 8000
+          type: string
+        type:
+          enum:
+            - error
+            - pageview
+            - pageleave
+            - app_ready
+          type: string
+      required:
+        - type
+        - path
+        - at
+      type: object
+    AppReady:
+      additionalProperties: false
+      properties:
+        hidden:
+          description: "Hidden at some moment before ready: the time is not the app's"
+          type: boolean
+        htmlMs:
+          description: The page's first byte (responseStart)
+          format: double
+          minimum: 0
+          type: number
+        jsMs:
+          description: The main script done (domContentLoadedEventEnd)
+          format: double
+          minimum: 0
+          type: number
+        me:
+          description: Whether the first screen drew /me from the phone's copy; none on sign-in
+          enum:
+            - saved
+            - network
+            - none
+          type: string
+        open:
+          description: "network: no service worker yet; saved: from its copy; update: the first open of a new version"
+          enum:
+            - network
+            - saved
+            - update
+          type: string
+        paintMs:
+          description: "First paint: the splash (first-contentful-paint)"
+          format: double
+          minimum: 0
+          type: number
+        readyMs:
+          format: double
+          minimum: 0
+          type: number
+        screen:
+          enum:
+            - shell
+            - signin
+            - other
+          type: string
+      required:
+        - readyMs
+        - htmlMs
+        - jsMs
+        - paintMs
+        - open
+        - me
+        - screen
+        - hidden
+      type: object
+    AskAccessInputBody:
+      additionalProperties: false
+      properties:
+        tenant:
+          description: The tenant's slug, from its address
+          maxLength: 100
+          minLength: 1
+          type: string
+      required:
+        - tenant
+      type: object
+    Bank:
+      additionalProperties: false
+      properties:
+        accountHolder:
+          type: string
+        accountNumber:
+          type: string
+        name:
+          type: string
+      type: object
+    ClaimEligibleOutputBody:
+      additionalProperties: false
+      properties:
+        userIds:
+          items:
+            type: string
+          type: array
+      required:
+        - userIds
+      type: object
+    ClaimType:
+      additionalProperties: false
+      properties:
+        amount:
+          format: int64
+          type: integer
+        autoThresholdHours:
+          format: double
+          type: number
+        enabled:
+          type: boolean
+        frequency:
+          enum:
+            - daily
+            - weekly
+            - monthly
+            - one_time
+          type: string
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        source:
+          description: "manual: staff submits; auto_submit: made for staff, an admin reviews; auto: made and approved when enough hours were worked"
+          enum:
+            - manual
+            - auto
+            - auto_submit
+          type: string
+      required:
+        - id
+        - name
+        - slug
+        - frequency
+        - enabled
+        - amount
+        - source
+      type: object
+    ClaimTypesOutputBody:
+      additionalProperties: false
+      properties:
+        types:
+          items:
+            $ref: "#/components/schemas/ClaimType"
+          type: array
+      required:
+        - types
+      type: object
+    CommissionType:
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        ratePerCup:
+          description: Rupiah per cup
+          format: int64
+          type: integer
+        slug:
+          type: string
+      required:
+        - id
+        - name
+        - slug
+        - enabled
+        - ratePerCup
+      type: object
+    CommissionTypesOutputBody:
+      additionalProperties: false
+      properties:
+        types:
+          items:
+            $ref: "#/components/schemas/CommissionType"
+          type: array
+      required:
+        - types
+      type: object
+    CreateClaimTypeInputBody:
+      additionalProperties: false
+      properties:
+        amount:
+          format: int64
+          maximum: 100000000
+          minimum: 0
+          type: integer
+        autoThresholdHours:
+          description: Needed for auto
+          format: double
+          maximum: 24
+          minimum: 0
+          type: number
+        frequency:
+          enum:
+            - daily
+            - weekly
+            - monthly
+            - one_time
+          type: string
+        name:
+          maxLength: 100
+          minLength: 1
+          type: string
+        slug:
+          maxLength: 100
+          pattern: ^[A-Z0-9_]+$
+          type: string
+        source:
+          enum:
+            - manual
+            - auto
+            - auto_submit
+          type: string
+      required:
+        - name
+        - slug
+        - frequency
+        - amount
+        - source
+      type: object
+    CreateCommissionTypeInputBody:
+      additionalProperties: false
+      properties:
+        name:
+          maxLength: 100
+          minLength: 1
+          type: string
+        ratePerCup:
+          format: int64
+          maximum: 1000000
+          minimum: 0
+          type: integer
+        slug:
+          description: Uppercase letters, digits and underscores
+          maxLength: 100
+          pattern: ^[A-Z0-9_]+$
+          type: string
+      required:
+        - name
+        - slug
+        - ratePerCup
+      type: object
+    Day:
+      additionalProperties: false
+      properties:
+        actualCash:
+          description: Null until counted at closing
+          format: int64
+          type:
+            - integer
+            - "null"
+        closedAt:
+          description: Empty while the day is open
+          format: date-time
+          type: string
+        cups:
+          format: int64
+          type: integer
+        date:
+          format: date
+          type: string
+        expectedCash:
+          format: int64
+          type: integer
+        expenseItems:
+          items:
+            $ref: "#/components/schemas/DayExpense"
+          type: array
+        expenses:
+          format: int64
+          type: integer
+        id:
+          format: uuid
+          type: string
+        notes:
+          type: string
+        openingBalance:
+          format: int64
+          type: integer
+        orders:
+          format: int64
+          type: integer
+        sales:
+          format: int64
+          type: integer
+        sellers:
+          description: Who worked (a session or an order), the most cups first
+          items:
+            $ref: "#/components/schemas/DaySeller"
+          type: array
+        storeId:
+          format: uuid
+          type: string
+        storeName:
+          type: string
+        variance:
+          format: int64
+          type:
+            - integer
+            - "null"
+      required:
+        - id
+        - storeId
+        - storeName
+        - date
+        - openingBalance
+        - sales
+        - orders
+        - cups
+        - expenses
+        - expectedCash
+        - actualCash
+        - variance
+        - expenseItems
+        - sellers
+      type: object
+    DayActivityOutputBody:
+      additionalProperties: false
+      properties:
+        events:
+          description: Oldest first
+          items:
+            $ref: "#/components/schemas/DayEvent"
+          type: array
+      required:
+        - events
+      type: object
+    DayDetail:
+      additionalProperties: false
+      properties:
+        actualCash:
+          description: Null until counted at closing
+          format: int64
+          type:
+            - integer
+            - "null"
+        closedAt:
+          description: Empty while the day is open
+          format: date-time
+          type: string
+        closedBy:
+          type: string
+        cups:
+          format: int64
+          type: integer
+        date:
+          format: date
+          type: string
+        expectedCash:
+          format: int64
+          type: integer
+        expenseItems:
+          items:
+            $ref: "#/components/schemas/DayExpense"
+          type: array
+        expenses:
+          format: int64
+          type: integer
+        id:
+          format: uuid
+          type: string
+        notes:
+          type: string
+        openedAt:
+          format: date-time
+          type: string
+        openedBy:
+          type: string
+        openingBalance:
+          format: int64
+          type: integer
+        orders:
+          format: int64
+          type: integer
+        photos:
+          items:
+            $ref: "#/components/schemas/DayPhoto"
+          type: array
+        products:
+          description: What the day sold per product, most first
+          items:
+            $ref: "#/components/schemas/DayProduct"
+          type: array
+        sales:
+          format: int64
+          type: integer
+        sellers:
+          description: Who worked (a session or an order), the most cups first
+          items:
+            $ref: "#/components/schemas/DaySeller"
+          type: array
+        storeId:
+          format: uuid
+          type: string
+        storeName:
+          type: string
+        variance:
+          format: int64
+          type:
+            - integer
+            - "null"
+      required:
+        - photos
+        - products
+        - id
+        - storeId
+        - storeName
+        - date
+        - openingBalance
+        - sales
+        - orders
+        - cups
+        - expenses
+        - expectedCash
+        - actualCash
+        - variance
+        - expenseItems
+        - sellers
+      type: object
+    DayEvent:
+      additionalProperties: false
+      properties:
+        at:
+          format: date-time
+          type: string
+        id:
+          format: uuid
+          type: string
+        metadata:
+          description: As the event saved it; a photo_url in it is a signed address
+        type:
+          examples:
+            - store_opened
+          type: string
+        userName:
+          type: string
+      required:
+        - id
+        - type
+        - at
+        - metadata
+      type: object
+    DayExpense:
+      additionalProperties: false
+      properties:
+        amount:
+          format: int64
+          type: integer
+        id:
+          format: uuid
+          type: string
+        notes:
+          type: string
+        type:
+          type: string
+      required:
+        - id
+        - type
+        - amount
+      type: object
+    DayPhoto:
+      additionalProperties: false
+      properties:
+        quantity:
+          $ref: "#/components/schemas/DayQuantity"
+        type:
+          description: opening, closing:ice, closing:syrup, closing:bags, closing:cups, closing:tea
+          examples:
+            - closing:tea
+          type: string
+        url:
+          description: A signed address, for a few minutes; empty when it could not be signed
+          type: string
+      required:
+        - type
+        - url
+      type: object
+    DayProduct:
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        quantity:
+          format: int64
+          type: integer
+        revenue:
+          format: int64
+          type: integer
+      required:
+        - name
+        - quantity
+        - revenue
+      type: object
+    DayQuantity:
+      additionalProperties: false
+      properties:
+        unit:
+          type: string
+        value:
+          format: double
+          type: number
+      required:
+        - value
+        - unit
+      type: object
+    DaySeller:
+      additionalProperties: false
+      properties:
+        avatarUrl:
+          type: string
+        cups:
+          format: int64
+          type: integer
+        name:
+          type: string
+        userId:
+          format: uuid
+          type: string
+      required:
+        - userId
+        - name
+        - cups
+      type: object
+    DaySession:
+      additionalProperties: false
+      properties:
+        avatarUrl:
+          type: string
+        endedAt:
+          format: date-time
+          type: string
+        id:
+          format: uuid
+          type: string
+        previousSessionId:
+          description: The session this one took over from
+          type: string
+        startedAt:
+          format: date-time
+          type: string
+        status:
+          examples:
+            - active
+          type: string
+        userId:
+          format: uuid
+          type: string
+        userName:
+          type: string
+      required:
+        - id
+        - userId
+        - startedAt
+        - status
+      type: object
+    DaySessionsOutputBody:
+      additionalProperties: false
+      properties:
+        sessions:
+          description: In the order they started
+          items:
+            $ref: "#/components/schemas/DaySession"
+          type: array
+      required:
+        - sessions
+      type: object
+    DaysOutputBody:
+      additionalProperties: false
+      properties:
+        days:
+          description: Newest first; with several stores, each store's day
+          items:
+            $ref: "#/components/schemas/Day"
+          type: array
+      required:
+        - days
+      type: object
+    DecisionInputBody:
+      additionalProperties: false
+      properties:
+        status:
+          enum:
+            - pending
+            - approved
+            - rejected
+          type: string
+      required:
+        - status
+      type: object
+    Device:
+      additionalProperties: false
+      properties:
+        cores:
+          format: int64
+          type: integer
+        downlink:
+          description: Mbit/s
+          format: double
+          type: number
+        memory:
+          description: GB, navigator.deviceMemory (rounded by the browser)
+          format: double
+          type: number
+        model:
+          description: Android Chrome's client hints
+          examples:
+            - SM-M115F
+          maxLength: 60
+          type: string
+        net:
+          description: navigator.connection.effectiveType
+          examples:
+            - 4g
+          maxLength: 10
+          type: string
+        osVersion:
+          maxLength: 20
+          type: string
+        rtt:
+          description: ms
+          format: int64
+          type: integer
+        saveData:
+          type: boolean
+        screenHeight:
+          format: int64
+          type: integer
+        screenWidth:
+          format: int64
+          type: integer
+      type: object
     Error:
       additionalProperties: false
       properties:
         code:
+          enum:
+            - account_inactive
+            - app_too_old
+            - auto_needs_hours
+            - bad_cursor
+            - bad_level
+            - bad_proof
+            - bad_range
+            - bad_request
+            - claim_not_found
+            - claim_type_not_found
+            - commission_not_found
+            - commission_type_not_found
+            - conflict
+            - day_not_found
+            - day_not_in_payout
+            - error
+            - files_unavailable
+            - forbidden
+            - idempotency_key_required
+            - idempotency_key_reused
+            - internal
+            - maintenance
+            - not_allowed
+            - not_found
+            - not_in_tenant
+            - not_signed_in
+            - not_yourself
+            - owner_kept
+            - payout_not_due
+            - payout_not_found
+            - payout_pending_review
+            - payout_settled
+            - period_not_found
+            - person_not_found
+            - proof_required
+            - request_not_found
+            - route_not_found
+            - staff_not_found
+            - store_not_found
+            - store_required
+            - too_large
+            - too_many_requests
+            - unauthorized
+            - unknown_app
           examples:
             - day_already_closed
           type: string
@@ -26,6 +760,67 @@ components:
         - status
         - code
         - message
+      type: object
+    EventsInputBody:
+      additionalProperties: false
+      properties:
+        device:
+          $ref: "#/components/schemas/Device"
+        events:
+          items:
+            $ref: "#/components/schemas/AppEvent"
+          maxItems: 50
+          minItems: 1
+          type: array
+        session:
+          format: uuid
+          type: string
+      required:
+        - events
+        - session
+        - device
+      type: object
+    Feedback:
+      additionalProperties: false
+      properties:
+        at:
+          format: date-time
+          type: string
+        id:
+          format: uuid
+          type: string
+        latitude:
+          format: double
+          type: number
+        locationDisplay:
+          type: string
+        locationName:
+          type: string
+        longitude:
+          format: double
+          type: number
+        notes:
+          type: string
+        userName:
+          type: string
+      required:
+        - id
+        - locationName
+        - locationDisplay
+        - latitude
+        - longitude
+        - at
+      type: object
+    FeedbacksOutputBody:
+      additionalProperties: false
+      properties:
+        feedbacks:
+          description: Newest first
+          items:
+            $ref: "#/components/schemas/Feedback"
+          type: array
+      required:
+        - feedbacks
       type: object
     HealthOutputBody:
       additionalProperties: false
@@ -50,6 +845,16 @@ components:
     Me:
       additionalProperties: false
       properties:
+        asked:
+          description: Slugs of the tenants the user asked to join, still waiting
+          items:
+            type: string
+          type: array
+        flags:
+          additionalProperties:
+            type: boolean
+          description: The feature flags on for this user (rules on role and app); a store's own are on the store
+          type: object
         tenants:
           description: Empty when the user belongs to no tenant
           items:
@@ -60,6 +865,32 @@ components:
       required:
         - user
         - tenants
+        - flags
+        - asked
+      type: object
+    MeAccess:
+      additionalProperties: false
+      properties:
+        backoffice:
+          description: guest, admin, or '' for none
+          type: string
+        seller:
+          description: member, or '' for none
+          type: string
+      required:
+        - seller
+        - backoffice
+      type: object
+    MePatchInputBody:
+      additionalProperties: false
+      properties:
+        language:
+          enum:
+            - en
+            - id
+          type: string
+      required:
+        - language
       type: object
     MeStore:
       additionalProperties: false
@@ -68,6 +899,11 @@ components:
           examples:
             - "22:00"
           type: string
+        flags:
+          additionalProperties:
+            type: boolean
+          description: The feature flags on at this store (rules on tenantId and storeId); a flag not listed is off
+          type: object
         id:
           format: uuid
           type: string
@@ -91,15 +927,22 @@ components:
         - openTime
         - closeTime
         - isDefault
+        - flags
       type: object
     MeTenant:
       additionalProperties: false
       properties:
+        access:
+          $ref: "#/components/schemas/MeAccess"
+          description: The user's level in each app here; the screens hide what they cannot do
         id:
           format: uuid
           type: string
         name:
           type: string
+        owner:
+          description: "The tenant's owner: an admin everywhere, whatever the levels say"
+          type: boolean
         payFrequency:
           examples:
             - bi_weekly
@@ -116,6 +959,8 @@ components:
         - slug
         - name
         - payFrequency
+        - access
+        - owner
         - stores
       type: object
     MeUser:
@@ -135,9 +980,15 @@ components:
           examples:
             - id
           type: string
+        phone:
+          type: string
         role:
           examples:
             - USER
+          type: string
+        since:
+          description: When the account was made
+          format: date-time
           type: string
       required:
         - id
@@ -146,11 +997,983 @@ components:
         - role
         - language
       type: object
+    Order:
+      additionalProperties: false
+      properties:
+        at:
+          format: date-time
+          type: string
+        cups:
+          format: int64
+          type: integer
+        id:
+          format: uuid
+          type: string
+        items:
+          items:
+            $ref: "#/components/schemas/OrderItem"
+          type: array
+        paymentMethod:
+          examples:
+            - cash
+          type: string
+        seller:
+          type: string
+        storeName:
+          type: string
+        total:
+          format: int64
+          type: integer
+      required:
+        - id
+        - at
+        - total
+        - paymentMethod
+        - storeName
+        - cups
+        - items
+      type: object
+    OrderItem:
+      additionalProperties: false
+      properties:
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        quantity:
+          format: int64
+          type: integer
+        totalPrice:
+          format: int64
+          type: integer
+        unitPrice:
+          format: int64
+          type: integer
+      required:
+        - id
+        - name
+        - quantity
+        - unitPrice
+        - totalPrice
+      type: object
+    OutputOrder:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/Order"
+          type: array
+        next:
+          type: string
+      required:
+        - items
+      type: object
+    PayPeriod:
+      additionalProperties: false
+      properties:
+        approved:
+          description: Commissions and claims approved
+          format: int64
+          type: integer
+        claims:
+          format: int64
+          type: integer
+        commissions:
+          description: Approved, selling staff only
+          format: int64
+          type: integer
+        end:
+          format: date
+          type: string
+        frequency:
+          enum:
+            - weekly
+            - bi_weekly
+            - four_weekly
+          type: string
+        payoutDate:
+          description: The day after the period ends
+          format: date
+          type: string
+        payouts:
+          description: "Payouts counted into the period, all staff: a schedule switch is safe at 0"
+          format: int64
+          type: integer
+        reviewed:
+          description: Approved plus still pending
+          format: int64
+          type: integer
+        start:
+          format: date
+          type: string
+        total:
+          format: int64
+          type: integer
+      required:
+        - frequency
+        - start
+        - end
+        - payoutDate
+        - payouts
+        - commissions
+        - claims
+        - total
+        - approved
+        - reviewed
+      type: object
+    PayPeriodAt:
+      additionalProperties: false
+      properties:
+        end:
+          format: date
+          type: string
+        frequency:
+          enum:
+            - weekly
+            - bi_weekly
+            - four_weekly
+          type: string
+        next:
+          description: The next period's first day; none after the current one
+          format: date
+          type: string
+        owed:
+          description: Approved, every person not yet paid or skipped
+          format: int64
+          type: integer
+        payoutDate:
+          description: The day after the period ends
+          format: date
+          type: string
+        people:
+          items:
+            $ref: "#/components/schemas/Payout"
+          type: array
+        previous:
+          description: The period before's first day
+          format: date
+          type: string
+        start:
+          format: date
+          type: string
+        toReview:
+          description: People with commissions or claims still to review
+          format: int64
+          type: integer
+      required:
+        - frequency
+        - start
+        - end
+        - payoutDate
+        - previous
+        - owed
+        - toReview
+        - people
+      type: object
+    PayStaff:
+      additionalProperties: false
+      properties:
+        avatarUrl:
+          type: string
+        bank:
+          $ref: "#/components/schemas/Bank"
+          description: Set by the staff member in the seller app
+        commissionType:
+          $ref: "#/components/schemas/CommissionType"
+        email:
+          type: string
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        role:
+          examples:
+            - USER
+          type: string
+        status:
+          examples:
+            - active
+          type: string
+      required:
+        - id
+        - name
+        - email
+        - role
+        - status
+        - bank
+      type: object
+    PayStaffOutputBody:
+      additionalProperties: false
+      properties:
+        staff:
+          description: Every user of the tenant, admins included; by name
+          items:
+            $ref: "#/components/schemas/PayStaff"
+          type: array
+      required:
+        - staff
+      type: object
+    Payout:
+      additionalProperties: false
+      properties:
+        approved:
+          description: Commissions and claims approved
+          format: int64
+          type: integer
+        avatarUrl:
+          type: string
+        claims:
+          format: int64
+          type: integer
+        commissions:
+          format: int64
+          type: integer
+        cups:
+          format: int64
+          type: integer
+        end:
+          format: date
+          type: string
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        nonSeller:
+          description: "No commission per cup (SELLER_0 or rate 0): hidden from the list by default"
+          type: boolean
+        orders:
+          format: int64
+          type: integer
+        paidAt:
+          format: date-time
+          type: string
+        pending:
+          description: Still to review
+          format: int64
+          type: integer
+        start:
+          format: date
+          type: string
+        status:
+          enum:
+            - pending
+            - paid
+            - skipped
+          type: string
+        total:
+          format: int64
+          type: integer
+        userId:
+          format: uuid
+          type: string
+      required:
+        - id
+        - userId
+        - name
+        - nonSeller
+        - status
+        - start
+        - end
+        - commissions
+        - claims
+        - total
+        - cups
+        - orders
+        - approved
+        - pending
+      type: object
+    PayoutsOutputBody:
+      additionalProperties: false
+      properties:
+        payouts:
+          description: Overlapping the month, newest period first
+          items:
+            $ref: "#/components/schemas/Payout"
+          type: array
+      required:
+        - payouts
+      type: object
+    Payslip:
+      additionalProperties: false
+      properties:
+        approved:
+          description: Commissions and claims approved
+          format: int64
+          type: integer
+        avatarUrl:
+          type: string
+        claimRows:
+          items:
+            $ref: "#/components/schemas/PayslipClaim"
+          type: array
+        commissionRows:
+          items:
+            $ref: "#/components/schemas/PayslipCommission"
+          type: array
+        cups:
+          format: int64
+          type: integer
+        end:
+          format: date
+          type: string
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        nonSeller:
+          description: "No commission per cup (SELLER_0 or rate 0): hidden from the list by default"
+          type: boolean
+        notes:
+          description: For the staff member
+          type: string
+        orders:
+          format: int64
+          type: integer
+        paidAt:
+          format: date-time
+          type: string
+        paidBy:
+          type: string
+        paymentProofUrl:
+          description: A signed address, for a few minutes
+          type: string
+        pending:
+          description: Still to review
+          format: int64
+          type: integer
+        ratePerCup:
+          description: Of the period's first commission; 0 without any
+          format: int64
+          type: integer
+        start:
+          format: date
+          type: string
+        status:
+          enum:
+            - pending
+            - paid
+            - skipped
+          type: string
+        total:
+          format: int64
+          type: integer
+        userId:
+          format: uuid
+          type: string
+      required:
+        - ratePerCup
+        - commissionRows
+        - claimRows
+        - id
+        - userId
+        - name
+        - nonSeller
+        - status
+        - start
+        - end
+        - total
+        - cups
+        - orders
+        - approved
+        - pending
+      type: object
+    PayslipClaim:
+      additionalProperties: false
+      properties:
+        amount:
+          format: int64
+          type: integer
+        date:
+          format: date
+          type: string
+        hoursWorked:
+          format: double
+          type: number
+        id:
+          format: uuid
+          type: string
+        notes:
+          type: string
+        status:
+          enum:
+            - pending
+            - approved
+            - rejected
+          type: string
+        thresholdHours:
+          format: double
+          type: number
+        type:
+          type: string
+      required:
+        - id
+        - date
+        - status
+        - amount
+      type: object
+    PayslipCommission:
+      additionalProperties: false
+      properties:
+        amount:
+          format: int64
+          type: integer
+        cups:
+          format: int64
+          type: integer
+        date:
+          format: date
+          type: string
+        id:
+          format: uuid
+          type: string
+        orders:
+          format: int64
+          type: integer
+        ratePerCup:
+          format: int64
+          type: integer
+        status:
+          enum:
+            - pending
+            - approved
+            - rejected
+          type: string
+        storeName:
+          type: string
+      required:
+        - id
+        - date
+        - status
+        - cups
+        - orders
+        - ratePerCup
+        - amount
+      type: object
+    RejectRequestInputBody:
+      additionalProperties: false
+      properties:
+        block:
+          description: Also drop this person's later asks, quietly
+          type: boolean
+      required:
+        - block
+      type: object
+    ReviewDayInputBody:
+      additionalProperties: false
+      properties:
+        status:
+          enum:
+            - approved
+            - rejected
+          type: string
+      required:
+        - status
+      type: object
+    ReviewDayOutputBody:
+      additionalProperties: false
+      properties:
+        claims:
+          format: int64
+          type: integer
+        commissions:
+          description: How many were decided
+          format: int64
+          type: integer
+      required:
+        - commissions
+        - claims
+      type: object
+    SalesDay:
+      additionalProperties: false
+      properties:
+        cups:
+          format: int64
+          type: integer
+        date:
+          format: date
+          type: string
+        notClosed:
+          description: "How many of them are not closed yet: their totals come when they close"
+          format: int64
+          type: integer
+        orders:
+          format: int64
+          type: integer
+        sales:
+          description: Rupiah
+          format: int64
+          type: integer
+        stores:
+          description: How many of the stores have this day
+          format: int64
+          type: integer
+      required:
+        - date
+        - sales
+        - orders
+        - cups
+        - stores
+        - notClosed
+      type: object
+    SalesDaysOutputBody:
+      additionalProperties: false
+      properties:
+        days:
+          description: Only days with a summary, oldest first
+          items:
+            $ref: "#/components/schemas/SalesDay"
+          type: array
+      required:
+        - days
+      type: object
+    SalesHour:
+      additionalProperties: false
+      properties:
+        cups:
+          format: int64
+          type: integer
+        hour:
+          format: int64
+          maximum: 23
+          minimum: 0
+          type: integer
+        orders:
+          format: int64
+          type: integer
+      required:
+        - hour
+        - orders
+        - cups
+      type: object
+    SalesHoursOutputBody:
+      additionalProperties: false
+      properties:
+        cups:
+          format: int64
+          type: integer
+        hours:
+          description: From the hour before the first sale to the hour after the last; empty without sales
+          items:
+            $ref: "#/components/schemas/SalesHour"
+          type: array
+        orders:
+          format: int64
+          type: integer
+        sales:
+          format: int64
+          type: integer
+      required:
+        - orders
+        - cups
+        - sales
+        - hours
+      type: object
+    SalesProduct:
+      additionalProperties: false
+      properties:
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        quantity:
+          format: int64
+          type: integer
+      required:
+        - id
+        - name
+        - quantity
+      type: object
+    SalesProductsOutputBody:
+      additionalProperties: false
+      properties:
+        products:
+          description: Most first
+          items:
+            $ref: "#/components/schemas/SalesProduct"
+          type: array
+      required:
+        - products
+      type: object
+    SetClaimEligibleInputBody:
+      additionalProperties: false
+      properties:
+        userIds:
+          description: Everyone who may claim it; the rest may not
+          items:
+            type: string
+          maxItems: 500
+          type: array
+      required:
+        - userIds
+      type: object
+    SetPayScheduleInputBody:
+      additionalProperties: false
+      properties:
+        frequency:
+          enum:
+            - weekly
+            - bi_weekly
+            - four_weekly
+          type: string
+      required:
+        - frequency
+      type: object
+    SetStaffCommissionInputBody:
+      additionalProperties: false
+      properties:
+        commissionTypeId:
+          description: Null takes it away
+          format: uuid
+          type:
+            - string
+            - "null"
+      required:
+        - commissionTypeId
+      type: object
+    SettlePayoutInputBody:
+      additionalProperties: false
+      properties:
+        notes:
+          description: For the staff member, on their payslip; cannot be changed after
+          maxLength: 500
+          type: string
+        paymentProofUrl:
+          description: The transfer screenshot's address from POST /files (purpose payroll_proof); needed to pay
+          maxLength: 1000
+          type: string
+        status:
+          description: "skipped: nothing owed, no transfer"
+          enum:
+            - paid
+            - skipped
+          type: string
+      required:
+        - status
+      type: object
+    StoreLive:
+      additionalProperties: false
+      properties:
+        cups:
+          format: int64
+          type: integer
+        id:
+          format: uuid
+          type: string
+        lastClosed:
+          format: date-time
+          type: string
+        name:
+          type: string
+        open:
+          description: Someone is selling there now
+          type: boolean
+        openSince:
+          format: date-time
+          type: string
+        orders:
+          format: int64
+          type: integer
+        sales:
+          format: int64
+          type: integer
+        sellerAvatar:
+          description: The seller's Google photo address
+          type: string
+        sellerName:
+          type: string
+        sellers:
+          description: Who sold here today and their cups, the most first; the seller on shift is in it even before their first order
+          items:
+            $ref: "#/components/schemas/DaySeller"
+          type: array
+        status:
+          description: "The store itself: active, fake (a demo) or inactive"
+          examples:
+            - active
+          type: string
+      required:
+        - id
+        - name
+        - status
+        - open
+        - orders
+        - cups
+        - sales
+        - sellers
+      type: object
+    StoresLiveOutputBody:
+      additionalProperties: false
+      properties:
+        date:
+          description: Today, in the stores' time zone
+          format: date
+          type: string
+        stores:
+          description: Open stores first, then by name
+          items:
+            $ref: "#/components/schemas/StoreLive"
+          type: array
+      required:
+        - date
+        - stores
+      type: object
+    TeaWasteDay:
+      additionalProperties: false
+      properties:
+        date:
+          format: date
+          type: string
+        litres:
+          format: double
+          type: number
+      required:
+        - date
+        - litres
+      type: object
+    TeaWasteOutputBody:
+      additionalProperties: false
+      properties:
+        days:
+          description: Only days whose tea was measured at closing
+          items:
+            $ref: "#/components/schemas/TeaWasteDay"
+          type: array
+      required:
+        - days
+      type: object
+    UacOutputBody:
+      additionalProperties: false
+      properties:
+        people:
+          description: Active first, then by name
+          items:
+            $ref: "#/components/schemas/UacPerson"
+          type: array
+        requests:
+          description: Waiting, oldest first
+          items:
+            $ref: "#/components/schemas/AccessRequest"
+          type: array
+      required:
+        - requests
+        - people
+      type: object
+    UacPerson:
+      additionalProperties: false
+      properties:
+        access:
+          $ref: "#/components/schemas/MeAccess"
+        active:
+          type: boolean
+        avatarUrl:
+          type: string
+        email:
+          type: string
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        owner:
+          type: boolean
+        phone:
+          type: string
+        since:
+          description: When the account was made
+          format: date-time
+          type: string
+        storeIds:
+          items:
+            type: string
+          type: array
+      required:
+        - id
+        - name
+        - email
+        - active
+        - owner
+        - access
+        - storeIds
+      type: object
+    UacPersonChange:
+      additionalProperties: false
+      properties:
+        access:
+          $ref: "#/components/schemas/MeAccess"
+          description: Each app's level, or '' for none; only the levels each app offers
+        active:
+          type: boolean
+        storeIds:
+          description: Exactly these of the tenant's stores
+          items:
+            type: string
+          maxItems: 100
+          type: array
+      required:
+        - access
+        - storeIds
+        - active
+      type: object
+    UpdateClaimTypeInputBody:
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+        name:
+          maxLength: 100
+          minLength: 1
+          type: string
+      type: object
+    UpdateCommissionTypeInputBody:
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+        name:
+          maxLength: 100
+          minLength: 1
+          type: string
+        ratePerCup:
+          format: int64
+          maximum: 1000000
+          minimum: 0
+          type: integer
+      type: object
+    UploadInputBody:
+      additionalProperties: false
+      properties:
+        contentType:
+          enum:
+            - image/webp
+            - image/jpeg
+          type: string
+        purpose:
+          enum:
+            - daily_photo
+            - report
+            - request
+            - reimbursement
+            - payroll_proof
+            - product_image
+          type: string
+        size:
+          description: Bytes, after the phone shrank it
+          format: int64
+          maximum: 1048576
+          minimum: 1
+          type: integer
+        storeId:
+          description: "For a store's photos: daily_photo, report, request"
+          format: uuid
+          type: string
+      required:
+        - purpose
+        - contentType
+        - size
+      type: object
+    UploadOutputBody:
+      additionalProperties: false
+      properties:
+        path:
+          description: Where it is kept, for the row that refers to it
+          type: string
+        uploadUrl:
+          description: PUT the photo here, straight to Storage; it works for a few minutes
+          type: string
+        url:
+          description: The address saved in the row (the old app's form); a private photo opens only through a signed address
+          type: string
+      required:
+        - uploadUrl
+        - path
+        - url
+      type: object
+    WeatherHour:
+      additionalProperties: false
+      properties:
+        code:
+          description: Tomorrow.io's weather code
+          format: int64
+          type: integer
+        date:
+          format: date
+          type: string
+        fetchedAt:
+          format: date-time
+          type: string
+        hour:
+          format: int64
+          maximum: 23
+          minimum: 0
+          type: integer
+        rainChance:
+          description: "%"
+          format: double
+          type: number
+        temperature:
+          description: °C
+          format: double
+          type: number
+      required:
+        - date
+        - hour
+        - temperature
+        - rainChance
+        - code
+        - fetchedAt
+      type: object
+    WeatherOutputBody:
+      additionalProperties: false
+      properties:
+        city:
+          type: string
+        hours:
+          description: Yesterday to tomorrow, by hour, in WIB
+          items:
+            $ref: "#/components/schemas/WeatherHour"
+          type: array
+        region:
+          type: string
+      required:
+        - city
+        - region
+        - hours
+      type: object
 info:
   title: tea-pos API
   version: dev
 openapi: 3.1.0
 paths:
+  /access-requests:
+    post:
+      operationId: askAccess
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskAccessInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Ask a tenant to let the caller in
+      tags:
+        - uac
+      x-access:
+        rateLimited: true
+        repeatable: true
+        signedIn: true
   /auth/callback:
     get:
       operationId: finishSignIn
@@ -244,6 +2067,58 @@ paths:
       tags:
         - auth
       x-access:
+        repeatable: true
+        signedIn: true
+  /auth/logout-everywhere:
+    post:
+      operationId: logoutEverywhere
+      responses:
+        "204":
+          description: No Content
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Sign out of every app on every phone
+      tags:
+        - auth
+      x-access:
+        repeatable: true
+        signedIn: true
+  /events:
+    post:
+      operationId: sendEvents
+      parameters:
+        - in: header
+          name: User-Agent
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventsInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Errors, page views and open times from an app, for PostHog
+      tags:
+        - system
+      x-access:
+        repeatable: true
         signedIn: true
   /health:
     get:
@@ -286,4 +2161,1552 @@ paths:
       tags:
         - me
       x-access:
+        signedIn: true
+    patch:
+      operationId: patchMe
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MePatchInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Change the signed-in user's own language
+      tags:
+        - me
+      x-access:
+        repeatable: true
+        signedIn: true
+  /tenants/{tenant}/days:
+    get:
+      operationId: listDays
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: month
+          required: true
+          schema:
+            examples:
+              - 2026-10
+            pattern: ^[0-9]{4}-[0-9]{2}$
+            type: string
+        - description: Repeat for several; none is every store of the tenant (All stores)
+          explode: false
+          in: query
+          name: storeId
+          schema:
+            description: Repeat for several; none is every store of the tenant (All stores)
+            items:
+              format: uuid
+              type: string
+            maxItems: 100
+            type:
+              - array
+              - "null"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DaysOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: A month of the stores' days, with expenses and who worked
+      tags:
+        - store
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/days/{id}:
+    get:
+      operationId: getDay
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DayDetail"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "One store's day: cash, expenses, who worked, photos, products"
+      tags:
+        - store
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/days/{id}/activity:
+    get:
+      operationId: getDayActivity
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DayActivityOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: What happened during a store's day, oldest first
+      tags:
+        - store
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/days/{id}/sessions:
+    get:
+      operationId: getDaySessions
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DaySessionsOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Who held a store's day, and the handovers
+      tags:
+        - store
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/feedbacks:
+    get:
+      operationId: listFeedbacks
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: limit
+          schema:
+            default: 100
+            format: int64
+            maximum: 500
+            minimum: 1
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbacksOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Where customers asked for a store, newest first
+      tags:
+        - more
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/files:
+    post:
+      operationId: signUpload
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: An address to upload one photo to, straight to Storage
+      tags:
+        - files
+      x-access:
+        tenant: true
+        repeatable: true
+        signedIn: true
+  /tenants/{tenant}/orders:
+    get:
+      operationId: listDayOrders
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - description: The day, in the stores' time zone
+          explode: false
+          in: query
+          name: date
+          required: true
+          schema:
+            description: The day, in the stores' time zone
+            format: date
+            type: string
+        - description: Repeat for several; none is every store of the tenant (All stores)
+          explode: false
+          in: query
+          name: storeId
+          schema:
+            description: Repeat for several; none is every store of the tenant (All stores)
+            items:
+              format: uuid
+              type: string
+            maxItems: 100
+            type:
+              - array
+              - "null"
+        - description: From the previous page's next; empty for the first
+          explode: false
+          in: query
+          name: cursor
+          schema:
+            description: From the previous page's next; empty for the first
+            type: string
+        - explode: false
+          in: query
+          name: limit
+          schema:
+            default: 30
+            format: int64
+            maximum: 100
+            minimum: 1
+            type: integer
+        - description: Only rows changed after this (a list catching up)
+          explode: false
+          in: query
+          name: since
+          schema:
+            description: Only rows changed after this (a list catching up)
+            format: date-time
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutputOrder"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: A day's orders over one store or several, newest first, a page at a time
+      tags:
+        - store
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/pay/claim-types:
+    get:
+      operationId: listClaimTypes
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimTypesOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: The tenant's claim types, by name
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+    post:
+      operationId: createClaimType
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClaimTypeInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimType"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Add a claim type
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/pay/claim-types/{id}:
+    patch:
+      operationId: updateClaimType
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateClaimTypeInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimType"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Rename or switch off a claim type
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/pay/claim-types/{id}/eligible:
+    get:
+      operationId: listClaimEligible
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimEligibleOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Who may claim a claim type
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+    put:
+      operationId: setClaimEligible
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetClaimEligibleInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "Set who may claim a claim type: everyone listed, no one else"
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/pay/claims/{id}:
+    put:
+      operationId: decideClaim
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DecisionInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Approve or reject one claim
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/pay/commission-types:
+    get:
+      operationId: listCommissionTypes
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommissionTypesOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: The tenant's commission types, by name
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+    post:
+      operationId: createCommissionType
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommissionTypeInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommissionType"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Add a commission type
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/pay/commission-types/{id}:
+    patch:
+      operationId: updateCommissionType
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCommissionTypeInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommissionType"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Rename, switch off or re-rate a commission type
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/pay/commissions/{id}:
+    put:
+      operationId: decideCommission
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DecisionInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Approve or reject one commission
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/pay/payouts:
+    get:
+      operationId: listPayouts
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: month
+          required: true
+          schema:
+            examples:
+              - 2026-10
+            pattern: ^[0-9]{4}-[0-9]{2}$
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayoutsOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Staff payouts overlapping a month, with their totals
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/pay/payouts/{id}:
+    get:
+      operationId: getPayslip
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payslip"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: A payout with every commission and claim in it
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/pay/payouts/{id}/days/{date}/review:
+    post:
+      operationId: reviewDay
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - description: The payout
+          in: path
+          name: id
+          required: true
+          schema:
+            description: The payout
+            format: uuid
+            type: string
+        - in: path
+          name: date
+          required: true
+          schema:
+            format: date
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewDayInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewDayOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Approve or reject every still-pending commission and claim of a payout's day
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/pay/payouts/{id}/settle:
+    post:
+      operationId: settlePayout
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettlePayoutInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Pay a payout (with the transfer screenshot) or skip it (nothing owed)
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/pay/period:
+    get:
+      operationId: getPayPeriod
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayPeriod"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: The current pay period and what it owes the selling staff
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/pay/periods/{start}:
+    get:
+      operationId: getPayPeriodAt
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - description: Any day of the period (its first, as the app links it), or current
+          in: path
+          name: start
+          required: true
+          schema:
+            description: Any day of the period (its first, as the app links it), or current
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayPeriodAt"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: A pay period and each person it pays, with what is still to review
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/pay/schedule:
+    put:
+      operationId: setPaySchedule
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetPayScheduleInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Set the tenant's pay frequency, for every staff member
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/pay/staff:
+    get:
+      operationId: listPayStaff
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayStaffOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: The tenant's users with their commission type and bank details
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/pay/staff/{userId}/commission-type:
+    put:
+      operationId: setStaffCommission
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetStaffCommissionInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Give a staff member a commission type, or none
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/sales/days:
+    get:
+      operationId: salesDays
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: from
+          required: true
+          schema:
+            format: date
+            type: string
+        - description: Included; at most 400 days after from
+          explode: false
+          in: query
+          name: to
+          required: true
+          schema:
+            description: Included; at most 400 days after from
+            format: date
+            type: string
+        - description: Repeat for several; none is every store of the tenant (All stores)
+          explode: false
+          in: query
+          name: storeId
+          schema:
+            description: Repeat for several; none is every store of the tenant (All stores)
+            items:
+              format: uuid
+              type: string
+            maxItems: 100
+            type:
+              - array
+              - "null"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalesDaysOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Sales, orders and cups per day, over one store or several
+      tags:
+        - store
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/sales/hours:
+    get:
+      operationId: salesHours
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: date
+          required: true
+          schema:
+            format: date
+            type: string
+        - description: Repeat for several; none is every store of the tenant (All stores)
+          explode: false
+          in: query
+          name: storeId
+          schema:
+            description: Repeat for several; none is every store of the tenant (All stores)
+            items:
+              format: uuid
+              type: string
+            maxItems: 100
+            type:
+              - array
+              - "null"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalesHoursOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: A day's cups and orders per hour, and its totals, over one store or several
+      tags:
+        - store
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/sales/products:
+    get:
+      operationId: salesProducts
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: from
+          required: true
+          schema:
+            format: date
+            type: string
+        - description: Included; at most 400 days after from
+          explode: false
+          in: query
+          name: to
+          required: true
+          schema:
+            description: Included; at most 400 days after from
+            format: date
+            type: string
+        - description: Repeat for several; none is every store of the tenant (All stores)
+          explode: false
+          in: query
+          name: storeId
+          schema:
+            description: Repeat for several; none is every store of the tenant (All stores)
+            items:
+              format: uuid
+              type: string
+            maxItems: 100
+            type:
+              - array
+              - "null"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalesProductsOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Cups per product over one store or several
+      tags:
+        - store
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/stores/live:
+    get:
+      operationId: storesLive
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoresLiveOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "Every store right now: open or closed, who is selling, today's sales"
+      tags:
+        - store
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/tea-waste:
+    get:
+      operationId: teaWaste
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: from
+          required: true
+          schema:
+            format: date
+            type: string
+        - description: Included; at most 400 days after from
+          explode: false
+          in: query
+          name: to
+          required: true
+          schema:
+            description: Included; at most 400 days after from
+            format: date
+            type: string
+        - description: Repeat for several; none is every store of the tenant (All stores)
+          explode: false
+          in: query
+          name: storeId
+          schema:
+            description: Repeat for several; none is every store of the tenant (All stores)
+            items:
+              format: uuid
+              type: string
+            maxItems: 100
+            type:
+              - array
+              - "null"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeaWasteOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Litres of tea left at closing per day, over one store or several
+      tags:
+        - store
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/uac:
+    get:
+      operationId: getUac
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UacOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Requests waiting and everyone in the tenant, with their levels per app
+      tags:
+        - uac
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/uac/people/{userId}:
+    get:
+      operationId: getUacPerson
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UacPerson"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "One person: their levels per app, stores and status"
+      tags:
+        - uac
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+    put:
+      operationId: setUacPerson
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UacPersonChange"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UacPerson"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Set a person's levels per app, stores and status, at once
+      tags:
+        - uac
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/uac/requests/{id}:
+    get:
+      operationId: getUacRequest
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessRequest"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: One request waiting
+      tags:
+        - uac
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/uac/requests/{id}/approve:
+    post:
+      operationId: approveUacRequest
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UacPersonChange"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UacPerson"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Let the person in with these levels and stores
+      tags:
+        - uac
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/uac/requests/{id}/reject:
+    post:
+      operationId: rejectUacRequest
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectRequestInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Turn a request down, or block the person's later asks too
+      tags:
+        - uac
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/weather:
+    get:
+      operationId: getWeather
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeatherOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: The forecast by hour, yesterday to tomorrow
+      tags:
+        - more
+      x-access:
+        tenant: true
         signedIn: true

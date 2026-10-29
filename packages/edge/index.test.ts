@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { forward } from "./index";
 
-const env = { API_ORIGIN: "https://api.example", EDGE_SECRET: "secret", APP: "seller" };
+const env = {
+    API_ORIGIN: "https://api.example",
+    REALTIME_ORIGIN: "https://realtime.example",
+    EDGE_SECRET: "secret",
+    APP: "seller",
+};
 
 function sent(path: string, headers: Record<string, string> = {}) {
     const fetch = vi.fn(async () => new Response("ok"));
@@ -29,6 +34,14 @@ describe("forward", () => {
             expect(target.host).toBe("api.example");
         },
     );
+
+    it("sends /api/realtime to the hub, with the same secret, and nothing else", async () => {
+        const { target, headers } = await sent("/api/realtime", { Upgrade: "websocket" });
+        expect(target.href).toBe("https://realtime.example/realtime");
+        expect(headers.get("X-Edge-Secret")).toBe("secret");
+        expect(headers.get("Upgrade")).toBe("websocket");
+        expect((await sent("/api/realtime/x")).target.host).toBe("api.example");
+    });
 
     it("sets the secret, app and origin, replacing a client's own", async () => {
         const { headers } = await sent("/api/me", {

@@ -17,6 +17,11 @@ export interface AppConfig {
     };
     /** Languages offered; the first is the default. */
     locales: readonly [Locale, ...Locale[]];
+    /**
+     * The store picker: "one" works in one store and must pick it (seller sells from it);
+     * "all" looks at stores and also offers All stores, its default (backoffice).
+     */
+    stores: "one" | "all";
 }
 
 export const defineApp = (app: AppConfig) => app;

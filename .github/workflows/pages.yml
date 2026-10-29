@@ -12,6 +12,9 @@ on:
             sha:
                 type: string
                 default: ""
+            version:
+                type: string
+                default: ""
     pull_request:
         branches: [staging]
         paths:
@@ -49,6 +52,7 @@ jobs:
             WRANGLER: npx -y wrangler@4.151.3
             BRANCH: ${{ inputs.production && 'main' || github.head_ref || github.ref_name }}
             APP_COMMIT: ${{ inputs.sha || github.event.pull_request.head.sha || github.sha }}
+            APP_VERSION: ${{ inputs.version || 'preview' }}
             PAGES_ENV: ${{ inputs.production && 'production' || 'preview' }}
             EDGE_SECRET: ${{ inputs.production && secrets.EDGE_SECRET_PRODUCTION || secrets.EDGE_SECRET_STAGING }}
         defaults:
@@ -65,6 +69,20 @@ jobs:
                   cache: pnpm
             - run: pnpm install --frozen-lockfile
             - run: pnpm --filter @tea-pos/${{ matrix.app }} build
+            # App errors read with our files and lines in PostHog: each file gets its chunk id, the maps go
+            # to PostHog, and are deleted before deploying (a phone never downloads one). Task 016c.
+            - name: Source maps
+              env:
+                  POSTHOG_CLI_API_KEY: ${{ secrets.POSTHOG_SOURCEMAPS_KEY }}
+                  # TEA-POS-PROD and TEA-POS-STG (previews and staging report to staging's).
+                  POSTHOG_CLI_PROJECT_ID: ${{ inputs.production && '446129' || '445574' }}
+              run: |
+                  if [ -n "$POSTHOG_CLI_API_KEY" ]; then
+                      npx -y @posthog/cli@0.18.9 sourcemap inject --directory dist/assets
+                      npx -y @posthog/cli@0.18.9 sourcemap upload --directory dist/assets \
+                          --release-name "${{ matrix.app }}" --release-version "$APP_VERSION" --delete-after
+                  fi
+                  rm -f dist/assets/*.map
             - name: Project exists
               run: $WRANGLER pages project create ${{ matrix.project }} --production-branch main 2>/dev/null || true
             - name: Secret

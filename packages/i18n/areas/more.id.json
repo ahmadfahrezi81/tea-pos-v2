@@ -1,0 +1,25 @@
+{
+    "weather": {
+        "asOf": "Per",
+        "now": "Sekarang",
+        "noData": "Belum ada data cuaca",
+        "clear": "Cerah",
+        "mostlyClear": "Cerah Berawan",
+        "partlyCloudy": "Berawan Sebagian",
+        "mostlyCloudy": "Banyak Awan",
+        "cloudy": "Berawan",
+        "foggy": "Berkabut",
+        "windy": "Berangin",
+        "drizzle": "Gerimis",
+        "lightRain": "Hujan Ringan",
+        "rain": "Hujan",
+        "heavyRain": "Hujan Lebat",
+        "snow": "Salju",
+        "freezingRain": "Hujan Es",
+        "thunderstorm": "Badai Petir",
+        "unknown": "Tidak diketahui"
+    },
+    "moreRows": {
+        "weather": "Cuaca"
+    }
+}

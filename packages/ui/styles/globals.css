@@ -1,5 +1,6 @@
 /* The theme every app shares. The brand colour comes from each app's app.config.ts. */
 @import "tailwindcss";
+@import "./motion.css";
 
 /* Tailwind scans the app by default; the shared packages hold classes too. */
 @source "../**/*.tsx";
@@ -277,5 +278,13 @@ a,
 
     [data-busy="true"] .action-spinner {
         animation: action-fade 1.2s ease-in-out infinite;
+    }
+}
+
+/* Sideways scrolling without a bar (charts wider than the phone). */
+@utility no-scrollbar {
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+        display: none;
     }
 }

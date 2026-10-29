@@ -29,3 +29,19 @@ func (q *Queries) GetTenantBySlug(ctx context.Context, slug string) (GetTenantBy
 	err := row.Scan(&i.ID, &i.Name, &i.Slug)
 	return i, err
 }
+
+const storeInTenant = `-- name: StoreInTenant :one
+SELECT EXISTS (SELECT 1 FROM stores WHERE id = $1 AND tenant_id = $2)
+`
+
+type StoreInTenantParams struct {
+	ID       pgtype.UUID
+	TenantID pgtype.UUID
+}
+
+func (q *Queries) StoreInTenant(ctx context.Context, arg StoreInTenantParams) (bool, error) {
+	row := q.db.QueryRow(ctx, storeInTenant, arg.ID, arg.TenantID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}

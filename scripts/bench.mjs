@@ -121,18 +121,38 @@ async function unthrottle(page) {
 }
 
 // Loads (or reloads) under throttling and waits for the app to say it is ready, then for the quiet after.
-async function measure(page, load) {
+// What the page showed when a load never finished, for the log.
+const describe = (page) =>
+    page
+        .evaluate(() => ({
+            path: location.pathname,
+            state: document.readyState,
+            splash: !!document.getElementById("splash"),
+            worker: !!navigator.serviceWorker?.controller,
+        }))
+        .catch((e) => ({ error: String(e) }));
+
+// Loads (or reloads) under throttling and waits for the app to say it is ready, then for the quiet after.
+// A load that never finishes (a shared runner sometimes stalls one) is tried once more, then fails.
+async function measure(page, load, attempt = 1) {
     await throttle(page);
     await load();
-    const signedOut = await page
+    const outcome = await page
         .waitForFunction(
             () =>
                 location.pathname === "/login" ||
                 performance.getEntriesByName("tea-pos:ready").length > 0,
-            { timeout: 120_000, polling: 500 },
+            { timeout: 60_000, polling: 500 },
         )
-        .then(() => page.evaluate(() => location.pathname === "/login"));
-    if (signedOut) {
+        .then(() => page.evaluate(() => (location.pathname === "/login" ? "signed out" : "ready")))
+        .catch(() => "stalled");
+    if (outcome === "stalled") {
+        console.error(`load ${attempt} stalled after 60 s:`, JSON.stringify(await describe(page)));
+        await unthrottle(page);
+        if (attempt === 2) throw new Error("two loads in a row never became ready");
+        return measure(page, load, 2);
+    }
+    if (outcome === "signed out") {
         console.error(`Not signed in on ${origin}. Run: pnpm bench --sign-in ${origin}`);
         process.exit(1);
     }
@@ -140,7 +160,18 @@ async function measure(page, load) {
     await new Promise((r) => setTimeout(r, 3000));
     const metrics = await page.evaluate(readMetrics);
     await unthrottle(page);
+    await toBackground(page);
     return metrics;
+}
+
+// The app sends what it queued as it goes to the background, as when a seller switches apps;
+// a request sent as a page closes is invisible here.
+async function toBackground(page) {
+    const other = await page.browser().newPage();
+    await other.bringToFront();
+    await new Promise((r) => setTimeout(r, 500));
+    await page.bringToFront();
+    await other.close();
 }
 
 const median = (values) => {
@@ -160,6 +191,21 @@ const browser = await launch(true);
 const [page] = await browser.pages();
 const cdp = await page.createCDPSession();
 const results = {};
+
+// The app reports each open itself (app_ready, task 016c): catch those reports, to check them
+// against what the bench measured, so the field numbers and these stay the same thing.
+const reported = [];
+page.on("request", async (req) => {
+    if (!req.url().endsWith("/api/events") || req.method() !== "POST") return;
+    try {
+        const body = req.postData() ?? (await req.fetchPostData());
+        for (const e of JSON.parse(body ?? "{}").events ?? [])
+            if (e.type === "app_ready") reported.push(e.ready);
+    } catch {
+        // Not ours to judge.
+    }
+});
+const measured = [];
 
 const testUser = option("--test-user");
 if (testUser) {
@@ -190,12 +236,20 @@ if (testUser) {
 }
 
 // Warm up once unthrottled, so the service worker and the saved cache exist for the reopens.
+// The cache is written a moment after the app is ready, so wait for both.
 await page.goto(url, { waitUntil: "networkidle0" });
+await page
+    .waitForFunction(() => performance.getEntriesByName("tea-pos:ready").length > 0, {
+        timeout: 30_000,
+    })
+    .catch(() => {});
+await new Promise((r) => setTimeout(r, 2000));
 
 if (!flag("--first-only")) {
     const list = [];
     for (let i = 0; i < runs; i++) {
         list.push(await measure(page, () => page.reload()));
+        measured.push({ kind: "reopen", want: "saved", ready: list.at(-1).ready });
         process.stdout.write(`reopen ${i + 1}/${runs}\r`);
     }
     results.reopen = summarize(list);
@@ -211,11 +265,21 @@ if (!flag("--reopen-only")) {
             storageTypes: "service_workers,cache_storage,indexeddb,local_storage",
         });
         list.push(await measure(page, () => page.goto(url)));
+        measured.push({ kind: "first visit", want: "network", ready: list.at(-1).ready });
         process.stdout.write(`first visit ${i + 1}/${runs}\r`);
     }
     results.first = summarize(list);
 }
 await browser.close();
+
+// Each measured load should have reported the same time (the app rounds to the millisecond) and the right kind of open.
+const mismatches = measured.filter((m) => {
+    const r = reported.find((e) => Math.abs(e.readyMs - m.ready) < 1);
+    return !r || r.open !== m.want || r.hidden;
+});
+const fieldCheck = mismatches.length
+    ? `app_ready check: ${mismatches.length} of ${measured.length} loads reported differently: ${JSON.stringify({ mismatches, reported })}`
+    : `app_ready check: all ${measured.length} loads reported the same time and kind of open`;
 
 const health = await fetch(`${origin}/api/health`)
     .then((r) => r.json())
@@ -243,6 +307,7 @@ for (const [label, cell] of Object.entries(rows)) {
 }
 console.log(`\n${origin} at ${commit}: 20× CPU, Slow 4G, cache disabled\n`);
 console.table(table);
+console.log(fieldCheck);
 
 const when = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Jakarta" }).slice(0, 16);
 const app = new URL(origin).hostname.split(".")[0];
@@ -269,6 +334,8 @@ if (process.env.BENCH_REPORT) {
         ...Object.entries(table).map(
             ([label, cells]) => `| ${label} | ${Object.values(cells).join(" | ")} |`,
         ),
+        "",
+        fieldCheck,
         "",
         "<details><summary>Benchmark log rows</summary>",
         "",

@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
 )
@@ -100,6 +101,22 @@ func TestHealth_RunsTheCommitUnderTest(t *testing.T) {
 		if want != "" && body["commit"] != want {
 			t.Errorf("%s runs %v, want %s", app, body["commit"], want)
 		}
+		if body["version"] != "staging" {
+			t.Errorf("%s says version %v, want staging", app, body["version"])
+		}
+	}
+}
+
+func TestMonitoring_TimingAndEventsReachThePhone(t *testing.T) {
+	p := newPhone(t, seller)
+	mustSignIn(t, p, "seller@test-a.test")
+	resp, _ := p.do(http.MethodGet, "/me", "", nil)
+	if st := resp.Header.Get("Server-Timing"); !strings.Contains(st, "db;dur=") {
+		t.Errorf("Server-Timing through the forwarder: %q", st)
+	}
+	at := time.Now().UTC().Format(time.RFC3339)
+	if resp, body := p.do(http.MethodPost, "/events", `{"session":"0192f1a2-3b4c-7d5e-8f60-718293a4b5c6","device":{},"events":[{"type":"pageview","path":"/e2e","at":"`+at+`"}]}`, nil); resp.StatusCode != http.StatusNoContent {
+		t.Errorf("/events: status %d %v", resp.StatusCode, body["code"])
 	}
 }
 
@@ -160,5 +177,52 @@ func TestSignOut_EndsTheSession(t *testing.T) {
 	}
 	if resp, _ := p.do(http.MethodGet, "/me", "", nil); resp.StatusCode != http.StatusUnauthorized {
 		t.Fatalf("/me after sign out: status %d, want 401", resp.StatusCode)
+	}
+}
+
+// Signing out everywhere ends the user's other sessions too (017b also closes their sockets).
+func TestSignOutEverywhere(t *testing.T) {
+	one, two := newPhone(t, seller), newPhone(t, seller)
+	mustSignIn(t, one, "seller@test-b.test")
+	mustSignIn(t, two, "seller@test-b.test")
+	if resp, _ := one.do(http.MethodPost, "/auth/logout-everywhere", "", nil); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("sign out everywhere: status %d", resp.StatusCode)
+	}
+	if resp, _ := two.do(http.MethodGet, "/me", "", nil); resp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("the other phone's /me: status %d, want 401", resp.StatusCode)
+	}
+}
+
+// The Store tab's numbers come through the backoffice's forwarder for the test admin, from
+// seed.sql's days and orders, and a seller cannot read them.
+func TestStore_AdminSeesTheTenantsSales(t *testing.T) {
+	admin := newPhone(t, backoffice)
+	mustSignIn(t, admin, "admin@test-a.test")
+	today := time.Now().In(time.FixedZone("WIB", 7*3600)).Format(time.DateOnly)
+	resp, body := admin.do(http.MethodGet, "/tenants/test-a/sales/days?from="+today[:8]+"01&to="+today, "", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("sales/days: %d %v", resp.StatusCode, body["code"])
+	}
+	if days, _ := body["days"].([]any); len(days) == 0 {
+		t.Fatal("no days this month: is seed.sql's Store data there?")
+	}
+	if resp, body := admin.do(http.MethodGet, "/tenants/test-a/orders?date="+today, "", nil); resp.StatusCode != http.StatusOK {
+		t.Fatalf("orders: %d %v", resp.StatusCode, body["code"])
+	}
+	sellerPhone := newPhone(t, seller)
+	mustSignIn(t, sellerPhone, "seller@test-a.test")
+	if resp, _ := sellerPhone.do(http.MethodGet, "/tenants/test-a/sales/days?from="+today+"&to="+today, "", nil); resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("seller: %d, want 403", resp.StatusCode)
+	}
+}
+
+// The Pay tab answers the test admin through the forwarder: the period and the staff.
+func TestPay_AdminSeesThePeriodAndStaff(t *testing.T) {
+	admin := newPhone(t, backoffice)
+	mustSignIn(t, admin, "admin@test-a.test")
+	for _, path := range []string{"/tenants/test-a/pay/period", "/tenants/test-a/pay/staff", "/tenants/test-a/pay/commission-types", "/tenants/test-a/pay/claim-types"} {
+		if resp, body := admin.do(http.MethodGet, path, "", nil); resp.StatusCode != http.StatusOK {
+			t.Errorf("%s: %d %v", path, resp.StatusCode, body["code"])
+		}
 	}
 }

@@ -12,4 +12,5 @@ export default defineApp({
         subtitleKey: "signIn.backofficeSub",
     },
     locales: ["en"],
+    stores: "all",
 });

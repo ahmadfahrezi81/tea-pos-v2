@@ -15,9 +15,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/files"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/handler"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/middleware"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/realtime"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/version"
 )
 
 const (
@@ -34,6 +37,8 @@ const (
 	DriverA   = "00000000-0000-0000-0004-00000000000a"
 	SellerB   = "00000000-0000-0000-0001-00000000000b"
 	NoTenant  = "00000000-0000-0000-0005-000000000000"
+	GuestA    = "00000000-0000-0000-0007-00000000000a"
+	OffA      = "00000000-0000-0000-0008-00000000000a"
 )
 
 // API is the real API, middleware chain included, on a test server.
@@ -46,17 +51,34 @@ type API struct {
 // NewAPI serves the API on pool. supabaseURL is a fake Supabase, or "" when sign-in is not under test.
 func NewAPI(t *testing.T, pool *pgxpool.Pool, supabaseURL string) *API {
 	t.Helper()
+	return NewAPIWith(t, pool, Options{SupabaseURL: supabaseURL})
+}
+
+type Options struct {
+	SupabaseURL    string
+	MinAppVersions map[string]version.Release
+	// Flags replaces PostHog's; nil has every flag off.
+	Flags auth.Flags
+	// StorageURL is a fake Supabase for photo uploads.
+	StorageURL string
+}
+
+func NewAPIWith(t *testing.T, pool *pgxpool.Pool, o Options) *API {
+	t.Helper()
 	q := store.New(pool)
 	sessions := auth.NewSessions(q)
 	mux := http.NewServeMux()
 	api := handler.NewAPI(mux, handler.Deps{
+		DB:           pool,
 		Queries:      q,
 		Sessions:     sessions,
-		Supabase:     auth.NewSupabase(supabaseURL, "test-publishable-key"),
+		Supabase:     auth.NewSupabase(o.SupabaseURL, "test-publishable-key"),
 		Limiter:      auth.NewLimiter(10, time.Minute),
 		TestLoginKey: TestLoginKey,
+		Flags:        o.Flags,
+		Files:        files.NewStorage(o.StorageURL, "test-secret-key"),
 	})
-	srv := httptest.NewServer(middleware.Standard(mux, 5*time.Second, EdgeSecret))
+	srv := httptest.NewServer(middleware.Standard(mux, middleware.Options{RequestTimeout: 5 * time.Second, EdgeSecret: EdgeSecret, MinAppVersions: o.MinAppVersions}))
 	t.Cleanup(srv.Close)
 	return &API{URL: srv.URL, Huma: api, Sessions: sessions}
 }
@@ -81,9 +103,22 @@ func Session(token string) *http.Cookie { return &http.Cookie{Name: auth.CookieN
 // Request is a call as the forwarder makes it: edge secret, app and its address set.
 func (a *API) Request(t *testing.T, method, path, app string, cookies ...*http.Cookie) *http.Response {
 	t.Helper()
-	req, err := http.NewRequest(method, a.URL+path, strings.NewReader(""))
+	return a.Send(t, method, path, app, "", nil, cookies...)
+}
+
+// Send is Request with a JSON body and headers ("Name: value" each).
+func (a *API) Send(t *testing.T, method, path, app, body string, headers []string, cookies ...*http.Cookie) *http.Response {
+	t.Helper()
+	req, err := http.NewRequest(method, a.URL+path, strings.NewReader(body))
 	if err != nil {
 		t.Fatal(err)
+	}
+	if body != "" {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	for _, h := range headers {
+		k, v, _ := strings.Cut(h, ":")
+		req.Header.Set(k, strings.TrimSpace(v))
 	}
 	req.Header.Set("X-Edge-Secret", EdgeSecret)
 	req.Header.Set("X-App", app)
@@ -103,3 +138,23 @@ func (a *API) Request(t *testing.T, method, path, app string, cookies ...*http.C
 var noRedirects = &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error {
 	return http.ErrUseLastResponse
 }}
+
+// NewRealtime serves the realtime hub on pool, listening for announcements as in production.
+func NewRealtime(t *testing.T, pool *pgxpool.Pool) string {
+	t.Helper()
+	q := store.New(pool)
+	hub := realtime.NewHub(auth.NewSessions(q), q)
+	ctx, cancel := context.WithCancel(context.Background())
+	go hub.Listen(ctx, pool.Config().ConnConfig.Copy())
+	mux := http.NewServeMux()
+	mux.Handle("GET /realtime", hub)
+	srv := httptest.NewServer(middleware.Standard(mux, middleware.Options{RequestTimeout: 5 * time.Second, EdgeSecret: EdgeSecret}))
+	t.Cleanup(func() {
+		hub.CloseAll()
+		cancel()
+		srv.Close()
+	})
+	// LISTEN is set up a moment after start; announcements before it would be missed.
+	time.Sleep(200 * time.Millisecond)
+	return "ws" + strings.TrimPrefix(srv.URL, "http") + "/realtime"
+}

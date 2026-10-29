@@ -8,6 +8,8 @@
     },
     "scripts": {
         "build": "turbo run build",
+        "seller": "pnpm --filter @tea-pos/seller dev",
+        "backoffice": "pnpm --filter @tea-pos/backoffice dev",
         "lint": "turbo run lint",
         "typecheck": "turbo run typecheck",
         "test": "turbo run test",

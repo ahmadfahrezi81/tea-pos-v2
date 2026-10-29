@@ -13,4 +13,5 @@ export default defineApp({
         subtitleKey: "signIn.sellerSub",
     },
     locales: ["en", "id"],
+    stores: "one",
 });

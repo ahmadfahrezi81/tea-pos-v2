@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { HomeScreen } from "@tea-pos/shell/HomeScreen";
+import { GoToTenant } from "@tea-pos/shell/HomeScreen";
 
+// `/` goes to the user's tenant.
 export const Route = createFileRoute("/_shell/")({
-    staticData: { shell: { titleKey: "home.title", parent: null, refreshable: true } },
-    component: HomeScreen,
+    staticData: { shell: { titleKey: "home.title", parent: null } },
+    component: GoToTenant,
 });

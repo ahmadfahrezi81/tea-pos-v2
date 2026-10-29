@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+    addDays,
+    formatCalendarDay,
+    localHour,
     formatDate,
     formatDateTime,
     formatMoney,
     formatMonth,
+    formatDay,
     formatRelative,
     formatTime,
     localDate,
@@ -68,5 +72,33 @@ describe("formatMoney", () => {
     it("is rupiah with Indonesian grouping", () => {
         expect(formatMoney(15000)).toBe("Rp 15.000");
         expect(formatMoney(0)).toBe("Rp 0");
+    });
+});
+
+describe("formatDay", () => {
+    const now = new Date("2026-10-24T05:00:00Z");
+    it("says today and yesterday, in the store's day", () => {
+        expect(formatDay("2026-10-24", "en", now)).toBe("Today");
+        expect(formatDay("2026-10-23", "en", now)).toBe("Yesterday");
+        expect(formatDay("2026-10-23", "id", now)).toBe("Kemarin");
+    });
+    it("names older days with their weekday", () => {
+        expect(formatDay("2026-10-01", "en", now)).toBe("Thu 1 Oct");
+    });
+});
+
+describe("calendar days", () => {
+    it("adds days across a month", () => {
+        expect(addDays("2026-10-31", 1)).toBe("2026-11-01");
+        expect(addDays("2026-03-01", -1)).toBe("2026-02-28");
+    });
+    it("formats a day in every shared style", () => {
+        expect(formatCalendarDay("2026-10-22", "en")).toBe("22 Oct");
+        expect(formatCalendarDay("2026-10-22", "en", "short")).toBe("Thu 22 Oct");
+        expect(formatCalendarDay("2026-10-22", "en", "full")).toBe("Thu, 22 Oct 2026");
+        expect(formatCalendarDay("2026-10-22", "en", "day")).toBe("22");
+    });
+    it("reads the hour on the store's clock", () => {
+        expect(localHour(new Date("2026-10-22T17:30:00Z"))).toBe(0);
     });
 });

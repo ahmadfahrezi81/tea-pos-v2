@@ -5,12 +5,73 @@
 package store
 
 import (
+	"database/sql/driver"
+	"fmt"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type RiverRiverJobState string
+
+const (
+	RiverRiverJobStateAvailable RiverRiverJobState = "available"
+	RiverRiverJobStateCancelled RiverRiverJobState = "cancelled"
+	RiverRiverJobStateCompleted RiverRiverJobState = "completed"
+	RiverRiverJobStateDiscarded RiverRiverJobState = "discarded"
+	RiverRiverJobStatePending   RiverRiverJobState = "pending"
+	RiverRiverJobStateRetryable RiverRiverJobState = "retryable"
+	RiverRiverJobStateRunning   RiverRiverJobState = "running"
+	RiverRiverJobStateScheduled RiverRiverJobState = "scheduled"
+)
+
+func (e *RiverRiverJobState) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = RiverRiverJobState(s)
+	case string:
+		*e = RiverRiverJobState(s)
+	default:
+		return fmt.Errorf("unsupported scan type for RiverRiverJobState: %T", src)
+	}
+	return nil
+}
+
+type NullRiverRiverJobState struct {
+	RiverRiverJobState RiverRiverJobState
+	Valid              bool // Valid is true if RiverRiverJobState is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullRiverRiverJobState) Scan(value interface{}) error {
+	if value == nil {
+		ns.RiverRiverJobState, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.RiverRiverJobState.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullRiverRiverJobState) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.RiverRiverJobState), nil
+}
 
 type AuthUser struct {
 	ID    pgtype.UUID
 	Email pgtype.Text
+}
+
+type IdempotencyKey struct {
+	UserID      pgtype.UUID
+	Key         string
+	RequestHash []byte
+	Status      pgtype.Int2
+	ContentType pgtype.Text
+	Body        []byte
+	CreatedAt   pgtype.Timestamptz
 }
 
 type PayrollClaim struct {
@@ -111,6 +172,49 @@ type PayrollUserInfo struct {
 	BankAccountHolder  pgtype.Text
 	CreatedAt          pgtype.Timestamptz
 	UpdatedAt          pgtype.Timestamptz
+}
+
+type RiverRiverJob struct {
+	ID           int64
+	State        RiverRiverJobState
+	Attempt      int16
+	MaxAttempts  int16
+	AttemptedAt  pgtype.Timestamptz
+	CreatedAt    pgtype.Timestamptz
+	FinalizedAt  pgtype.Timestamptz
+	ScheduledAt  pgtype.Timestamptz
+	Priority     int16
+	Args         []byte
+	AttemptedBy  []string
+	Errors       [][]byte
+	Kind         string
+	Metadata     []byte
+	Queue        string
+	Tags         []string
+	UniqueKey    []byte
+	UniqueStates pgtype.Bits
+}
+
+type RiverRiverLeader struct {
+	ElectedAt pgtype.Timestamptz
+	ExpiresAt pgtype.Timestamptz
+	LeaderID  string
+	Name      string
+}
+
+type RiverRiverNotification struct {
+	ID        int64
+	CreatedAt pgtype.Timestamptz
+	Payload   string
+	Topic     string
+}
+
+type RiverRiverQueue struct {
+	Name      string
+	CreatedAt pgtype.Timestamptz
+	Metadata  []byte
+	PausedAt  pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
 }
 
 type Session struct {
@@ -270,6 +374,17 @@ type Tenant struct {
 	UpdatedAt    pgtype.Timestamptz
 	Slug         string
 	PayFrequency string
+	OwnerID      pgtype.UUID
+}
+
+type TenantAccessRequest struct {
+	ID        pgtype.UUID
+	TenantID  pgtype.UUID
+	UserID    pgtype.UUID
+	Status    string
+	CreatedAt pgtype.Timestamptz
+	DecidedBy pgtype.UUID
+	DecidedAt pgtype.Timestamptz
 }
 
 type TenantActivityLog struct {
@@ -336,6 +451,15 @@ type User struct {
 	AvatarUrl         pgtype.Text
 }
 
+type UserAppAccess struct {
+	TenantID  pgtype.UUID
+	UserID    pgtype.UUID
+	App       string
+	Access    string
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+}
+
 type UserStoreAssignment struct {
 	ID        pgtype.UUID
 	UserID    pgtype.UUID
@@ -349,6 +473,18 @@ type UserTenantAssignment struct {
 	TenantID  pgtype.UUID
 	UserID    pgtype.UUID
 	CreatedAt pgtype.Timestamptz
+	Status    string
+}
+
+type WeatherHour struct {
+	Cell                     string
+	Date                     pgtype.Date
+	Hour                     int16
+	Temperature              pgtype.Numeric
+	PrecipitationProbability pgtype.Numeric
+	WeatherCode              int32
+	Observed                 bool
+	FetchedAt                pgtype.Timestamptz
 }
 
 type WeatherHourly struct {

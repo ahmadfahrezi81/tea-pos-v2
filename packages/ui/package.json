@@ -3,24 +3,56 @@
     "private": true,
     "type": "module",
     "exports": {
-        "./ActionButton": "./ActionButton.tsx",
-        "./Emoji": "./Emoji.tsx",
+        "./ActionButton": "./controls/ActionButton.tsx",
+        "./AreaChart": "./chart/AreaChart.tsx",
+        "./Avatar": "./controls/Avatar.tsx",
+        "./avatarUrl": "./lib/avatarUrl.ts",
+        "./Badge": "./controls/Badge.tsx",
+        "./BarChart": "./chart/BarChart.tsx",
+        "./Callout": "./feedback/Callout.tsx",
+        "./ChoiceList": "./controls/ChoiceList.tsx",
+        "./ComingSoon": "./feedback/ComingSoon.tsx",
+        "./CopyButton": "./controls/CopyButton.tsx",
+        "./DetailList": "./layout/DetailList.tsx",
         "./dot-grid": "./styles/dot-grid.ts",
-        "./globals.css": "./styles/globals.css"
+        "./Drawer": "./layout/Drawer.tsx",
+        "./Emoji": "./feedback/Emoji.tsx",
+        "./EmptyState": "./feedback/EmptyState.tsx",
+        "./FilterButton": "./controls/FilterButton.tsx",
+        "./form/*": "./form/*.tsx",
+        "./globals.css": "./styles/globals.css",
+        "./icon": "./lib/icon.ts",
+        "./ListRow": "./layout/ListRow.tsx",
+        "./LoadMore": "./feedback/LoadMore.tsx",
+        "./MonthStepper": "./controls/MonthStepper.tsx",
+        "./motion": "./lib/motion.ts",
+        "./Panel": "./layout/Panel.tsx",
+        "./PhotoInput": "./photo/PhotoInput.tsx",
+        "./SearchBox": "./controls/SearchBox.tsx",
+        "./SectionLabel": "./layout/SectionLabel.tsx",
+        "./Sheet": "./layout/Sheet.tsx",
+        "./shrinkPhoto": "./photo/shrink.ts",
+        "./Skeleton": "./feedback/Skeleton.tsx",
+        "./toast": "./toast/Toast.tsx",
+        "./weather": "./lib/weather.ts"
     },
     "scripts": {
         "lint": "eslint .",
         "typecheck": "tsc -p ."
     },
     "peerDependencies": {
-        "react": "^19"
+        "react": "^19",
+        "react-dom": "^19"
     },
     "dependencies": {
-        "@fontsource-variable/inter": "5.3.0"
+        "@fontsource-variable/inter": "5.3.0",
+        "lucide-react": "1.61.0"
     },
     "devDependencies": {
         "@types/react": "19.3.0",
+        "@types/react-dom": "19.3.0",
         "react": "19.3.1",
+        "react-dom": "19.3.1",
         "vite": "8.3.5"
     }
 }

@@ -4,8 +4,10 @@ import (
 	"context"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
@@ -22,17 +24,19 @@ func registerMe(api huma.API, d Deps) {
 	}, auth.SignedIn, func(ctx context.Context, _ *struct{}) (*contract.MeOutput, error) {
 		caller, _ := auth.CallerFrom(ctx)
 
-		// Three small reads, side by side: one round trip of waiting instead of three.
+		// Four small reads, side by side: one round trip of waiting instead of four.
 		var (
 			wg      sync.WaitGroup
 			me      store.GetMeRow
 			tenants []store.ListUserTenantsRow
 			stores  []store.ListAssignedStoresRow
-			errs    [3]error
+			asked   []string
+			errs    [4]error
 		)
 		wg.Go(func() { me, errs[0] = d.Queries.GetMe(ctx, caller.UserID) })
 		wg.Go(func() { tenants, errs[1] = d.Queries.ListUserTenants(ctx, caller.UserID) })
 		wg.Go(func() { stores, errs[2] = listStores(ctx, d.Queries, caller) })
+		wg.Go(func() { asked, errs[3] = d.Queries.ListAskedTenants(ctx, caller.UserID) })
 		wg.Wait()
 		for _, err := range errs {
 			if err != nil {
@@ -48,12 +52,19 @@ func registerMe(api huma.API, d Deps) {
 				Role:      me.Role,
 				AvatarURL: me.AvatarUrl.String,
 				Language:  me.PreferredLanguage,
+				Phone:     me.PhoneNumber.String,
+				Since:     since(me.CreatedAt),
 			},
 			Tenants: make([]contract.MeTenant, 0, len(tenants)),
+			Flags:   d.Flags.All(caller.UserID.String(), auth.FlagProps(caller)),
+			Asked:   append([]string{}, asked...),
 		}}
 		byTenant := map[string][]contract.MeStore{}
 		for _, s := range stores {
 			id := s.TenantID.String()
+			// In memory, no network: a few stores cost microseconds.
+			props := auth.FlagProps(caller)
+			props["tenantId"], props["storeId"] = id, s.ID.String()
 			byTenant[id] = append(byTenant[id], contract.MeStore{
 				ID:        s.ID.String(),
 				Name:      s.Name,
@@ -61,19 +72,44 @@ func registerMe(api huma.API, d Deps) {
 				OpenTime:  s.OpenTime,
 				CloseTime: s.CloseTime,
 				IsDefault: s.IsDefault,
+				Flags:     d.Flags.All(caller.UserID.String(), props),
 			})
 		}
 		for _, t := range tenants {
 			id := t.ID.String()
+			level := func(app, access string) string {
+				return string(auth.LevelIn(app, auth.Membership{
+					Status: t.Status, Owner: t.IsOwner, Access: access, HasLevels: t.HasLevels, Role: me.Role,
+				}))
+			}
 			out.Body.Tenants = append(out.Body.Tenants, contract.MeTenant{
 				ID:           id,
 				Slug:         t.Slug,
 				Name:         t.Name,
 				PayFrequency: t.PayFrequency,
-				Stores:       append([]contract.MeStore{}, byTenant[id]...),
+				Access: contract.MeAccess{
+					Seller:     level("seller", t.SellerAccess),
+					Backoffice: level("backoffice", t.BackofficeAccess),
+				},
+				Owner:  t.IsOwner,
+				Stores: append([]contract.MeStore{}, byTenant[id]...),
 			})
 		}
 		return out, nil
+	})
+}
+
+func registerMePatch(api huma.API, d Deps) {
+	route(api, huma.Operation{
+		OperationID:   "patchMe",
+		Method:        http.MethodPatch,
+		Path:          "/me",
+		Summary:       "Change the signed-in user's own language",
+		Tags:          []string{"me"},
+		DefaultStatus: http.StatusNoContent,
+	}, auth.SignedIn.Repeatable(), func(ctx context.Context, in *contract.MePatchInput) (*struct{}, error) {
+		caller, _ := auth.CallerFrom(ctx)
+		return nil, d.Queries.SetUserLanguage(ctx, store.SetUserLanguageParams{ID: caller.UserID, PreferredLanguage: in.Body.Language})
 	})
 }
 
@@ -88,4 +124,12 @@ func listStores(ctx context.Context, q *store.Queries, caller auth.Caller) ([]st
 		out[i] = store.ListAssignedStoresRow(r)
 	}
 	return out, err
+}
+
+// users.created_at has no zone; the database writes it in UTC.
+func since(t pgtype.Timestamp) string {
+	if !t.Valid {
+		return ""
+	}
+	return t.Time.UTC().Format(time.RFC3339)
 }

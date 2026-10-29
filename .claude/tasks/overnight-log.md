@@ -1,0 +1,34 @@
+# Overnight log — Steps 20-24 (2026-10-25)
+
+The owner asked for the backoffice to be built overnight, merged to staging when green, never to production; every judgement call is written here with its reason, newest last.
+
+## Step 20 — Pay setup
+
+- **No review of task files tonight:** each is written first and committed with its code; the owner reviews them in the morning
+- **The Pay tab's totals come from Go** (`GET /pay/period`), the same sums v1's screen makes from the period's payouts, so the tab works before Step 23 builds the payouts screens
+- **Staff list in one read:** users with their commission type and bank details joined in SQL; v1 makes three requests and joins them on the phone
+- **Eligibility saved per claim type** (`PUT /pay/claim-types/{id}/eligible` with the full list of users), in one transaction; v1 sends one request per staff member changed, each replacing that person's whole set
+- **Kept as v1:** no uniqueness on slugs (v1 has none; adding a constraint is a data model change, after cutover); a claim type's amount and source cannot be changed after creation (v1's edit screen shows them read-only); config changes write no activity log (v1 writes none)
+- **Backoffice budget 135 → 137 KB:** the first screen's own code did not grow; the Pay screens share Link and React helpers with it, so the build split those into small shared files, each with its own compression overhead (+1.3 KB). Tuning the split (Rolldown's chunking options) is a separate task for the morning, not something to try blind overnight
+
+## Steps 21 and 22 — the payslip: commissions, the day review, claims
+
+- **Built as one step and one PR:** in v1 the day review (Step 21) and claim decisions (Step 22) are the same screen, the payslip, reached from Staff Payouts; splitting them would build that screen twice. Step 23 (settling a payout) stays its own
+- **The payouts list and the payslip are read in Go,** each in one request (v1: the list joins users and pay info on the phone; the payslip makes three requests)
+- **Every decision keeps v1's rules:** a decision on a settled (paid or skipped) payout's day is refused; a whole day decides only its still-pending rows, so a double tap never overturns a decision; each decision writes the same activity log entries as v1 (`payroll_commission_updated`, `claim_status_updated`; a day: one entry per table with its count)
+
+## Step 23 — paying a payout
+
+- **Two rules checked in Go as well as on the screen:** the period must have reached its last day, and paying needs the screenshot. v1 checks both only in the screen; a stale tab or a retried request would slip past it. The screenshot must be one uploaded for this tenant's payroll proofs
+- **Kept as v1:** skip versus pay is the screen's call from the total (v1's comment: what a zero total means is a judgement about the period, not a fact the server enforces); `paid_at`/`paid_by` are written for a skip too
+- **The screenshot is taken from the gallery and never cropped** (a new option on the shared photo input): the camera photos' 4:3 crop would cut a transfer receipt in half
+- **Compared with v1:** the pay calendar for every day of Dec 2024-2027 and each frequency (3,378 windows, 0 differ), and the totals of every payout on staging against v1's arithmetic (13, 0 differ). Staging holds only 13 payouts; production's comparison is part of the cutover (Step 25)
+
+## Step 24 — More
+
+- **The map is Leaflet with OpenStreetMap tiles, not Mapbox:** v1 uses mapbox-gl (about 200 KB, and a Mapbox access token only the owner can add); the RFC already picks Leaflet for maps. OpenStreetMap's tiles need no key and are fine for a screen one admin opens; switching to Mapbox's tiles later is the tile address and a token. Leaflet (about 40 KB) loads only on that screen
+- **Weather reads v1's `weather_hourly`** (one location, filled by the cron website), as v1's sheet does, until Step 45 moves the weather to the worker's per-area table
+- **v1's Bebas Neue title on the weather sheet** comes from `@fontsource/bebas-neue`, loaded only with the sheet
+- **Patch Notes is What's new** (Step 17d): the same notes, written by the release skill; the row keeps v1's scroll icon
+- **The map's translations moved** from the seller area to a new `more` area, shared by both apps' More screens
+- **Supply and Chats stay "coming soon"**, as v1 shows them

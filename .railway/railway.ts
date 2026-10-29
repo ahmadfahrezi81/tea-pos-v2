@@ -23,6 +23,8 @@ export default defineRailway((ctx) => {
         GOMEMLIMIT: gomemlimit,
         // Fixed pools: Supabase allows 60 connections and its own services hold about 25.
         DB_MAX_CONNS: dbMaxConns,
+        // The release's version (or "staging"), set by scripts/railway-deploy.mjs before each deploy.
+        APP_VERSION: preserve(),
     });
 
     const api = service("api", {
@@ -39,6 +41,18 @@ export default defineRailway((ctx) => {
             EDGE_SECRET: preserve(),
             SUPABASE_URL: preserve(),
             SUPABASE_PUBLISHABLE_KEY: preserve(),
+            // Signs photo uploads and private reads (Storage); never leaves Go.
+            SUPABASE_SECRET_KEY: preserve(),
+            // PostHog: errors, the apps' events, flags. Each rules download is billed as 10 flag
+            // checks (1M free a month): every 60 s is 432k, staging every 5 min 86k.
+            POSTHOG_KEY: preserve(),
+            POSTHOG_FLAGS_KEY: preserve(),
+            POSTHOG_FLAGS_POLL_SECONDS: prod ? "60" : "300",
+            // The worker's weather (it references this; Infisical syncs into api only).
+            TOMORROW_IO_API_KEY: preserve(),
+            // When a release breaks older apps, its PR adds e.g. MIN_APP_VERSION: "seller@2026.11.2"
+            // (426, and the app updates itself).
+
             // Staging only: the test sign-in for end-to-end tests, compiled in by the build tag.
             ...(prod ? {} : { GO_BUILD_TAGS: "testlogin", TEST_LOGIN_KEY: preserve() }),
         },
@@ -54,6 +68,7 @@ export default defineRailway((ctx) => {
             ...env("100MiB", "2"),
             DATABASE_URL: api.env.DATABASE_URL,
             EDGE_SECRET: api.env.EDGE_SECRET,
+            POSTHOG_KEY: api.env.POSTHOG_KEY,
         },
     });
     const worker = service("worker", {
@@ -62,7 +77,14 @@ export default defineRailway((ctx) => {
         deploy,
         start: "/app/worker",
         replicas,
-        env: { ...env("100MiB", "4"), DATABASE_URL: api.env.DATABASE_URL },
+        env: {
+            ...env("100MiB", "4"),
+            DATABASE_URL: api.env.DATABASE_URL,
+            TOMORROW_IO_API_KEY: api.env.TOMORROW_IO_API_KEY,
+            POSTHOG_KEY: api.env.POSTHOG_KEY,
+            // v2's cron, its schedules per environment in internal/jobs (Schedules).
+            JOBS_SCHEDULE: "on",
+        },
     });
 
     // Nightly dump of production to R2 at 20:00 UTC (03:00 WIB); runs, uploads, exits. Staging's data is fake.
@@ -79,6 +101,7 @@ export default defineRailway((ctx) => {
             R2_ACCESS_KEY_ID: preserve(),
             R2_SECRET_ACCESS_KEY: preserve(),
             HC_PING_URL: preserve(),
+            APP_VERSION: preserve(),
         },
     });
 

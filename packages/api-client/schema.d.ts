@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/access-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask a tenant to let the caller in */
+        post: operations["askAccess"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/callback": {
         parameters: {
             query?: never;
@@ -55,6 +72,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/logout-everywhere": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign out of every app on every phone */
+        post: operations["logoutEverywhere"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Errors, page views and open times from an app, for PostHog */
+        post: operations["sendEvents"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -86,6 +137,589 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** Change the signed-in user's own language */
+        patch: operations["patchMe"];
+        trace?: never;
+    };
+    "/tenants/{tenant}/days": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A month of the stores' days, with expenses and who worked */
+        get: operations["listDays"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/days/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One store's day: cash, expenses, who worked, photos, products */
+        get: operations["getDay"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/days/{id}/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What happened during a store's day, oldest first */
+        get: operations["getDayActivity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/days/{id}/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Who held a store's day, and the handovers */
+        get: operations["getDaySessions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/feedbacks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Where customers asked for a store, newest first */
+        get: operations["listFeedbacks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** An address to upload one photo to, straight to Storage */
+        post: operations["signUpload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A day's orders over one store or several, newest first, a page at a time */
+        get: operations["listDayOrders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/claim-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The tenant's claim types, by name */
+        get: operations["listClaimTypes"];
+        put?: never;
+        /** Add a claim type */
+        post: operations["createClaimType"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/claim-types/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename or switch off a claim type */
+        patch: operations["updateClaimType"];
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/claim-types/{id}/eligible": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Who may claim a claim type */
+        get: operations["listClaimEligible"];
+        /** Set who may claim a claim type: everyone listed, no one else */
+        put: operations["setClaimEligible"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/claims/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Approve or reject one claim */
+        put: operations["decideClaim"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/commission-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The tenant's commission types, by name */
+        get: operations["listCommissionTypes"];
+        put?: never;
+        /** Add a commission type */
+        post: operations["createCommissionType"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/commission-types/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename, switch off or re-rate a commission type */
+        patch: operations["updateCommissionType"];
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/commissions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Approve or reject one commission */
+        put: operations["decideCommission"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/payouts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Staff payouts overlapping a month, with their totals */
+        get: operations["listPayouts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/payouts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A payout with every commission and claim in it */
+        get: operations["getPayslip"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/payouts/{id}/days/{date}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve or reject every still-pending commission and claim of a payout's day */
+        post: operations["reviewDay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/payouts/{id}/settle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pay a payout (with the transfer screenshot) or skip it (nothing owed) */
+        post: operations["settlePayout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/period": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The current pay period and what it owes the selling staff */
+        get: operations["getPayPeriod"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/periods/{start}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A pay period and each person it pays, with what is still to review */
+        get: operations["getPayPeriodAt"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set the tenant's pay frequency, for every staff member */
+        put: operations["setPaySchedule"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/staff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The tenant's users with their commission type and bank details */
+        get: operations["listPayStaff"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/pay/staff/{userId}/commission-type": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Give a staff member a commission type, or none */
+        put: operations["setStaffCommission"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/sales/days": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sales, orders and cups per day, over one store or several */
+        get: operations["salesDays"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/sales/hours": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A day's cups and orders per hour, and its totals, over one store or several */
+        get: operations["salesHours"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/sales/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cups per product over one store or several */
+        get: operations["salesProducts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/stores/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every store right now: open or closed, who is selling, today's sales */
+        get: operations["storesLive"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/tea-waste": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Litres of tea left at closing per day, over one store or several */
+        get: operations["teaWaste"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/uac": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Requests waiting and everyone in the tenant, with their levels per app */
+        get: operations["getUac"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/uac/people/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One person: their levels per app, stores and status */
+        get: operations["getUacPerson"];
+        /** Set a person's levels per app, stores and status, at once */
+        put: operations["setUacPerson"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/uac/requests/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One request waiting */
+        get: operations["getUacRequest"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/uac/requests/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Let the person in with these levels and stores */
+        post: operations["approveUacRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/uac/requests/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn a request down, or block the person's later asks too */
+        post: operations["rejectUacRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/weather": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The forecast by hour, yesterday to tomorrow */
+        get: operations["getWeather"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
         patch?: never;
         trace?: never;
     };
@@ -93,9 +727,342 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AccessRequest: {
+            /** Format: date-time */
+            at: string;
+            avatarUrl?: string;
+            email: string;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: uuid */
+            userId: string;
+        };
+        AppEvent: {
+            /**
+             * Format: date-time
+             * @description The phone's clock; Go uses its own when this is far off
+             */
+            at: string;
+            chunks?: {
+                [key: string]: string;
+            };
+            message?: string;
+            /** @example TypeError */
+            name?: string;
+            /** @example /test-a/home */
+            path: string;
+            ready?: components["schemas"]["AppReady"];
+            stack?: string;
+            /** @enum {string} */
+            type: "error" | "pageview" | "pageleave" | "app_ready";
+        };
+        AppReady: {
+            /** @description Hidden at some moment before ready: the time is not the app's */
+            hidden: boolean;
+            /**
+             * Format: double
+             * @description The page's first byte (responseStart)
+             */
+            htmlMs: number;
+            /**
+             * Format: double
+             * @description The main script done (domContentLoadedEventEnd)
+             */
+            jsMs: number;
+            /**
+             * @description Whether the first screen drew /me from the phone's copy; none on sign-in
+             * @enum {string}
+             */
+            me: "saved" | "network" | "none";
+            /**
+             * @description network: no service worker yet; saved: from its copy; update: the first open of a new version
+             * @enum {string}
+             */
+            open: "network" | "saved" | "update";
+            /**
+             * Format: double
+             * @description First paint: the splash (first-contentful-paint)
+             */
+            paintMs: number;
+            /** Format: double */
+            readyMs: number;
+            /** @enum {string} */
+            screen: "shell" | "signin" | "other";
+        };
+        AskAccessInputBody: {
+            /** @description The tenant's slug, from its address */
+            tenant: string;
+        };
+        Bank: {
+            accountHolder?: string;
+            accountNumber?: string;
+            name?: string;
+        };
+        ClaimEligibleOutputBody: {
+            userIds: string[];
+        };
+        ClaimType: {
+            /** Format: int64 */
+            amount: number;
+            /** Format: double */
+            autoThresholdHours?: number;
+            enabled: boolean;
+            /** @enum {string} */
+            frequency: "daily" | "weekly" | "monthly" | "one_time";
+            /** Format: uuid */
+            id: string;
+            name: string;
+            slug: string;
+            /**
+             * @description manual: staff submits; auto_submit: made for staff, an admin reviews; auto: made and approved when enough hours were worked
+             * @enum {string}
+             */
+            source: "manual" | "auto" | "auto_submit";
+        };
+        ClaimTypesOutputBody: {
+            types: components["schemas"]["ClaimType"][];
+        };
+        CommissionType: {
+            enabled: boolean;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /**
+             * Format: int64
+             * @description Rupiah per cup
+             */
+            ratePerCup: number;
+            slug: string;
+        };
+        CommissionTypesOutputBody: {
+            types: components["schemas"]["CommissionType"][];
+        };
+        CreateClaimTypeInputBody: {
+            /** Format: int64 */
+            amount: number;
+            /**
+             * Format: double
+             * @description Needed for auto
+             */
+            autoThresholdHours?: number;
+            /** @enum {string} */
+            frequency: "daily" | "weekly" | "monthly" | "one_time";
+            name: string;
+            slug: string;
+            /** @enum {string} */
+            source: "manual" | "auto" | "auto_submit";
+        };
+        CreateCommissionTypeInputBody: {
+            name: string;
+            /** Format: int64 */
+            ratePerCup: number;
+            /** @description Uppercase letters, digits and underscores */
+            slug: string;
+        };
+        Day: {
+            /**
+             * Format: int64
+             * @description Null until counted at closing
+             */
+            actualCash: number | null;
+            /**
+             * Format: date-time
+             * @description Empty while the day is open
+             */
+            closedAt?: string;
+            /** Format: int64 */
+            cups: number;
+            /** Format: date */
+            date: string;
+            /** Format: int64 */
+            expectedCash: number;
+            expenseItems: components["schemas"]["DayExpense"][];
+            /** Format: int64 */
+            expenses: number;
+            /** Format: uuid */
+            id: string;
+            notes?: string;
+            /** Format: int64 */
+            openingBalance: number;
+            /** Format: int64 */
+            orders: number;
+            /** Format: int64 */
+            sales: number;
+            /** @description Who worked (a session or an order), the most cups first */
+            sellers: components["schemas"]["DaySeller"][];
+            /** Format: uuid */
+            storeId: string;
+            storeName: string;
+            /** Format: int64 */
+            variance: number | null;
+        };
+        DayActivityOutputBody: {
+            /** @description Oldest first */
+            events: components["schemas"]["DayEvent"][];
+        };
+        DayDetail: {
+            /**
+             * Format: int64
+             * @description Null until counted at closing
+             */
+            actualCash: number | null;
+            /**
+             * Format: date-time
+             * @description Empty while the day is open
+             */
+            closedAt?: string;
+            closedBy?: string;
+            /** Format: int64 */
+            cups: number;
+            /** Format: date */
+            date: string;
+            /** Format: int64 */
+            expectedCash: number;
+            expenseItems: components["schemas"]["DayExpense"][];
+            /** Format: int64 */
+            expenses: number;
+            /** Format: uuid */
+            id: string;
+            notes?: string;
+            /** Format: date-time */
+            openedAt?: string;
+            openedBy?: string;
+            /** Format: int64 */
+            openingBalance: number;
+            /** Format: int64 */
+            orders: number;
+            photos: components["schemas"]["DayPhoto"][];
+            /** @description What the day sold per product, most first */
+            products: components["schemas"]["DayProduct"][];
+            /** Format: int64 */
+            sales: number;
+            /** @description Who worked (a session or an order), the most cups first */
+            sellers: components["schemas"]["DaySeller"][];
+            /** Format: uuid */
+            storeId: string;
+            storeName: string;
+            /** Format: int64 */
+            variance: number | null;
+        };
+        DayEvent: {
+            /** Format: date-time */
+            at: string;
+            /** Format: uuid */
+            id: string;
+            /** @description As the event saved it; a photo_url in it is a signed address */
+            metadata: unknown;
+            /** @example store_opened */
+            type: string;
+            userName?: string;
+        };
+        DayExpense: {
+            /** Format: int64 */
+            amount: number;
+            /** Format: uuid */
+            id: string;
+            notes?: string;
+            type: string;
+        };
+        DayPhoto: {
+            quantity?: components["schemas"]["DayQuantity"];
+            /**
+             * @description opening, closing:ice, closing:syrup, closing:bags, closing:cups, closing:tea
+             * @example closing:tea
+             */
+            type: string;
+            /** @description A signed address, for a few minutes; empty when it could not be signed */
+            url: string;
+        };
+        DayProduct: {
+            name: string;
+            /** Format: int64 */
+            quantity: number;
+            /** Format: int64 */
+            revenue: number;
+        };
+        DayQuantity: {
+            unit: string;
+            /** Format: double */
+            value: number;
+        };
+        DaySeller: {
+            avatarUrl?: string;
+            /** Format: int64 */
+            cups: number;
+            name: string;
+            /** Format: uuid */
+            userId: string;
+        };
+        DaySession: {
+            avatarUrl?: string;
+            /** Format: date-time */
+            endedAt?: string;
+            /** Format: uuid */
+            id: string;
+            /** @description The session this one took over from */
+            previousSessionId?: string;
+            /** Format: date-time */
+            startedAt: string;
+            /** @example active */
+            status: string;
+            /** Format: uuid */
+            userId: string;
+            userName?: string;
+        };
+        DaySessionsOutputBody: {
+            /** @description In the order they started */
+            sessions: components["schemas"]["DaySession"][];
+        };
+        DaysOutputBody: {
+            /** @description Newest first; with several stores, each store's day */
+            days: components["schemas"]["Day"][];
+        };
+        DecisionInputBody: {
+            /** @enum {string} */
+            status: "pending" | "approved" | "rejected";
+        };
+        Device: {
+            /** Format: int64 */
+            cores?: number;
+            /**
+             * Format: double
+             * @description Mbit/s
+             */
+            downlink?: number;
+            /**
+             * Format: double
+             * @description GB, navigator.deviceMemory (rounded by the browser)
+             */
+            memory?: number;
+            /**
+             * @description Android Chrome's client hints
+             * @example SM-M115F
+             */
+            model?: string;
+            /**
+             * @description navigator.connection.effectiveType
+             * @example 4g
+             */
+            net?: string;
+            osVersion?: string;
+            /**
+             * Format: int64
+             * @description ms
+             */
+            rtt?: number;
+            saveData?: boolean;
+            /** Format: int64 */
+            screenHeight?: number;
+            /** Format: int64 */
+            screenWidth?: number;
+        };
         Error: {
-            /** @example day_already_closed */
-            code: string;
+            /**
+             * @example day_already_closed
+             * @enum {string}
+             */
+            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_cursor" | "bad_level" | "bad_proof" | "bad_range" | "bad_request" | "claim_not_found" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_yourself" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_not_found" | "person_not_found" | "proof_required" | "request_not_found" | "route_not_found" | "staff_not_found" | "store_not_found" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
             details?: string[] | null;
             /** @example The day is already closed */
             message: string;
@@ -104,6 +1071,30 @@ export interface components {
              * @example 409
              */
             status: number;
+        };
+        EventsInputBody: {
+            device: components["schemas"]["Device"];
+            events: components["schemas"]["AppEvent"][];
+            /** Format: uuid */
+            session: string;
+        };
+        Feedback: {
+            /** Format: date-time */
+            at: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: double */
+            latitude: number;
+            locationDisplay: string;
+            locationName: string;
+            /** Format: double */
+            longitude: number;
+            notes?: string;
+            userName?: string;
+        };
+        FeedbacksOutputBody: {
+            /** @description Newest first */
+            feedbacks: components["schemas"]["Feedback"][];
         };
         HealthOutputBody: {
             /** @example a1b2c3d */
@@ -114,13 +1105,33 @@ export interface components {
             version: string;
         };
         Me: {
+            /** @description Slugs of the tenants the user asked to join, still waiting */
+            asked: string[];
+            /** @description The feature flags on for this user (rules on role and app); a store's own are on the store */
+            flags: {
+                [key: string]: boolean;
+            };
             /** @description Empty when the user belongs to no tenant */
             tenants: components["schemas"]["MeTenant"][];
             user: components["schemas"]["MeUser"];
         };
+        MeAccess: {
+            /** @description guest, admin, or '' for none */
+            backoffice: string;
+            /** @description member, or '' for none */
+            seller: string;
+        };
+        MePatchInputBody: {
+            /** @enum {string} */
+            language: "en" | "id";
+        };
         MeStore: {
             /** @example 22:00 */
             closeTime: string;
+            /** @description The feature flags on at this store (rules on tenantId and storeId); a flag not listed is off */
+            flags: {
+                [key: string]: boolean;
+            };
             /** Format: uuid */
             id: string;
             /** @description The store this user's app opens on */
@@ -132,9 +1143,13 @@ export interface components {
             status: string;
         };
         MeTenant: {
+            /** @description The user's level in each app here; the screens hide what they cannot do */
+            access: components["schemas"]["MeAccess"];
             /** Format: uuid */
             id: string;
             name: string;
+            /** @description The tenant's owner: an admin everywhere, whatever the levels say */
+            owner: boolean;
             /** @example bi_weekly */
             payFrequency: string;
             slug: string;
@@ -152,8 +1167,492 @@ export interface components {
              * @example id
              */
             language: string;
+            phone?: string;
             /** @example USER */
             role: string;
+            /**
+             * Format: date-time
+             * @description When the account was made
+             */
+            since?: string;
+        };
+        Order: {
+            /** Format: date-time */
+            at: string;
+            /** Format: int64 */
+            cups: number;
+            /** Format: uuid */
+            id: string;
+            items: components["schemas"]["OrderItem"][];
+            /** @example cash */
+            paymentMethod: string;
+            seller?: string;
+            storeName: string;
+            /** Format: int64 */
+            total: number;
+        };
+        OrderItem: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: int64 */
+            quantity: number;
+            /** Format: int64 */
+            totalPrice: number;
+            /** Format: int64 */
+            unitPrice: number;
+        };
+        OutputOrder: {
+            items: components["schemas"]["Order"][];
+            next?: string;
+        };
+        PayPeriod: {
+            /**
+             * Format: int64
+             * @description Commissions and claims approved
+             */
+            approved: number;
+            /** Format: int64 */
+            claims: number;
+            /**
+             * Format: int64
+             * @description Approved, selling staff only
+             */
+            commissions: number;
+            /** Format: date */
+            end: string;
+            /** @enum {string} */
+            frequency: "weekly" | "bi_weekly" | "four_weekly";
+            /**
+             * Format: date
+             * @description The day after the period ends
+             */
+            payoutDate: string;
+            /**
+             * Format: int64
+             * @description Payouts counted into the period, all staff: a schedule switch is safe at 0
+             */
+            payouts: number;
+            /**
+             * Format: int64
+             * @description Approved plus still pending
+             */
+            reviewed: number;
+            /** Format: date */
+            start: string;
+            /** Format: int64 */
+            total: number;
+        };
+        PayPeriodAt: {
+            /** Format: date */
+            end: string;
+            /** @enum {string} */
+            frequency: "weekly" | "bi_weekly" | "four_weekly";
+            /**
+             * Format: date
+             * @description The next period's first day; none after the current one
+             */
+            next?: string;
+            /**
+             * Format: int64
+             * @description Approved, every person not yet paid or skipped
+             */
+            owed: number;
+            /**
+             * Format: date
+             * @description The day after the period ends
+             */
+            payoutDate: string;
+            people: components["schemas"]["Payout"][];
+            /**
+             * Format: date
+             * @description The period before's first day
+             */
+            previous: string;
+            /** Format: date */
+            start: string;
+            /**
+             * Format: int64
+             * @description People with commissions or claims still to review
+             */
+            toReview: number;
+        };
+        PayStaff: {
+            avatarUrl?: string;
+            /** @description Set by the staff member in the seller app */
+            bank: components["schemas"]["Bank"];
+            commissionType?: components["schemas"]["CommissionType"];
+            email: string;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @example USER */
+            role: string;
+            /** @example active */
+            status: string;
+        };
+        PayStaffOutputBody: {
+            /** @description Every user of the tenant, admins included; by name */
+            staff: components["schemas"]["PayStaff"][];
+        };
+        Payout: {
+            /**
+             * Format: int64
+             * @description Commissions and claims approved
+             */
+            approved: number;
+            avatarUrl?: string;
+            /** Format: int64 */
+            claims: number;
+            /** Format: int64 */
+            commissions: number;
+            /** Format: int64 */
+            cups: number;
+            /** Format: date */
+            end: string;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @description No commission per cup (SELLER_0 or rate 0): hidden from the list by default */
+            nonSeller: boolean;
+            /** Format: int64 */
+            orders: number;
+            /** Format: date-time */
+            paidAt?: string;
+            /**
+             * Format: int64
+             * @description Still to review
+             */
+            pending: number;
+            /** Format: date */
+            start: string;
+            /** @enum {string} */
+            status: "pending" | "paid" | "skipped";
+            /** Format: int64 */
+            total: number;
+            /** Format: uuid */
+            userId: string;
+        };
+        PayoutsOutputBody: {
+            /** @description Overlapping the month, newest period first */
+            payouts: components["schemas"]["Payout"][];
+        };
+        Payslip: {
+            /**
+             * Format: int64
+             * @description Commissions and claims approved
+             */
+            approved: number;
+            avatarUrl?: string;
+            claimRows: components["schemas"]["PayslipClaim"][];
+            commissionRows: components["schemas"]["PayslipCommission"][];
+            /** Format: int64 */
+            cups: number;
+            /** Format: date */
+            end: string;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @description No commission per cup (SELLER_0 or rate 0): hidden from the list by default */
+            nonSeller: boolean;
+            /** @description For the staff member */
+            notes?: string;
+            /** Format: int64 */
+            orders: number;
+            /** Format: date-time */
+            paidAt?: string;
+            paidBy?: string;
+            /** @description A signed address, for a few minutes */
+            paymentProofUrl?: string;
+            /**
+             * Format: int64
+             * @description Still to review
+             */
+            pending: number;
+            /**
+             * Format: int64
+             * @description Of the period's first commission; 0 without any
+             */
+            ratePerCup: number;
+            /** Format: date */
+            start: string;
+            /** @enum {string} */
+            status: "pending" | "paid" | "skipped";
+            /** Format: int64 */
+            total: number;
+            /** Format: uuid */
+            userId: string;
+        };
+        PayslipClaim: {
+            /** Format: int64 */
+            amount: number;
+            /** Format: date */
+            date: string;
+            /** Format: double */
+            hoursWorked?: number;
+            /** Format: uuid */
+            id: string;
+            notes?: string;
+            /** @enum {string} */
+            status: "pending" | "approved" | "rejected";
+            /** Format: double */
+            thresholdHours?: number;
+            type?: string;
+        };
+        PayslipCommission: {
+            /** Format: int64 */
+            amount: number;
+            /** Format: int64 */
+            cups: number;
+            /** Format: date */
+            date: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: int64 */
+            orders: number;
+            /** Format: int64 */
+            ratePerCup: number;
+            /** @enum {string} */
+            status: "pending" | "approved" | "rejected";
+            storeName?: string;
+        };
+        RejectRequestInputBody: {
+            /** @description Also drop this person's later asks, quietly */
+            block: boolean;
+        };
+        ReviewDayInputBody: {
+            /** @enum {string} */
+            status: "approved" | "rejected";
+        };
+        ReviewDayOutputBody: {
+            /** Format: int64 */
+            claims: number;
+            /**
+             * Format: int64
+             * @description How many were decided
+             */
+            commissions: number;
+        };
+        SalesDay: {
+            /** Format: int64 */
+            cups: number;
+            /** Format: date */
+            date: string;
+            /**
+             * Format: int64
+             * @description How many of them are not closed yet: their totals come when they close
+             */
+            notClosed: number;
+            /** Format: int64 */
+            orders: number;
+            /**
+             * Format: int64
+             * @description Rupiah
+             */
+            sales: number;
+            /**
+             * Format: int64
+             * @description How many of the stores have this day
+             */
+            stores: number;
+        };
+        SalesDaysOutputBody: {
+            /** @description Only days with a summary, oldest first */
+            days: components["schemas"]["SalesDay"][];
+        };
+        SalesHour: {
+            /** Format: int64 */
+            cups: number;
+            /** Format: int64 */
+            hour: number;
+            /** Format: int64 */
+            orders: number;
+        };
+        SalesHoursOutputBody: {
+            /** Format: int64 */
+            cups: number;
+            /** @description From the hour before the first sale to the hour after the last; empty without sales */
+            hours: components["schemas"]["SalesHour"][];
+            /** Format: int64 */
+            orders: number;
+            /** Format: int64 */
+            sales: number;
+        };
+        SalesProduct: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: int64 */
+            quantity: number;
+        };
+        SalesProductsOutputBody: {
+            /** @description Most first */
+            products: components["schemas"]["SalesProduct"][];
+        };
+        SetClaimEligibleInputBody: {
+            /** @description Everyone who may claim it; the rest may not */
+            userIds: string[];
+        };
+        SetPayScheduleInputBody: {
+            /** @enum {string} */
+            frequency: "weekly" | "bi_weekly" | "four_weekly";
+        };
+        SetStaffCommissionInputBody: {
+            /**
+             * Format: uuid
+             * @description Null takes it away
+             */
+            commissionTypeId: string | null;
+        };
+        SettlePayoutInputBody: {
+            /** @description For the staff member, on their payslip; cannot be changed after */
+            notes?: string;
+            /** @description The transfer screenshot's address from POST /files (purpose payroll_proof); needed to pay */
+            paymentProofUrl?: string;
+            /**
+             * @description skipped: nothing owed, no transfer
+             * @enum {string}
+             */
+            status: "paid" | "skipped";
+        };
+        StoreLive: {
+            /** Format: int64 */
+            cups: number;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            lastClosed?: string;
+            name: string;
+            /** @description Someone is selling there now */
+            open: boolean;
+            /** Format: date-time */
+            openSince?: string;
+            /** Format: int64 */
+            orders: number;
+            /** Format: int64 */
+            sales: number;
+            /** @description The seller's Google photo address */
+            sellerAvatar?: string;
+            sellerName?: string;
+            /** @description Who sold here today and their cups, the most first; the seller on shift is in it even before their first order */
+            sellers: components["schemas"]["DaySeller"][];
+            /**
+             * @description The store itself: active, fake (a demo) or inactive
+             * @example active
+             */
+            status: string;
+        };
+        StoresLiveOutputBody: {
+            /**
+             * Format: date
+             * @description Today, in the stores' time zone
+             */
+            date: string;
+            /** @description Open stores first, then by name */
+            stores: components["schemas"]["StoreLive"][];
+        };
+        TeaWasteDay: {
+            /** Format: date */
+            date: string;
+            /** Format: double */
+            litres: number;
+        };
+        TeaWasteOutputBody: {
+            /** @description Only days whose tea was measured at closing */
+            days: components["schemas"]["TeaWasteDay"][];
+        };
+        UacOutputBody: {
+            /** @description Active first, then by name */
+            people: components["schemas"]["UacPerson"][];
+            /** @description Waiting, oldest first */
+            requests: components["schemas"]["AccessRequest"][];
+        };
+        UacPerson: {
+            access: components["schemas"]["MeAccess"];
+            active: boolean;
+            avatarUrl?: string;
+            email: string;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            owner: boolean;
+            phone?: string;
+            /**
+             * Format: date-time
+             * @description When the account was made
+             */
+            since?: string;
+            storeIds: string[];
+        };
+        UacPersonChange: {
+            /** @description Each app's level, or '' for none; only the levels each app offers */
+            access: components["schemas"]["MeAccess"];
+            active: boolean;
+            /** @description Exactly these of the tenant's stores */
+            storeIds: string[];
+        };
+        UpdateClaimTypeInputBody: {
+            enabled?: boolean;
+            name?: string;
+        };
+        UpdateCommissionTypeInputBody: {
+            enabled?: boolean;
+            name?: string;
+            /** Format: int64 */
+            ratePerCup?: number;
+        };
+        UploadInputBody: {
+            /** @enum {string} */
+            contentType: "image/webp" | "image/jpeg";
+            /** @enum {string} */
+            purpose: "daily_photo" | "report" | "request" | "reimbursement" | "payroll_proof" | "product_image";
+            /**
+             * Format: int64
+             * @description Bytes, after the phone shrank it
+             */
+            size: number;
+            /**
+             * Format: uuid
+             * @description For a store's photos: daily_photo, report, request
+             */
+            storeId?: string;
+        };
+        UploadOutputBody: {
+            /** @description Where it is kept, for the row that refers to it */
+            path: string;
+            /** @description PUT the photo here, straight to Storage; it works for a few minutes */
+            uploadUrl: string;
+            /** @description The address saved in the row (the old app's form); a private photo opens only through a signed address */
+            url: string;
+        };
+        WeatherHour: {
+            /**
+             * Format: int64
+             * @description Tomorrow.io's weather code
+             */
+            code: number;
+            /** Format: date */
+            date: string;
+            /** Format: date-time */
+            fetchedAt: string;
+            /** Format: int64 */
+            hour: number;
+            /**
+             * Format: double
+             * @description %
+             */
+            rainChance: number;
+            /**
+             * Format: double
+             * @description °C
+             */
+            temperature: number;
+        };
+        WeatherOutputBody: {
+            city: string;
+            /** @description Yesterday to tomorrow, by hour, in WIB */
+            hours: components["schemas"]["WeatherHour"][];
+            region: string;
         };
     };
     responses: never;
@@ -164,6 +1663,37 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    askAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AskAccessInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     finishSignIn: {
         parameters: {
             query?: {
@@ -259,6 +1789,67 @@ export interface operations {
             };
         };
     };
+    logoutEverywhere: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    sendEvents: {
+        parameters: {
+            query?: never;
+            header?: {
+                "User-Agent"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EventsInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     getHealth: {
         parameters: {
             query?: never;
@@ -304,6 +1895,1323 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Me"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    patchMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MePatchInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listDays: {
+        parameters: {
+            query: {
+                month: string;
+                /** @description Repeat for several; none is every store of the tenant (All stores) */
+                storeId?: string[] | null;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DaysOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getDay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DayDetail"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getDayActivity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DayActivityOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getDaySessions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DaySessionsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listFeedbacks: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbacksOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    signUpload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UploadInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listDayOrders: {
+        parameters: {
+            query: {
+                /** @description The day, in the stores' time zone */
+                date: string;
+                /** @description Repeat for several; none is every store of the tenant (All stores) */
+                storeId?: string[] | null;
+                /** @description From the previous page's next; empty for the first */
+                cursor?: string;
+                limit?: number;
+                /** @description Only rows changed after this (a list catching up) */
+                since?: string;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutputOrder"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listClaimTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimTypesOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createClaimType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateClaimTypeInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimType"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    updateClaimType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateClaimTypeInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimType"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listClaimEligible: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimEligibleOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    setClaimEligible: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetClaimEligibleInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    decideClaim: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listCommissionTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommissionTypesOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createCommissionType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCommissionTypeInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommissionType"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    updateCommissionType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCommissionTypeInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommissionType"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    decideCommission: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listPayouts: {
+        parameters: {
+            query: {
+                month: string;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayoutsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getPayslip: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Payslip"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    reviewDay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                /** @description The payout */
+                id: string;
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewDayInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewDayOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    settlePayout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SettlePayoutInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getPayPeriod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPeriod"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getPayPeriodAt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                /** @description Any day of the period (its first, as the app links it), or current */
+                start: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPeriodAt"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    setPaySchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetPayScheduleInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listPayStaff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayStaffOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    setStaffCommission: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetStaffCommissionInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    salesDays: {
+        parameters: {
+            query: {
+                from: string;
+                /** @description Included; at most 400 days after from */
+                to: string;
+                /** @description Repeat for several; none is every store of the tenant (All stores) */
+                storeId?: string[] | null;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesDaysOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    salesHours: {
+        parameters: {
+            query: {
+                date: string;
+                /** @description Repeat for several; none is every store of the tenant (All stores) */
+                storeId?: string[] | null;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesHoursOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    salesProducts: {
+        parameters: {
+            query: {
+                from: string;
+                /** @description Included; at most 400 days after from */
+                to: string;
+                /** @description Repeat for several; none is every store of the tenant (All stores) */
+                storeId?: string[] | null;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesProductsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    storesLive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoresLiveOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    teaWaste: {
+        parameters: {
+            query: {
+                from: string;
+                /** @description Included; at most 400 days after from */
+                to: string;
+                /** @description Repeat for several; none is every store of the tenant (All stores) */
+                storeId?: string[] | null;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeaWasteOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getUac: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UacOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getUacPerson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UacPerson"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    setUacPerson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UacPersonChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UacPerson"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getUacRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessRequest"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    approveUacRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UacPersonChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UacPerson"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    rejectUacRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectRequestInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getWeather: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeatherOutputBody"];
                 };
             };
             /** @description Error */

@@ -1,0 +1,25 @@
+{
+    "weather": {
+        "asOf": "As of",
+        "now": "Now",
+        "noData": "No weather data yet",
+        "clear": "Clear",
+        "mostlyClear": "Mostly Clear",
+        "partlyCloudy": "Partly Cloudy",
+        "mostlyCloudy": "Mostly Cloudy",
+        "cloudy": "Cloudy",
+        "foggy": "Foggy",
+        "windy": "Windy",
+        "drizzle": "Drizzle",
+        "lightRain": "Light Rain",
+        "rain": "Rain",
+        "heavyRain": "Heavy Rain",
+        "snow": "Snow",
+        "freezingRain": "Freezing Rain",
+        "thunderstorm": "Thunderstorm",
+        "unknown": "Unknown"
+    },
+    "moreRows": {
+        "weather": "Weather"
+    }
+}

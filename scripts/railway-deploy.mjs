@@ -1,24 +1,28 @@
 // Deploys Railway services at one exact commit and waits until each is live (or failed).
 // Railway does not deploy by itself (railway.ts: no branch, no Wait for CI); deploy.yml calls
 // this, in order after the migrations. By hand, e.g. a rollback to the previous release:
-//   RAILWAY_TOKEN=<that environment's project token> node scripts/railway-deploy.mjs <commit> api realtime worker
+//   APP_VERSION=2026.10.5 RAILWAY_TOKEN=<that environment's project token> node scripts/railway-deploy.mjs <commit> api realtime worker
+// APP_VERSION is what /health will say: the release's version, or "staging".
 // Writes one JSON line per service to $DEPLOY_REPORT when set (the PR comment's details).
 import { appendFileSync } from "node:fs";
 
 const [commit, ...services] = process.argv.slice(2);
-if (!commit || !services.length || !process.env.RAILWAY_TOKEN) {
-    console.error("Usage: RAILWAY_TOKEN=... node scripts/railway-deploy.mjs <commit> <service>...");
+const appVersion = process.env.APP_VERSION;
+if (!commit || !services.length || !process.env.RAILWAY_TOKEN || !appVersion) {
+    console.error(
+        "Usage: APP_VERSION=... RAILWAY_TOKEN=... node scripts/railway-deploy.mjs <commit> <service>...",
+    );
     process.exit(1);
 }
 
-async function q(query) {
+async function q(query, variables) {
     const r = await fetch("https://backboard.railway.com/graphql/v2", {
         method: "POST",
         headers: {
             "Project-Access-Token": process.env.RAILWAY_TOKEN,
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query, variables }),
     });
     const json = await r.json();
     if (json.errors) throw new Error(json.errors.map((e) => e.message).join("; "));
@@ -41,6 +45,17 @@ async function deploy(name) {
     const serviceId = ids[name];
     if (!serviceId) throw new Error(`no service named ${name}`);
     const started = Date.now();
+    // The Dockerfile builds it in; skipDeploys, because the deploy below is the one wanted.
+    await q(`mutation($input: VariableUpsertInput!) { variableUpsert(input: $input) }`, {
+        input: {
+            projectId,
+            environmentId,
+            serviceId,
+            name: "APP_VERSION",
+            value: appVersion,
+            skipDeploys: true,
+        },
+    });
     const { serviceInstanceDeployV2: id } = await q(
         `mutation { serviceInstanceDeployV2(serviceId: "${serviceId}", environmentId: "${environmentId}", commitSha: "${commit}") }`,
     );

@@ -1,0 +1,194 @@
+/* The navigation bar (navProgress.ts) and the pull-to-refresh spinner.
+   Only transform and opacity animate, so the bar moves while the main thread is
+   busy. Every animation is declared paused and only played from JavaScript: one
+   created mid-navigation froze on slow Android. */
+
+.nav-progress {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    z-index: 10;
+    height: 2.5px;
+    overflow: hidden;
+    pointer-events: none;
+    /* Never hidden with opacity, so its layer stays alive; at rest it sits off-screen. */
+    will-change: transform, opacity;
+    /* Done: one pulse, then gone. The controller goes idle on its animationend. */
+    animation: nav-settle 650ms 180ms forwards;
+    animation-play-state: paused;
+}
+
+.nav-progress > span {
+    position: absolute;
+    inset: 0;
+    background: var(--accent-primary);
+    /* 3D form asks Chrome for a compositor layer; 2D leaves it to a heuristic. */
+    transform: translate3d(-100%, 0, 0);
+    will-change: transform;
+    animation-play-state: paused;
+    animation-fill-mode: forwards;
+}
+
+/* Crawl: answers the tap fast, slows, never finishes on its own. */
+.nav-progress > .crawl {
+    overflow: hidden;
+    animation-name: nav-crawl;
+    animation-duration: 12s;
+}
+
+/* Fill: overtakes the crawl on done, wherever the crawl got to. */
+.nav-progress > .fill {
+    animation-name: nav-fill;
+    animation-duration: 180ms;
+    animation-timing-function: ease-out;
+}
+
+/* Sheen: "still working" once the crawl has slowed; faster while landing. */
+.nav-progress > .crawl::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.6), transparent);
+    animation: nav-sheen 1400ms ease-in-out infinite paused;
+}
+
+.nav-progress[data-state="landing"] > .crawl::after {
+    animation-duration: 900ms;
+}
+
+@keyframes nav-crawl {
+    0% {
+        transform: translate3d(-100%, 0, 0);
+        animation-timing-function: ease-out;
+    }
+    2% {
+        transform: translate3d(-75%, 0, 0);
+        animation-timing-function: ease-out;
+    }
+    20% {
+        transform: translate3d(-35%, 0, 0);
+        animation-timing-function: ease-out;
+    }
+    100% {
+        transform: translate3d(-10%, 0, 0);
+    }
+}
+
+@keyframes nav-sheen {
+    from {
+        transform: translate3d(-100%, 0, 0);
+    }
+    to {
+        transform: translate3d(100%, 0, 0);
+    }
+}
+
+@keyframes nav-fill {
+    to {
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes nav-settle {
+    0% {
+        opacity: 1;
+    }
+    35% {
+        opacity: 0.45;
+    }
+    70% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* Pull to refresh: sits behind the content in the gap the pull opens
+   (centred: (56 - 24) / 2 = 16). */
+.pull-spinner {
+    position: absolute;
+    left: 50%;
+    top: 16px;
+    width: 24px;
+    height: 24px;
+    margin-left: -12px;
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0.6);
+    transition:
+        opacity 200ms ease,
+        transform 200ms ease;
+}
+
+/* Following the finger: no easing between writes. */
+.pull-spinner[data-state="pulling"] {
+    transition: none;
+}
+
+.pull-spinner[data-state="spinning"] {
+    opacity: 1;
+    transform: none;
+}
+
+/* The arc starts at twelve o'clock, as platform spinners do. */
+.pull-spinner > svg {
+    display: block;
+    transform: rotate(-90deg);
+}
+
+/* Leaving: fades while still spinning; the content rises once it is gone. */
+.pull-spinner[data-state="leaving"] {
+    opacity: 0;
+    transform: none;
+    transition: opacity 150ms ease;
+}
+
+/* The same animation across both states, so it does not restart. */
+.pull-spinner:is([data-state="spinning"], [data-state="leaving"]) > svg {
+    animation: pull-spin 800ms linear infinite;
+}
+
+/* The arrowhead belongs to the pull only. */
+.pull-arrowhead {
+    transition: opacity 100ms ease;
+}
+
+.pull-spinner:is([data-state="spinning"], [data-state="leaving"]) .pull-arrowhead {
+    opacity: 0;
+}
+
+@keyframes pull-spin {
+    from {
+        transform: rotate(-90deg);
+    }
+    to {
+        transform: rotate(270deg);
+    }
+}
+/* Reduced motion: a still bar, full when done, then a fade. */
+@media (prefers-reduced-motion: reduce) {
+    .nav-progress,
+    .nav-progress *,
+    .nav-progress *::after {
+        animation: none !important;
+    }
+
+    .nav-progress:is([data-state="loading"], [data-state="landing"]) > .crawl {
+        transform: translate3d(-50%, 0, 0);
+    }
+
+    .nav-progress[data-state="done"] > .fill {
+        transform: none;
+    }
+
+    .nav-progress[data-state="done"] {
+        opacity: 0;
+        transition: opacity 300ms;
+    }
+
+    /* A still three-quarter arc still says "working" without spinning. */
+    .pull-spinner:is([data-state="spinning"], [data-state="leaving"]) > svg {
+        animation: none;
+    }
+}

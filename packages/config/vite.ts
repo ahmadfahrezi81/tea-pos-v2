@@ -6,7 +6,7 @@ import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, type Plugin, type ProxyOptions } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 import { pickLocale } from "@tea-pos/i18n/pick";
@@ -21,8 +21,32 @@ const contract = createHash("sha256")
     .digest("hex")
     .slice(0, 12);
 
+const APP_COMMIT = (process.env.APP_COMMIT ?? "dev").slice(0, 7);
+// The release's version, "staging" or "preview" (deploy.yml, pages.yml); "dev" locally.
+const APP_VERSION = process.env.APP_VERSION ?? "dev";
+// X-App-Version, on every request: "seller@2026.10.3+a1b2c3d".
+const appTag = (app: AppConfig) => `${app.id}@${APP_VERSION}+${APP_COMMIT}`;
+
+// Errors from the very start, kept until the shell sends them with the page views (shell/events.ts).
+// At most 20 a page load, so an error in a loop cannot flood. And whether the page was ever hidden
+// while it loaded: such an open time is not the app's (app_ready leaves it out).
+const EARLY_EVENTS =
+    'window.__wasHidden=document.hidden;addEventListener("visibilitychange",function(){if(document.hidden)__wasHidden=true});' +
+    'window.__events=[];(function(){var n=0;function k(e,m,s){if(n++<20)__events.push({type:"error",name:e||"Error",' +
+    'message:String(m||"").slice(0,2000),stack:String(s||"").slice(0,8000),path:location.pathname,at:new Date().toISOString()})}' +
+    'addEventListener("error",function(e){var r=e.error;k(r&&r.name,r?r.message:e.message,r&&r.stack)});' +
+    'addEventListener("unhandledrejection",function(e){var r=e.reason;k(r&&r.name||"UnhandledRejection",r&&r.message||r,r&&r.stack)})})()';
+
 // The routes drawn on first open; the bundle-size check counts what this preloads.
-const FIRST_SCREEN = [/src\/routes\/_shell\.tsx/, /src\/routes\/_shell\/index\.tsx/];
+const FIRST_SCREEN = [
+    /src\/routes\/_shell\.tsx/,
+    /src\/routes\/_shell\/index\.tsx/,
+    /src\/routes\/_shell\/\$tenant\.tsx/,
+    /src\/routes\/_shell\/\$tenant\/index\.tsx/,
+    // Each app's first tab: backoffice Store, seller POS.
+    /src\/routes\/_shell\/\$tenant\/store\/index\.tsx/,
+    /src\/routes\/_shell\/\$tenant\/pos\.tsx/,
+];
 
 // Everything the first screen needs is requested with the main JavaScript, not after
 // it runs: its route code and the font. The language is preloaded by pickLanguage below.
@@ -143,7 +167,9 @@ function appHtml(app: AppConfig): Plugin {
                 {
                     tag: "script",
                     // /me starts with the page, not after the JavaScript: one round trip less (useMe takes it).
-                    children: `if(location.pathname!=="/login")window.__me=fetch("/api/me").catch(function(){return null})`,
+                    children:
+                        `${EARLY_EVENTS};if(location.pathname!=="/login")window.__me=fetch("/api/me",` +
+                        `{headers:{"X-App-Version":${JSON.stringify(appTag(app))}}}).catch(function(){return null})`,
                     injectTo: "head-prepend",
                 },
                 {
@@ -162,11 +188,40 @@ function appHtml(app: AppConfig): Plugin {
     };
 }
 
+// The hub's socket in local dev, sent as the forwarder sends it (set REALTIME_ORIGIN, e.g. a local realtime).
+function realtimeProxy(app: AppConfig): Record<string, ProxyOptions> {
+    if (!process.env.REALTIME_ORIGIN) return {};
+    return {
+        "/api/realtime": {
+            target: process.env.REALTIME_ORIGIN,
+            ws: true,
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/api/, ""),
+            headers: { "X-Edge-Secret": process.env.EDGE_SECRET ?? "", "X-App": app.id },
+            configure: (proxy) =>
+                proxy.on("proxyReqWs", (req, incoming) =>
+                    req.setHeader("X-App-Origin", `http://${incoming.headers.host}`),
+                ),
+        },
+    };
+}
+
+// The newest What's new entry for the app, so the More tab's dot needs no download.
+function whatsNewLatest(app: AppConfig): string {
+    const all = JSON.parse(
+        readFileSync(new URL("../shell/whats-new.json", import.meta.url), "utf8"),
+    ) as { version: string; apps: string[] }[];
+    return all.find((e) => e.apps.includes(app.id))?.version ?? "";
+}
+
 // The one Vite setup every app shares; an app only passes its config.
 export function appConfig(app: AppConfig) {
     return defineConfig({
         define: {
-            __APP_COMMIT__: JSON.stringify((process.env.APP_COMMIT ?? "dev").slice(0, 7)),
+            __APP_COMMIT__: JSON.stringify(APP_COMMIT),
+            __APP_VERSION__: JSON.stringify(APP_VERSION),
+            __APP_TAG__: JSON.stringify(appTag(app)),
+            __WHATS_NEW_LATEST__: JSON.stringify(whatsNewLatest(app)),
             __API_CONTRACT__: JSON.stringify(contract),
         },
         plugins: [
@@ -213,10 +268,12 @@ export function appConfig(app: AppConfig) {
             }),
         ],
         // The bundle-size check reads which files the first screen loads.
-        build: { manifest: true },
+        // Maps for PostHog to read app errors with (pages.yml uploads and deletes them); the files never point to them.
+        build: { manifest: true, sourcemap: "hidden" },
         // Local dev reaches the API the way the Pages forwarder does (API_ORIGIN=http://localhost:8080 for a local Go).
         server: {
             proxy: {
+                ...realtimeProxy(app),
                 "/api": {
                     target: process.env.API_ORIGIN ?? "https://api-staging-c60d.up.railway.app",
                     changeOrigin: true,

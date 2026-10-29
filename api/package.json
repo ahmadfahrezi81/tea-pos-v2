@@ -10,6 +10,7 @@
         "generate": "bash scripts/pending.sh && go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1 generate && go run ./cmd/openapi > openapi.yaml",
         "generate:check": "bash scripts/pending.sh && git diff --exit-code db/pending.sql && go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1 diff && go run ./cmd/openapi | diff -u openapi.yaml - && echo 'generated code up to date'",
         "db:schema": "infisical run --env=staging --path=/app -- bash scripts/db-schema.sh",
-        "test:e2e": "go test -tags e2e -count=1 ./tests/e2e/"
+        "test:e2e": "go test -tags e2e -count=1 ./tests/e2e/",
+        "fake-sales": "ENV=staging infisical run --env=staging --path=/app -- go run ./tools/fakesales"
     }
 }
