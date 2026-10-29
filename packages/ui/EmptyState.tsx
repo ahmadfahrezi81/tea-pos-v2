@@ -2,7 +2,7 @@ import { DOT_GRID } from "./styles/dot-grid";
 import { Emoji, type EmojiName } from "./Emoji";
 
 // One picture for every empty screen, so an empty state costs one small file at most.
-const EMPTY: EmojiName = "emptyNest";
+const EMPTY: EmojiName = "ghost";
 
 /** Nothing to show: a white card, the dot grid and one emoji, a bold title and a line under it. */
 export function EmptyState({ title, body }: { title: string; body?: string }) {
