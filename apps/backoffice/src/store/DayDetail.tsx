@@ -61,7 +61,7 @@ export function DayDetail({ id }: { id: string }) {
     );
 
     return (
-        <div className="space-y-4 pb-8">
+        <div className="space-y-4">
             <div className="bg-white rounded-2xl p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                     <h3 className="font-bold text-xl text-gray-800 leading-tight">

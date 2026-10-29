@@ -13,6 +13,7 @@ import { decisions, payDate, usePayslip, usePayWrite } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { Dialog, Drawer } from "@tea-pos/ui/Drawer";
 import { ICON } from "@tea-pos/ui/icon";
+import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
 
 type Slip = components["schemas"]["Payslip"];
 type Row = { id: string; date: string; status: string; amount: number };
@@ -124,7 +125,7 @@ export function Payslip({ id }: { id: string }) {
     );
 
     return (
-        <div className="space-y-3 pb-32">
+        <div className="space-y-3">
             {pendingDates.length > 0 && !warningDismissed && (
                 <div className="bg-red-100 p-3.5 rounded-xl">
                     <div className="flex items-start justify-between mb-2">
@@ -404,23 +405,25 @@ export function Payslip({ id }: { id: string }) {
             </Group>
 
             {slip.status === "pending" && slip.pending === 0 && canWrite && (
-                <div className="fixed bottom-0 inset-x-0 mx-auto max-w-[480px] p-4 pb-8 bg-white border-t border-gray-100 z-10">
-                    {left > 0 ? (
-                        <button
-                            disabled
-                            className={`w-full py-3.5 text-white font-bold rounded-xl opacity-40 ${isSkip ? "bg-gray-700" : "bg-green-600"}`}
-                        >
-                            {t("pay.daysLeftLong").replace("{n}", String(left))}
-                        </button>
-                    ) : (
-                        <Link
-                            to={pathname.concat("/settle")}
-                            className={`block text-center w-full py-3.5 text-white font-bold rounded-xl active:opacity-80 ${isSkip ? "bg-gray-700" : "bg-green-600"}`}
-                        >
-                            {t(isSkip ? "pay.skip" : "pay.pay")}
-                        </Link>
-                    )}
-                </div>
+                <FooterSlot>
+                    <div className="bg-white border-t border-gray-200 p-4">
+                        {left > 0 ? (
+                            <button
+                                disabled
+                                className={`w-full py-3.5 text-white font-bold rounded-xl opacity-40 ${isSkip ? "bg-gray-700" : "bg-green-600"}`}
+                            >
+                                {t("pay.daysLeftLong").replace("{n}", String(left))}
+                            </button>
+                        ) : (
+                            <Link
+                                to={pathname.concat("/settle")}
+                                className={`block text-center w-full py-3.5 text-white font-bold rounded-xl active:opacity-80 ${isSkip ? "bg-gray-700" : "bg-green-600"}`}
+                            >
+                                {t(isSkip ? "pay.skip" : "pay.pay")}
+                            </Link>
+                        )}
+                    </div>
+                </FooterSlot>
             )}
 
             <Dialog open={showProof} onClose={() => setShowProof(false)}>
@@ -435,7 +438,7 @@ export function Payslip({ id }: { id: string }) {
                 <Drawer
                     onClose={() => setConfirm(null)}
                     dim="bg-black/40"
-                    className="p-5 pb-8 space-y-4"
+                    className="p-5 space-y-4"
                 >
                     <div className="flex items-center justify-between">
                         <p className="text-lg font-bold text-gray-900">

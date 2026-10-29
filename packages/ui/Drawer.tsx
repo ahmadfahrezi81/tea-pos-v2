@@ -6,7 +6,8 @@ import { usePresence } from "./motion";
 /**
  * A panel up from the bottom over a dimmed page; a tap outside closes it. It slides in and,
  * while `open` turns false, slides out before it goes. Into the page body: a header is its own
- * layer, which would trap a fixed panel. Every bottom sheet is built on it.
+ * layer, which would trap a fixed panel. Every bottom sheet is built on it; it alone adds the phone's
+ * home bar gap, so a sheet's own padding is only its design.
  */
 export function Drawer({
     open = true,
@@ -36,10 +37,10 @@ export function Drawer({
             <div
                 role="dialog"
                 aria-label={label}
-                className={`relative mx-auto w-full max-w-[480px] overflow-x-hidden bg-white rounded-t-2xl ${leaving ? "animate-sheet-out" : "animate-sheet-in"} ${className}`}
+                className={`relative mx-auto w-full max-w-[480px] overflow-x-hidden bg-white rounded-t-2xl pb-[env(safe-area-inset-bottom)] ${leaving ? "animate-sheet-out" : "animate-sheet-in"}`}
                 onClick={(e) => e.stopPropagation()}
             >
-                {children}
+                <div className={className}>{children}</div>
             </div>
         </div>,
         document.body,

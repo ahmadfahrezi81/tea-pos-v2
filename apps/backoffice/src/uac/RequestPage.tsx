@@ -45,7 +45,7 @@ export function RequestPage({ id }: { id: string }) {
     const asked = declining !== null;
 
     return (
-        <div className="space-y-4 pb-24">
+        <div className="space-y-4">
             <HeaderTitle>{data.name}</HeaderTitle>
 
             <div className="flex items-center gap-3 rounded-2xl bg-white p-4">

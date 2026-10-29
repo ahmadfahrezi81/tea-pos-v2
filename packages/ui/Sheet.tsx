@@ -22,7 +22,7 @@ export function Sheet({
     children: ReactNode;
 }) {
     return (
-        <Drawer open={open} onClose={onClose} label={title} className="px-4 pt-5 pb-8">
+        <Drawer open={open} onClose={onClose} label={title} className="px-4 pt-5 pb-5">
             <DrawerHandle />
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">

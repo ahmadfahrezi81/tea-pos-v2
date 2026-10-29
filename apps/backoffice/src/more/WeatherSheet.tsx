@@ -45,7 +45,7 @@ export function WeatherSheet({ open, onClose }: { open: boolean; onClose: () => 
         <Drawer
             open={open}
             onClose={onClose}
-            className="rounded-t-xl px-4 pt-5 pb-10 max-h-[90dvh] overflow-y-auto"
+            className="px-4 pt-5 pb-5 max-h-[90dvh] overflow-y-auto"
         >
             <DrawerHandle />
             <div className="flex items-center justify-between mb-3">

@@ -246,7 +246,7 @@ export function DaySessions({ id }: { id: string }) {
     const people = new Set(sessions.map((s) => s.userId)).size;
     const nameOf = new Map(sessions.map((s) => [s.id, s.userName]));
     return (
-        <div className="flex flex-col gap-3 pb-8">
+        <div className="flex flex-col gap-3">
             <div className="bg-white rounded-2xl px-4 py-3 flex items-center gap-4 text-sm">
                 <div>
                     <span className="font-bold text-gray-900">{sessions.length}</span>
