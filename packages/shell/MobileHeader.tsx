@@ -49,7 +49,7 @@ export function MobileHeader({
                             <ArrowLeft size={30} strokeWidth={2.5} />
                         </button>
                     </div>
-                    <h1 className="group truncate text-center text-xl font-extrabold tracking-tight text-gray-900">
+                    <h1 className="group truncate text-center text-2xl font-extrabold tracking-tight text-gray-900">
                         {titleText}
                     </h1>
                     <div ref={actionsRef} className="flex items-center justify-end gap-1" />
