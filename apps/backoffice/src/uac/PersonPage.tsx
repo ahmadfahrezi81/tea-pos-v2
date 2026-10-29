@@ -239,7 +239,7 @@ export function AccessFields({
                                             className={`flex size-6 shrink-0 items-center justify-center rounded-md border-2 ${
                                                 on
                                                     ? "border-brand/90 bg-brand/90 text-white"
-                                                    : "border-gray-300"
+                                                    : "border-gray-300 bg-white"
                                             }`}
                                         >
                                             {on && <Check size={16} strokeWidth={4} />}

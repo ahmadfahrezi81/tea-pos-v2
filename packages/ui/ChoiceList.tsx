@@ -37,7 +37,7 @@ export function ChoiceList<T extends string>({
                             )}
                         </div>
                         <span
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${selected ? "border-brand/90 bg-brand/90" : "border-gray-300"}`}
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${selected ? "border-brand/90 bg-brand/90" : "border-gray-300 bg-white"}`}
                         >
                             {selected && <Check size={16} className="text-white" strokeWidth={4} />}
                         </span>
