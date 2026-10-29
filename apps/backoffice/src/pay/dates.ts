@@ -18,21 +18,6 @@ export function weeks(start: string, end: string, word: string): string {
     return a === b ? `${word} ${a}` : `${word} ${a} · ${word} ${b}`;
 }
 
-export const dayMonth = (date: string, locale: string) =>
-    new Intl.DateTimeFormat(locale === "id" ? "id-ID" : "en-GB", {
-        day: "numeric",
-        month: "short",
-        timeZone: "UTC",
-    }).format(new Date(`${date}T00:00:00Z`));
-
-export const shortDay = (date: string, locale: string) =>
-    new Intl.DateTimeFormat(locale === "id" ? "id-ID" : "en-GB", {
-        weekday: "short",
-        day: "numeric",
-        month: "short",
-        timeZone: "UTC",
-    }).format(new Date(`${date}T00:00:00Z`));
-
 /** `3 days left`, `1 day left`. */
 export const daysLeftText = (
     t: (k: "pay.daysLeftLong" | "pay.dayLeftLong") => string,

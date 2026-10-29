@@ -1,6 +1,6 @@
 import { api } from "@tea-pos/api-client";
 import { uploadPhoto } from "@tea-pos/api-client/files";
-import { formatMoney, localDate } from "@tea-pos/format";
+import { formatCalendarDay, formatMoney, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
 import { Callout } from "@tea-pos/ui/Callout";
@@ -11,7 +11,7 @@ import { PhotoInput } from "@tea-pos/ui/PhotoInput";
 import { Link, useLocation, useRouter } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 
-import { dayMonth, daysLeft, daysLeftText } from "./dates";
+import { daysLeft, daysLeftText } from "./dates";
 import { usePayslip, usePayStaff, usePayWrite } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { useSlug } from "@tea-pos/shell/tenant";
@@ -130,7 +130,7 @@ export function PayConfirm({ id }: { id: string }) {
                     />
                 )}
                 <p className="text-sm text-gray-900">
-                    {dayMonth(slip.start, locale)} – {dayMonth(slip.end, locale)}{" "}
+                    {formatCalendarDay(slip.start, locale)} – {formatCalendarDay(slip.end, locale)}{" "}
                     {slip.end.slice(0, 4)}
                 </p>
             </div>

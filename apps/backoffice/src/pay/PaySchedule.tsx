@@ -1,4 +1,4 @@
-import { localDate } from "@tea-pos/format";
+import { addDays, formatCalendarDay, localDate } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { ConfirmSheet } from "@tea-pos/shell/FormFooter";
@@ -11,16 +11,11 @@ import { useState } from "react";
 import { usePayPeriod, usePayWrite, writes } from "./pay";
 import { daysLeft } from "./dates";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
+import type { Locale } from "@tea-pos/i18n";
 
 type Frequency = "weekly" | "bi_weekly" | "four_weekly";
 const FREQUENCIES: Frequency[] = ["weekly", "bi_weekly", "four_weekly"];
 const WEEKS: Record<Frequency, number> = { weekly: 1, bi_weekly: 2, four_weekly: 4 };
-
-const addDays = (d: string, n: number) => {
-    const x = new Date(`${d}T12:00:00Z`);
-    x.setUTCDate(x.getUTCDate() + n);
-    return x.toISOString().slice(0, 10);
-};
 
 /** The period a day falls in, as Go and the old app count it (shown before switching, never saved). */
 function windowOf(date: string, f: Frequency): [string, string] {
@@ -35,15 +30,10 @@ function windowOf(date: string, f: Frequency): [string, string] {
     return [start, addDays(start, days - 1)];
 }
 
-function range(start: string, end: string, locale: string) {
-    const f = (d: string, o: Intl.DateTimeFormatOptions) =>
-        new Intl.DateTimeFormat(locale === "id" ? "id-ID" : "en-GB", {
-            ...o,
-            timeZone: "UTC",
-        }).format(new Date(`${d}T00:00:00Z`));
+function range(start: string, end: string, locale: Locale) {
     return start.slice(0, 7) === end.slice(0, 7)
-        ? `${f(start, { day: "numeric" })}–${f(end, { day: "numeric", month: "short" })}`
-        : `${f(start, { day: "numeric", month: "short" })} – ${f(end, { day: "numeric", month: "short" })}`;
+        ? `${formatCalendarDay(start, locale, "day")}–${formatCalendarDay(end, locale)}`
+        : `${formatCalendarDay(start, locale)} – ${formatCalendarDay(end, locale)}`;
 }
 
 /** The tenant's pay frequency: safe to change only on a period's last day, or before anything is counted into it. */

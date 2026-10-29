@@ -1,5 +1,5 @@
 import type { components } from "@tea-pos/api-client";
-import { formatMoney, localDate } from "@tea-pos/format";
+import { addDays, formatCalendarDay, formatMoney, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { ActionButton } from "@tea-pos/ui/ActionButton";
 import { CopyButton } from "@tea-pos/ui/CopyButton";
@@ -8,7 +8,7 @@ import { useAccess } from "@tea-pos/shell/tenant";
 import { AlertTriangle, Check, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import { dayMonth, daysLeft, daysLeftText, shortDay, weeks } from "./dates";
+import { daysLeft, daysLeftText, weeks } from "./dates";
 import { decisions, payDate, usePayslip, usePayWrite } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { Dialog, Drawer } from "@tea-pos/ui/Drawer";
@@ -29,12 +29,6 @@ type Confirm = {
     label: string;
     amount: number;
     count?: number;
-};
-
-const addDays = (d: string, n: number) => {
-    const x = new Date(`${d}T12:00:00Z`);
-    x.setUTCDate(x.getUTCDate() + n);
-    return x.toISOString().slice(0, 10);
 };
 
 /**
@@ -208,7 +202,7 @@ export function Payslip({ id }: { id: string }) {
                     {detail(
                         t("pay.paidOn"),
                         slip.paidAt
-                            ? `${dayMonth(slip.paidAt.slice(0, 10), locale)} ${slip.paidAt.slice(0, 4)}`
+                            ? formatCalendarDay(localDate(slip.paidAt), locale, "full")
                             : "—",
                     )}
                     {detail(t("pay.paidBy"), slip.paidBy || "—")}
@@ -294,7 +288,7 @@ export function Payslip({ id }: { id: string }) {
                                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                                     <div className="flex items-center gap-2">
                                         <p className="text-base font-bold text-gray-900">
-                                            {shortDay(d, locale)}
+                                            {formatCalendarDay(d, locale, "short")}
                                         </p>
                                         <Badge>
                                             {t(allDone ? "pay.dayDone" : "pay.dayPending")}
@@ -363,7 +357,11 @@ export function Payslip({ id }: { id: string }) {
                                                         kind: "day",
                                                         id: d,
                                                         status: s,
-                                                        label: shortDay(d, locale),
+                                                        label: formatCalendarDay(
+                                                            d,
+                                                            locale,
+                                                            "short",
+                                                        ),
                                                         amount: pendingTotal,
                                                         count: pending.length,
                                                     })

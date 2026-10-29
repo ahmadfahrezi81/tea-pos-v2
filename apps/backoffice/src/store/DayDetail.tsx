@@ -1,5 +1,5 @@
 import type { components } from "@tea-pos/api-client";
-import { formatDateTime, formatMoney } from "@tea-pos/format";
+import { formatCalendarDay, formatDateTime, formatMoney } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { ImageOff, X } from "lucide-react";
@@ -21,15 +21,6 @@ const CLOSING = [
     "closing:cups",
     "closing:tea",
 ] as const;
-
-const longDate = (date: string, locale: string) =>
-    new Intl.DateTimeFormat(locale === "id" ? "id-ID" : "en-GB", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        timeZone: "UTC",
-    }).format(new Date(`${date}T00:00:00Z`));
 
 /** One store's day, as the old seller app's Details: cash, expenses, who worked, notes, photos, products. */
 export function DayDetail({ id }: { id: string }) {
@@ -67,7 +58,7 @@ export function DayDetail({ id }: { id: string }) {
             <div className="bg-white rounded-2xl p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                     <h3 className="font-bold text-xl text-gray-800 leading-tight">
-                        {longDate(day.date, locale)}
+                        {formatCalendarDay(day.date, locale, "long")}
                     </h3>
                     <Badge>
                         {t(day.closedAt ? "analytics.statusClosed" : "analytics.statusOpen")}

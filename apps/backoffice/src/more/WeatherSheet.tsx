@@ -1,5 +1,5 @@
 import type { MessageKey } from "@tea-pos/i18n";
-import { useT } from "@tea-pos/i18n/react";
+import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Drawer, DrawerHandle } from "@tea-pos/ui/Drawer";
 import { isNight, weatherOf } from "@tea-pos/ui/weather";
 import { X } from "lucide-react";
@@ -7,28 +7,17 @@ import { X } from "lucide-react";
 import { useWeather } from "./more";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
+import { addDays, formatTime, localDate, localHour } from "@tea-pos/format";
 
-const nowInWib = () => {
-    const d = new Date(Date.now() + 7 * 3_600_000);
-    return { today: d.toISOString().slice(0, 10), hour: d.getUTCHours() };
-};
-const addDays = (date: string, n: number) => {
-    const d = new Date(`${date}T12:00:00Z`);
-    d.setUTCDate(d.getUTCDate() + n);
-    return d.toISOString().slice(0, 10);
-};
 const hour12 = (h: number) => `${h % 12 === 0 ? 12 : h % 12} ${h >= 12 ? "PM" : "AM"}`;
-const fetchedAt = (iso: string) => {
-    const d = new Date(new Date(iso).getTime() + 7 * 3_600_000);
-    const h = d.getUTCHours();
-    return `${h % 12 === 0 ? 12 : h % 12}:${String(d.getUTCMinutes()).padStart(2, "0")}${h >= 12 ? "pm" : "am"}`;
-};
 
 /** The old apps' weather sheet: the hour before now to six hours ahead. */
 export function WeatherSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
     const t = useT();
+    const locale = useLocale();
     const { data, isPending } = useWeather(open);
-    const { today, hour } = nowInWib();
+    const today = localDate();
+    const hour = localHour();
     const yesterday = addDays(today, -1);
     const tomorrow = addDays(today, 1);
     const spills = hour + 6 > 23;
@@ -56,7 +45,7 @@ export function WeatherSheet({ open, onClose }: { open: boolean; onClose: () => 
                     </p>
                     <p className="text-sm text-gray-500">
                         {t("weather.asOf")}{" "}
-                        {current?.fetchedAt ? fetchedAt(current.fetchedAt) : "—"}
+                        {current?.fetchedAt ? formatTime(current.fetchedAt, locale) : "—"}
                     </p>
                 </div>
                 <button
