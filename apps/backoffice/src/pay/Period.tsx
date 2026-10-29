@@ -3,8 +3,8 @@ import { formatMoney, localDate } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
-import { Link } from "@tanstack/react-router";
-import { Check, ChevronLeft, ChevronRight, Settings } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { ChevronLeft, ChevronRight, Settings } from "lucide-react";
 
 import { daysLeft, daysLeftText, shortDay, weeks } from "./dates";
 import { payDate, usePayPeriodAt, useSlug } from "./pay";
@@ -12,6 +12,8 @@ import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
+import { ListRow } from "@tea-pos/ui/ListRow";
+import { Badge } from "@tea-pos/ui/Badge";
 
 type Person = components["schemas"]["Payout"];
 
@@ -66,7 +68,7 @@ export function PeriodHome({ start }: { start: string }) {
                         <ChevronLeft size={ICON} />
                     </Link>
                     <div className="text-center">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        <p className="text-xs font-bold uppercase tracking-widest text-gray-900">
                             {weeks(p.start, p.end, t("pay.week"))}
                         </p>
                         <p className="text-lg font-bold text-gray-900">
@@ -88,7 +90,7 @@ export function PeriodHome({ start }: { start: string }) {
                         <span className="size-9" />
                     )}
                 </div>
-                <p className="mt-1 text-center text-sm text-gray-500">
+                <p className="mt-1 text-center text-sm text-gray-900">
                     {left <= 0 && toPay > 0
                         ? t("pay.payDay").replace("{n}", String(toPay))
                         : `${t("pay.paysOn").replace("{date}", payDate(p.payoutDate, locale))}${
@@ -131,21 +133,11 @@ export function PeriodHome({ start }: { start: string }) {
                 <EmptyState title={t("pay.noPeople")} body={t("pay.noPeopleBody")} />
             )}
             {groups.map(({ g, rows }) => (
-                <section key={g} className="space-y-2">
-                    <p className="px-1 text-sm font-semibold text-gray-500">
-                        {t(`pay.${g}` as MessageKey)} ({rows.length})
-                    </p>
-                    <div className="overflow-hidden rounded-2xl bg-white">
-                        {rows.map((x, i) => (
-                            <PersonRow
-                                key={x.id}
-                                person={x}
-                                start={p.start}
-                                last={i === rows.length - 1}
-                            />
-                        ))}
-                    </div>
-                </section>
+                <SettingsGroup key={g} title={`${t(`pay.${g}` as MessageKey)} (${rows.length})`}>
+                    {rows.map((x) => (
+                        <PersonRow key={x.id} person={x} start={p.start} />
+                    ))}
+                </SettingsGroup>
             ))}
 
             <SettingsGroup>
@@ -159,31 +151,40 @@ export function PeriodHome({ start }: { start: string }) {
     );
 }
 
-function PersonRow({ person: x, start, last }: { person: Person; start: string; last: boolean }) {
+/** A person in the period, as v1's lists: their photo, name, a badge for what is next, the amount. */
+function PersonRow({ person: x, start }: { person: Person; start: string }) {
     const t = useT();
     const slug = useSlug();
+    const navigate = useNavigate();
+    const badge =
+        x.status !== "pending"
+            ? t(x.status === "skipped" ? "pay.skipped" : "pay.paid")
+            : x.pending > 0
+              ? t("pay.waiting").replace("{n}", String(x.pending))
+              : t("pay.readyBadge");
     return (
-        <Link
-            to="/$tenant/pay/$start/$userId"
-            params={{ tenant: slug, start, userId: x.userId }}
-            className={`flex items-center gap-3 p-3 active:bg-gray-50 ${last ? "" : "border-b border-gray-100"}`}
-        >
-            <Avatar url={x.avatarUrl} size={36} />
-            <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold text-gray-900">{x.name}</p>
-                {x.pending > 0 && (
-                    <p className="text-xs text-amber-600">
-                        {t("pay.waiting").replace("{n}", String(x.pending))}
-                    </p>
-                )}
-                {x.status !== "pending" && (
-                    <p className="text-xs text-gray-500">
-                        {t(x.status === "skipped" ? "pay.skipped" : "pay.paid")}
-                    </p>
-                )}
-            </div>
-            <span className="shrink-0 font-semibold text-gray-900">{formatMoney(x.total)}</span>
-            {group(x) === "ready" && <Check size={18} className="shrink-0 text-green-600" />}
-        </Link>
+        <ListRow
+            onClick={() =>
+                void navigate({
+                    to: "/$tenant/pay/$start/$userId",
+                    params: { tenant: slug, start, userId: x.userId },
+                })
+            }
+            leading={<Avatar url={x.avatarUrl} square />}
+            title={x.name}
+            subtitle={
+                <span className="flex pt-1">
+                    <Badge>{badge}</Badge>
+                </span>
+            }
+            trailing={
+                <span className="flex items-center gap-1 shrink-0">
+                    <span className="text-base font-bold text-gray-900">
+                        {formatMoney(x.total)}
+                    </span>
+                    <ChevronRight size={ICON} strokeWidth={2.5} className="text-brand/90" />
+                </span>
+            }
+        />
     );
 }

@@ -220,6 +220,7 @@
         "noPeople": "Nobody to pay in this period.",
         "noPayslip": "Nothing for this person in this period.",
         "noPeopleBody": "Payslips show here once a seller closes a day in this period.",
-        "dayLeftLong": "1 day left"
+        "dayLeftLong": "1 day left",
+        "readyBadge": "Ready"
     }
 }
