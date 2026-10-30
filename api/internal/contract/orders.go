@@ -4,7 +4,8 @@ import "github.com/ahmadfahrezi81/tea-pos-v2/api/internal/page"
 
 type DayOrdersInput struct {
 	Tenant string `path:"tenant"`
-	Date   string `query:"date" required:"true" format:"date" doc:"The day, in the stores' time zone"`
+	From   string `query:"from" required:"true" format:"date" doc:"The first day, in the stores' time zone"`
+	To     string `query:"to" required:"true" format:"date" doc:"The last day, included; at most 400 days after from"`
 	Stores
 	page.Input
 }

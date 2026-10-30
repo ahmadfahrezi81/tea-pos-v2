@@ -81,6 +81,8 @@ Listed first, built after the walkthrough.
 
 **Pay, as built:** the period header is only its dates and arrows; the pay date has its own card; each person is v1's card (orders, cups, commission, claims, total, what is next), to review first, then ready, then Done. A person's page in People gains a Pay panel (commission type, bank), and changing the type opens `/uac/<id>/commission`; Staff Payroll Info and Staff Commissions leave Pay Settings, which keeps the two types with a count. Pay Schedule moves to More → Advanced (`/advanced`). How it works for Pay at `/pay/help`, on the shared `HelpTopics`.
 
+**Store, as built:** one range in the address (`?from=&to=`, today when absent) on every Store screen, from `RangeBar` and `DateRangeSheet` (`packages/ui`: presets, then a calendar; no library). `stores/live` takes an optional range; `orders` and `days` take `from` and `to`, replacing `date` and `month`. The home: range, totals and chart (by hour on one day, by day otherwise) over real stores, a card per store, then Orders, Day by day and How it works; the filter, search and All Stores row go. A store: who is on (today), the same numbers, the latest 5 orders with See all, Day by day (on one day, that day's detail). `/store/all` redirects to the home. The orders chart page keeps its own day.
+
 The owner's walkthrough ended here; build these now. The owner does 2, 3 and 5's SQL.
 
 ## Done when

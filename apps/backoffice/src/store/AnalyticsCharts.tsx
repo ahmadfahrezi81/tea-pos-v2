@@ -1,15 +1,13 @@
 import { formatDate, formatMoney } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { useSlug } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { BarChart } from "@tea-pos/ui/BarChart";
-import { useNavigate } from "@tanstack/react-router";
 import { Package } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { MonthPicker } from "./AnalyticsMonth";
-import { monthRange, useSalesDays, useSalesProducts, useStoreId, useTeaWaste } from "./sales";
+import { RangeBar, useRange } from "./range";
+import { useSalesDays, useSalesProducts, useTeaWaste } from "./sales";
 import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
 // Tea waste, as the old app judged it: up to 12 L a day is fine, and a litre costs Rp 1.000.
@@ -30,24 +28,11 @@ const WEEK = [
 ] as const;
 
 /** The old seller app's charts page for the picked stores: daily sales, tea waste, day of week, products. */
-export function AnalyticsCharts({ month }: { month: string }) {
-    const slug = useSlug();
-    const storeId = useStoreId();
-    const navigate = useNavigate();
-    const [from, to] = monthRange(month);
+export function AnalyticsCharts() {
+    const { from, to } = useRange();
     return (
         <div className="space-y-4">
-            <MonthPicker
-                month={month}
-                onChange={(m) =>
-                    void navigate({
-                        to: "/$tenant/store/$storeId/analytics/charts",
-                        params: { tenant: slug, storeId },
-                        search: { month: m },
-                        replace: true,
-                    })
-                }
-            />
+            <RangeBar />
             <DailySales from={from} to={to} />
             <TeaWaste from={from} to={to} />
             <DayOfWeek from={from} to={to} />

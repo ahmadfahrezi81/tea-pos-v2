@@ -26,6 +26,7 @@ import { Route as ShellTenantAdvancedScheduleRouteImport } from './routes/_shell
 import { Route as ShellTenantPayIndexRouteImport } from './routes/_shell/$tenant/pay/index'
 import { Route as ShellTenantPayHelpRouteImport } from './routes/_shell/$tenant/pay/help'
 import { Route as ShellTenantStoreIndexRouteImport } from './routes/_shell/$tenant/store/index'
+import { Route as ShellTenantStoreHelpRouteImport } from './routes/_shell/$tenant/store/help'
 import { Route as ShellTenantUacIndexRouteImport } from './routes/_shell/$tenant/uac/index'
 import { Route as ShellTenantUacHelpRouteImport } from './routes/_shell/$tenant/uac/help'
 import { Route as ShellTenantPayStartIndexRouteImport } from './routes/_shell/$tenant/pay/$start/index'
@@ -137,6 +138,11 @@ const ShellTenantPayHelpRoute = ShellTenantPayHelpRouteImport.update({
 const ShellTenantStoreIndexRoute = ShellTenantStoreIndexRouteImport.update({
   id: '/store/',
   path: '/store/',
+  getParentRoute: () => ShellTenantRoute,
+} as any)
+const ShellTenantStoreHelpRoute = ShellTenantStoreHelpRouteImport.update({
+  id: '/store/help',
+  path: '/store/help',
   getParentRoute: () => ShellTenantRoute,
 } as any)
 const ShellTenantUacIndexRoute = ShellTenantUacIndexRouteImport.update({
@@ -295,6 +301,7 @@ export interface FileRoutesByFullPath {
   '/$tenant/account/language': typeof ShellTenantAccountLanguageRoute
   '/$tenant/advanced/schedule': typeof ShellTenantAdvancedScheduleRoute
   '/$tenant/pay/help': typeof ShellTenantPayHelpRoute
+  '/$tenant/store/help': typeof ShellTenantStoreHelpRoute
   '/$tenant/uac/help': typeof ShellTenantUacHelpRoute
   '/$tenant/account/': typeof ShellTenantAccountIndexRoute
   '/$tenant/advanced/': typeof ShellTenantAdvancedIndexRoute
@@ -336,6 +343,7 @@ export interface FileRoutesByTo {
   '/$tenant/account/language': typeof ShellTenantAccountLanguageRoute
   '/$tenant/advanced/schedule': typeof ShellTenantAdvancedScheduleRoute
   '/$tenant/pay/help': typeof ShellTenantPayHelpRoute
+  '/$tenant/store/help': typeof ShellTenantStoreHelpRoute
   '/$tenant/uac/help': typeof ShellTenantUacHelpRoute
   '/$tenant/account': typeof ShellTenantAccountIndexRoute
   '/$tenant/advanced': typeof ShellTenantAdvancedIndexRoute
@@ -380,6 +388,7 @@ export interface FileRoutesById {
   '/_shell/$tenant/account/language': typeof ShellTenantAccountLanguageRoute
   '/_shell/$tenant/advanced/schedule': typeof ShellTenantAdvancedScheduleRoute
   '/_shell/$tenant/pay/help': typeof ShellTenantPayHelpRoute
+  '/_shell/$tenant/store/help': typeof ShellTenantStoreHelpRoute
   '/_shell/$tenant/uac/help': typeof ShellTenantUacHelpRoute
   '/_shell/$tenant/account/': typeof ShellTenantAccountIndexRoute
   '/_shell/$tenant/advanced/': typeof ShellTenantAdvancedIndexRoute
@@ -424,6 +433,7 @@ export interface FileRouteTypes {
     | '/$tenant/account/language'
     | '/$tenant/advanced/schedule'
     | '/$tenant/pay/help'
+    | '/$tenant/store/help'
     | '/$tenant/uac/help'
     | '/$tenant/account/'
     | '/$tenant/advanced/'
@@ -465,6 +475,7 @@ export interface FileRouteTypes {
     | '/$tenant/account/language'
     | '/$tenant/advanced/schedule'
     | '/$tenant/pay/help'
+    | '/$tenant/store/help'
     | '/$tenant/uac/help'
     | '/$tenant/account'
     | '/$tenant/advanced'
@@ -508,6 +519,7 @@ export interface FileRouteTypes {
     | '/_shell/$tenant/account/language'
     | '/_shell/$tenant/advanced/schedule'
     | '/_shell/$tenant/pay/help'
+    | '/_shell/$tenant/store/help'
     | '/_shell/$tenant/uac/help'
     | '/_shell/$tenant/account/'
     | '/_shell/$tenant/advanced/'
@@ -662,6 +674,13 @@ declare module '@tanstack/react-router' {
       path: '/store'
       fullPath: '/$tenant/store/'
       preLoaderRoute: typeof ShellTenantStoreIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/store/help': {
+      id: '/_shell/$tenant/store/help'
+      path: '/store/help'
+      fullPath: '/$tenant/store/help'
+      preLoaderRoute: typeof ShellTenantStoreHelpRouteImport
       parentRoute: typeof ShellTenantRoute
     }
     '/_shell/$tenant/uac/': {
@@ -845,6 +864,7 @@ interface ShellTenantRouteChildren {
   ShellTenantAccountLanguageRoute: typeof ShellTenantAccountLanguageRoute
   ShellTenantAdvancedScheduleRoute: typeof ShellTenantAdvancedScheduleRoute
   ShellTenantPayHelpRoute: typeof ShellTenantPayHelpRoute
+  ShellTenantStoreHelpRoute: typeof ShellTenantStoreHelpRoute
   ShellTenantUacHelpRoute: typeof ShellTenantUacHelpRoute
   ShellTenantAccountIndexRoute: typeof ShellTenantAccountIndexRoute
   ShellTenantAdvancedIndexRoute: typeof ShellTenantAdvancedIndexRoute
@@ -885,6 +905,7 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
   ShellTenantAccountLanguageRoute: ShellTenantAccountLanguageRoute,
   ShellTenantAdvancedScheduleRoute: ShellTenantAdvancedScheduleRoute,
   ShellTenantPayHelpRoute: ShellTenantPayHelpRoute,
+  ShellTenantStoreHelpRoute: ShellTenantStoreHelpRoute,
   ShellTenantUacHelpRoute: ShellTenantUacHelpRoute,
   ShellTenantAccountIndexRoute: ShellTenantAccountIndexRoute,
   ShellTenantAdvancedIndexRoute: ShellTenantAdvancedIndexRoute,

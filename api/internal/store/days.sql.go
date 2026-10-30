@@ -393,7 +393,7 @@ type ListDaysRow struct {
 	ClosedAt       pgtype.Timestamp
 }
 
-// A month of the stores' days, newest first (one row per store per day).
+// A range of the stores' days, newest first (one row per store per day).
 func (q *Queries) ListDays(ctx context.Context, arg ListDaysParams) ([]ListDaysRow, error) {
 	rows, err := q.db.Query(ctx, listDays,
 		arg.TenantID,

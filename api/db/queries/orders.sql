@@ -1,6 +1,6 @@
 -- name: ListDayOrders :many
--- A day's orders over the stores, newest first, a page at a time: after the cursor, limit+1 rows.
--- created_at holds UTC without a zone; the day's bounds come in the same way.
+-- A range of days' orders over the stores, newest first, a page at a time: after the cursor, limit+1 rows.
+-- created_at holds UTC without a zone; the bounds come in the same way.
 SELECT o.id, o.created_at, o.total_amount, o.payment_method, st.name AS store_name, u.full_name AS seller,
     (SELECT COALESCE(sum(i.quantity), 0) FROM store_order_items i WHERE i.order_id = o.id)::bigint AS cups
 FROM store_orders o

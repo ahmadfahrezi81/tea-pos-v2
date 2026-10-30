@@ -12,12 +12,18 @@ export function useStoreId(): string {
 
 export const ALL = "all";
 
-/** The stores a Store screen adds up: the one in the address, or every store of the tenant. */
+/** The stores a Store screen adds up: the one in the address, or every real store of the tenant. */
 export function useStoreScope(): { tenant: string; storeId?: string[] } | null {
     const tenant = useTenant()?.tenant;
     const storeId = useStoreId();
     if (!tenant) return null;
-    return { tenant: tenant.slug, storeId: storeId === ALL ? undefined : [storeId] };
+    return {
+        tenant: tenant.slug,
+        storeId:
+            storeId === ALL
+                ? tenant.stores.filter((s) => s.status === "active").map((s) => s.id)
+                : [storeId],
+    };
 }
 
 /** Sales, orders and cups per day over the picked stores, `from` to `to` (both `2026-10-01`). */
@@ -32,19 +38,12 @@ export function useSalesDays(from: string, to: string) {
                 query: { from, to, storeId: scope?.storeId },
             },
         },
-        { enabled: !!scope, staleTime: STALE.COOL },
+        { enabled: !!scope && !!from, staleTime: STALE.COOL },
     );
 }
 
-/** `2026-10` as its first and last days. */
-export function monthRange(month: string): [string, string] {
-    const [y = 0, m = 1] = month.split("-").map(Number);
-    const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
-    return [`${month}-01`, `${month}-${String(last).padStart(2, "0")}`];
-}
-
-/** A month of the picked stores' days, newest first, with expenses and who worked. */
-export function useDays(month: string) {
+/** The picked stores' days in a range, newest first, with expenses and who worked. */
+export function useDays(from: string, to: string) {
     const scope = useStoreScope();
     return $api.useQuery(
         "get",
@@ -52,7 +51,7 @@ export function useDays(month: string) {
         {
             params: {
                 path: { tenant: scope?.tenant ?? "" },
-                query: { month, storeId: scope?.storeId },
+                query: { from, to, storeId: scope?.storeId },
             },
         },
         { enabled: !!scope, staleTime: STALE.COOL },
@@ -120,13 +119,6 @@ export function useTeaWaste(from: string, to: string) {
     );
 }
 
-/** A Store screen's `?month=2026-10`, this month when absent or not a month. */
-export function monthSearch(search: { month?: unknown } & SearchSchemaInput): { month: string } {
-    const month =
-        typeof search.month === "string" && /^\d{4}-\d{2}$/.test(search.month) ? search.month : "";
-    return { month: month || localDate().slice(0, 7) };
-}
-
 /** A Store screen's `?date=2026-10-24`, today when absent or not a date. */
 export function dateSearch(search: { date?: unknown } & SearchSchemaInput): { date: string } {
     const date =
@@ -148,21 +140,27 @@ export function useSalesHours(date: string) {
                 query: { date, storeId: scope?.storeId },
             },
         },
-        { enabled: !!scope, staleTime: STALE.WARM, meta: { live: ["order"] } },
+        {
+            enabled: !!scope && !!date,
+            staleTime: STALE.WARM,
+            refetchInterval: date === localDate() ? 60_000 : false,
+            meta: { live: ["order"] },
+        },
     );
 }
 
-/** A day's orders, newest first, a page at a time. Refetched when an order is made (017b). */
-export function useDayOrders(date: string) {
+/** A range's orders, newest first, a page at a time. Refetched when an order is made (017b). */
+export function useRangeOrders(from: string, to: string) {
     const scope = useStoreScope();
     return useInfiniteList(
-        ["store-orders", scope?.tenant, scope?.storeId ?? "all", date],
+        ["store-orders", scope?.tenant, scope?.storeId ?? "all", from, to],
         async (cursor) => {
             const { data, error } = await api.GET("/tenants/{tenant}/orders", {
                 params: {
                     path: { tenant: scope?.tenant ?? "" },
                     query: {
-                        date,
+                        from,
+                        to,
                         storeId: scope?.storeId,
                         cursor: cursor || undefined,
                         limit: 30,
@@ -176,13 +174,13 @@ export function useDayOrders(date: string) {
     );
 }
 
-/** Every store right now. v1 writes without telling the hub, so it refetches every minute while on screen. */
-export function useStoresLive() {
+/** Every store, with a range's sales. v1 writes without telling the hub, so it refetches every minute while on screen. */
+export function useStoresLive(from: string, to: string) {
     const tenant = useSlug();
     return $api.useQuery(
         "get",
         "/tenants/{tenant}/stores/live",
-        { params: { path: { tenant } } },
+        { params: { path: { tenant }, query: { from, to } } },
         {
             enabled: !!tenant,
             staleTime: STALE.WARM,
@@ -192,18 +190,15 @@ export function useStoresLive() {
     );
 }
 
-/** Today's cups by hour over exactly these stores (the Store list's filtered ones). */
-export function useTodayHoursFor(storeIds: string[]) {
-    const tenant = useSlug();
-    return $api.useQuery(
-        "get",
-        "/tenants/{tenant}/sales/hours",
-        { params: { path: { tenant }, query: { date: localDate(), storeId: storeIds } } },
-        {
-            enabled: !!tenant && storeIds.length > 0,
-            staleTime: STALE.WARM,
-            refetchInterval: 60_000,
-            meta: { live: ["order"] },
-        },
+/** The stores a screen adds up, from the live list, and their totals: real stores, or the one in the address. */
+export function useScopeStores(from: string, to: string) {
+    const storeId = useStoreId();
+    const stores = useStoresLive(from, to).data?.stores.filter((s) =>
+        storeId === ALL ? s.status === "active" : s.id === storeId,
     );
+    const sum = (k: "sales" | "cups" | "orders") => (stores ?? []).reduce((n, s) => n + s[k], 0);
+    return {
+        stores,
+        totals: stores && { sales: sum("sales"), cups: sum("cups"), orders: sum("orders") },
+    };
 }
