@@ -105,7 +105,11 @@
         "locationFeedback": "Feedback Lokasi",
         "patchNotes": "Catatan Rilis",
         "noStores": "Belum ada toko yang ditugaskan.",
-        "default": "Utama"
+        "default": "Utama",
+        "updateApp": "Perbarui aplikasi",
+        "updateTitle": "Perbarui aplikasi sekarang?",
+        "updateBody": "Mengunduh ulang versi terbaru. Yang belum disimpan akan hilang.",
+        "updateOffline": "Tidak ada koneksi. Coba lagi saat online."
     },
     "whatsNew": {
         "title": "Yang Baru",
@@ -214,11 +218,11 @@
     "status": {
         "title": "Info aplikasi",
         "api": "API",
-        "commit": "Commit",
+        "commit": "Commit API",
         "app": "Aplikasi",
         "ok": "Terhubung",
         "down": "Tidak terjangkau",
-        "version": "Versi"
+        "version": "Versi API"
     },
     "errors": {
         "account_inactive": "Akun ini tidak aktif. Hubungi pemilik.",
