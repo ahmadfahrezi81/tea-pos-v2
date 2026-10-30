@@ -62,7 +62,7 @@ func TestStoresLive(t *testing.T) {
 	if err := json.NewDecoder(r.Body).Decode(&ranged.Body); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := pool.Exec(ctx, `UPDATE public.store_daily_summaries SET actual_cash = 900, expected_cash = 1000 WHERE id = '00000000-0000-0000-0091-00000000000a'`); err != nil {
+	if _, err := pool.Exec(ctx, `UPDATE public.store_daily_summaries SET actual_cash = 900, expected_cash = 1000, total_expenses = 300, opening_balance = 50 WHERE id = '00000000-0000-0000-0091-00000000000a'`); err != nil {
 		t.Fatal(err)
 	}
 	r = a.Request(t, http.MethodGet, "/tenants/tenant-a/stores/live?from="+today.AddDate(0, 0, -3).Format(time.DateOnly)+"&to="+today.Format(time.DateOnly), "backoffice", guest)
@@ -70,7 +70,7 @@ func TestStoresLive(t *testing.T) {
 	if err := json.NewDecoder(r.Body).Decode(&cash.Body); err != nil {
 		t.Fatal(err)
 	}
-	if n := cash.Body.Stores[2]; n.CashCounted != 900 || n.CashDiff != -100 || n.ClosedDays != 1 {
+	if n := cash.Body.Stores[2]; n.CashCounted != 900 || n.CashDiff != -100 || n.ClosedDays != 1 || n.Expenses != 300 || n.Opening != 50 || n.Days != 1 || n.NotClosed != 0 || n.ClosedAt == nil {
 		t.Errorf("cash at North: %+v", n)
 	}
 	if c := ranged.Body.Stores[0]; c.Orders != 2 || c.Cups != 3 || c.Sales != 24000 || !c.Open {

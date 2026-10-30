@@ -270,8 +270,6 @@
         "sellerSince": "{name} · since {time}",
         "closedAt": "Closed {when}",
         "notOpened": "Not opened yet",
-        "demo": "Demo",
-        "inactive": "Shut down",
         "byHour": "by hour",
         "sales": "Total Sales",
         "cups": "Cups",
@@ -301,9 +299,19 @@
         "oneDay": "1 day",
         "stores": "Stores",
         "cash": "Cash",
-        "cashMatches": "matches",
-        "cashShort": "{amount} short",
-        "cashOver": "{amount} over",
-        "salesShort": "Sales"
+        "cashShort": "Cash short {amount}",
+        "cashOver": "Cash over {amount}",
+        "salesShort": "Sales",
+        "expenses": "Expenses",
+        "expected": "Expected",
+        "total": "Total",
+        "opening": "Opening",
+        "cashOff": "Cash off",
+        "openAt": "Open · {time}",
+        "closedAtTime": "Closed · {time}",
+        "notClosed": "Not closed",
+        "didntOpen": "Didn't open",
+        "nNotClosed": "{n} not closed",
+        "daysClosed": "{n} of {m} days closed"
     }
 }

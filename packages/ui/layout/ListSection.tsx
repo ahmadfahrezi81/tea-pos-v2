@@ -19,8 +19,3 @@ export function ListSection({
         </section>
     );
 }
-
-/** Between a core's lists and its menu rows. */
-export function ListDivider() {
-    return <hr className="border-t-2 border-slate-300 mx-1" />;
-}

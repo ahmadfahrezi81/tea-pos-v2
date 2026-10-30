@@ -17,7 +17,7 @@ export function RangePanel({
 }) {
     const t = useT();
     const locale = useLocale();
-    const { from, to, single, label } = useRange();
+    const { from, to, single } = useRange();
     const hours = useSalesHours(single ? from : "");
     const days = useSalesDays(single ? "" : from, to);
     const points = single
@@ -32,7 +32,7 @@ export function RangePanel({
               value: d.cups,
           }));
     return (
-        <Panel title={label}>
+        <Panel>
             {totals ? (
                 <p className="px-1 text-3xl font-bold text-gray-900">{formatMoney(totals.sales)}</p>
             ) : (

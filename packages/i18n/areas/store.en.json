@@ -127,7 +127,7 @@
         "helpRange": "The date range",
         "helpRangeBody": "One range for every Store screen.\nPick a preset or your own days; today by default.\nDays are always in the store's time zone.",
         "helpHome": "The home",
-        "helpHomeBody": "Totals add up real stores only: demo and shut-down stores never count.\nEach store shows its sales and who sold.\nOpen or Closed shows on today only.",
+        "helpHomeBody": "Totals add up real stores only: demo and shut-down stores never count.\nOne day: opening + sales − expenses gives the total at the top right; while open it is what is expected.\nSeveral days: sales at the top right, with cups, expenses and how far the cash was off.\nThe pill under the name says how the day or days went; red needs a look.",
         "helpStore": "One store",
         "helpStoreBody": "The same numbers for that store, with its latest orders.\nSee all opens every order in the range.\nDay by day opens each day's cash and expenses.",
         "helpFresh": "How fresh it is",

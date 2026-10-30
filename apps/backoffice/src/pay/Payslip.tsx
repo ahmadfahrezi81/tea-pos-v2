@@ -395,7 +395,7 @@ export function Payslip({ id }: { id: string }) {
 
             {slip.status === "pending" && slip.pending === 0 && canWrite && (
                 <FooterSlot>
-                    <div className="bg-white border-t border-gray-200 p-4">
+                    <div className="bg-white border-t border-gray-200 px-4 py-3">
                         {left > 0 ? (
                             <button
                                 disabled

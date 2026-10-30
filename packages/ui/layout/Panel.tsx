@@ -11,19 +11,22 @@ export function Panel({
     beside,
     children,
 }: {
-    title: string;
+    /** None when something above already says what this is. */
+    title?: string;
     /** At the heading's right: a badge, a count. */
     beside?: ReactNode;
     children: ReactNode;
 }) {
     return (
         <section className="space-y-2">
-            <div className="flex items-center gap-2 pr-1">
-                <div className="flex-1 min-w-0">
-                    <SectionLabel>{title}</SectionLabel>
+            {title && (
+                <div className="flex items-center gap-2 pr-1">
+                    <div className="flex-1 min-w-0">
+                        <SectionLabel>{title}</SectionLabel>
+                    </div>
+                    {beside}
                 </div>
-                {beside}
-            </div>
+            )}
             <div className="panel rounded-2xl bg-white p-4 space-y-3">{children}</div>
         </section>
     );

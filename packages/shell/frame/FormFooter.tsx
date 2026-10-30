@@ -53,7 +53,7 @@ export function FormFooter({
     return (
         <>
             <FooterSlot>
-                <div className="bg-white border-t border-gray-200 p-4">
+                <div className="bg-white border-t border-gray-200 px-4 py-3">
                     <ActionButton
                         action={() => {
                             if (!confirmTitle) return onSubmit();

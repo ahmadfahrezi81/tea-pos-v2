@@ -28,7 +28,7 @@ export function AccountScreen() {
         <div className="min-h-full flex flex-col">
             <div className="space-y-4">
                 <div className="bg-white rounded-2xl p-4 flex items-center gap-4">
-                    <Avatar url={user.avatarUrl} size={64} square />
+                    <Avatar url={user.avatarUrl} size={64} />
                     <div className="flex-1 min-w-0">
                         <p className="text-xl font-semibold text-gray-900 leading-tight truncate">
                             {user.fullName}

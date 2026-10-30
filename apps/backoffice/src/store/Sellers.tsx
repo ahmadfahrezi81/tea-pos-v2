@@ -13,7 +13,7 @@ export function Sellers({ sellers }: { sellers: components["schemas"]["DaySeller
                     key={s.userId}
                     className="flex items-center gap-2 bg-slate-100 rounded-xl p-1.5"
                 >
-                    <Avatar url={s.avatarUrl} size={28} square />
+                    <Avatar url={s.avatarUrl} size={28} />
                     <p className="text-base font-bold text-gray-900 truncate flex-1">
                         {s.name || t("common.unknown")}
                     </p>

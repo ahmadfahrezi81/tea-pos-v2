@@ -36,6 +36,7 @@
         "./Sheet": "./layout/Sheet.tsx",
         "./shrinkPhoto": "./photo/shrink.ts",
         "./Skeleton": "./feedback/Skeleton.tsx",
+        "./Tile": "./controls/Tile.tsx",
         "./toast": "./toast/Toast.tsx",
         "./weather": "./lib/weather.ts"
     },
