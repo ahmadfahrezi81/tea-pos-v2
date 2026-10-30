@@ -29,24 +29,33 @@ async function servedBuild(): Promise<string | null> {
     }
 }
 
-const APPLIED_KEY = "tea-pos:update-applied-at";
+const ATTEMPT_KEY = "tea-pos:update-attempt";
 
-function markApplied() {
+/** How many times this phone has tried to reach `build`; survives the reload that follows. */
+function attempts(build: string | null): number {
+    if (!build) return 0;
     try {
-        sessionStorage.setItem(APPLIED_KEY, String(Date.now()));
+        const saved = JSON.parse(localStorage.getItem(ATTEMPT_KEY) ?? "{}") as {
+            build?: string;
+            count?: number;
+        };
+        return saved.build === build ? (saved.count ?? 0) : 0;
     } catch {
-        // Not remembered: one reload more at worst.
+        return 0;
     }
 }
 
-/** Reloaded for an update a moment ago: if still behind, no full page again, so it cannot loop. */
-function justApplied(): boolean {
+function markAttempt(build: string | null) {
+    if (!build) return;
     try {
-        return Date.now() - Number(sessionStorage.getItem(APPLIED_KEY)) < CHECK_THROTTLE_MS;
+        localStorage.setItem(ATTEMPT_KEY, JSON.stringify({ build, count: attempts(build) + 1 }));
     } catch {
-        return false;
+        // Not remembered: one reload more, and the file count still limits nothing worse.
     }
 }
+
+/** Tried this many times and still behind: stop asking until the next build; More has Update app. */
+const MAX_ATTEMPTS = 2;
 
 /** `backoffice@2026.10.8+a1b2c3d` as `2026.10.8`. */
 const versionOf = (build: string) => build.split("@")[1]?.split("+")[0] ?? "";
@@ -71,6 +80,23 @@ async function clearCaches(): Promise<void> {
         // No caches to clear: the reload still goes ahead.
     }
 }
+
+/**
+ * The way out when the normal flow fails: no worker and no saved files, so the reload comes straight
+ * from the network. Kept apart from it on purpose. False, changing nothing, when there is no signal:
+ * without saved files the app could not open again.
+ */
+export async function forceUpdate(): Promise<boolean> {
+    if (!(await servedBuild())) return false;
+    const registrations = await navigator.serviceWorker?.getRegistrations().catch(() => []);
+    await Promise.all((registrations ?? []).map((r) => r.unregister().catch(() => false)));
+    await clearCaches();
+    location.reload();
+    return true;
+}
+
+/** This build's version, for showing. */
+export const currentVersion = () => versionOf(APP_TAG);
 
 /** Every address the precache holds, whichever cache the worker is writing to. */
 async function savedFiles(): Promise<Set<string>> {
@@ -129,12 +155,13 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
     const updateSW = useRef<(reload?: boolean) => Promise<void>>(async () => {});
     const registration = useRef<ServiceWorkerRegistration>(undefined);
     // Nothing tapped yet since opening: a full page interrupts nothing.
-    const fresh = useRef(!justApplied());
+    const fresh = useRef(true);
     const blockingRef = useRef(false);
     const stopWatching = useRef<() => void>(() => {});
     // Said no, or got out, this session: asked again on the next open.
     const quiet = useRef(false);
     const applying = useRef(false);
+    const target = useRef<string | null>(null);
     const phaseRef = useRef<Phase>("idle");
     useEffect(() => {
         phaseRef.current = phase;
@@ -148,7 +175,10 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
     const apply = async () => {
         if (applying.current) return;
         applying.current = true;
-        markApplied();
+        // The second try gets past whatever kept the first on the old build.
+        const again = attempts(target.current) > 0;
+        markAttempt(target.current);
+        if (again && (await forceUpdate())) return;
         const waiting = registration.current?.waiting;
         if (waiting) await takeOver(waiting, TAKE_OVER_MS);
         location.reload();
@@ -201,12 +231,14 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
         let lastCheckedAt = 0;
         const check = async () => {
             if (document.visibilityState !== "visible" || quiet.current) return;
-            if (phaseRef.current !== "idle") return;
+            if (phaseRef.current !== "idle" || !registration.current) return;
             if (Date.now() - lastCheckedAt < CHECK_THROTTLE_MS) return;
             lastCheckedAt = Date.now();
             const openedFresh = fresh.current;
             const build = await servedBuild();
             if (!build || build === APP_TAG) return;
+            if (attempts(build) >= MAX_ATTEMPTS) return;
+            target.current = build;
             setVersion(versionOf(build));
             if (openedFresh) block(true);
             download();
@@ -224,8 +256,9 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
                             void updateSW.current(false);
                             return;
                         }
+                        if (quiet.current || attempts(build) >= MAX_ATTEMPTS) return;
+                        target.current = build;
                         if (build) setVersion(versionOf(build));
-                        if (quiet.current) return;
                         if (fresh.current) block(true);
                         download();
                     });
@@ -236,6 +269,17 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
                 },
             });
         });
+        // A screen's code from the build this page started on is gone: only a new page can open it.
+        const onChunkGone = (e: Event) => {
+            e.preventDefault();
+            void servedBuild().then((build) => {
+                if (build && build !== APP_TAG && attempts(build) < MAX_ATTEMPTS) {
+                    markAttempt(build);
+                    location.reload();
+                }
+            });
+        };
+        window.addEventListener("vite:preloadError", onChunkGone);
         const onVisible = () => void check();
         const onTap = () => {
             fresh.current = false;
@@ -248,6 +292,7 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
             stopWatching.current();
             document.removeEventListener("visibilitychange", onVisible);
             document.removeEventListener("pointerdown", onTap);
+            window.removeEventListener("vite:preloadError", onChunkGone);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -257,7 +302,12 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
             onAppTooOld(() => {
                 setForced(true);
                 block(true);
-                download();
+                // Asked first: this build must not keep reloading if the server stays ahead of it.
+                void servedBuild().then((build) => {
+                    target.current = build;
+                    if (build) setVersion(versionOf(build));
+                    download();
+                });
             }),
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
@@ -285,14 +335,7 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
                         block(false);
                         value.later();
                     }}
-                    onRetry={() => {
-                        // The worker could not get through: start clean, straight from the network.
-                        void (async () => {
-                            await registration.current?.unregister().catch(() => {});
-                            await clearCaches();
-                            location.reload();
-                        })();
-                    }}
+                    onRetry={() => void forceUpdate()}
                     phase={phase}
                     percent={percent}
                 />

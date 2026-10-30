@@ -116,6 +116,8 @@ The owner's walkthrough ended here; build these now. The owner does 2, 3 and 5's
 6. **One avatar shape:** the header's proportion, about 29%, at every size; no round or square option
 7. **Store card, by what the business measures:** a status pill under the name always (open, closed with its time, not closed in red, days closed). One day: Opening, + Sales, − Expenses, the total top right (Expected while open), a red bar when the cash is off. Several days: Sales top right; Cups, Expenses, Cash off. `stores/live` gains opening, days, notClosed, closedAt and expenses in the same join
 8. **Updates are downloads (bug, on staging: the sheet kept coming back and Reload stayed on the old build):** a reload alone is answered by the old worker. Now the new worker takes over first. A fresh open shows a full download page with progress, with Try again and Continue after 60 s (no way out on a 426). In use it downloads behind a toast at the top that cannot be closed, then a sheet asks to reload; Later lasts until the next open. Progress counts the new worker's files as they are saved
+9. **A way out by hand:** Update app in More, with the version: no worker and no saved files, then a reload from the network (`forceUpdate`). Refused with no signal. It only helps builds that have it
+10. **Update edge cases:** attempts per build survive the reload: a second try clears the worker and its files, and after two it stops asking until the next build, so no phone needs a reinstall or loops. A screen's code gone after a deploy reloads the page once. App info says API commit and App
 
 ## Done when
 

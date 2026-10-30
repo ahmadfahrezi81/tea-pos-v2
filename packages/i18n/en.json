@@ -105,7 +105,11 @@
         "locationFeedback": "Location Feedback",
         "patchNotes": "Patch Notes",
         "noStores": "No stores assigned yet.",
-        "default": "Default"
+        "default": "Default",
+        "updateApp": "Update app",
+        "updateTitle": "Update the app now?",
+        "updateBody": "Downloads the latest version again. Anything unsaved is lost.",
+        "updateOffline": "No connection. Try again when you are online."
     },
     "whatsNew": {
         "title": "What's New",
@@ -214,11 +218,11 @@
     "status": {
         "title": "App info",
         "api": "API",
-        "commit": "Commit",
+        "commit": "API commit",
         "app": "App",
         "ok": "Connected",
         "down": "Unreachable",
-        "version": "Version"
+        "version": "API version"
     },
     "errors": {
         "account_inactive": "This account isn't active. Ask the owner.",
