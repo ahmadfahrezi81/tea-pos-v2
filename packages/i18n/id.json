@@ -164,9 +164,9 @@
         "maintenanceSub": "Kami sedang melakukan pembaruan untuk meningkatkan pengalaman Anda. Kami akan segera kembali.",
         "update": {
             "title": "Pembaruan Tersedia",
-            "body": "Versi baru sudah siap. Muat ulang untuk memakainya.",
+            "body": "Versi baru sudah diunduh. Muat ulang untuk memakainya.",
             "infoTitle": "Yang Anda dapat",
-            "infoBody": "Perbaikan dan peningkatan terbaru. Memuat ulang hanya sebentar dan pekerjaan Anda tetap aman."
+            "infoBody": "Memuat ulang sebentar saja. Selesaikan dulu yang sedang dikerjakan: yang belum disimpan akan hilang."
         },
         "inactivity": {
             "title": "Perlu Dimuat Ulang",
@@ -188,7 +188,14 @@
         "noAccessTitle": "Belum punya akses",
         "noAccessBody": "Minta bergabung ke usaha ini. Admin akan mengizinkanmu masuk.",
         "requestAccess": "Minta akses",
-        "requestSent": "Permintaan terkirim. Kamu bisa masuk setelah admin menyetujuinya."
+        "requestSent": "Permintaan terkirim. Kamu bisa masuk setelah admin menyetujuinya.",
+        "updating": "Memperbarui {app}",
+        "updateDownloading": "Mengunduh pembaruan",
+        "updateDone": "Selesai. Memulai ulang…",
+        "updateKeepOpen": "Biarkan aplikasi tetap terbuka",
+        "updateRetry": "Coba lagi",
+        "updateContinue": "Lanjutkan dulu",
+        "updateFailed": "Pembaruan gagal"
     },
     "signIn": {
         "google": "Lanjutkan dengan Google",

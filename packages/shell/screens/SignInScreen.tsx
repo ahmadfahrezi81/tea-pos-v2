@@ -3,7 +3,6 @@ import { useT } from "@tea-pos/i18n/react";
 import { ActionButton } from "@tea-pos/ui/ActionButton";
 
 import { useApp } from "../session/AppContext";
-import { useApplyUpdateNow } from "../frame/AppUpdate";
 
 // The codes the API sends back on /login?error=; anything else reads as a plain failure.
 const ERRORS: Record<string, MessageKey> = {
@@ -17,8 +16,6 @@ const ERRORS: Record<string, MessageKey> = {
 export function SignInScreen() {
     const t = useT();
     const { logo, titleKey, subtitleKey } = useApp().signIn;
-    // Signed-out users stay here, outside the shell's update sheet.
-    useApplyUpdateNow();
     const reason = new URLSearchParams(window.location.search).get("error");
     const error = reason ? (ERRORS[reason] ?? "signIn.errors.signInFailed") : null;
 
