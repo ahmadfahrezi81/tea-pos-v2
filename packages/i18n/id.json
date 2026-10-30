@@ -294,6 +294,7 @@
         "helpTitle": "Cara kerja toko",
         "noSales": "Tidak ada penjualan di rentang ini",
         "totalCups": "Cup per hari",
-        "totals": "Total"
+        "totals": "Total",
+        "oneDay": "1 hari"
     }
 }

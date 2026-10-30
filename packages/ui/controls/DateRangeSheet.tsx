@@ -104,7 +104,7 @@ function Calendar({
     value: DateRange;
     today: string;
     locale: string;
-    labels: { apply: string; days: (n: number) => string };
+    labels: { title: string; apply: string; days: (n: number) => string };
     formatRange: (range: DateRange) => string;
     onBack: () => void;
     onApply: (range: DateRange) => void;
@@ -140,26 +140,28 @@ function Calendar({
 
     return (
         <div className="space-y-3">
+            <button
+                onClick={onBack}
+                className="flex items-center gap-1 font-medium text-gray-900 active:opacity-70"
+            >
+                <ChevronLeft size={ICON} />
+                {labels.title}
+            </button>
             <div className="flex items-center justify-between">
-                <button onClick={onBack} className={STEP_ARROW} aria-label="‹">
+                <button onClick={() => step(-1)} className={STEP_ARROW} aria-label="‹">
                     <ChevronLeft {...stepIcon} />
                 </button>
-                <div className="flex items-center gap-2">
-                    <button onClick={() => step(-1)} className={STEP_ARROW} aria-label="‹">
-                        <ChevronLeft {...stepIcon} />
-                    </button>
-                    <p className="w-36 text-center font-bold text-gray-900">
-                        {fmt({ month: "long", year: "numeric" }).format(first)}
-                    </p>
-                    <button
-                        onClick={() => step(1)}
-                        disabled={month >= today.slice(0, 7)}
-                        className={`${STEP_ARROW} disabled:opacity-30`}
-                        aria-label="›"
-                    >
-                        <ChevronRight {...stepIcon} />
-                    </button>
-                </div>
+                <p className="font-bold text-gray-900">
+                    {fmt({ month: "long", year: "numeric" }).format(first)}
+                </p>
+                <button
+                    onClick={() => step(1)}
+                    disabled={month >= today.slice(0, 7)}
+                    className={`${STEP_ARROW} disabled:opacity-30`}
+                    aria-label="›"
+                >
+                    <ChevronRight {...stepIcon} />
+                </button>
             </div>
             <div className="grid grid-cols-7 text-center">
                 {weekdays.map((d, i) => (

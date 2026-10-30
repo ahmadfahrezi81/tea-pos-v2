@@ -294,6 +294,7 @@
         "helpTitle": "How stores work",
         "noSales": "No sales in this range",
         "totalCups": "Cups by day",
-        "totals": "Totals"
+        "totals": "Totals",
+        "oneDay": "1 day"
     }
 }
