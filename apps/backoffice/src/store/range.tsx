@@ -91,7 +91,10 @@ export function RangeBar() {
                     title: t("store.dateRange"),
                     custom: t("store.custom"),
                     apply: t("store.apply"),
-                    days: (n) => t("store.daysCount").replace("{n}", String(n)),
+                    days: (n) =>
+                        n === 1
+                            ? t("store.oneDay")
+                            : t("store.daysCount").replace("{n}", String(n)),
                 }}
                 formatRange={dates}
             />
