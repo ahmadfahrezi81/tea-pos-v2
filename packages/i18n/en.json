@@ -164,9 +164,9 @@
         "maintenanceSub": "We're making some updates to improve your experience. We'll be back shortly.",
         "update": {
             "title": "Update Available",
-            "body": "A new version is ready. Refresh to load it.",
+            "body": "A new version has downloaded. Reload to use it.",
             "infoTitle": "What you get",
-            "infoBody": "The latest improvements and fixes. Refreshing takes a moment and keeps your work."
+            "infoBody": "Reloading takes a moment. Finish what you are doing first: anything unsaved is lost."
         },
         "inactivity": {
             "title": "Refresh Required",
@@ -188,7 +188,14 @@
         "noAccessTitle": "No access yet",
         "noAccessBody": "Ask to join this business. An admin will let you in.",
         "requestAccess": "Request access",
-        "requestSent": "Request sent. You'll get in once an admin approves it."
+        "requestSent": "Request sent. You'll get in once an admin approves it.",
+        "updating": "Updating {app}",
+        "updateDownloading": "Downloading update",
+        "updateDone": "Updated. Restarting…",
+        "updateKeepOpen": "Please keep the app open",
+        "updateRetry": "Try again",
+        "updateContinue": "Continue for now",
+        "updateFailed": "Update failed"
     },
     "signIn": {
         "google": "Continue with Google",

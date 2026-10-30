@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { navProgress } from "./navProgress";
 import { refreshGate } from "./refreshGate";
-import { useAppUpdate } from "./AppUpdate";
+import { UpdateBar, useAppUpdate } from "./AppUpdate";
 import { Drawer } from "@tea-pos/ui/Drawer";
 
 const INACTIVITY_LIMIT = 1000 * 60 * 20; // 20 minutes
@@ -62,7 +62,7 @@ export function RefreshSheet() {
     }, []);
 
     // An update outranks inactivity.
-    const reason = update.available ? "update" : showInactivityPrompt ? "inactivity" : null;
+    const reason = update.phase === "ready" ? "update" : showInactivityPrompt ? "inactivity" : null;
 
     // An update needs new code, so a reload. Inactivity only needs fresh data: a
     // refetch in place, so the POS cart (held in memory) survives.
@@ -83,12 +83,36 @@ export function RefreshSheet() {
 
     // Clears the idle flag too, or dismissing an update swapped in the idle sheet.
     const handleDismiss = () => {
-        if (reason === "update") update.dismiss();
+        if (reason === "update") update.later();
         setShowInactivityPrompt(false);
         lastActivityRef.current = Date.now();
     };
 
-    if (!reason) return null;
+    const toast = (update.phase === "downloading" || update.phase === "stuck") && (
+        <div
+            role="status"
+            className="pointer-events-auto fixed inset-x-0 top-[calc(env(safe-area-inset-top)+8px)] z-50 mx-auto w-[calc(100%-24px)] max-w-[456px] rounded-xl bg-gray-900 px-3 py-2 text-white shadow-lg animate-drop-in"
+        >
+            {update.phase === "stuck" ? (
+                <div className="flex items-center justify-between gap-3 text-sm font-semibold">
+                    <span>{t("shell.updateFailed")}</span>
+                    <button onClick={update.retry} className="underline active:opacity-70">
+                        {t("shell.updateRetry")}
+                    </button>
+                </div>
+            ) : (
+                <div className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-3 text-sm font-semibold">
+                        <span>{t("shell.updateDownloading")}</span>
+                        {update.percent !== null && <span>{update.percent}%</span>}
+                    </div>
+                    <UpdateBar percent={update.percent} dark />
+                </div>
+            )}
+        </div>
+    );
+
+    if (!reason) return toast || null;
     const { emoji, key } = COPY[reason];
 
     return (
