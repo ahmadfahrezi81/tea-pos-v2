@@ -79,6 +79,8 @@ Listed first, built after the walkthrough.
 15. **Inactive does not lock anyone out of v1 (bug):** v1 seller's proxy sends anyone whose `users.status` is not `active` to `/unauthorized?reason=<status>`, but v2 only sets `user_tenant_assignments.status`. The RFC's "v1 never checks a status" is wrong. Fix: v2 also writes `users.status` while v1 runs, in the same transaction (it is one per person, not per tenant). v1 backoffice checks only the role, so it needs `users.role` (already synced) to keep them out. Also add a separate Suspended status if the owner wants one (v1 has both, with their own messages). Correct the RFC
 16. **The rule for every core: detail outside, more detail inside.** A list shows the useful numbers before any tap, and tapping gives the breakdown. Pay's people show the breakdown (commission, cups and so on) as v1's list does; Store likewise, then Orders for more
 
+**Pay, as built:** the period header is only its dates and arrows; the pay date has its own card; each person is v1's card (orders, cups, commission, claims, total, what is next), to review first, then ready, then Done. A person's page in People gains a Pay panel (commission type, bank), and changing the type opens `/uac/<id>/commission`; Staff Payroll Info and Staff Commissions leave Pay Settings, which keeps the two types with a count. Pay Schedule moves to More → Advanced (`/advanced`). How it works for Pay at `/pay/help`, on the shared `HelpTopics`.
+
 The owner's walkthrough ended here; build these now. The owner does 2, 3 and 5's SQL.
 
 ## Done when

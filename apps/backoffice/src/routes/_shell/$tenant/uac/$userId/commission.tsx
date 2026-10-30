@@ -1,10 +1,9 @@
 import { loadArea } from "@tea-pos/i18n";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { StaffCommission } from "../../../../../../pay/Staff";
+import { StaffCommission } from "../../../../../pay/Staff";
 
-export const Route = createFileRoute("/_shell/$tenant/pay/settings/staff-commissions/$userId")({
-    // The Pay screens' words come with them, not on the first open.
+export const Route = createFileRoute("/_shell/$tenant/uac/$userId/commission")({
     loader: () => loadArea("pay"),
     staticData: { shell: { titleKey: "pay.setCommission", parent: ".." } },
     component: function Screen() {

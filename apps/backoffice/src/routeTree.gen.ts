@@ -21,15 +21,18 @@ import { Route as ShellTenantAccountIndexRouteImport } from './routes/_shell/$te
 import { Route as ShellTenantAccountDetailsRouteImport } from './routes/_shell/$tenant/account/details'
 import { Route as ShellTenantAccountInfoRouteImport } from './routes/_shell/$tenant/account/info'
 import { Route as ShellTenantAccountLanguageRouteImport } from './routes/_shell/$tenant/account/language'
+import { Route as ShellTenantAdvancedIndexRouteImport } from './routes/_shell/$tenant/advanced/index'
+import { Route as ShellTenantAdvancedScheduleRouteImport } from './routes/_shell/$tenant/advanced/schedule'
 import { Route as ShellTenantPayIndexRouteImport } from './routes/_shell/$tenant/pay/index'
+import { Route as ShellTenantPayHelpRouteImport } from './routes/_shell/$tenant/pay/help'
 import { Route as ShellTenantStoreIndexRouteImport } from './routes/_shell/$tenant/store/index'
 import { Route as ShellTenantUacIndexRouteImport } from './routes/_shell/$tenant/uac/index'
 import { Route as ShellTenantUacHelpRouteImport } from './routes/_shell/$tenant/uac/help'
 import { Route as ShellTenantPayStartIndexRouteImport } from './routes/_shell/$tenant/pay/$start/index'
 import { Route as ShellTenantPaySettingsIndexRouteImport } from './routes/_shell/$tenant/pay/settings/index'
-import { Route as ShellTenantPaySettingsScheduleRouteImport } from './routes/_shell/$tenant/pay/settings/schedule'
 import { Route as ShellTenantStoreStoreIdIndexRouteImport } from './routes/_shell/$tenant/store/$storeId/index'
 import { Route as ShellTenantUacUserIdIndexRouteImport } from './routes/_shell/$tenant/uac/$userId/index'
+import { Route as ShellTenantUacUserIdCommissionRouteImport } from './routes/_shell/$tenant/uac/$userId/commission'
 import { Route as ShellTenantUacUserIdEditRouteImport } from './routes/_shell/$tenant/uac/$userId/edit'
 import { Route as ShellTenantUacRequestsIdRouteImport } from './routes/_shell/$tenant/uac/requests/$id'
 import { Route as ShellTenantPayStartUserIdIndexRouteImport } from './routes/_shell/$tenant/pay/$start/$userId/index'
@@ -38,10 +41,6 @@ import { Route as ShellTenantPaySettingsClaimTypesIndexRouteImport } from './rou
 import { Route as ShellTenantPaySettingsClaimTypesAddRouteImport } from './routes/_shell/$tenant/pay/settings/claim-types/add'
 import { Route as ShellTenantPaySettingsCommissionTypesIndexRouteImport } from './routes/_shell/$tenant/pay/settings/commission-types/index'
 import { Route as ShellTenantPaySettingsCommissionTypesAddRouteImport } from './routes/_shell/$tenant/pay/settings/commission-types/add'
-import { Route as ShellTenantPaySettingsStaffCommissionsIndexRouteImport } from './routes/_shell/$tenant/pay/settings/staff-commissions/index'
-import { Route as ShellTenantPaySettingsStaffCommissionsUserIdRouteImport } from './routes/_shell/$tenant/pay/settings/staff-commissions/$userId'
-import { Route as ShellTenantPaySettingsStaffIndexRouteImport } from './routes/_shell/$tenant/pay/settings/staff/index'
-import { Route as ShellTenantPaySettingsStaffUserIdRouteImport } from './routes/_shell/$tenant/pay/settings/staff/$userId'
 import { Route as ShellTenantStoreStoreIdAnalyticsIndexRouteImport } from './routes/_shell/$tenant/store/$storeId/analytics/index'
 import { Route as ShellTenantStoreStoreIdAnalyticsChartsRouteImport } from './routes/_shell/$tenant/store/$storeId/analytics/charts'
 import { Route as ShellTenantStoreStoreIdOrdersIndexRouteImport } from './routes/_shell/$tenant/store/$storeId/orders/index'
@@ -113,9 +112,26 @@ const ShellTenantAccountLanguageRoute =
     path: '/account/language',
     getParentRoute: () => ShellTenantRoute,
   } as any)
+const ShellTenantAdvancedIndexRoute =
+  ShellTenantAdvancedIndexRouteImport.update({
+    id: '/advanced/',
+    path: '/advanced/',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantAdvancedScheduleRoute =
+  ShellTenantAdvancedScheduleRouteImport.update({
+    id: '/advanced/schedule',
+    path: '/advanced/schedule',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
 const ShellTenantPayIndexRoute = ShellTenantPayIndexRouteImport.update({
   id: '/pay/',
   path: '/pay/',
+  getParentRoute: () => ShellTenantRoute,
+} as any)
+const ShellTenantPayHelpRoute = ShellTenantPayHelpRouteImport.update({
+  id: '/pay/help',
+  path: '/pay/help',
   getParentRoute: () => ShellTenantRoute,
 } as any)
 const ShellTenantStoreIndexRoute = ShellTenantStoreIndexRouteImport.update({
@@ -145,12 +161,6 @@ const ShellTenantPaySettingsIndexRoute =
     path: '/pay/settings/',
     getParentRoute: () => ShellTenantRoute,
   } as any)
-const ShellTenantPaySettingsScheduleRoute =
-  ShellTenantPaySettingsScheduleRouteImport.update({
-    id: '/pay/settings/schedule',
-    path: '/pay/settings/schedule',
-    getParentRoute: () => ShellTenantRoute,
-  } as any)
 const ShellTenantStoreStoreIdIndexRoute =
   ShellTenantStoreStoreIdIndexRouteImport.update({
     id: '/store/$storeId/',
@@ -161,6 +171,12 @@ const ShellTenantUacUserIdIndexRoute =
   ShellTenantUacUserIdIndexRouteImport.update({
     id: '/uac/$userId/',
     path: '/uac/$userId/',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantUacUserIdCommissionRoute =
+  ShellTenantUacUserIdCommissionRouteImport.update({
+    id: '/uac/$userId/commission',
+    path: '/uac/$userId/commission',
     getParentRoute: () => ShellTenantRoute,
   } as any)
 const ShellTenantUacUserIdEditRoute =
@@ -209,30 +225,6 @@ const ShellTenantPaySettingsCommissionTypesAddRoute =
   ShellTenantPaySettingsCommissionTypesAddRouteImport.update({
     id: '/pay/settings/commission-types/add',
     path: '/pay/settings/commission-types/add',
-    getParentRoute: () => ShellTenantRoute,
-  } as any)
-const ShellTenantPaySettingsStaffCommissionsIndexRoute =
-  ShellTenantPaySettingsStaffCommissionsIndexRouteImport.update({
-    id: '/pay/settings/staff-commissions/',
-    path: '/pay/settings/staff-commissions/',
-    getParentRoute: () => ShellTenantRoute,
-  } as any)
-const ShellTenantPaySettingsStaffCommissionsUserIdRoute =
-  ShellTenantPaySettingsStaffCommissionsUserIdRouteImport.update({
-    id: '/pay/settings/staff-commissions/$userId',
-    path: '/pay/settings/staff-commissions/$userId',
-    getParentRoute: () => ShellTenantRoute,
-  } as any)
-const ShellTenantPaySettingsStaffIndexRoute =
-  ShellTenantPaySettingsStaffIndexRouteImport.update({
-    id: '/pay/settings/staff/',
-    path: '/pay/settings/staff/',
-    getParentRoute: () => ShellTenantRoute,
-  } as any)
-const ShellTenantPaySettingsStaffUserIdRoute =
-  ShellTenantPaySettingsStaffUserIdRouteImport.update({
-    id: '/pay/settings/staff/$userId',
-    path: '/pay/settings/staff/$userId',
     getParentRoute: () => ShellTenantRoute,
   } as any)
 const ShellTenantStoreStoreIdAnalyticsIndexRoute =
@@ -301,12 +293,15 @@ export interface FileRoutesByFullPath {
   '/$tenant/account/details': typeof ShellTenantAccountDetailsRoute
   '/$tenant/account/info': typeof ShellTenantAccountInfoRoute
   '/$tenant/account/language': typeof ShellTenantAccountLanguageRoute
+  '/$tenant/advanced/schedule': typeof ShellTenantAdvancedScheduleRoute
+  '/$tenant/pay/help': typeof ShellTenantPayHelpRoute
   '/$tenant/uac/help': typeof ShellTenantUacHelpRoute
   '/$tenant/account/': typeof ShellTenantAccountIndexRoute
+  '/$tenant/advanced/': typeof ShellTenantAdvancedIndexRoute
   '/$tenant/pay/': typeof ShellTenantPayIndexRoute
   '/$tenant/store/': typeof ShellTenantStoreIndexRoute
   '/$tenant/uac/': typeof ShellTenantUacIndexRoute
-  '/$tenant/pay/settings/schedule': typeof ShellTenantPaySettingsScheduleRoute
+  '/$tenant/uac/$userId/commission': typeof ShellTenantUacUserIdCommissionRoute
   '/$tenant/uac/$userId/edit': typeof ShellTenantUacUserIdEditRoute
   '/$tenant/uac/requests/$id': typeof ShellTenantUacRequestsIdRoute
   '/$tenant/pay/$start/': typeof ShellTenantPayStartIndexRoute
@@ -316,15 +311,11 @@ export interface FileRoutesByFullPath {
   '/$tenant/pay/$start/$userId/settle': typeof ShellTenantPayStartUserIdSettleRoute
   '/$tenant/pay/settings/claim-types/add': typeof ShellTenantPaySettingsClaimTypesAddRoute
   '/$tenant/pay/settings/commission-types/add': typeof ShellTenantPaySettingsCommissionTypesAddRoute
-  '/$tenant/pay/settings/staff-commissions/$userId': typeof ShellTenantPaySettingsStaffCommissionsUserIdRoute
-  '/$tenant/pay/settings/staff/$userId': typeof ShellTenantPaySettingsStaffUserIdRoute
   '/$tenant/store/$storeId/analytics/charts': typeof ShellTenantStoreStoreIdAnalyticsChartsRoute
   '/$tenant/store/$storeId/orders/chart': typeof ShellTenantStoreStoreIdOrdersChartRoute
   '/$tenant/pay/$start/$userId/': typeof ShellTenantPayStartUserIdIndexRoute
   '/$tenant/pay/settings/claim-types/': typeof ShellTenantPaySettingsClaimTypesIndexRoute
   '/$tenant/pay/settings/commission-types/': typeof ShellTenantPaySettingsCommissionTypesIndexRoute
-  '/$tenant/pay/settings/staff-commissions/': typeof ShellTenantPaySettingsStaffCommissionsIndexRoute
-  '/$tenant/pay/settings/staff/': typeof ShellTenantPaySettingsStaffIndexRoute
   '/$tenant/store/$storeId/analytics/': typeof ShellTenantStoreStoreIdAnalyticsIndexRoute
   '/$tenant/store/$storeId/orders/': typeof ShellTenantStoreStoreIdOrdersIndexRoute
   '/$tenant/pay/settings/claim-types/$id/edit': typeof ShellTenantPaySettingsClaimTypesIdEditRoute
@@ -343,12 +334,15 @@ export interface FileRoutesByTo {
   '/$tenant/account/details': typeof ShellTenantAccountDetailsRoute
   '/$tenant/account/info': typeof ShellTenantAccountInfoRoute
   '/$tenant/account/language': typeof ShellTenantAccountLanguageRoute
+  '/$tenant/advanced/schedule': typeof ShellTenantAdvancedScheduleRoute
+  '/$tenant/pay/help': typeof ShellTenantPayHelpRoute
   '/$tenant/uac/help': typeof ShellTenantUacHelpRoute
   '/$tenant/account': typeof ShellTenantAccountIndexRoute
+  '/$tenant/advanced': typeof ShellTenantAdvancedIndexRoute
   '/$tenant/pay': typeof ShellTenantPayIndexRoute
   '/$tenant/store': typeof ShellTenantStoreIndexRoute
   '/$tenant/uac': typeof ShellTenantUacIndexRoute
-  '/$tenant/pay/settings/schedule': typeof ShellTenantPaySettingsScheduleRoute
+  '/$tenant/uac/$userId/commission': typeof ShellTenantUacUserIdCommissionRoute
   '/$tenant/uac/$userId/edit': typeof ShellTenantUacUserIdEditRoute
   '/$tenant/uac/requests/$id': typeof ShellTenantUacRequestsIdRoute
   '/$tenant/pay/$start': typeof ShellTenantPayStartIndexRoute
@@ -358,15 +352,11 @@ export interface FileRoutesByTo {
   '/$tenant/pay/$start/$userId/settle': typeof ShellTenantPayStartUserIdSettleRoute
   '/$tenant/pay/settings/claim-types/add': typeof ShellTenantPaySettingsClaimTypesAddRoute
   '/$tenant/pay/settings/commission-types/add': typeof ShellTenantPaySettingsCommissionTypesAddRoute
-  '/$tenant/pay/settings/staff-commissions/$userId': typeof ShellTenantPaySettingsStaffCommissionsUserIdRoute
-  '/$tenant/pay/settings/staff/$userId': typeof ShellTenantPaySettingsStaffUserIdRoute
   '/$tenant/store/$storeId/analytics/charts': typeof ShellTenantStoreStoreIdAnalyticsChartsRoute
   '/$tenant/store/$storeId/orders/chart': typeof ShellTenantStoreStoreIdOrdersChartRoute
   '/$tenant/pay/$start/$userId': typeof ShellTenantPayStartUserIdIndexRoute
   '/$tenant/pay/settings/claim-types': typeof ShellTenantPaySettingsClaimTypesIndexRoute
   '/$tenant/pay/settings/commission-types': typeof ShellTenantPaySettingsCommissionTypesIndexRoute
-  '/$tenant/pay/settings/staff-commissions': typeof ShellTenantPaySettingsStaffCommissionsIndexRoute
-  '/$tenant/pay/settings/staff': typeof ShellTenantPaySettingsStaffIndexRoute
   '/$tenant/store/$storeId/analytics': typeof ShellTenantStoreStoreIdAnalyticsIndexRoute
   '/$tenant/store/$storeId/orders': typeof ShellTenantStoreStoreIdOrdersIndexRoute
   '/$tenant/pay/settings/claim-types/$id/edit': typeof ShellTenantPaySettingsClaimTypesIdEditRoute
@@ -388,12 +378,15 @@ export interface FileRoutesById {
   '/_shell/$tenant/account/details': typeof ShellTenantAccountDetailsRoute
   '/_shell/$tenant/account/info': typeof ShellTenantAccountInfoRoute
   '/_shell/$tenant/account/language': typeof ShellTenantAccountLanguageRoute
+  '/_shell/$tenant/advanced/schedule': typeof ShellTenantAdvancedScheduleRoute
+  '/_shell/$tenant/pay/help': typeof ShellTenantPayHelpRoute
   '/_shell/$tenant/uac/help': typeof ShellTenantUacHelpRoute
   '/_shell/$tenant/account/': typeof ShellTenantAccountIndexRoute
+  '/_shell/$tenant/advanced/': typeof ShellTenantAdvancedIndexRoute
   '/_shell/$tenant/pay/': typeof ShellTenantPayIndexRoute
   '/_shell/$tenant/store/': typeof ShellTenantStoreIndexRoute
   '/_shell/$tenant/uac/': typeof ShellTenantUacIndexRoute
-  '/_shell/$tenant/pay/settings/schedule': typeof ShellTenantPaySettingsScheduleRoute
+  '/_shell/$tenant/uac/$userId/commission': typeof ShellTenantUacUserIdCommissionRoute
   '/_shell/$tenant/uac/$userId/edit': typeof ShellTenantUacUserIdEditRoute
   '/_shell/$tenant/uac/requests/$id': typeof ShellTenantUacRequestsIdRoute
   '/_shell/$tenant/pay/$start/': typeof ShellTenantPayStartIndexRoute
@@ -403,15 +396,11 @@ export interface FileRoutesById {
   '/_shell/$tenant/pay/$start/$userId/settle': typeof ShellTenantPayStartUserIdSettleRoute
   '/_shell/$tenant/pay/settings/claim-types/add': typeof ShellTenantPaySettingsClaimTypesAddRoute
   '/_shell/$tenant/pay/settings/commission-types/add': typeof ShellTenantPaySettingsCommissionTypesAddRoute
-  '/_shell/$tenant/pay/settings/staff-commissions/$userId': typeof ShellTenantPaySettingsStaffCommissionsUserIdRoute
-  '/_shell/$tenant/pay/settings/staff/$userId': typeof ShellTenantPaySettingsStaffUserIdRoute
   '/_shell/$tenant/store/$storeId/analytics/charts': typeof ShellTenantStoreStoreIdAnalyticsChartsRoute
   '/_shell/$tenant/store/$storeId/orders/chart': typeof ShellTenantStoreStoreIdOrdersChartRoute
   '/_shell/$tenant/pay/$start/$userId/': typeof ShellTenantPayStartUserIdIndexRoute
   '/_shell/$tenant/pay/settings/claim-types/': typeof ShellTenantPaySettingsClaimTypesIndexRoute
   '/_shell/$tenant/pay/settings/commission-types/': typeof ShellTenantPaySettingsCommissionTypesIndexRoute
-  '/_shell/$tenant/pay/settings/staff-commissions/': typeof ShellTenantPaySettingsStaffCommissionsIndexRoute
-  '/_shell/$tenant/pay/settings/staff/': typeof ShellTenantPaySettingsStaffIndexRoute
   '/_shell/$tenant/store/$storeId/analytics/': typeof ShellTenantStoreStoreIdAnalyticsIndexRoute
   '/_shell/$tenant/store/$storeId/orders/': typeof ShellTenantStoreStoreIdOrdersIndexRoute
   '/_shell/$tenant/pay/settings/claim-types/$id/edit': typeof ShellTenantPaySettingsClaimTypesIdEditRoute
@@ -433,12 +422,15 @@ export interface FileRouteTypes {
     | '/$tenant/account/details'
     | '/$tenant/account/info'
     | '/$tenant/account/language'
+    | '/$tenant/advanced/schedule'
+    | '/$tenant/pay/help'
     | '/$tenant/uac/help'
     | '/$tenant/account/'
+    | '/$tenant/advanced/'
     | '/$tenant/pay/'
     | '/$tenant/store/'
     | '/$tenant/uac/'
-    | '/$tenant/pay/settings/schedule'
+    | '/$tenant/uac/$userId/commission'
     | '/$tenant/uac/$userId/edit'
     | '/$tenant/uac/requests/$id'
     | '/$tenant/pay/$start/'
@@ -448,15 +440,11 @@ export interface FileRouteTypes {
     | '/$tenant/pay/$start/$userId/settle'
     | '/$tenant/pay/settings/claim-types/add'
     | '/$tenant/pay/settings/commission-types/add'
-    | '/$tenant/pay/settings/staff-commissions/$userId'
-    | '/$tenant/pay/settings/staff/$userId'
     | '/$tenant/store/$storeId/analytics/charts'
     | '/$tenant/store/$storeId/orders/chart'
     | '/$tenant/pay/$start/$userId/'
     | '/$tenant/pay/settings/claim-types/'
     | '/$tenant/pay/settings/commission-types/'
-    | '/$tenant/pay/settings/staff-commissions/'
-    | '/$tenant/pay/settings/staff/'
     | '/$tenant/store/$storeId/analytics/'
     | '/$tenant/store/$storeId/orders/'
     | '/$tenant/pay/settings/claim-types/$id/edit'
@@ -475,12 +463,15 @@ export interface FileRouteTypes {
     | '/$tenant/account/details'
     | '/$tenant/account/info'
     | '/$tenant/account/language'
+    | '/$tenant/advanced/schedule'
+    | '/$tenant/pay/help'
     | '/$tenant/uac/help'
     | '/$tenant/account'
+    | '/$tenant/advanced'
     | '/$tenant/pay'
     | '/$tenant/store'
     | '/$tenant/uac'
-    | '/$tenant/pay/settings/schedule'
+    | '/$tenant/uac/$userId/commission'
     | '/$tenant/uac/$userId/edit'
     | '/$tenant/uac/requests/$id'
     | '/$tenant/pay/$start'
@@ -490,15 +481,11 @@ export interface FileRouteTypes {
     | '/$tenant/pay/$start/$userId/settle'
     | '/$tenant/pay/settings/claim-types/add'
     | '/$tenant/pay/settings/commission-types/add'
-    | '/$tenant/pay/settings/staff-commissions/$userId'
-    | '/$tenant/pay/settings/staff/$userId'
     | '/$tenant/store/$storeId/analytics/charts'
     | '/$tenant/store/$storeId/orders/chart'
     | '/$tenant/pay/$start/$userId'
     | '/$tenant/pay/settings/claim-types'
     | '/$tenant/pay/settings/commission-types'
-    | '/$tenant/pay/settings/staff-commissions'
-    | '/$tenant/pay/settings/staff'
     | '/$tenant/store/$storeId/analytics'
     | '/$tenant/store/$storeId/orders'
     | '/$tenant/pay/settings/claim-types/$id/edit'
@@ -519,12 +506,15 @@ export interface FileRouteTypes {
     | '/_shell/$tenant/account/details'
     | '/_shell/$tenant/account/info'
     | '/_shell/$tenant/account/language'
+    | '/_shell/$tenant/advanced/schedule'
+    | '/_shell/$tenant/pay/help'
     | '/_shell/$tenant/uac/help'
     | '/_shell/$tenant/account/'
+    | '/_shell/$tenant/advanced/'
     | '/_shell/$tenant/pay/'
     | '/_shell/$tenant/store/'
     | '/_shell/$tenant/uac/'
-    | '/_shell/$tenant/pay/settings/schedule'
+    | '/_shell/$tenant/uac/$userId/commission'
     | '/_shell/$tenant/uac/$userId/edit'
     | '/_shell/$tenant/uac/requests/$id'
     | '/_shell/$tenant/pay/$start/'
@@ -534,15 +524,11 @@ export interface FileRouteTypes {
     | '/_shell/$tenant/pay/$start/$userId/settle'
     | '/_shell/$tenant/pay/settings/claim-types/add'
     | '/_shell/$tenant/pay/settings/commission-types/add'
-    | '/_shell/$tenant/pay/settings/staff-commissions/$userId'
-    | '/_shell/$tenant/pay/settings/staff/$userId'
     | '/_shell/$tenant/store/$storeId/analytics/charts'
     | '/_shell/$tenant/store/$storeId/orders/chart'
     | '/_shell/$tenant/pay/$start/$userId/'
     | '/_shell/$tenant/pay/settings/claim-types/'
     | '/_shell/$tenant/pay/settings/commission-types/'
-    | '/_shell/$tenant/pay/settings/staff-commissions/'
-    | '/_shell/$tenant/pay/settings/staff/'
     | '/_shell/$tenant/store/$storeId/analytics/'
     | '/_shell/$tenant/store/$storeId/orders/'
     | '/_shell/$tenant/pay/settings/claim-types/$id/edit'
@@ -643,11 +629,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellTenantAccountLanguageRouteImport
       parentRoute: typeof ShellTenantRoute
     }
+    '/_shell/$tenant/advanced/': {
+      id: '/_shell/$tenant/advanced/'
+      path: '/advanced'
+      fullPath: '/$tenant/advanced/'
+      preLoaderRoute: typeof ShellTenantAdvancedIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/advanced/schedule': {
+      id: '/_shell/$tenant/advanced/schedule'
+      path: '/advanced/schedule'
+      fullPath: '/$tenant/advanced/schedule'
+      preLoaderRoute: typeof ShellTenantAdvancedScheduleRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
     '/_shell/$tenant/pay/': {
       id: '/_shell/$tenant/pay/'
       path: '/pay'
       fullPath: '/$tenant/pay/'
       preLoaderRoute: typeof ShellTenantPayIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/pay/help': {
+      id: '/_shell/$tenant/pay/help'
+      path: '/pay/help'
+      fullPath: '/$tenant/pay/help'
+      preLoaderRoute: typeof ShellTenantPayHelpRouteImport
       parentRoute: typeof ShellTenantRoute
     }
     '/_shell/$tenant/store/': {
@@ -685,13 +692,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellTenantPaySettingsIndexRouteImport
       parentRoute: typeof ShellTenantRoute
     }
-    '/_shell/$tenant/pay/settings/schedule': {
-      id: '/_shell/$tenant/pay/settings/schedule'
-      path: '/pay/settings/schedule'
-      fullPath: '/$tenant/pay/settings/schedule'
-      preLoaderRoute: typeof ShellTenantPaySettingsScheduleRouteImport
-      parentRoute: typeof ShellTenantRoute
-    }
     '/_shell/$tenant/store/$storeId/': {
       id: '/_shell/$tenant/store/$storeId/'
       path: '/store/$storeId'
@@ -704,6 +704,13 @@ declare module '@tanstack/react-router' {
       path: '/uac/$userId'
       fullPath: '/$tenant/uac/$userId/'
       preLoaderRoute: typeof ShellTenantUacUserIdIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/uac/$userId/commission': {
+      id: '/_shell/$tenant/uac/$userId/commission'
+      path: '/uac/$userId/commission'
+      fullPath: '/$tenant/uac/$userId/commission'
+      preLoaderRoute: typeof ShellTenantUacUserIdCommissionRouteImport
       parentRoute: typeof ShellTenantRoute
     }
     '/_shell/$tenant/uac/$userId/edit': {
@@ -760,34 +767,6 @@ declare module '@tanstack/react-router' {
       path: '/pay/settings/commission-types/add'
       fullPath: '/$tenant/pay/settings/commission-types/add'
       preLoaderRoute: typeof ShellTenantPaySettingsCommissionTypesAddRouteImport
-      parentRoute: typeof ShellTenantRoute
-    }
-    '/_shell/$tenant/pay/settings/staff-commissions/': {
-      id: '/_shell/$tenant/pay/settings/staff-commissions/'
-      path: '/pay/settings/staff-commissions'
-      fullPath: '/$tenant/pay/settings/staff-commissions/'
-      preLoaderRoute: typeof ShellTenantPaySettingsStaffCommissionsIndexRouteImport
-      parentRoute: typeof ShellTenantRoute
-    }
-    '/_shell/$tenant/pay/settings/staff-commissions/$userId': {
-      id: '/_shell/$tenant/pay/settings/staff-commissions/$userId'
-      path: '/pay/settings/staff-commissions/$userId'
-      fullPath: '/$tenant/pay/settings/staff-commissions/$userId'
-      preLoaderRoute: typeof ShellTenantPaySettingsStaffCommissionsUserIdRouteImport
-      parentRoute: typeof ShellTenantRoute
-    }
-    '/_shell/$tenant/pay/settings/staff/': {
-      id: '/_shell/$tenant/pay/settings/staff/'
-      path: '/pay/settings/staff'
-      fullPath: '/$tenant/pay/settings/staff/'
-      preLoaderRoute: typeof ShellTenantPaySettingsStaffIndexRouteImport
-      parentRoute: typeof ShellTenantRoute
-    }
-    '/_shell/$tenant/pay/settings/staff/$userId': {
-      id: '/_shell/$tenant/pay/settings/staff/$userId'
-      path: '/pay/settings/staff/$userId'
-      fullPath: '/$tenant/pay/settings/staff/$userId'
-      preLoaderRoute: typeof ShellTenantPaySettingsStaffUserIdRouteImport
       parentRoute: typeof ShellTenantRoute
     }
     '/_shell/$tenant/store/$storeId/analytics/': {
@@ -864,12 +843,15 @@ interface ShellTenantRouteChildren {
   ShellTenantAccountDetailsRoute: typeof ShellTenantAccountDetailsRoute
   ShellTenantAccountInfoRoute: typeof ShellTenantAccountInfoRoute
   ShellTenantAccountLanguageRoute: typeof ShellTenantAccountLanguageRoute
+  ShellTenantAdvancedScheduleRoute: typeof ShellTenantAdvancedScheduleRoute
+  ShellTenantPayHelpRoute: typeof ShellTenantPayHelpRoute
   ShellTenantUacHelpRoute: typeof ShellTenantUacHelpRoute
   ShellTenantAccountIndexRoute: typeof ShellTenantAccountIndexRoute
+  ShellTenantAdvancedIndexRoute: typeof ShellTenantAdvancedIndexRoute
   ShellTenantPayIndexRoute: typeof ShellTenantPayIndexRoute
   ShellTenantStoreIndexRoute: typeof ShellTenantStoreIndexRoute
   ShellTenantUacIndexRoute: typeof ShellTenantUacIndexRoute
-  ShellTenantPaySettingsScheduleRoute: typeof ShellTenantPaySettingsScheduleRoute
+  ShellTenantUacUserIdCommissionRoute: typeof ShellTenantUacUserIdCommissionRoute
   ShellTenantUacUserIdEditRoute: typeof ShellTenantUacUserIdEditRoute
   ShellTenantUacRequestsIdRoute: typeof ShellTenantUacRequestsIdRoute
   ShellTenantPayStartIndexRoute: typeof ShellTenantPayStartIndexRoute
@@ -879,15 +861,11 @@ interface ShellTenantRouteChildren {
   ShellTenantPayStartUserIdSettleRoute: typeof ShellTenantPayStartUserIdSettleRoute
   ShellTenantPaySettingsClaimTypesAddRoute: typeof ShellTenantPaySettingsClaimTypesAddRoute
   ShellTenantPaySettingsCommissionTypesAddRoute: typeof ShellTenantPaySettingsCommissionTypesAddRoute
-  ShellTenantPaySettingsStaffCommissionsUserIdRoute: typeof ShellTenantPaySettingsStaffCommissionsUserIdRoute
-  ShellTenantPaySettingsStaffUserIdRoute: typeof ShellTenantPaySettingsStaffUserIdRoute
   ShellTenantStoreStoreIdAnalyticsChartsRoute: typeof ShellTenantStoreStoreIdAnalyticsChartsRoute
   ShellTenantStoreStoreIdOrdersChartRoute: typeof ShellTenantStoreStoreIdOrdersChartRoute
   ShellTenantPayStartUserIdIndexRoute: typeof ShellTenantPayStartUserIdIndexRoute
   ShellTenantPaySettingsClaimTypesIndexRoute: typeof ShellTenantPaySettingsClaimTypesIndexRoute
   ShellTenantPaySettingsCommissionTypesIndexRoute: typeof ShellTenantPaySettingsCommissionTypesIndexRoute
-  ShellTenantPaySettingsStaffCommissionsIndexRoute: typeof ShellTenantPaySettingsStaffCommissionsIndexRoute
-  ShellTenantPaySettingsStaffIndexRoute: typeof ShellTenantPaySettingsStaffIndexRoute
   ShellTenantStoreStoreIdAnalyticsIndexRoute: typeof ShellTenantStoreStoreIdAnalyticsIndexRoute
   ShellTenantStoreStoreIdOrdersIndexRoute: typeof ShellTenantStoreStoreIdOrdersIndexRoute
   ShellTenantPaySettingsClaimTypesIdEditRoute: typeof ShellTenantPaySettingsClaimTypesIdEditRoute
@@ -905,12 +883,15 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
   ShellTenantAccountDetailsRoute: ShellTenantAccountDetailsRoute,
   ShellTenantAccountInfoRoute: ShellTenantAccountInfoRoute,
   ShellTenantAccountLanguageRoute: ShellTenantAccountLanguageRoute,
+  ShellTenantAdvancedScheduleRoute: ShellTenantAdvancedScheduleRoute,
+  ShellTenantPayHelpRoute: ShellTenantPayHelpRoute,
   ShellTenantUacHelpRoute: ShellTenantUacHelpRoute,
   ShellTenantAccountIndexRoute: ShellTenantAccountIndexRoute,
+  ShellTenantAdvancedIndexRoute: ShellTenantAdvancedIndexRoute,
   ShellTenantPayIndexRoute: ShellTenantPayIndexRoute,
   ShellTenantStoreIndexRoute: ShellTenantStoreIndexRoute,
   ShellTenantUacIndexRoute: ShellTenantUacIndexRoute,
-  ShellTenantPaySettingsScheduleRoute: ShellTenantPaySettingsScheduleRoute,
+  ShellTenantUacUserIdCommissionRoute: ShellTenantUacUserIdCommissionRoute,
   ShellTenantUacUserIdEditRoute: ShellTenantUacUserIdEditRoute,
   ShellTenantUacRequestsIdRoute: ShellTenantUacRequestsIdRoute,
   ShellTenantPayStartIndexRoute: ShellTenantPayStartIndexRoute,
@@ -922,10 +903,6 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
     ShellTenantPaySettingsClaimTypesAddRoute,
   ShellTenantPaySettingsCommissionTypesAddRoute:
     ShellTenantPaySettingsCommissionTypesAddRoute,
-  ShellTenantPaySettingsStaffCommissionsUserIdRoute:
-    ShellTenantPaySettingsStaffCommissionsUserIdRoute,
-  ShellTenantPaySettingsStaffUserIdRoute:
-    ShellTenantPaySettingsStaffUserIdRoute,
   ShellTenantStoreStoreIdAnalyticsChartsRoute:
     ShellTenantStoreStoreIdAnalyticsChartsRoute,
   ShellTenantStoreStoreIdOrdersChartRoute:
@@ -935,9 +912,6 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
     ShellTenantPaySettingsClaimTypesIndexRoute,
   ShellTenantPaySettingsCommissionTypesIndexRoute:
     ShellTenantPaySettingsCommissionTypesIndexRoute,
-  ShellTenantPaySettingsStaffCommissionsIndexRoute:
-    ShellTenantPaySettingsStaffCommissionsIndexRoute,
-  ShellTenantPaySettingsStaffIndexRoute: ShellTenantPaySettingsStaffIndexRoute,
   ShellTenantStoreStoreIdAnalyticsIndexRoute:
     ShellTenantStoreStoreIdAnalyticsIndexRoute,
   ShellTenantStoreStoreIdOrdersIndexRoute:
