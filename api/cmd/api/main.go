@@ -56,6 +56,7 @@ func main() {
 	q := store.New(db)
 	mux := http.NewServeMux()
 	handler.NewAPI(mux, handler.Deps{
+		Docs:         cfg.Env == "local",
 		DB:           db,
 		Queries:      q,
 		Sessions:     auth.NewSessions(q),

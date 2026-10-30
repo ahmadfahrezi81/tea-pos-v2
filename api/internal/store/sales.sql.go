@@ -101,7 +101,10 @@ SELECT s.id, s.name, s.status,
     (SELECT max(d.closed_at) FROM store_daily_summaries d WHERE d.store_id = s.id)::timestamp AS last_closed,
     COALESCE(t.orders, 0)::bigint AS orders,
     COALESCE(t.sales, 0)::bigint AS sales,
-    COALESCE(c.cups, 0)::bigint AS cups
+    COALESCE(c.cups, 0)::bigint AS cups,
+    COALESCE(m.counted, 0)::bigint AS cash_counted,
+    COALESCE(m.diff, 0)::bigint AS cash_diff,
+    COALESCE(m.days, 0)::int AS closed_days
 FROM stores s
 LEFT JOIN store_sessions ss ON ss.store_id = s.id AND ss.status = 'active'
 LEFT JOIN users u ON u.id = ss.user_id
@@ -116,13 +119,22 @@ LEFT JOIN LATERAL (
     JOIN store_order_items i ON i.order_id = o.id
     WHERE o.store_id = s.id AND o.created_at >= $1 AND o.created_at < $2
 ) c ON true
-WHERE s.tenant_id = $3
+LEFT JOIN LATERAL (
+    -- The cash counted at closing: only closed days have it.
+    SELECT sum(d.actual_cash) AS counted, sum(d.actual_cash - d.expected_cash) AS diff, count(*) AS days
+    FROM store_daily_summaries d
+    WHERE d.store_id = s.id AND d.date BETWEEN $3::date AND $4::date
+        AND d.closed_at IS NOT NULL AND d.actual_cash IS NOT NULL
+) m ON true
+WHERE s.tenant_id = $5
 ORDER BY ss.started_at IS NULL, s.name
 `
 
 type StoresLiveParams struct {
 	DayStart pgtype.Timestamp
 	DayEnd   pgtype.Timestamp
+	FromDate pgtype.Date
+	ToDate   pgtype.Date
 	TenantID pgtype.UUID
 }
 
@@ -138,12 +150,21 @@ type StoresLiveRow struct {
 	Orders       int64
 	Sales        int64
 	Cups         int64
+	CashCounted  int64
+	CashDiff     int64
+	ClosedDays   int32
 }
 
 // Every store of the tenant right now: its open session and who is selling, when it last closed,
 // and the range's (day_start to day_end, UTC as the old tables hold it) orders, cups and sales.
 func (q *Queries) StoresLive(ctx context.Context, arg StoresLiveParams) ([]StoresLiveRow, error) {
-	rows, err := q.db.Query(ctx, storesLive, arg.DayStart, arg.DayEnd, arg.TenantID)
+	rows, err := q.db.Query(ctx, storesLive,
+		arg.DayStart,
+		arg.DayEnd,
+		arg.FromDate,
+		arg.ToDate,
+		arg.TenantID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -163,6 +184,9 @@ func (q *Queries) StoresLive(ctx context.Context, arg StoresLiveParams) ([]Store
 			&i.Orders,
 			&i.Sales,
 			&i.Cups,
+			&i.CashCounted,
+			&i.CashDiff,
+			&i.ClosedDays,
 		); err != nil {
 			return nil, err
 		}

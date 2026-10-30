@@ -3,13 +3,11 @@ import { formatMoney } from "@tea-pos/format";
 import { useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
-import { rowIcon } from "@tea-pos/shell/Settings";
 import { useAccess, useSlug } from "@tea-pos/shell/tenant";
-import { ListCard, ListRow } from "@tea-pos/ui/ListRow";
-import { Panel } from "@tea-pos/ui/Panel";
+import { InfoList, InfoRow } from "@tea-pos/ui/DetailList";
 import { SearchBox as UiSearchBox } from "@tea-pos/ui/SearchBox";
-import { useNavigate, useRouter } from "@tanstack/react-router";
-import { Check, ChevronRight, Wallet } from "lucide-react";
+import { Link, useRouter } from "@tanstack/react-router";
+import { Check, ChevronRight } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { useCommissionTypes, usePayStaff, usePayWrite, writes } from "./pay";
@@ -57,52 +55,61 @@ function useStaffMember(id: string) {
 export function PersonPay({ id }: { id: string }) {
     const t = useT();
     const slug = useSlug();
-    const navigate = useNavigate();
     const { canWrite } = useAccess();
     const { loaded, staff } = useStaffMember(id);
     if (!loaded) return <Skeleton className="h-40 rounded-2xl" />;
     if (!staff) return null;
     const type = staff.commissionType;
     const bank = staff.bank;
+    const commission = (
+        <>
+            <span className="min-w-0 truncate">
+                {type
+                    ? `${type.name} · ${t("pay.perCup").replace("{rate}", formatMoney(type.ratePerCup))}`
+                    : t("pay.noCommission")}
+            </span>
+        </>
+    );
     return (
-        <Panel icon={<Wallet {...rowIcon} />} title={t("nav.pay")}>
-            <ListCard>
-                <ListRow
-                    onClick={
-                        canWrite
-                            ? () => void navigate({ to: `/${slug}/uac/${id}/commission` })
-                            : undefined
-                    }
-                    title={t("pay.commissionType")}
-                    subtitle={
-                        type
-                            ? `${type.name} · ${t("pay.perCup").replace("{rate}", formatMoney(type.ratePerCup))}`
-                            : t("pay.noCommission")
-                    }
-                    trailing={
-                        canWrite ? (
-                            <ChevronRight size={ICON} strokeWidth={2.5} className="text-brand/90" />
-                        ) : undefined
-                    }
-                />
+        <section className="space-y-2">
+            <SectionLabel>{t("nav.pay")}</SectionLabel>
+            <InfoList>
+                {canWrite ? (
+                    <Link
+                        to="/$tenant/uac/$userId/commission"
+                        params={{ tenant: slug, userId: id }}
+                        className="flex items-center justify-between gap-4 text-[15px] text-gray-900 active:opacity-70"
+                    >
+                        <span className="shrink-0">{t("pay.commissionType")}</span>
+                        <span className="flex min-w-0 items-center gap-1 font-medium">
+                            {commission}
+                            <ChevronRight
+                                size={18}
+                                strokeWidth={2.5}
+                                className="text-brand/90 shrink-0"
+                            />
+                        </span>
+                    </Link>
+                ) : (
+                    <InfoRow label={t("pay.commissionType")}>{commission}</InfoRow>
+                )}
                 {bank.name || bank.accountNumber ? (
                     <>
-                        {bank.name && <ListRow title={t("pay.bank")} subtitle={bank.name} />}
+                        {bank.name && <InfoRow label={t("pay.bank")}>{bank.name}</InfoRow>}
                         {bank.accountNumber && (
-                            <ListRow
-                                title={t("pay.accountNumber")}
-                                subtitle={<span className="font-mono">{bank.accountNumber}</span>}
-                            />
+                            <InfoRow label={t("pay.accountNumber")}>
+                                <span className="font-mono">{bank.accountNumber}</span>
+                            </InfoRow>
                         )}
                         {bank.accountHolder && (
-                            <ListRow title={t("pay.accountHolder")} subtitle={bank.accountHolder} />
+                            <InfoRow label={t("pay.accountHolder")}>{bank.accountHolder}</InfoRow>
                         )}
                     </>
                 ) : (
-                    <ListRow title={t("pay.bankDetails")} subtitle={t("pay.noBank")} />
+                    <InfoRow label={t("pay.bankDetails")}>{t("pay.noBank")}</InfoRow>
                 )}
-            </ListCard>
-        </Panel>
+            </InfoList>
+        </section>
     );
 }
 

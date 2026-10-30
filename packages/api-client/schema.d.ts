@@ -1519,6 +1519,21 @@ export interface components {
             status: "paid" | "skipped";
         };
         StoreLive: {
+            /**
+             * Format: int64
+             * @description Cash counted at closing, over the range's closed days
+             */
+            cashCounted: number;
+            /**
+             * Format: int64
+             * @description Counted minus expected on those days; negative is short
+             */
+            cashDiff: number;
+            /**
+             * Format: int64
+             * @description Days in the range closed with cash counted
+             */
+            closedDays: number;
             /** Format: int64 */
             cups: number;
             /** Format: uuid */

@@ -1664,6 +1664,18 @@ components:
     StoreLive:
       additionalProperties: false
       properties:
+        cashCounted:
+          description: Cash counted at closing, over the range's closed days
+          format: int64
+          type: integer
+        cashDiff:
+          description: Counted minus expected on those days; negative is short
+          format: int64
+          type: integer
+        closedDays:
+          description: Days in the range closed with cash counted
+          format: int64
+          type: integer
         cups:
           format: int64
           type: integer
@@ -1710,6 +1722,9 @@ components:
         - orders
         - cups
         - sales
+        - cashCounted
+        - cashDiff
+        - closedDays
         - sellers
       type: object
     StoresLiveOutputBody:
@@ -2217,7 +2232,7 @@ paths:
             format: date
             type: string
         - description: Repeat for several; none is every store of the tenant (All stores)
-          explode: false
+          explode: true
           in: query
           name: storeId
           schema:
@@ -2460,7 +2475,7 @@ paths:
             format: date
             type: string
         - description: Repeat for several; none is every store of the tenant (All stores)
-          explode: false
+          explode: true
           in: query
           name: storeId
           schema:
@@ -3247,7 +3262,7 @@ paths:
             format: date
             type: string
         - description: Repeat for several; none is every store of the tenant (All stores)
-          explode: false
+          explode: true
           in: query
           name: storeId
           schema:
@@ -3297,7 +3312,7 @@ paths:
             format: date
             type: string
         - description: Repeat for several; none is every store of the tenant (All stores)
-          explode: false
+          explode: true
           in: query
           name: storeId
           schema:
@@ -3356,7 +3371,7 @@ paths:
             format: date
             type: string
         - description: Repeat for several; none is every store of the tenant (All stores)
-          explode: false
+          explode: true
           in: query
           name: storeId
           schema:
@@ -3461,7 +3476,7 @@ paths:
             format: date
             type: string
         - description: Repeat for several; none is every store of the tenant (All stores)
-          explode: false
+          explode: true
           in: query
           name: storeId
           schema:

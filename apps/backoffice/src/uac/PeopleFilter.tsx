@@ -4,7 +4,7 @@ import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { ChoiceList } from "@tea-pos/ui/ChoiceList";
 import { Switch } from "@tea-pos/ui/form/Switch";
 import { Sheet } from "@tea-pos/ui/Sheet";
-import { ChevronLeft, LayoutGrid, Store, UserX } from "lucide-react";
+import { LayoutGrid, Store, UserX } from "lucide-react";
 import { useState } from "react";
 
 import type { Person } from "./uac";
@@ -60,30 +60,24 @@ export function PeopleFilterSheet({
     };
 
     return (
-        <Sheet open={open} onClose={close} title={app ? appLabel(app) : t("uac.filter")}>
+        <Sheet
+            open={open}
+            onClose={close}
+            title={app ? appLabel(app) : t("uac.filter")}
+            onBack={app ? () => setApp(null) : undefined}
+        >
             {app ? (
-                <div className="space-y-3">
-                    <button
-                        onClick={() => setApp(null)}
-                        className="flex items-center gap-1 text-gray-900 font-medium active:opacity-70"
-                    >
-                        <ChevronLeft {...rowIcon} />
-                        {t("uac.filter")}
-                    </button>
-                    <div>
-                        <ChoiceList
-                            value={value[app]}
-                            onChange={(level) => {
-                                onChange({ ...value, [app]: level });
-                                setApp(null);
-                            }}
-                            choices={LEVELS[app].map((l) => ({
-                                value: l,
-                                label: t(l === "any" ? "uac.any" : levelKey(l)),
-                            }))}
-                        />
-                    </div>
-                </div>
+                <ChoiceList
+                    value={value[app]}
+                    onChange={(level) => {
+                        onChange({ ...value, [app]: level });
+                        setApp(null);
+                    }}
+                    choices={LEVELS[app].map((l) => ({
+                        value: l,
+                        label: t(l === "any" ? "uac.any" : levelKey(l)),
+                    }))}
+                />
             ) : (
                 <div className="space-y-4">
                     <div>

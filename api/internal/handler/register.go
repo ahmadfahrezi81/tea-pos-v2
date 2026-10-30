@@ -19,6 +19,8 @@ import (
 
 // Deps is what the handlers use. Printing the spec passes none: no handler runs then.
 type Deps struct {
+	// Docs serves /docs and /openapi.yaml: on a laptop only.
+	Docs bool
 	// DB runs Idempotent writes in their own transaction (internal/idem).
 	DB       *pgxpool.Pool
 	Queries  *store.Queries
@@ -62,7 +64,29 @@ func NewAPI(mux *http.ServeMux, d Deps) huma.API {
 	registerMore(api, d)
 	registerUac(api, d)
 	registerTestLogin(api, d)
+	if d.Docs {
+		registerDocs(mux, api)
+	}
 	return api
+}
+
+// registerDocs is the API's reference for a laptop, through the local /api: /api/docs.
+func registerDocs(mux *http.ServeMux, api huma.API) {
+	mux.HandleFunc("GET /openapi.yaml", func(w http.ResponseWriter, _ *http.Request) {
+		b, err := api.OpenAPI().YAML()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/yaml")
+		_, _ = w.Write(b)
+	})
+	mux.HandleFunc("GET /docs", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte(`<!doctype html><title>tea-pos API</title>
+<script id="api-reference" data-url="/api/openapi.yaml"></script>
+<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.25.0"></script>`))
+	})
 }
 
 // NewHealth is /health alone, for the programs that serve nothing else over HTTP.

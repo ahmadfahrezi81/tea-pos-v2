@@ -298,6 +298,12 @@
         "noSales": "No sales in this range",
         "totalCups": "Cups by day",
         "totals": "Totals",
-        "oneDay": "1 day"
+        "oneDay": "1 day",
+        "stores": "Stores",
+        "cash": "Cash",
+        "cashMatches": "matches",
+        "cashShort": "{amount} short",
+        "cashOver": "{amount} over",
+        "salesShort": "Sales"
     }
 }

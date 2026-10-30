@@ -2,12 +2,12 @@ import type { components } from "@tea-pos/api-client";
 import { formatCalendarDay, formatDateTime, formatMoney } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { ImageOff, X } from "lucide-react";
+import { ImageOff } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { Sellers } from "./Sellers";
 import { useDay } from "./sales";
-import { Dialog } from "@tea-pos/ui/Drawer";
+import { ImagePreview } from "@tea-pos/ui/ImagePreview";
 import { Badge } from "@tea-pos/ui/Badge";
 import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
@@ -282,20 +282,12 @@ export function PhotoTile({ photo, label }: { photo: Photo; label: string }) {
                     </p>
                 )}
             </div>
-            <Dialog open={open} onClose={() => setOpen(false)} dim="bg-black/90" label={label}>
-                <img
-                    src={photo.url}
-                    alt={label}
-                    className="max-h-[90dvh] max-w-full object-contain"
-                />
-                <button
-                    onClick={() => setOpen(false)}
-                    className="fixed top-4 right-4 p-2 text-white"
-                    aria-label={label}
-                >
-                    <X size={28} />
-                </button>
-            </Dialog>
+            <ImagePreview
+                open={open}
+                onClose={() => setOpen(false)}
+                src={photo.url}
+                title={label}
+            />
         </div>
     );
 }

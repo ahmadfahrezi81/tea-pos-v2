@@ -219,6 +219,27 @@ function readOnly(): Plugin {
     };
 }
 
+// What this build is, asked before anything downloads (shell AppUpdate): left out of the worker's
+// files and never cached, or a phone could not notice a new one.
+function versionFile(app: AppConfig): Plugin {
+    return {
+        name: "version-file",
+        apply: "build",
+        generateBundle() {
+            this.emitFile({
+                type: "asset",
+                fileName: "version.json",
+                source: JSON.stringify({ version: appTag(app) }),
+            });
+            this.emitFile({
+                type: "asset",
+                fileName: "_headers",
+                source: "/version.json\n  Cache-Control: no-store\n/sw.js\n  Cache-Control: no-cache\n",
+            });
+        },
+    };
+}
+
 // The hub's socket in local dev, sent as the forwarder sends it (set REALTIME_ORIGIN, e.g. a local realtime).
 function realtimeProxy(app: AppConfig): Record<string, ProxyOptions> {
     if (!process.env.REALTIME_ORIGIN) return {};
@@ -266,6 +287,7 @@ export function appConfig(app: AppConfig) {
             pickLanguage(app),
             inlineCss(),
             appHtml(app),
+            versionFile(app),
             VitePWA({
                 // The update sheet asks first: reloading mid-order would drop the cart.
                 registerType: "prompt",

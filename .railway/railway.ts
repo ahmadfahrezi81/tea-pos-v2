@@ -44,10 +44,10 @@ export default defineRailway((ctx) => {
             // Signs photo uploads and private reads (Storage); never leaves Go.
             SUPABASE_SECRET_KEY: preserve(),
             // PostHog: errors, the apps' events, flags. Each rules download is billed as 10 flag
-            // checks (1M free a month): every 60 s is 432k, staging every 5 min 86k.
+            // checks (1M free a month): every 5 min is 86k.
             POSTHOG_KEY: preserve(),
             POSTHOG_FLAGS_KEY: preserve(),
-            POSTHOG_FLAGS_POLL_SECONDS: prod ? "60" : "300",
+            POSTHOG_FLAGS_POLL_SECONDS: "300",
             // The worker's weather (it references this; Infisical syncs into api only).
             TOMORROW_IO_API_KEY: preserve(),
             // When a release breaks older apps, its PR adds e.g. MIN_APP_VERSION: "seller@2026.11.2"

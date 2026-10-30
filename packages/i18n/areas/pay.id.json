@@ -215,6 +215,8 @@
         "helpPaying": "Membayar",
         "helpPayingBody": "Buka seseorang untuk melihat rinciannya, lalu bayar atau lewati.\nBayar: menyimpan bukti transfer dan menutup periodenya.\nLewati: menutupnya tanpa transfer.\nPeriode yang sudah dibayar atau dilewati tidak bisa diubah lagi.",
         "helpSetup": "Pengaturan",
-        "helpSetupBody": "Jenis komisi dan klaim: di Pengaturan Gaji.\nKomisi dan bank seseorang: di halamannya di Orang.\nJadwal gaji: di Lainnya, Lanjutan."
+        "helpSetupBody": "Jenis komisi dan klaim: di Pengaturan Gaji.\nKomisi dan bank seseorang: di halamannya di Orang.\nJadwal gaji: di Lainnya, Lanjutan.",
+        "payoutsList": "Pembayaran",
+        "nextShort": "Pembayaran"
     }
 }
