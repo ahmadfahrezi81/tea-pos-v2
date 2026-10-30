@@ -20,6 +20,7 @@
         "unknown": "Unknown"
     },
     "moreRows": {
-        "weather": "Weather"
+        "weather": "Weather",
+        "advanced": "Advanced"
     }
 }

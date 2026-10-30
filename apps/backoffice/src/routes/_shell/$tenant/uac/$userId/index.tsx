@@ -4,7 +4,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PersonPage } from "../../../../../uac/PersonPage";
 
 export const Route = createFileRoute("/_shell/$tenant/uac/$userId/")({
-    loader: () => loadArea("uac"),
+    // A person's page shows their pay too.
+    loader: () => Promise.all([loadArea("uac"), loadArea("pay")]),
     staticData: { shell: { titleKey: "nav.uac", parent: "..", refreshable: true } },
     component: function Screen() {
         return <PersonPage userId={Route.useParams().userId} />;
