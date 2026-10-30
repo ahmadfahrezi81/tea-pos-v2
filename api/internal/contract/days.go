@@ -4,7 +4,8 @@ import "encoding/json"
 
 type DaysInput struct {
 	Tenant string `path:"tenant"`
-	Month  string `query:"month" required:"true" pattern:"^[0-9]{4}-[0-9]{2}$" example:"2026-10"`
+	From   string `query:"from" required:"true" format:"date"`
+	To     string `query:"to" required:"true" format:"date" doc:"Included; at most 400 days after from"`
 	Stores
 }
 

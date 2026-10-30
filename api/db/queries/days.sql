@@ -1,5 +1,5 @@
 -- name: ListDays :many
--- A month of the stores' days, newest first (one row per store per day).
+-- A range of the stores' days, newest first (one row per store per day).
 SELECT s.id, s.store_id, st.name AS store_name, s.date, s.opening_balance, s.total_sales, s.total_orders,
     s.total_cups, s.total_expenses::bigint AS total_expenses, s.expected_cash, s.actual_cash, s.variance,
     s.notes, s.closed_at

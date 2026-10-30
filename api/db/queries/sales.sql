@@ -23,7 +23,7 @@ ORDER BY s.date;
 
 -- name: StoresLive :many
 -- Every store of the tenant right now: its open session and who is selling, when it last closed,
--- and today's (day_start to day_end, UTC as the old tables hold it) orders, cups and sales.
+-- and the range's (day_start to day_end, UTC as the old tables hold it) orders, cups and sales.
 SELECT s.id, s.name, s.status,
     ss.started_at AS open_since,
     ss.user_id AS seller_id,
@@ -51,7 +51,7 @@ WHERE s.tenant_id = @tenant_id
 ORDER BY ss.started_at IS NULL, s.name;
 
 -- name: StoresLiveSellers :many
--- Who sold at each store today (day_start to day_end) and their cups, the most first.
+-- Who sold at each store in the range (day_start to day_end) and their cups, the most first.
 SELECT o.store_id, o.user_id,
     COALESCE(u.full_name, '')::text AS name,
     COALESCE(u.avatar_url, '')::text AS avatar_url,

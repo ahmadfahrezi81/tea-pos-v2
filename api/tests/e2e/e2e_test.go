@@ -206,7 +206,7 @@ func TestStore_AdminSeesTheTenantsSales(t *testing.T) {
 	if days, _ := body["days"].([]any); len(days) == 0 {
 		t.Fatal("no days this month: is seed.sql's Store data there?")
 	}
-	if resp, body := admin.do(http.MethodGet, "/tenants/test-a/orders?date="+today, "", nil); resp.StatusCode != http.StatusOK {
+	if resp, body := admin.do(http.MethodGet, "/tenants/test-a/orders?from="+today+"&to="+today, "", nil); resp.StatusCode != http.StatusOK {
 		t.Fatalf("orders: %d %v", resp.StatusCode, body["code"])
 	}
 	sellerPhone := newPhone(t, seller)

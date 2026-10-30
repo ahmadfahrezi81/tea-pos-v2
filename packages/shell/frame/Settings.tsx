@@ -13,6 +13,7 @@ export function SettingsRow({
     label,
     sublabel,
     to,
+    search,
     onClick,
     right,
     dot,
@@ -21,6 +22,8 @@ export function SettingsRow({
     label: string;
     sublabel?: string;
     to?: string;
+    /** The address's search, for `to`. */
+    search?: Record<string, string>;
     onClick?: () => void;
     /** Replaces the chevron: a toggle, a badge, a value. */
     right?: ReactNode;
@@ -48,7 +51,7 @@ export function SettingsRow({
     );
     const className = "group w-full flex items-stretch gap-3 text-left active:bg-gray-50";
     return to ? (
-        <Link to={to} className={className}>
+        <Link to={to} search={search as never} className={className}>
             {inner}
         </Link>
     ) : (

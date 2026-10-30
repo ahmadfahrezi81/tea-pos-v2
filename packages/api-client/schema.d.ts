@@ -148,7 +148,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** A month of the stores' days, with expenses and who worked */
+        /** A range of the stores' days, with expenses and who worked */
         get: operations["listDays"];
         put?: never;
         post?: never;
@@ -250,7 +250,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** A day's orders over one store or several, newest first, a page at a time */
+        /** The orders of a range of days over one store or several, newest first, a page at a time */
         get: operations["listDayOrders"];
         put?: never;
         post?: never;
@@ -593,7 +593,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Every store right now: open or closed, who is selling, today's sales */
+        /** Every store: open or closed right now and who is selling, with the sales of a range (today by default) */
         get: operations["storesLive"];
         put?: never;
         post?: never;
@@ -1942,7 +1942,9 @@ export interface operations {
     listDays: {
         parameters: {
             query: {
-                month: string;
+                from: string;
+                /** @description Included; at most 400 days after from */
+                to: string;
                 /** @description Repeat for several; none is every store of the tenant (All stores) */
                 storeId?: string[] | null;
             };
@@ -2141,8 +2143,10 @@ export interface operations {
     listDayOrders: {
         parameters: {
             query: {
-                /** @description The day, in the stores' time zone */
-                date: string;
+                /** @description The first day, in the stores' time zone */
+                from: string;
+                /** @description The last day, included; at most 400 days after from */
+                to: string;
                 /** @description Repeat for several; none is every store of the tenant (All stores) */
                 storeId?: string[] | null;
                 /** @description From the previous page's next; empty for the first */
@@ -2927,7 +2931,12 @@ export interface operations {
     };
     storesLive: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description The sales' first day; today when absent. Open or closed is always right now */
+                from?: string;
+                /** @description The sales' last day, included; from when absent */
+                to?: string;
+            };
             header?: never;
             path: {
                 tenant: string;

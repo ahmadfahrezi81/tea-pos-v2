@@ -51,7 +51,7 @@ func TestDayOrders(t *testing.T) {
 			Items []contract.Order
 			Next  string
 		}
-		if s := get("/orders?date=2026-10-01&limit=2&storeId="+storeACentral+"&cursor="+cursor, &p); s != 200 {
+		if s := get("/orders?from=2026-10-01&to=2026-10-01&limit=2&storeId="+storeACentral+"&cursor="+cursor, &p); s != 200 {
 			t.Fatalf("page: %d", s)
 		}
 		all = append(all, p.Items...)
@@ -80,7 +80,7 @@ func TestDayOrders(t *testing.T) {
 	if get("/sales/hours?date=2026-09-30", &empty.Body); empty.Body.Orders != 0 || len(empty.Body.Hours) != 0 {
 		t.Errorf("a day without sales: %+v", empty.Body)
 	}
-	if s := get("/orders?date=2026-10-01&cursor=junk", &struct{}{}); s != http.StatusBadRequest {
+	if s := get("/orders?from=2026-10-01&to=2026-10-01&cursor=junk", &struct{}{}); s != http.StatusBadRequest {
 		t.Errorf("a bad cursor: %d", s)
 	}
 }
