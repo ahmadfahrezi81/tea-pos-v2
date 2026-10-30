@@ -53,6 +53,33 @@ The owner's test round on staging (RFC: [Backoffice v2 refinement](https://app.n
     - Repetition: one `TodayPanel`; every tag is a `Badge`; one `SectionLabel` heading (Settings, Panel and Field use it); one `useSlug` (`shell/session/tenant`); lists inside a `Sheet` line up by themselves (`.sheet`), no more `-mx-4`; calendar days, `addDays` and `localHour` in `packages/format` (with tests), so no screen builds its own Intl formatter or WIB arithmetic
     - Structure: `packages/shell` in `screens/`, `frame/`, `session/`, `lib/`; `packages/ui` in `layout/`, `feedback/`, `controls/`, `lib/`; both export each file by name, so no app import changed. `@tea-pos/shell/avatar` goes (use `@tea-pos/ui/avatarUrl`)
     - Left: the unused `GET /feedbacks` and `POST /auth/logout-everywhere` (a backend PR); `ReadOnlyInput`, `SelectInput` and the Skeleton variants wait for the seller's screens
+31. **`pnpm backoffice` runs everything local on staging's database:** local Go and local Vite together (`scripts/dev.sh`), secrets from Infisical's `staging`
+32. **`pnpm backoffice:prod`, the real data, read only:** the same on Infisical's `prod`; Vite refuses every write before the proxy (`READ_ONLY`), except sign-in, sign-out and the app's events; PostHog keys blanked
+
+## Round 2: the owner's list from production (2026-10-30)
+
+Listed first, built after the walkthrough.
+
+1. **Backoffice sign-in looks too light:** the heading and description are boring, and there is no icon
+2. **New backoffice icon (the owner makes it):** the current one is lazy; remind the owner to update all icons, seller's excepted, and double check them
+3. **Keep the new icon light:** compress it, so it wastes no kilobytes
+4. **Personal details editable in Account (backoffice):** at least the name, as the owner recalls v1 allows; check v1
+5. **The owner is wrong on production and cannot be changed:** the backfill picked each tenant's earliest admin. Let the owner be changed. Not decided: the owner may look again at how owner is designed, or drop the idea; for now it may just be changed by SQL. Remind the owner to look at the design
+6. **Bottom sheets drag to close:** pulling the handle down does nothing today. Our own, light, no library (`Drawer`), so every sheet gets it
+7. **Confirmation sheet's bottom padding too thick on phones:** cut it in half. Today `Sheet`'s `pb-5` (20 px) plus `Drawer`'s safe area; to `pb-2.5` (10 px), the safe area stays
+8. **Every core has How it works:** Store, Pay and UAC each get the section; UAC's `/uac/help` exists, so Store and Pay follow it
+9. **Store home needs a redesign:** the top's Today with its icon becomes a date range selector: our own (shadcn has one, no library), with presets (last week, last month) and a custom range. Concern: it means backend changes and may be heavy, so design how ranges are served first. Agreed look: Vercel's dashboard selector made ours and mobile friendly, in a bottom sheet: preset rows, then a Custom range calendar with Apply; no typed times, whole days in the store's time zone
+10. **Store home's purpose (to discuss with the owner):** see how the whole business is doing today at a glance, close to the analytics page. The filter (Demo, Shut down, Open only) goes, the All stores row goes, and the search and filter approach is rethought. Decided: shut-down and demo stores leave the home and its totals; demo stores stay as data, for testing (check staging still has real stores to show)
+11. **A store's page has no clear purpose (to discuss):** it repeats the home's day, and Analytics and Orders are one level deeper with their own month selector. Proposal: one page with the home's range and no tabs: the summary, then the latest orders coming in (a snippet; See all opens the orders page), then a row to the day-by-day page (today's Analytics), which is only for scrolling back through days. One range only: day by day follows the selected range (kept in the address) and has no month selector of its own; on a single day the row opens that day's detail
+12. **Pay's period header:** the amount owed goes. The pay date and days left go too, or get their own properly padded section; compare with v1
+13. **Pay's people, cleaner and with more up front:** rethink the Ready and not ready grouping, and show the detail on the row before tapping, as v1's payroll page does; compare with v1
+14. **Pay Settings is too complicated (to discuss):** break down what handles what. Should Staff Payroll Info live in UAC or a person's page? Pay Schedule leaves it, for a deeper, dangerous settings area under More
+    - Decided: anything about one person (Staff Payroll Info, Staff Commissions) moves to their page, combined in a Pay panel; guests may see it (they are family), only admins edit. Commission and Claim Types stay in Pay Settings, formatted nicely; Pay itself stays about paying
+    - Decided: the UAC tab becomes People
+15. **Inactive does not lock anyone out of v1 (bug):** v1 seller's proxy sends anyone whose `users.status` is not `active` to `/unauthorized?reason=<status>`, but v2 only sets `user_tenant_assignments.status`. The RFC's "v1 never checks a status" is wrong. Fix: v2 also writes `users.status` while v1 runs, in the same transaction (it is one per person, not per tenant). v1 backoffice checks only the role, so it needs `users.role` (already synced) to keep them out. Also add a separate Suspended status if the owner wants one (v1 has both, with their own messages). Correct the RFC
+16. **The rule for every core: detail outside, more detail inside.** A list shows the useful numbers before any tap, and tapping gives the breakdown. Pay's people show the breakdown (commission, cups and so on) as v1's list does; Store likewise, then Orders for more
+
+The owner's walkthrough ended here; build these now. The owner does 2, 3 and 5's SQL.
 
 ## Done when
 

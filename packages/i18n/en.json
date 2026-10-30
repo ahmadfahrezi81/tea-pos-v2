@@ -149,7 +149,7 @@
         "editPayrollInfo": "Edit Payroll Info",
         "moreNew": "More •",
         "pay": "Pay",
-        "uac": "UAC"
+        "uac": "People"
     },
     "shell": {
         "account": "Account",
@@ -193,8 +193,8 @@
         "signingIn": "Signing you in...",
         "sellerTitle": "Welcome back",
         "sellerSub": "Ready to sell? Let's get you in.",
-        "backofficeTitle": "Backoffice",
-        "backofficeSub": "Admin access only.",
+        "backofficeTitle": "Tea POS Office",
+        "backofficeSub": "Your stores, pay and people, all in one place.",
         "errors": {
             "signInFailed": "Sign-in did not finish. Please try again.",
             "notAllowed": "This account cannot use this app. Ask your manager if this is wrong.",

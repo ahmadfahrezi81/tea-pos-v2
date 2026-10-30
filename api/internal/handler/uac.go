@@ -252,7 +252,7 @@ func setPerson(ctx context.Context, q *store.Queries, caller auth.Caller, p stor
 	}
 	status := "active"
 	if !c.Active {
-		// v1 never reads the status: without stores, its seller app shows them nothing either.
+		// users.status can stay active for someone in another tenant: without stores, v1 shows them nothing here.
 		status, ids = "inactive", nil
 	}
 	if _, err := q.SetMembershipStatus(ctx, store.SetMembershipStatusParams{TenantID: caller.TenantID, UserID: p.ID, Status: status}); err != nil {
@@ -262,6 +262,9 @@ func setPerson(ctx context.Context, q *store.Queries, caller auth.Caller, p stor
 		return err
 	}
 	if err := q.SyncUserRole(ctx, p.ID); err != nil {
+		return err
+	}
+	if err := q.SyncUserStatus(ctx, p.ID); err != nil {
 		return err
 	}
 	for _, topic := range []string{realtime.TenantTopic(caller.TenantID.String()), realtime.UserTopic(p.ID.String())} {

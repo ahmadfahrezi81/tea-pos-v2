@@ -9,7 +9,8 @@
     "scripts": {
         "build": "turbo run build",
         "seller": "pnpm --filter @tea-pos/seller dev",
-        "backoffice": "pnpm --filter @tea-pos/backoffice dev",
+        "backoffice": "infisical run --env=staging --path=/app -- bash scripts/dev.sh backoffice",
+        "backoffice:prod": "READ_ONLY=1 infisical run --env=prod --path=/app -- bash scripts/dev.sh backoffice",
         "lint": "turbo run lint",
         "typecheck": "turbo run typecheck",
         "test": "turbo run test",

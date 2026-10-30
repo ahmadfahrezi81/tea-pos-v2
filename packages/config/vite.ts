@@ -188,6 +188,37 @@ function appHtml(app: AppConfig): Plugin {
     };
 }
 
+// pnpm backoffice:prod: the only writes that reach production's database from a laptop are signing in and out.
+const READ_ONLY_ALLOWED = [
+    "/api/auth/google",
+    "/api/auth/callback",
+    "/api/auth/logout",
+    "/api/events",
+];
+function readOnly(): Plugin {
+    return {
+        name: "read-only",
+        apply: "serve",
+        configureServer(server) {
+            server.middlewares.use((req, res, next) => {
+                const path = req.url?.split("?")[0] ?? "";
+                const write = !["GET", "HEAD", "OPTIONS"].includes(req.method ?? "");
+                if (!write || !path.startsWith("/api/") || READ_ONLY_ALLOWED.includes(path))
+                    return next();
+                res.statusCode = 403;
+                res.setHeader("Content-Type", "application/json");
+                res.end(
+                    JSON.stringify({
+                        status: 403,
+                        code: "read_only",
+                        message: "Read only: connected to production",
+                    }),
+                );
+            });
+        },
+    };
+}
+
 // The hub's socket in local dev, sent as the forwarder sends it (set REALTIME_ORIGIN, e.g. a local realtime).
 function realtimeProxy(app: AppConfig): Record<string, ProxyOptions> {
     if (!process.env.REALTIME_ORIGIN) return {};
@@ -225,6 +256,7 @@ export function appConfig(app: AppConfig) {
             __API_CONTRACT__: JSON.stringify(contract),
         },
         plugins: [
+            ...(process.env.READ_ONLY ? [readOnly()] : []),
             // Routes from src/routes, each screen its own chunk.
             tanstackRouter({ target: "react", autoCodeSplitting: true }),
             react(),

@@ -81,6 +81,19 @@ func TestUac(t *testing.T) {
 	if r := a.Request(t, http.MethodGet, "/tenants/tenant-a/weather", "seller", seller); r.StatusCode != 403 {
 		t.Errorf("turned off, next request: %d", r.StatusCode)
 	}
+	// v1's seller app reads users.status, and turning back on restores it.
+	var status string
+	_ = pool.QueryRow(ctx, `SELECT status FROM users WHERE id = $1`, testkit.SellerA).Scan(&status)
+	if status != "inactive" {
+		t.Errorf("off: users.status %s", status)
+	}
+	if s, _ := put(admin, testkit.SellerA, fmt.Sprintf(`{"access":{"seller":"member","backoffice":""},"storeIds":[%q],"active":true}`, storeANorth)); s != 200 {
+		t.Fatal(s)
+	}
+	_ = pool.QueryRow(ctx, `SELECT status FROM users WHERE id = $1`, testkit.SellerA).Scan(&status)
+	if status != "active" {
+		t.Errorf("back on: users.status %s", status)
+	}
 
 	for _, tc := range []struct{ name, user, body, code string }{
 		{"the owner lowered", testkit.AdminA, `{"access":{"seller":"member","backoffice":"guest"},"storeIds":[],"active":true}`, "owner_kept"},
