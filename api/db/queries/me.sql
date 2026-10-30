@@ -42,8 +42,14 @@ JOIN user_tenant_assignments t ON t.tenant_id = s.tenant_id
 WHERE t.user_id = $1
 ORDER BY s.name;
 
--- name: SetUserLanguage :exec
-UPDATE users SET preferred_language = $2 WHERE id = $1;
+-- name: SetUserProfile :exec
+-- Only what was sent changes; an empty phone clears it.
+UPDATE users SET
+    preferred_language = COALESCE(sqlc.narg(language), preferred_language),
+    full_name = COALESCE(sqlc.narg(full_name), full_name),
+    phone_number = CASE WHEN sqlc.narg(phone)::text IS NULL THEN phone_number ELSE NULLIF(sqlc.narg(phone)::text, '') END,
+    updated_at = now()
+WHERE id = @id;
 
 -- name: ListAskedTenants :many
 -- The tenants the user asked to join and is still waiting on (blocked looks the same to them).

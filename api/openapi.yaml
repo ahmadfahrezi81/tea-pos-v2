@@ -702,6 +702,7 @@ components:
             - bad_proof
             - bad_range
             - bad_request
+            - blank_name
             - claim_not_found
             - claim_type_not_found
             - commission_not_found
@@ -884,13 +885,18 @@ components:
     MePatchInputBody:
       additionalProperties: false
       properties:
+        fullName:
+          maxLength: 200
+          type: string
         language:
           enum:
             - en
             - id
           type: string
-      required:
-        - language
+        phone:
+          description: Empty clears it
+          maxLength: 30
+          type: string
       type: object
     MeStore:
       additionalProperties: false
@@ -2179,7 +2185,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
           description: Error
-      summary: Change the signed-in user's own language
+      summary: Change the signed-in user's own language, name or phone
       tags:
         - me
       x-access:

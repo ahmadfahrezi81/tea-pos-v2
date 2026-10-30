@@ -95,6 +95,22 @@ func TestMeLanguage(t *testing.T) {
 	if resp := a.Send(t, http.MethodPatch, "/me", "seller", `{"language":"fr"}`, nil, seller); resp.StatusCode != http.StatusBadRequest {
 		t.Fatalf("unknown language: %d", resp.StatusCode)
 	}
+	// Name and phone: only what is sent changes; a blank name is refused; an empty phone clears it.
+	if resp := a.Send(t, http.MethodPatch, "/me", "seller", `{"fullName":"  New Name ","phone":"0812"}`, nil, seller); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("set name: %d", resp.StatusCode)
+	}
+	if me := getMe(t, a, testkit.SellerA, "seller"); me.User.FullName != "New Name" || me.User.Phone != "0812" || me.User.Language != "id" {
+		t.Fatalf("after name: %+v", me.User)
+	}
+	if resp := a.Send(t, http.MethodPatch, "/me", "seller", `{"fullName":"  "}`, nil, seller); resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("blank name: %d", resp.StatusCode)
+	}
+	if resp := a.Send(t, http.MethodPatch, "/me", "seller", `{"phone":""}`, nil, seller); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("clear phone: %d", resp.StatusCode)
+	}
+	if me := getMe(t, a, testkit.SellerA, "seller"); me.User.Phone != "" || me.User.FullName != "New Name" {
+		t.Fatalf("after clearing: %+v", me.User)
+	}
 }
 
 // Each tenant says the user's level in each app: from their rows, from users.role when they have

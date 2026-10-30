@@ -30,7 +30,11 @@ const KINDS = {
     edit: { icon: Pencil, labelKey: "shell.edit", writes: true },
 } satisfies Record<string, { icon: LucideIcon; labelKey: MessageKey; writes: boolean }>;
 
-export type HeaderAction = { kind: keyof typeof KINDS } &
+export type HeaderAction = {
+    kind: keyof typeof KINDS;
+    /** One's own data: shown to anyone, whatever their level. */
+    own?: boolean;
+} &
     /** A path; without a leading slash, under this screen (`"add"`). */
     ({ to: string; onClick?: never } | { onClick: () => void; to?: never });
 
@@ -53,7 +57,7 @@ const labelButton = "rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white 
 export function HeaderActions({ actions: all }: { actions: HeaderAction[] }) {
     const target = useContext(HeaderSlotContext);
     const { canWrite } = useAccess();
-    const actions = all.filter((a) => canWrite || !KINDS[a.kind].writes);
+    const actions = all.filter((a) => canWrite || a.own || !KINDS[a.kind].writes);
     if (!target || actions.length === 0) return null;
     const shown = actions.length > 2 ? actions.slice(0, 1) : actions;
     const rest = actions.length > 2 ? actions.slice(1) : [];

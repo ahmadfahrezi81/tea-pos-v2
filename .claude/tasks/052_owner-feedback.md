@@ -83,6 +83,8 @@ Listed first, built after the walkthrough.
 
 **Store, as built:** one range in the address (`?from=&to=`, today when absent) on every Store screen, from `RangeBar` and `DateRangeSheet` (`packages/ui`: presets, then a calendar; no library). `stores/live` takes an optional range; `orders` and `days` take `from` and `to`, replacing `date` and `month`. The home: range, totals and chart (by hour on one day, by day otherwise) over real stores, a card per store, then Orders, Day by day and How it works; the filter, search and All Stores row go. A store: who is on (today), the same numbers, the latest 5 orders with See all, Day by day (on one day, that day's detail). `/store/all` redirects to the home. The orders chart page keeps its own day.
 
+**Personal details, as built:** Edit on the screen (shown to anyone: it is their own) changes first and last name and phone, as v1's API allows; `PATCH /me` takes `fullName` and `phone` beside `language`. In the shared shell, so both apps have it. v1's API also lets people edit their bank; left out, since bank details now show on a person's page in People.
+
 The owner's walkthrough ended here; build these now. The owner does 2, 3 and 5's SQL.
 
 ## Done when

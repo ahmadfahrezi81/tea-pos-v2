@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/httpx"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
 )
 
@@ -99,17 +101,30 @@ func registerMe(api huma.API, d Deps) {
 	})
 }
 
+var errBlankName = httpx.New(http.StatusBadRequest, "blank_name", "A name cannot be blank")
+
 func registerMePatch(api huma.API, d Deps) {
 	route(api, huma.Operation{
 		OperationID:   "patchMe",
 		Method:        http.MethodPatch,
 		Path:          "/me",
-		Summary:       "Change the signed-in user's own language",
+		Summary:       "Change the signed-in user's own language, name or phone",
 		Tags:          []string{"me"},
 		DefaultStatus: http.StatusNoContent,
 	}, auth.SignedIn.Repeatable(), func(ctx context.Context, in *contract.MePatchInput) (*struct{}, error) {
 		caller, _ := auth.CallerFrom(ctx)
-		return nil, d.Queries.SetUserLanguage(ctx, store.SetUserLanguageParams{ID: caller.UserID, PreferredLanguage: in.Body.Language})
+		p := store.SetUserProfileParams{ID: caller.UserID, Language: pgtype.Text{String: in.Body.Language, Valid: in.Body.Language != ""}}
+		if in.Body.FullName != nil {
+			name := strings.TrimSpace(*in.Body.FullName)
+			if name == "" {
+				return nil, errBlankName
+			}
+			p.FullName = pgtype.Text{String: name, Valid: true}
+		}
+		if in.Body.Phone != nil {
+			p.Phone = pgtype.Text{String: strings.TrimSpace(*in.Body.Phone), Valid: true}
+		}
+		return nil, d.Queries.SetUserProfile(ctx, p)
 	})
 }
 

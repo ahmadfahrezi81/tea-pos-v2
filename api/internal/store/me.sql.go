@@ -233,16 +233,29 @@ func (q *Queries) ListUserTenants(ctx context.Context, userID pgtype.UUID) ([]Li
 	return items, nil
 }
 
-const setUserLanguage = `-- name: SetUserLanguage :exec
-UPDATE users SET preferred_language = $2 WHERE id = $1
+const setUserProfile = `-- name: SetUserProfile :exec
+UPDATE users SET
+    preferred_language = COALESCE($1, preferred_language),
+    full_name = COALESCE($2, full_name),
+    phone_number = CASE WHEN $3::text IS NULL THEN phone_number ELSE NULLIF($3::text, '') END,
+    updated_at = now()
+WHERE id = $4
 `
 
-type SetUserLanguageParams struct {
-	ID                pgtype.UUID
-	PreferredLanguage string
+type SetUserProfileParams struct {
+	Language pgtype.Text
+	FullName pgtype.Text
+	Phone    pgtype.Text
+	ID       pgtype.UUID
 }
 
-func (q *Queries) SetUserLanguage(ctx context.Context, arg SetUserLanguageParams) error {
-	_, err := q.db.Exec(ctx, setUserLanguage, arg.ID, arg.PreferredLanguage)
+// Only what was sent changes; an empty phone clears it.
+func (q *Queries) SetUserProfile(ctx context.Context, arg SetUserProfileParams) error {
+	_, err := q.db.Exec(ctx, setUserProfile,
+		arg.Language,
+		arg.FullName,
+		arg.Phone,
+		arg.ID,
+	)
 	return err
 }

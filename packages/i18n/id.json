@@ -88,7 +88,9 @@
         "searchBank": "Cari bank...",
         "accountHolderPlaceholder": "Sesuai yang tertera di rekening",
         "title": "Akun",
-        "signingOut": "Sedang keluar…"
+        "signingOut": "Sedang keluar…",
+        "confirmSave": "Simpan data Anda?",
+        "confirmSaveBody": "Nama Anda berubah di semua tempat, di setiap aplikasi."
     },
     "more": {
         "workDays": "Hari Kerja",
@@ -256,7 +258,8 @@
         "payout_pending_review": "Semua komisi dan klaim harus ditinjau dulu.",
         "proof_required": "Membayar butuh tangkapan layar transfer.",
         "bad_proof": "Tangkapan layar itu bukan bukti gaji usaha ini.",
-        "request_not_found": "Permintaan itu sudah dijawab."
+        "request_not_found": "Permintaan itu sudah dijawab.",
+        "blank_name": "Nama tidak boleh kosong"
     },
     "store": {
         "title": "Toko",
