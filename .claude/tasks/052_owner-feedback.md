@@ -1,6 +1,6 @@
 # Task 052 — The owner's feedback round
 
-**Status: built 2026-10-29 on `feat/backoffice-feedback`; PR into `staging` next.**
+**Status: round 1 released in 2026.10.6. Round 2, from production (2026-10-30), in four PRs: quick fixes, Pay, Store, personal details.**
 
 ## The goal
 
