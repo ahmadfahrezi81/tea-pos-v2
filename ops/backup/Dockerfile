@@ -1,6 +1,6 @@
 # The nightly backup (Railway cron service "backup") and the restore tool.
 # pg_dump refuses a server newer than itself: keep this at Supabase's major version.
-FROM postgres:17
+FROM postgres:18
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends curl ca-certificates \
