@@ -137,7 +137,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Change the signed-in user's own language */
+        /** Change the signed-in user's own language, name or phone */
         patch: operations["patchMe"];
         trace?: never;
     };
@@ -1062,7 +1062,7 @@ export interface components {
              * @example day_already_closed
              * @enum {string}
              */
-            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_cursor" | "bad_level" | "bad_proof" | "bad_range" | "bad_request" | "claim_not_found" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_yourself" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_not_found" | "person_not_found" | "proof_required" | "request_not_found" | "route_not_found" | "staff_not_found" | "store_not_found" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
+            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_cursor" | "bad_level" | "bad_proof" | "bad_range" | "bad_request" | "blank_name" | "claim_not_found" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_yourself" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_not_found" | "person_not_found" | "proof_required" | "request_not_found" | "route_not_found" | "staff_not_found" | "store_not_found" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
             details?: string[] | null;
             /** @example The day is already closed */
             message: string;
@@ -1122,8 +1122,11 @@ export interface components {
             seller: string;
         };
         MePatchInputBody: {
+            fullName?: string;
             /** @enum {string} */
-            language: "en" | "id";
+            language?: "en" | "id";
+            /** @description Empty clears it */
+            phone?: string;
         };
         MeStore: {
             /** @example 22:00 */

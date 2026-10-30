@@ -88,7 +88,9 @@
         "searchBank": "Search bank...",
         "accountHolderPlaceholder": "As printed on the account",
         "title": "Account",
-        "signingOut": "Signing out…"
+        "signingOut": "Signing out…",
+        "confirmSave": "Save your details?",
+        "confirmSaveBody": "Your name changes everywhere it shows, in every app."
     },
     "more": {
         "workDays": "Work Days",
@@ -256,7 +258,8 @@
         "payout_pending_review": "Every commission and claim must be reviewed first.",
         "proof_required": "Paying needs the transfer screenshot.",
         "bad_proof": "That screenshot was not uploaded as this business's payroll proof.",
-        "request_not_found": "That request was already answered."
+        "request_not_found": "That request was already answered.",
+        "blank_name": "A name cannot be blank"
     },
     "store": {
         "title": "Store",

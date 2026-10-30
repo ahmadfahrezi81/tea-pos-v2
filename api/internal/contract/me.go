@@ -48,9 +48,11 @@ type MeStore struct {
 	Flags     map[string]bool `json:"flags" nullable:"false" doc:"The feature flags on at this store (rules on tenantId and storeId); a flag not listed is off"`
 }
 
-// MePatchInput changes the caller's own profile; only the language for now.
+// MePatchInput changes the caller's own profile; what is left out stays as it is.
 type MePatchInput struct {
 	Body struct {
-		Language string `json:"language" enum:"en,id"`
+		Language string  `json:"language,omitempty" required:"false" enum:"en,id"`
+		FullName *string `json:"fullName,omitempty" required:"false" maxLength:"200"`
+		Phone    *string `json:"phone,omitempty" required:"false" maxLength:"30" doc:"Empty clears it"`
 	}
 }
