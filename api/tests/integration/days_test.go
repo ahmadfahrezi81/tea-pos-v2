@@ -95,7 +95,7 @@ func TestDays(t *testing.T) {
 
 	// The month: both of Tenant A's days, with expenses and sellers; Tenant B's not.
 	var month struct{ Days []contract.Day }
-	if s := get("/days?month=2026-10", &month); s != 200 || len(month.Days) != 2 {
+	if s := get("/days?from=2026-10-01&to=2026-10-31", &month); s != 200 || len(month.Days) != 2 {
 		t.Fatalf("month: %d %+v", s, month.Days)
 	}
 	c := month.Days[0]

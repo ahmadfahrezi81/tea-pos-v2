@@ -1,4 +1,4 @@
-import { formatDateTime, formatDay, formatMoney, formatTime, localDate } from "@tea-pos/format";
+import { formatDateTime, formatMoney, formatTime, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { useSlug } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
@@ -6,7 +6,8 @@ import { LoadMore } from "@tea-pos/ui/LoadMore";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { CalendarDays, Receipt } from "lucide-react";
 
-import { ALL, useDayOrders, useSalesHours, useStoreId } from "./sales";
+import { RangeBar, useRange } from "./range";
+import { ALL, useRangeOrders, useSalesHours, useScopeStores, useStoreId } from "./sales";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
@@ -34,19 +35,19 @@ function DatePicker({ date, onChange }: { date: string; onChange: (date: string)
 }
 
 /**
- * The old seller app's Orders for the picked stores: the day's totals, cups by hour, and every
+ * The old seller app's Orders for the picked stores and range: the totals, on one day cups by hour, and every
  * order with its items, a page at a time; new orders arrive live.
  */
-export function StoreOrders({ date }: { date: string }) {
+export function StoreOrders() {
     const t = useT();
     const locale = useLocale();
-    const navigate = useNavigate();
     const slug = useSlug();
     const storeId = useStoreId();
     const severalStores = storeId === ALL;
-    const hours = useSalesHours(date);
-    const orders = useDayOrders(date);
-    const totals = hours.data;
+    const { from, to, label, single } = useRange();
+    const { totals } = useScopeStores(from, to);
+    const hours = useSalesHours(single ? from : "");
+    const orders = useRangeOrders(from, to);
     const list = orders.data ?? [];
 
     return (
@@ -80,27 +81,17 @@ export function StoreOrders({ date }: { date: string }) {
                 </div>
             </div>
 
-            <DatePicker
-                date={date}
-                onChange={(d) =>
-                    void navigate({
-                        to: "/$tenant/store/$storeId/orders",
-                        params: { tenant: slug, storeId },
-                        search: { date: d },
-                        replace: true,
-                    })
-                }
-            />
+            <RangeBar />
 
-            {totals && totals.hours.length > 0 && (
+            {single && hours.data && hours.data.hours.length > 0 && (
                 <Link
                     to="/$tenant/store/$storeId/orders/chart"
                     params={{ tenant: slug, storeId }}
-                    search={{ date }}
+                    search={{ date: from }}
                     className="block bg-white rounded-2xl p-2 pb-1"
                 >
                     <AreaChart
-                        points={totals.hours.map((h) => ({
+                        points={hours.data.hours.map((h) => ({
                             key: String(h.hour),
                             label: hourLabel(h.hour),
                             value: h.cups,
@@ -120,9 +111,7 @@ export function StoreOrders({ date }: { date: string }) {
             ) : (
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-gray-800">
-                            {formatDay(date, locale)}
-                        </h3>
+                        <h3 className="text-lg font-semibold text-gray-800">{label}</h3>
                         <span className="text-sm text-gray-500">
                             {totals?.orders ?? list.length} {t("analytics.orders").toLowerCase()}
                         </span>
@@ -132,7 +121,7 @@ export function StoreOrders({ date }: { date: string }) {
                             <div className="p-3.5 flex justify-between items-start">
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
-                                        {/* Numbered against the day, newest highest, however many pages are loaded. */}
+                                        {/* Numbered against the range, newest highest, however many pages are loaded. */}
                                         <p className="text-lg font-bold text-gray-800">
                                             {t("store.orderNumber").replace(
                                                 "{n}",
@@ -142,7 +131,9 @@ export function StoreOrders({ date }: { date: string }) {
                                         {order.paymentMethod === "qris" && <Badge>QRIS</Badge>}
                                     </div>
                                     <span className="text-sm text-gray-500">
-                                        {formatTime(order.at, locale)}
+                                        {single
+                                            ? formatTime(order.at, locale)
+                                            : formatDateTime(order.at, locale)}
                                         {severalStores ? ` · ${order.storeName}` : ""}
                                     </span>
                                 </div>

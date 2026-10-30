@@ -13,6 +13,7 @@
         "./ChoiceList": "./controls/ChoiceList.tsx",
         "./ComingSoon": "./feedback/ComingSoon.tsx",
         "./CopyButton": "./controls/CopyButton.tsx",
+        "./DateRangeSheet": "./controls/DateRangeSheet.tsx",
         "./DetailList": "./layout/DetailList.tsx",
         "./dot-grid": "./styles/dot-grid.ts",
         "./Drawer": "./layout/Drawer.tsx",

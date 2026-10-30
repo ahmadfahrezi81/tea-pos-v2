@@ -137,7 +137,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Change the signed-in user's own language */
+        /** Change the signed-in user's own language, name or phone */
         patch: operations["patchMe"];
         trace?: never;
     };
@@ -148,7 +148,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** A month of the stores' days, with expenses and who worked */
+        /** A range of the stores' days, with expenses and who worked */
         get: operations["listDays"];
         put?: never;
         post?: never;
@@ -250,7 +250,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** A day's orders over one store or several, newest first, a page at a time */
+        /** The orders of a range of days over one store or several, newest first, a page at a time */
         get: operations["listDayOrders"];
         put?: never;
         post?: never;
@@ -593,7 +593,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Every store right now: open or closed, who is selling, today's sales */
+        /** Every store: open or closed right now and who is selling, with the sales of a range (today by default) */
         get: operations["storesLive"];
         put?: never;
         post?: never;
@@ -1062,7 +1062,7 @@ export interface components {
              * @example day_already_closed
              * @enum {string}
              */
-            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_cursor" | "bad_level" | "bad_proof" | "bad_range" | "bad_request" | "claim_not_found" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_yourself" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_not_found" | "person_not_found" | "proof_required" | "request_not_found" | "route_not_found" | "staff_not_found" | "store_not_found" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
+            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_cursor" | "bad_level" | "bad_proof" | "bad_range" | "bad_request" | "blank_name" | "claim_not_found" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_yourself" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_not_found" | "person_not_found" | "proof_required" | "request_not_found" | "route_not_found" | "staff_not_found" | "store_not_found" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
             details?: string[] | null;
             /** @example The day is already closed */
             message: string;
@@ -1122,8 +1122,11 @@ export interface components {
             seller: string;
         };
         MePatchInputBody: {
+            fullName?: string;
             /** @enum {string} */
-            language: "en" | "id";
+            language?: "en" | "id";
+            /** @description Empty clears it */
+            phone?: string;
         };
         MeStore: {
             /** @example 22:00 */
@@ -1942,7 +1945,9 @@ export interface operations {
     listDays: {
         parameters: {
             query: {
-                month: string;
+                from: string;
+                /** @description Included; at most 400 days after from */
+                to: string;
                 /** @description Repeat for several; none is every store of the tenant (All stores) */
                 storeId?: string[] | null;
             };
@@ -2141,8 +2146,10 @@ export interface operations {
     listDayOrders: {
         parameters: {
             query: {
-                /** @description The day, in the stores' time zone */
-                date: string;
+                /** @description The first day, in the stores' time zone */
+                from: string;
+                /** @description The last day, included; at most 400 days after from */
+                to: string;
                 /** @description Repeat for several; none is every store of the tenant (All stores) */
                 storeId?: string[] | null;
                 /** @description From the previous page's next; empty for the first */
@@ -2927,7 +2934,12 @@ export interface operations {
     };
     storesLive: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description The sales' first day; today when absent. Open or closed is always right now */
+                from?: string;
+                /** @description The sales' last day, included; from when absent */
+                to?: string;
+            };
             header?: never;
             path: {
                 tenant: string;

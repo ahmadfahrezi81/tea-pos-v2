@@ -702,6 +702,7 @@ components:
             - bad_proof
             - bad_range
             - bad_request
+            - blank_name
             - claim_not_found
             - claim_type_not_found
             - commission_not_found
@@ -884,13 +885,18 @@ components:
     MePatchInputBody:
       additionalProperties: false
       properties:
+        fullName:
+          maxLength: 200
+          type: string
         language:
           enum:
             - en
             - id
           type: string
-      required:
-        - language
+        phone:
+          description: Empty clears it
+          maxLength: 30
+          type: string
       type: object
     MeStore:
       additionalProperties: false
@@ -2179,7 +2185,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
           description: Error
-      summary: Change the signed-in user's own language
+      summary: Change the signed-in user's own language, name or phone
       tags:
         - me
       x-access:
@@ -2196,12 +2202,19 @@ paths:
             type: string
         - explode: false
           in: query
-          name: month
+          name: from
           required: true
           schema:
-            examples:
-              - 2026-10
-            pattern: ^[0-9]{4}-[0-9]{2}$
+            format: date
+            type: string
+        - description: Included; at most 400 days after from
+          explode: false
+          in: query
+          name: to
+          required: true
+          schema:
+            description: Included; at most 400 days after from
+            format: date
             type: string
         - description: Repeat for several; none is every store of the tenant (All stores)
           explode: false
@@ -2229,7 +2242,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
           description: Error
-      summary: A month of the stores' days, with expenses and who worked
+      summary: A range of the stores' days, with expenses and who worked
       tags:
         - store
       x-access:
@@ -2428,13 +2441,22 @@ paths:
           required: true
           schema:
             type: string
-        - description: The day, in the stores' time zone
+        - description: The first day, in the stores' time zone
           explode: false
           in: query
-          name: date
+          name: from
           required: true
           schema:
-            description: The day, in the stores' time zone
+            description: The first day, in the stores' time zone
+            format: date
+            type: string
+        - description: The last day, included; at most 400 days after from
+          explode: false
+          in: query
+          name: to
+          required: true
+          schema:
+            description: The last day, included; at most 400 days after from
             format: date
             type: string
         - description: Repeat for several; none is every store of the tenant (All stores)
@@ -2487,7 +2509,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
           description: Error
-      summary: A day's orders over one store or several, newest first, a page at a time
+      summary: The orders of a range of days over one store or several, newest first, a page at a time
       tags:
         - store
       x-access:
@@ -3376,6 +3398,22 @@ paths:
           required: true
           schema:
             type: string
+        - description: The sales' first day; today when absent. Open or closed is always right now
+          explode: false
+          in: query
+          name: from
+          schema:
+            description: The sales' first day; today when absent. Open or closed is always right now
+            format: date
+            type: string
+        - description: The sales' last day, included; from when absent
+          explode: false
+          in: query
+          name: to
+          schema:
+            description: The sales' last day, included; from when absent
+            format: date
+            type: string
       responses:
         "200":
           content:
@@ -3389,7 +3427,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
           description: Error
-      summary: "Every store right now: open or closed, who is selling, today's sales"
+      summary: "Every store: open or closed right now and who is selling, with the sales of a range (today by default)"
       tags:
         - store
       x-access:

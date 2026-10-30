@@ -26,6 +26,8 @@ type SalesDay struct {
 
 type StoresLiveInput struct {
 	Tenant string `path:"tenant"`
+	From   string `query:"from" format:"date" doc:"The sales' first day; today when absent. Open or closed is always right now"`
+	To     string `query:"to" format:"date" doc:"The sales' last day, included; from when absent"`
 }
 
 type StoresLiveOutput struct {
