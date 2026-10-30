@@ -8,8 +8,10 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/domain"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/tests/testkit"
 )
 
@@ -52,6 +54,16 @@ func TestStoresLive(t *testing.T) {
 	}
 	if s[0].Orders != 1 || s[0].Cups != 2 || s[0].Sales != 16000 {
 		t.Errorf("today at Central: %+v", s[0])
+	}
+	// A range counts every order in it.
+	today := time.Now().In(domain.WIB)
+	r := a.Request(t, http.MethodGet, "/tenants/tenant-a/stores/live?from="+today.AddDate(0, 0, -3).Format(time.DateOnly)+"&to="+today.Format(time.DateOnly), "backoffice", guest)
+	var ranged contract.StoresLiveOutput
+	if err := json.NewDecoder(r.Body).Decode(&ranged.Body); err != nil {
+		t.Fatal(err)
+	}
+	if c := ranged.Body.Stores[0]; c.Orders != 2 || c.Cups != 3 || c.Sales != 24000 || !c.Open {
+		t.Errorf("range at Central: %+v", c)
 	}
 	// Closed ones by name: A Closed, then A North, which last closed on 1 Oct.
 	if s[1].Name != "A Closed" || s[1].Open || s[2].Name != "A North" || s[2].LastClosed == nil || s[2].LastClosed.Format("2006-01-02T15:04") != "2026-10-01T14:00" {

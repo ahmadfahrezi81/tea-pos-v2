@@ -17,6 +17,7 @@ import { useRouter } from "@tanstack/react-router";
 import { Check, LayoutGrid, Store } from "lucide-react";
 import { useState } from "react";
 
+import { PersonPay } from "../pay/Staff";
 import { storeGroups, useSetPerson, useUacPerson, type Change, type Person } from "./uac";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 
@@ -99,6 +100,8 @@ export function PersonPage({ userId }: { userId: string }) {
                     ))
                 )}
             </Panel>
+
+            <PersonPay id={p.id} />
         </div>
     );
 }

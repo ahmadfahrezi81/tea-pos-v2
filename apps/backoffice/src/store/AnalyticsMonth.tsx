@@ -1,24 +1,16 @@
 import type { components } from "@tea-pos/api-client";
-import { formatDate, formatDay, formatMoney, formatMonth, localDate } from "@tea-pos/format";
+import { formatDate, formatDay, formatMoney, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 
 import { useSlug } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { Sheet } from "@tea-pos/ui/Sheet";
-import { Link, useNavigate } from "@tanstack/react-router";
-import {
-    AlertTriangle,
-    CalendarDays,
-    History,
-    Info,
-    MoreVertical,
-    Receipt,
-    Users,
-    X,
-} from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { AlertTriangle, History, Info, MoreVertical, Receipt, Users, X } from "lucide-react";
 import { useState } from "react";
 
-import { ALL, monthRange, useDays, useSalesDays, useStoreId } from "./sales";
+import { RangeBar, useRange } from "./range";
+import { ALL, useDays, useSalesDays, useStoreId } from "./sales";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
@@ -27,45 +19,19 @@ import { Badge } from "@tea-pos/ui/Badge";
 
 type Day = components["schemas"]["Day"];
 
-/** The month picker every analytics screen shares: the browser's own. */
-export function MonthPicker({
-    month,
-    onChange,
-}: {
-    month: string;
-    onChange: (month: string) => void;
-}) {
-    const t = useT();
-    return (
-        <div className="bg-white p-4 rounded-2xl">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-                <CalendarDays size={16} className="inline mr-1" />
-                {t("analytics.selectMonth")}
-                <input
-                    type="month"
-                    value={month}
-                    onChange={(e) => onChange(e.target.value || localDate().slice(0, 7))}
-                    className="mt-2 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand/90 focus:outline-none"
-                />
-            </label>
-        </div>
-    );
-}
-
 /**
- * The old seller app's Analytics, for the picked stores: the month's totals, cups per day, and
+ * Day by day, the old seller app's Analytics, for the picked stores and range: the totals, cups per day, and
  * each store's day with its cash, who worked and expenses; a day's menu opens its detail,
  * activity and sessions.
  */
-export function AnalyticsMonth({ month }: { month: string }) {
+export function AnalyticsMonth() {
     const t = useT();
     const locale = useLocale();
-    const navigate = useNavigate();
     const slug = useSlug();
     const storeId = useStoreId();
     const severalStores = storeId === ALL;
-    const [from, to] = monthRange(month);
-    const days = useDays(month);
+    const { from, to, label } = useRange();
+    const days = useDays(from, to);
     const perDay = useSalesDays(from, to);
     const [warningDismissed, setWarningDismissed] = useState(false);
     const [active, setActive] = useState<Day | null>(null);
@@ -73,13 +39,6 @@ export function AnalyticsMonth({ month }: { month: string }) {
     const today = localDate();
     const unclosed = (list ?? []).filter((d) => !d.closedAt && d.date !== today);
     const total = (pick: (d: Day) => number) => (list ?? []).reduce((sum, d) => sum + pick(d), 0);
-    const setMonth = (m: string) =>
-        void navigate({
-            to: "/$tenant/store/$storeId/analytics",
-            params: { tenant: slug, storeId },
-            search: { month: m },
-            replace: true,
-        });
 
     return (
         <div className="space-y-4">
@@ -113,7 +72,7 @@ export function AnalyticsMonth({ month }: { month: string }) {
             <div className="bg-white p-4 rounded-2xl">
                 <div className="flex items-center gap-2 mb-3">
                     <Receipt size={ICON} className="text-gray-600" />
-                    <h3 className="font-semibold text-gray-800">{t("analytics.monthlyTotals")}</h3>
+                    <h3 className="font-semibold text-gray-800">{t("store.totals")}</h3>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                     <Total
@@ -139,13 +98,13 @@ export function AnalyticsMonth({ month }: { month: string }) {
                 </div>
             </div>
 
-            <MonthPicker month={month} onChange={setMonth} />
+            <RangeBar />
 
             {perDay.data && perDay.data.days.length > 0 && (
                 <Link
                     to="/$tenant/store/$storeId/analytics/charts"
                     params={{ tenant: slug, storeId }}
-                    search={{ month }}
+                    search={{ from, to }}
                     className="block bg-white rounded-2xl p-2 pb-1"
                 >
                     <AreaChart
@@ -161,9 +120,7 @@ export function AnalyticsMonth({ month }: { month: string }) {
             )}
 
             <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-800">
-                    {formatMonth(month, locale)}
-                </h3>
+                <h3 className="text-lg font-semibold text-gray-800">{label}</h3>
                 <span className="text-sm text-gray-500">
                     {list?.length ?? 0} {t("store.days")}
                 </span>

@@ -1,10 +1,9 @@
 import type { components } from "@tea-pos/api-client";
 import { formatCalendarDay, formatMoney, localDate } from "@tea-pos/format";
-import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, Settings } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { CalendarClock, ChevronLeft, ChevronRight, CircleHelp, Settings } from "lucide-react";
 
 import { daysLeft, daysLeftText, weeks } from "./dates";
 import { payDate, usePayPeriodAt } from "./pay";
@@ -12,22 +11,19 @@ import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
-import { ListRow } from "@tea-pos/ui/ListRow";
 import { Badge } from "@tea-pos/ui/Badge";
 import { STEP_ARROW, stepIcon } from "@tea-pos/ui/MonthStepper";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 import { useSlug } from "@tea-pos/shell/tenant";
 
 type Person = components["schemas"]["Payout"];
 
-/** What a person needs from the admin: review first, then ready, then settled. */
-function group(p: Person): "toReview" | "ready" | "settled" {
-    if (p.status !== "pending") return "settled";
-    return p.pending > 0 ? "toReview" : "ready";
-}
+/** A person the admin can pay now: nothing left to review, not yet settled. */
+const isReady = (p: Person) => p.status === "pending" && p.pending === 0;
 
 /**
- * The Pay tab's home: one period (‹ › flips between them) and each person it pays, grouped by
- * what needs you; a person opens their payslip. Pay settings sit at the bottom.
+ * The Pay tab's home: one period (‹ › flips between them), its pay date, and each person's numbers
+ * up front, those to review first, then those ready, then Done; a card opens the payslip.
  */
 export function PeriodHome({ start }: { start: string }) {
     const t = useT();
@@ -49,10 +45,9 @@ export function PeriodHome({ start }: { start: string }) {
     const left = daysLeft(p.payoutDate, today);
     // Staff with no commission rate and nothing owed or waiting are noise here, as in v1's list.
     const people = p.people.filter((x) => !x.nonSeller || x.total > 0 || x.pending > 0);
-    const groups = (["toReview", "ready", "settled"] as const)
-        .map((g) => ({ g, rows: people.filter((x) => group(x) === g) }))
-        .filter((x) => x.rows.length > 0);
-    const toPay = people.filter((x) => group(x) === "ready").length;
+    const open = people.filter((x) => x.status === "pending").sort((a, b) => b.pending - a.pending);
+    const done = people.filter((x) => x.status !== "pending");
+    const toPay = people.filter(isReady).length;
 
     return (
         <div className="space-y-4">
@@ -92,22 +87,23 @@ export function PeriodHome({ start }: { start: string }) {
                         <span className="size-11 shrink-0" />
                     )}
                 </div>
-                <p className="mt-1 text-center text-sm text-gray-900">
-                    {left <= 0 && toPay > 0
-                        ? t("pay.payDay").replace("{n}", String(toPay))
-                        : `${t("pay.paysOn").replace("{date}", payDate(p.payoutDate, locale))}${
-                              left > 0 ? ` · ${daysLeftText(t, left)}` : ""
-                          }`}
-                </p>
-                <p className="mt-1 text-center text-sm font-semibold text-gray-900">
-                    {t("pay.owedLine").replace("{amount}", formatMoney(p.owed))}
-                    {p.toReview > 0 && (
-                        <span className="text-amber-600">
-                            {" "}
-                            · {t("pay.reviewCount").replace("{n}", String(p.toReview))}
-                        </span>
-                    )}
-                </p>
+            </div>
+
+            <div className="bg-white p-3 rounded-2xl flex items-center gap-3">
+                <div className="size-11 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
+                    <CalendarClock size={ICON} className="text-brand" />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">
+                        {left <= 0 && toPay > 0
+                            ? t("pay.payDay").replace("{n}", String(toPay))
+                            : t(left > 0 ? "pay.nextPayout" : "pay.payDate")}
+                    </p>
+                    <p className="text-lg font-bold text-gray-900">
+                        {payDate(p.payoutDate, locale)}
+                    </p>
+                </div>
+                {left > 0 && <Badge>{daysLeftText(t, left)}</Badge>}
             </div>
 
             {before && before.people.some((x) => x.status === "pending" && x.total > 0) && (
@@ -132,16 +128,20 @@ export function PeriodHome({ start }: { start: string }) {
                 </Link>
             )}
 
-            {groups.length === 0 && (
+            {people.length === 0 && (
                 <EmptyState title={t("pay.noPeople")} body={t("pay.noPeopleBody")} />
             )}
-            {groups.map(({ g, rows }) => (
-                <SettingsGroup key={g} title={`${t(`pay.${g}` as MessageKey)} (${rows.length})`}>
-                    {rows.map((x) => (
-                        <PersonRow key={x.id} person={x} start={p.start} />
-                    ))}
-                </SettingsGroup>
+            {open.map((x) => (
+                <PersonCard key={x.id} person={x} start={p.start} />
             ))}
+            {done.length > 0 && (
+                <div className="space-y-2">
+                    {open.length > 0 && <SectionLabel>{t("pay.done")}</SectionLabel>}
+                    {done.map((x) => (
+                        <PersonCard key={x.id} person={x} start={p.start} />
+                    ))}
+                </div>
+            )}
 
             <SettingsGroup>
                 <SettingsRow
@@ -149,45 +149,81 @@ export function PeriodHome({ start }: { start: string }) {
                     icon={<Settings {...rowIcon} />}
                     label={t("pay.settingsTitle")}
                 />
+                <SettingsRow
+                    to={`/${slug}/pay/help`}
+                    icon={<CircleHelp {...rowIcon} />}
+                    label={t("pay.helpTitle")}
+                />
             </SettingsGroup>
         </div>
     );
 }
 
-/** A person in the period, as v1's lists: their photo, name, a badge for what is next, the amount. */
-function PersonRow({ person: x, start }: { person: Person; start: string }) {
+const Tile = ({
+    label,
+    value,
+    className,
+}: {
+    label: string;
+    value: string | number;
+    className: string;
+}) => (
+    <div className={`p-2 rounded-lg ${className}`}>
+        <p className="text-xs font-semibold text-gray-900">{label}</p>
+        <p className="text-lg font-bold text-gray-900">{value}</p>
+    </div>
+);
+
+/** A person in the period, as v1's card: who, what is next, and the numbers before any tap. */
+function PersonCard({ person: x, start }: { person: Person; start: string }) {
     const t = useT();
     const slug = useSlug();
-    const navigate = useNavigate();
-    const badge =
-        x.status !== "pending"
-            ? t(x.status === "skipped" ? "pay.skipped" : "pay.paid")
-            : x.pending > 0
-              ? t("pay.waiting").replace("{n}", String(x.pending))
-              : t("pay.readyBadge");
+    const reviewed = x.approved + x.pending;
     return (
-        <ListRow
-            onClick={() =>
-                void navigate({
-                    to: "/$tenant/pay/$start/$userId",
-                    params: { tenant: slug, start, userId: x.userId },
-                })
-            }
-            leading={<Avatar url={x.avatarUrl} square />}
-            title={x.name}
-            subtitle={
-                <span className="flex pt-1">
-                    <Badge>{badge}</Badge>
-                </span>
-            }
-            trailing={
-                <span className="flex items-center gap-1 shrink-0">
-                    <span className="text-base font-bold text-gray-900">
-                        {formatMoney(x.total)}
-                    </span>
-                    <ChevronRight size={ICON} strokeWidth={2.5} className="text-brand/90" />
-                </span>
-            }
-        />
+        <Link
+            to="/$tenant/pay/$start/$userId"
+            params={{ tenant: slug, start, userId: x.userId }}
+            className="block bg-white rounded-2xl p-3 space-y-3 active:bg-gray-50"
+        >
+            <div className="flex items-center gap-3">
+                <Avatar url={x.avatarUrl} square />
+                <p className="flex-1 min-w-0 text-lg font-bold text-gray-900 truncate">{x.name}</p>
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                    <Badge>
+                        {x.status !== "pending"
+                            ? t(x.status === "skipped" ? "pay.skipped" : "pay.paid")
+                            : x.pending > 0
+                              ? t("pay.waiting").replace("{n}", String(x.pending))
+                              : t("pay.readyBadge")}
+                    </Badge>
+                    {reviewed > 0 && (
+                        <span className="text-xs font-medium text-gray-900">
+                            {t("pay.approvedOf")
+                                .replace("{a}", String(x.approved))
+                                .replace("{n}", String(reviewed))}
+                        </span>
+                    )}
+                </div>
+            </div>
+            <div className="grid grid-cols-4 gap-2 bg-slate-50 rounded-xl p-2">
+                <Tile label={t("pay.orders")} value={x.orders} className="bg-orange-100" />
+                <Tile label={t("pay.cups")} value={x.cups} className="bg-blue-100" />
+                <Tile
+                    label={t("pay.commission")}
+                    value={formatMoney(x.commissions)}
+                    className="bg-teal-100 col-span-2"
+                />
+                <Tile
+                    label={t("pay.claims")}
+                    value={formatMoney(x.claims)}
+                    className="bg-purple-100 col-span-2"
+                />
+                <Tile
+                    label={t("pay.total")}
+                    value={formatMoney(x.total)}
+                    className="bg-green-100 col-span-2"
+                />
+            </div>
+        </Link>
     );
 }

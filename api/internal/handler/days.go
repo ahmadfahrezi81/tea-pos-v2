@@ -35,13 +35,13 @@ func registerDays(api huma.API, d Deps) {
 		OperationID: "listDays",
 		Method:      http.MethodGet,
 		Path:        "/tenants/{tenant}/days",
-		Summary:     "A month of the stores' days, with expenses and who worked",
+		Summary:     "A range of the stores' days, with expenses and who worked",
 		Tags:        []string{"store"},
 	}, storeAccess, func(ctx context.Context, in *contract.DaysInput) (*contract.DaysOutput, error) {
 		caller, _ := auth.CallerFrom(ctx)
-		first, err := time.Parse("2006-01", in.Month)
+		from, to, err := dateRange(in.From, in.To)
 		if err != nil {
-			return nil, errBadRange
+			return nil, err
 		}
 		ids, err := storeScope(ctx, d.Queries, caller.TenantID, in.StoreIDs)
 		if err != nil {
@@ -49,8 +49,7 @@ func registerDays(api huma.API, d Deps) {
 		}
 		rows, err := d.Queries.ListDays(ctx, store.ListDaysParams{
 			TenantID: caller.TenantID, StoreIds: ids,
-			FromDate: pgtype.Date{Time: first, Valid: true},
-			ToDate:   pgtype.Date{Time: first.AddDate(0, 1, -1), Valid: true},
+			FromDate: from, ToDate: to,
 		})
 		if err != nil {
 			return nil, err
@@ -59,7 +58,7 @@ func registerDays(api huma.API, d Deps) {
 		for i, r := range rows {
 			dayIDs[i] = r.ID
 		}
-		// Expenses and sellers for the whole month, side by side: two queries, not two per day.
+		// Expenses and sellers for the whole range, side by side: two queries, not two per day.
 		var (
 			wg       sync.WaitGroup
 			expenses []store.ListDayExpensesRow

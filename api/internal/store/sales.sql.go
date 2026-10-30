@@ -141,7 +141,7 @@ type StoresLiveRow struct {
 }
 
 // Every store of the tenant right now: its open session and who is selling, when it last closed,
-// and today's (day_start to day_end, UTC as the old tables hold it) orders, cups and sales.
+// and the range's (day_start to day_end, UTC as the old tables hold it) orders, cups and sales.
 func (q *Queries) StoresLive(ctx context.Context, arg StoresLiveParams) ([]StoresLiveRow, error) {
 	rows, err := q.db.Query(ctx, storesLive, arg.DayStart, arg.DayEnd, arg.TenantID)
 	if err != nil {
@@ -202,7 +202,7 @@ type StoresLiveSellersRow struct {
 	Cups      int64
 }
 
-// Who sold at each store today (day_start to day_end) and their cups, the most first.
+// Who sold at each store in the range (day_start to day_end) and their cups, the most first.
 func (q *Queries) StoresLiveSellers(ctx context.Context, arg StoresLiveSellersParams) ([]StoresLiveSellersRow, error) {
 	rows, err := q.db.Query(ctx, storesLiveSellers, arg.TenantID, arg.DayStart, arg.DayEnd)
 	if err != nil {

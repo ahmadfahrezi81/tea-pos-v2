@@ -22,11 +22,11 @@ func registerOrders(api huma.API, d Deps) {
 		OperationID: "listDayOrders",
 		Method:      http.MethodGet,
 		Path:        "/tenants/{tenant}/orders",
-		Summary:     "A day's orders over one store or several, newest first, a page at a time",
+		Summary:     "The orders of a range of days over one store or several, newest first, a page at a time",
 		Tags:        []string{"store"},
 	}, storeAccess, func(ctx context.Context, in *contract.DayOrdersInput) (*contract.DayOrdersOutput, error) {
 		caller, _ := auth.CallerFrom(ctx)
-		start, end, err := dayBounds(in.Date)
+		start, end, err := rangeBounds(in.From, in.To)
 		if err != nil {
 			return nil, err
 		}
@@ -128,6 +128,19 @@ func order(r store.ListDayOrdersRow) contract.Order {
 		ID: r.ID.String(), At: utc(r.CreatedAt), Total: int64(r.TotalAmount), PaymentMethod: r.PaymentMethod,
 		StoreName: r.StoreName, Seller: r.Seller.String, Cups: r.Cups,
 	}
+}
+
+// rangeBounds is from's start to the end of to, each a store's day.
+func rangeBounds(from, to string) (start, end pgtype.Timestamp, err error) {
+	if _, _, err = dateRange(from, to); err != nil {
+		return start, end, err
+	}
+	start, _, err = dayBounds(from)
+	if err != nil {
+		return start, end, err
+	}
+	_, end, err = dayBounds(to)
+	return start, end, err
 }
 
 // dayBounds is a store's day (WIB) as the old tables hold time: UTC without a zone.

@@ -88,7 +88,9 @@
         "searchBank": "Search bank...",
         "accountHolderPlaceholder": "As printed on the account",
         "title": "Account",
-        "signingOut": "Signing out…"
+        "signingOut": "Signing out…",
+        "confirmSave": "Save your details?",
+        "confirmSaveBody": "Your name changes everywhere it shows, in every app."
     },
     "more": {
         "workDays": "Work Days",
@@ -256,7 +258,8 @@
         "payout_pending_review": "Every commission and claim must be reviewed first.",
         "proof_required": "Paying needs the transfer screenshot.",
         "bad_proof": "That screenshot was not uploaded as this business's payroll proof.",
-        "request_not_found": "That request was already answered."
+        "request_not_found": "That request was already answered.",
+        "blank_name": "A name cannot be blank"
     },
     "store": {
         "title": "Store",
@@ -269,12 +272,7 @@
         "notOpened": "Not opened yet",
         "demo": "Demo",
         "inactive": "Shut down",
-        "todayLabel": "Today",
         "byHour": "by hour",
-        "noSalesToday": "No sales yet today",
-        "everyStore": "Every store together",
-        "analyticsRow": "Analytics",
-        "ordersRow": "Orders",
         "sales": "Total Sales",
         "cups": "Cups",
         "orders": "Orders",
@@ -282,15 +280,24 @@
         "noStores": "No stores yet",
         "rightNow": "Right now",
         "cupsByHour": "Cups by hour",
-        "search": "Search stores...",
-        "filter": "Filter",
-        "type": "Type",
-        "real": "Real stores",
-        "demoStores": "Demo stores",
-        "shutDown": "Shut down stores",
-        "allTypes": "All stores",
-        "openOnly": "Open only",
-        "noMatch": "No stores match",
-        "noMatchBody": "Try another name or clear the filter."
+        "dateRange": "Date range",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "last7": "Last 7 days",
+        "last30": "Last 30 days",
+        "thisMonth": "This month",
+        "lastMonth": "Last month",
+        "custom": "Custom range",
+        "apply": "Apply",
+        "daysCount": "{n} days",
+        "latestOrders": "Latest orders",
+        "seeAll": "See all",
+        "dayByDay": "Day by day",
+        "dayDetail": "That day's detail",
+        "helpTitle": "How stores work",
+        "noSales": "No sales in this range",
+        "totalCups": "Cups by day",
+        "totals": "Totals",
+        "oneDay": "1 day"
     }
 }

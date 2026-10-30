@@ -45,8 +45,8 @@ type ListDayOrdersRow struct {
 	Cups          int64
 }
 
-// A day's orders over the stores, newest first, a page at a time: after the cursor, limit+1 rows.
-// created_at holds UTC without a zone; the day's bounds come in the same way.
+// A range of days' orders over the stores, newest first, a page at a time: after the cursor, limit+1 rows.
+// created_at holds UTC without a zone; the bounds come in the same way.
 func (q *Queries) ListDayOrders(ctx context.Context, arg ListDayOrdersParams) ([]ListDayOrdersRow, error) {
 	rows, err := q.db.Query(ctx, listDayOrders,
 		arg.TenantID,

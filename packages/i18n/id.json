@@ -88,7 +88,9 @@
         "searchBank": "Cari bank...",
         "accountHolderPlaceholder": "Sesuai yang tertera di rekening",
         "title": "Akun",
-        "signingOut": "Sedang keluar…"
+        "signingOut": "Sedang keluar…",
+        "confirmSave": "Simpan data Anda?",
+        "confirmSaveBody": "Nama Anda berubah di semua tempat, di setiap aplikasi."
     },
     "more": {
         "workDays": "Hari Kerja",
@@ -256,7 +258,8 @@
         "payout_pending_review": "Semua komisi dan klaim harus ditinjau dulu.",
         "proof_required": "Membayar butuh tangkapan layar transfer.",
         "bad_proof": "Tangkapan layar itu bukan bukti gaji usaha ini.",
-        "request_not_found": "Permintaan itu sudah dijawab."
+        "request_not_found": "Permintaan itu sudah dijawab.",
+        "blank_name": "Nama tidak boleh kosong"
     },
     "store": {
         "title": "Toko",
@@ -269,12 +272,7 @@
         "notOpened": "Belum pernah buka",
         "demo": "Demo",
         "inactive": "Berhenti",
-        "todayLabel": "Hari ini",
         "byHour": "per jam",
-        "noSalesToday": "Belum ada penjualan hari ini",
-        "everyStore": "Semua toko digabung",
-        "analyticsRow": "Analitik",
-        "ordersRow": "Pesanan",
         "sales": "Total Penjualan",
         "cups": "Cups",
         "orders": "Pesanan",
@@ -282,15 +280,24 @@
         "noStores": "Belum ada toko",
         "rightNow": "Saat ini",
         "cupsByHour": "Gelas per jam",
-        "search": "Cari toko...",
-        "filter": "Saring",
-        "type": "Jenis",
-        "real": "Toko asli",
-        "demoStores": "Toko demo",
-        "shutDown": "Toko berhenti",
-        "allTypes": "Semua toko",
-        "openOnly": "Hanya yang buka",
-        "noMatch": "Tidak ada toko yang cocok",
-        "noMatchBody": "Coba nama lain atau hapus saringan."
+        "dateRange": "Rentang tanggal",
+        "today": "Hari ini",
+        "yesterday": "Kemarin",
+        "last7": "7 hari terakhir",
+        "last30": "30 hari terakhir",
+        "thisMonth": "Bulan ini",
+        "lastMonth": "Bulan lalu",
+        "custom": "Rentang khusus",
+        "apply": "Terapkan",
+        "daysCount": "{n} hari",
+        "latestOrders": "Pesanan terbaru",
+        "seeAll": "Lihat semua",
+        "dayByDay": "Per hari",
+        "dayDetail": "Rincian hari itu",
+        "helpTitle": "Cara kerja toko",
+        "noSales": "Tidak ada penjualan di rentang ini",
+        "totalCups": "Cup per hari",
+        "totals": "Total",
+        "oneDay": "1 hari"
     }
 }

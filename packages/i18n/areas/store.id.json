@@ -122,5 +122,15 @@
             "incident_report_created": "Laporan insiden"
         },
         "orderNumber": "Pesanan #{n}"
+    },
+    "storeHelp": {
+        "helpRange": "Rentang tanggal",
+        "helpRangeBody": "Satu rentang untuk semua layar Toko.\nPilih preset atau hari sendiri; bawaannya hari ini.\nHari selalu mengikuti zona waktu toko.",
+        "helpHome": "Beranda",
+        "helpHomeBody": "Total hanya menghitung toko asli: toko demo dan tutup permanen tidak dihitung.\nSetiap toko menampilkan penjualan dan penjualnya.\nBuka atau Tutup hanya tampil untuk hari ini.",
+        "helpStore": "Satu toko",
+        "helpStoreBody": "Angka yang sama untuk toko itu, dengan pesanan terbarunya.\nLihat semua membuka setiap pesanan di rentang itu.\nPer hari membuka kas dan pengeluaran tiap hari.",
+        "helpFresh": "Seberapa baru",
+        "helpFreshBody": "Angka diperbarui setiap menit, atau saat ditarik ke bawah.\nCup per hari berasal dari hari yang sudah ditutup, jadi hari yang masih buka bisa terbaca rendah."
     }
 }

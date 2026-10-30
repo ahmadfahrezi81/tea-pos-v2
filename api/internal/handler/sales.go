@@ -26,12 +26,22 @@ func registerSales(api huma.API, d Deps) {
 		OperationID: "storesLive",
 		Method:      http.MethodGet,
 		Path:        "/tenants/{tenant}/stores/live",
-		Summary:     "Every store right now: open or closed, who is selling, today's sales",
+		Summary:     "Every store: open or closed right now and who is selling, with the sales of a range (today by default)",
 		Tags:        []string{"store"},
-	}, storeAccess, func(ctx context.Context, _ *contract.StoresLiveInput) (*contract.StoresLiveOutput, error) {
+	}, storeAccess, func(ctx context.Context, in *contract.StoresLiveInput) (*contract.StoresLiveOutput, error) {
 		caller, _ := auth.CallerFrom(ctx)
 		today := time.Now().In(domain.WIB).Format(time.DateOnly)
-		start, end, _ := dayBounds(today)
+		from, to := in.From, in.To
+		if from == "" {
+			from = today
+		}
+		if to == "" {
+			to = from
+		}
+		start, end, err := rangeBounds(from, to)
+		if err != nil {
+			return nil, err
+		}
 		rows, err := d.Queries.StoresLive(ctx, store.StoresLiveParams{TenantID: caller.TenantID, DayStart: start, DayEnd: end})
 		if err != nil {
 			return nil, err
