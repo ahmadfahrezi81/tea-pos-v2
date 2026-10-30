@@ -23,9 +23,9 @@ export function Sheet({
     children: ReactNode;
 }) {
     return (
-        <Drawer open={open} onClose={onClose} label={title} className="px-4 pt-5 pb-5">
+        <Drawer open={open} onClose={onClose} label={title} className="px-4 pt-5 pb-2.5">
             <DrawerHandle />
-            <div className="flex items-center justify-between mb-4">
+            <div data-drag className="flex items-center justify-between mb-4 touch-none">
                 <div className="flex items-center gap-3">
                     <p className="text-xl font-bold text-gray-900">{title}</p>
                     {beside}

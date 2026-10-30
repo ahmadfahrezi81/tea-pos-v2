@@ -8,6 +8,7 @@ export default defineApp({
     // orange-600, so it is obvious at a glance which app is on screen
     brand: "oklch(0.646 0.222 41.116)",
     signIn: {
+        logo: "/icons/icon-192x192.png",
         titleKey: "signIn.backofficeTitle",
         subtitleKey: "signIn.backofficeSub",
     },
