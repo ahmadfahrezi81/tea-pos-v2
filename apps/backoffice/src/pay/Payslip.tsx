@@ -11,7 +11,8 @@ import { useState, type ReactNode } from "react";
 import { daysLeft, daysLeftText, weeks } from "./dates";
 import { decisions, payDate, usePayslip, usePayWrite } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
-import { Dialog, Drawer } from "@tea-pos/ui/Drawer";
+import { Drawer } from "@tea-pos/ui/Drawer";
+import { ImagePreview } from "@tea-pos/ui/ImagePreview";
 import { ICON } from "@tea-pos/ui/icon";
 import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
 import { Badge } from "@tea-pos/ui/Badge";
@@ -414,19 +415,20 @@ export function Payslip({ id }: { id: string }) {
                 </FooterSlot>
             )}
 
-            <Dialog open={showProof} onClose={() => setShowProof(false)}>
-                <img
+            {slip.paymentProofUrl && (
+                <ImagePreview
+                    open={showProof}
+                    onClose={() => setShowProof(false)}
                     src={slip.paymentProofUrl}
-                    alt={t("pay.receipt")}
-                    className="rounded-xl max-h-[80vh] w-auto object-contain"
+                    title={`${t("pay.receipt")} · ${weeks(slip.start, slip.end, t("pay.week"))}`}
                 />
-            </Dialog>
+            )}
 
             {confirm && (
                 <Drawer
                     onClose={() => setConfirm(null)}
                     dim="bg-black/40"
-                    className="p-5 space-y-4"
+                    className="px-5 pt-5 pb-2.5 space-y-4"
                 >
                     <div className="flex items-center justify-between">
                         <p className="text-lg font-bold text-gray-900">

@@ -298,6 +298,12 @@
         "noSales": "Tidak ada penjualan di rentang ini",
         "totalCups": "Cup per hari",
         "totals": "Total",
-        "oneDay": "1 hari"
+        "oneDay": "1 hari",
+        "stores": "Toko",
+        "cash": "Kas",
+        "cashMatches": "cocok",
+        "cashShort": "kurang {amount}",
+        "cashOver": "lebih {amount}",
+        "salesShort": "Penjualan"
     }
 }

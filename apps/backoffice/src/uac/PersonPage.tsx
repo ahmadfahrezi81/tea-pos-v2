@@ -6,15 +6,15 @@ import { Badge } from "@tea-pos/ui/Badge";
 import { Callout } from "@tea-pos/ui/Callout";
 import { ChoiceList } from "@tea-pos/ui/ChoiceList";
 import { Switch } from "@tea-pos/ui/form/Switch";
-import { DetailList, DetailRow } from "@tea-pos/ui/DetailList";
-import { ListCard, ListRow } from "@tea-pos/ui/ListRow";
+import { InfoList, InfoRow } from "@tea-pos/ui/DetailList";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 import { Panel, PanelLabel } from "@tea-pos/ui/Panel";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
 import { HeaderActions, HeaderTitle } from "@tea-pos/shell/HeaderActions";
-import { rowIcon, SettingsGroup } from "@tea-pos/shell/Settings";
+import { SettingsGroup } from "@tea-pos/shell/Settings";
 import { useAccess, useTenant } from "@tea-pos/shell/tenant";
 import { useRouter } from "@tanstack/react-router";
-import { Check, LayoutGrid, Store } from "lucide-react";
+import { Check } from "lucide-react";
 import { useState } from "react";
 
 import { PersonPay } from "../pay/Staff";
@@ -38,10 +38,10 @@ export function PersonPage({ userId }: { userId: string }) {
             <HeaderTitle>{p.name}</HeaderTitle>
             {canWrite && !p.owner && <HeaderActions actions={[{ kind: "edit", to: "edit" }]} />}
 
-            <div className="bg-white rounded-2xl p-4 flex items-center gap-4">
-                <Avatar url={p.avatarUrl} size={64} square />
+            <div className="bg-white rounded-2xl p-3 flex items-center gap-3">
+                <Avatar url={p.avatarUrl} size={48} square />
                 <div className="flex-1 min-w-0">
-                    <p className="text-xl font-semibold text-gray-900 leading-tight truncate">
+                    <p className="text-lg font-semibold text-gray-900 leading-tight truncate">
                         {p.name}
                     </p>
                     {p.owner && <p className="text-sm text-gray-900">{t("uac.owner")}</p>}
@@ -49,57 +49,42 @@ export function PersonPage({ userId }: { userId: string }) {
             </div>
             {p.owner && <p className="px-1 text-sm text-gray-900">{t("uac.ownerNote")}</p>}
 
-            <DetailList>
-                <DetailRow label={t("uac.status")}>
+            <InfoList>
+                <InfoRow label={t("uac.status")}>
                     <Badge>{t(p.active ? "uac.active" : "uac.inactive")}</Badge>
-                </DetailRow>
-                <DetailRow label={t("account.email")}>
-                    <span className="break-all">{p.email}</span>
-                </DetailRow>
-                <DetailRow label={t("account.phoneNumber")}>{p.phone || "—"}</DetailRow>
-                <DetailRow label={t("account.memberSince")}>
+                </InfoRow>
+                <InfoRow label={t("account.email")}>{p.email}</InfoRow>
+                <InfoRow label={t("account.phoneNumber")}>{p.phone || "—"}</InfoRow>
+                <InfoRow label={t("account.memberSince")}>
                     {p.since ? formatLongDate(p.since, locale) : "—"}
-                </DetailRow>
-            </DetailList>
+                </InfoRow>
+            </InfoList>
 
-            <Panel icon={<LayoutGrid {...rowIcon} />} title={t("uac.apps")}>
-                <ListCard>
+            <section className="space-y-2">
+                <SectionLabel>{t("uac.apps")}</SectionLabel>
+                <InfoList>
                     {(["seller", "backoffice"] as const).map((app) => (
-                        <ListRow
-                            key={app}
-                            title={t(`uac.${app}`)}
-                            trailing={
-                                <span
-                                    className={`text-base text-gray-900 ${p.access[app] ? "font-semibold" : "font-normal"}`}
-                                >
-                                    {t(`uac.${p.access[app] || "none"}` as MessageKey)}
-                                </span>
-                            }
-                        />
+                        <InfoRow key={app} label={t(`uac.${app}`)}>
+                            {t(`uac.${p.access[app] || "none"}` as MessageKey)}
+                        </InfoRow>
                     ))}
-                </ListCard>
-            </Panel>
+                </InfoList>
+            </section>
 
-            <Panel icon={<Store {...rowIcon} />} title={t("uac.stores")}>
-                {theirs.length === 0 ? (
-                    <ListCard>
-                        <p className="py-4 text-gray-900">{t("uac.noStores")}</p>
-                    </ListCard>
-                ) : (
-                    storeGroups(theirs).map((g) => (
-                        <div key={g.key} className="space-y-2">
-                            <PanelLabel>
-                                {t(g.key)} ({g.stores.length})
-                            </PanelLabel>
-                            <ListCard>
-                                {g.stores.map((s) => (
-                                    <ListRow key={s.id} title={s.name} />
-                                ))}
-                            </ListCard>
-                        </div>
-                    ))
-                )}
-            </Panel>
+            <section className="space-y-2">
+                <SectionLabel>{t("uac.stores")}</SectionLabel>
+                <InfoList>
+                    {theirs.length === 0 ? (
+                        <p className="text-[15px] text-gray-900">{t("uac.noStores")}</p>
+                    ) : (
+                        storeGroups(theirs).map((g) => (
+                            <InfoRow key={g.key} label={t(g.key)}>
+                                {g.stores.map((s) => s.name).join(", ")}
+                            </InfoRow>
+                        ))
+                    )}
+                </InfoList>
+            </section>
 
             <PersonPay id={p.id} />
         </div>
@@ -190,7 +175,7 @@ export function AccessFields({
     const stores = useTenant()?.tenant.stores ?? [];
     return (
         <>
-            <Panel icon={<LayoutGrid {...rowIcon} />} title={t("uac.apps")}>
+            <Panel title={t("uac.apps")}>
                 {(["seller", "backoffice"] as const).map((app) => (
                     <section key={app} className="space-y-2">
                         <PanelLabel>{t(app === "seller" ? "uac.seller" : "uac.office")}</PanelLabel>
@@ -210,7 +195,7 @@ export function AccessFields({
                 ))}
             </Panel>
 
-            <Panel icon={<Store {...rowIcon} />} title={t("uac.stores")}>
+            <Panel title={t("uac.stores")}>
                 {storeGroups(stores).map((g) => (
                     <section key={g.key} className="space-y-2">
                         <PanelLabel>

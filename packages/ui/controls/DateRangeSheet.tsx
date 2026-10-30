@@ -46,7 +46,12 @@ export function DateRangeSheet({
     };
     const picked = presets.find((p) => p.from === value.from && p.to === value.to)?.key;
     return (
-        <Sheet open={open} onClose={close} title={custom ? labels.custom : labels.title}>
+        <Sheet
+            open={open}
+            onClose={close}
+            title={custom ? labels.custom : labels.title}
+            onBack={custom ? () => setCustom(false) : undefined}
+        >
             {custom ? (
                 <Calendar
                     value={value}
@@ -54,7 +59,6 @@ export function DateRangeSheet({
                     locale={locale}
                     labels={labels}
                     formatRange={formatRange}
-                    onBack={() => setCustom(false)}
                     onApply={(r) => {
                         onChange(r);
                         close();
@@ -98,15 +102,13 @@ function Calendar({
     locale,
     labels,
     formatRange,
-    onBack,
     onApply,
 }: {
     value: DateRange;
     today: string;
     locale: string;
-    labels: { title: string; apply: string; days: (n: number) => string };
+    labels: { apply: string; days: (n: number) => string };
     formatRange: (range: DateRange) => string;
-    onBack: () => void;
     onApply: (range: DateRange) => void;
 }) {
     const [from, setFrom] = useState(value.from);
@@ -140,13 +142,6 @@ function Calendar({
 
     return (
         <div className="space-y-3">
-            <button
-                onClick={onBack}
-                className="flex items-center gap-1 font-medium text-gray-900 active:opacity-70"
-            >
-                <ChevronLeft size={ICON} />
-                {labels.title}
-            </button>
             <div className="flex items-center justify-between">
                 <button onClick={() => step(-1)} className={STEP_ARROW} aria-label="‹">
                     <ChevronLeft {...stepIcon} />

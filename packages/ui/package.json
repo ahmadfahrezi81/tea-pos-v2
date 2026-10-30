@@ -25,6 +25,8 @@
         "./icon": "./lib/icon.ts",
         "./ListRow": "./layout/ListRow.tsx",
         "./LoadMore": "./feedback/LoadMore.tsx",
+        "./ImagePreview": "./feedback/ImagePreview.tsx",
+        "./ListSection": "./layout/ListSection.tsx",
         "./MonthStepper": "./controls/MonthStepper.tsx",
         "./motion": "./lib/motion.ts",
         "./Panel": "./layout/Panel.tsx",

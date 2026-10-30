@@ -87,6 +87,25 @@ Listed first, built after the walkthrough.
 
 The owner's walkthrough ended here; build these now. The owner does 2, 3 and 5's SQL.
 
+## Round 3: the owner's list, after 2026.10.7
+
+1. **The update pop-up takes too long:** in v1 (Vercel) a deploy shows almost at once, on the next navigation or as the bottom sheet. Find out why ours is slow (CDN, service worker, how often it checks). Not caused by PostHog
+2. **PostHog runs every 60 seconds, too much:** production downloads the flag rules every 60 seconds (`POSTHOG_FLAGS_POLL_SECONDS` in `.railway/railway.ts`; staging 300). Decided: 300 on production too; a flag change then takes up to 5 minutes
+3. **Confirmation sheet's bottom padding still looks thick on the PWA:** the cut in round 2 does not show; check the footer's extra PWA gap too
+4. **Store home's cups and chart look like one store (bug):** with two real stores they should show the total; check the totals and cups by hour over all real stores
+5. **Check the Store endpoints are efficient:** no heavy compute at once, each screen fetched well, well-designed endpoints
+6. **Nested bottom sheets, back in the title:** as YouTube and our own header: a back arrow beside the sheet's title, top left, no extra row. `Sheet` gains `onBack`; the date range and People filter use it, and any other nested sheet
+7. **Store cards show more, as the analytics card, condensed:** sales, orders, cups, and cash at a glance, without much height. Proposal: a 3-column grid of Sales, Orders, Cups, a one-line Cash row (counted and the difference from expected), then the seller row; the repeated cups line goes. Cash comes from the day summaries, so `stores/live` or the screen needs it (see 5)
+8. **Pay cards shorter, one row:** only Cups, Commission, Claims and Total; Orders goes. Three equal coloured tiles in one row: Commission, Claims, Total; cups go under the name with the approved count. Item 7's Store card goes ahead as proposed
+9. **Pay date back inside the period card:** one card: the arrows and dates, then under them a small grey tile with its own padding (as the seller row: `bg-slate-100`, rounded), holding the next payout and the days left. The separate card goes
+10. **Swipe the Pay period card left and right to change period:** only on that card, as a sheet's handle is only for dragging; right is the period before, left the next, none past the current one. Arrows stay
+11. **Lists stand apart from menu rows:** on core homes it is unclear where the list ends and the menu rows begin. A list (Pay's people, Store's stores) sits inside a thin-padded container with its heading and count; a divider separates it from the menu rows. One shared component for Pay and Store
+12. **Headings outside the box:** as More's GENERAL label, a section's heading sits above its box, no big icon inside. Payouts (11) above the container; `Panel`'s heading moves out, for People's Apps, Stores and Pay and any other panel
+13. **A person's page condensed, as the payslip's details:** label on the left, value on the right, one line each, tight rows, for Status, Email, Phone, Member Since, and Apps, Stores and Pay. Headings outside, no icons (12), also on Store's Today panel. The duplicate name (title and profile card) can go down to one line in the card
+14. **One image preview everywhere:** today the payslip's receipt has no close button and a day's photo has its X on the image. One `ImagePreview` in `packages/ui`: full screen on black, a top bar with the title on the left and the X on the right (as Slack), the image fitted under it; a tap outside the image or back closes it. The receipt, the day's photos and any other preview use it
+
+**Round 3, investigated:** the chart read only the first store: `storeId` was sent repeated while Huma expected commas (`query:"storeId,explode"` now, with a test). The update sheet was slow because it waited for the new worker to finish downloading; v1 asks `/api/version` first. Now `version.json` (static, uncached, `versionFile` in `packages/config/vite.ts`) is the question, on open, foreground and a tap, at most once a minute; a different answer shows the sheet at once and starts the download; Update waits up to 10 s, then drops the old worker and reloads from the network; a declined build is not asked again. Docs: `/api/docs` on a laptop only.
+
 ## Done when
 
 - Typecheck, lint, build and bundle size pass

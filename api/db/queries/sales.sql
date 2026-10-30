@@ -32,7 +32,10 @@ SELECT s.id, s.name, s.status,
     (SELECT max(d.closed_at) FROM store_daily_summaries d WHERE d.store_id = s.id)::timestamp AS last_closed,
     COALESCE(t.orders, 0)::bigint AS orders,
     COALESCE(t.sales, 0)::bigint AS sales,
-    COALESCE(c.cups, 0)::bigint AS cups
+    COALESCE(c.cups, 0)::bigint AS cups,
+    COALESCE(m.counted, 0)::bigint AS cash_counted,
+    COALESCE(m.diff, 0)::bigint AS cash_diff,
+    COALESCE(m.days, 0)::int AS closed_days
 FROM stores s
 LEFT JOIN store_sessions ss ON ss.store_id = s.id AND ss.status = 'active'
 LEFT JOIN users u ON u.id = ss.user_id
@@ -47,6 +50,13 @@ LEFT JOIN LATERAL (
     JOIN store_order_items i ON i.order_id = o.id
     WHERE o.store_id = s.id AND o.created_at >= @day_start AND o.created_at < @day_end
 ) c ON true
+LEFT JOIN LATERAL (
+    -- The cash counted at closing: only closed days have it.
+    SELECT sum(d.actual_cash) AS counted, sum(d.actual_cash - d.expected_cash) AS diff, count(*) AS days
+    FROM store_daily_summaries d
+    WHERE d.store_id = s.id AND d.date BETWEEN @from_date::date AND @to_date::date
+        AND d.closed_at IS NOT NULL AND d.actual_cash IS NOT NULL
+) m ON true
 WHERE s.tenant_id = @tenant_id
 ORDER BY ss.started_at IS NULL, s.name;
 

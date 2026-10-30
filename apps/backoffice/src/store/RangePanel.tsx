@@ -1,10 +1,8 @@
 import { formatCalendarDay, formatMoney } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { rowIcon } from "@tea-pos/shell/Settings";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { Panel, PanelLabel } from "@tea-pos/ui/Panel";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
-import { Banknote } from "lucide-react";
 
 import { useRange } from "./range";
 import { useSalesDays, useSalesHours } from "./sales";
@@ -34,7 +32,7 @@ export function RangePanel({
               value: d.cups,
           }));
     return (
-        <Panel icon={<Banknote {...rowIcon} />} title={label}>
+        <Panel title={label}>
             {totals ? (
                 <p className="px-1 text-3xl font-bold text-gray-900">{formatMoney(totals.sales)}</p>
             ) : (
