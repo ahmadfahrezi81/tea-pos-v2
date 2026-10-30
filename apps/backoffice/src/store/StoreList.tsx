@@ -50,7 +50,7 @@ export function StoreList() {
                 </ListSection>
             )}
 
-            <ListDivider />
+            {shown && shown.length > 0 && <ListDivider />}
 
             <SettingsGroup>
                 <SettingsRow

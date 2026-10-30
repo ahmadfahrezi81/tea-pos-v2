@@ -63,6 +63,7 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
     const served = useRef<string | null>(null);
     const ready = useRef(false);
     const onReady = useRef<() => void>(() => {});
+    const applying = useRef(false);
 
     useEffect(() => {
         let lastCheckedAt = 0;
@@ -106,6 +107,9 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const apply = async () => {
+        // A tap and a 426 can both land here; the first one's wait decides.
+        if (applying.current) return;
+        applying.current = true;
         if (!ready.current) {
             const arrived = await new Promise<boolean>((resolve) => {
                 onReady.current = () => resolve(true);

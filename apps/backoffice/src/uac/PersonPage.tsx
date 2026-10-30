@@ -77,11 +77,14 @@ export function PersonPage({ userId }: { userId: string }) {
                     {theirs.length === 0 ? (
                         <p className="text-[15px] text-gray-900">{t("uac.noStores")}</p>
                     ) : (
-                        storeGroups(theirs).map((g) => (
-                            <InfoRow key={g.key} label={t(g.key)}>
-                                {g.stores.map((s) => s.name).join(", ")}
-                            </InfoRow>
-                        ))
+                        // Every store on its own line, so a long list is never cut; only the unusual say so.
+                        storeGroups(theirs).flatMap((g) =>
+                            g.stores.map((s) => (
+                                <InfoRow key={s.id} label={s.name}>
+                                    {s.status === "active" ? "" : t(g.key)}
+                                </InfoRow>
+                            )),
+                        )
                     )}
                 </InfoList>
             </section>
