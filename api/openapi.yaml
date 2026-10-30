@@ -1672,11 +1672,23 @@ components:
           description: Counted minus expected on those days; negative is short
           format: int64
           type: integer
+        closedAt:
+          description: The range's latest closing
+          format: date-time
+          type: string
         closedDays:
           description: Days in the range closed with cash counted
           format: int64
           type: integer
         cups:
+          format: int64
+          type: integer
+        days:
+          description: Days in the range the store opened
+          format: int64
+          type: integer
+        expenses:
+          description: Spent over the range
           format: int64
           type: integer
         id:
@@ -1687,12 +1699,20 @@ components:
           type: string
         name:
           type: string
+        notClosed:
+          description: Of those, not closed (today's, while it is open, included)
+          format: int64
+          type: integer
         open:
           description: Someone is selling there now
           type: boolean
         openSince:
           format: date-time
           type: string
+        opening:
+          description: "Opening balances added up: meaningful for one day"
+          format: int64
+          type: integer
         orders:
           format: int64
           type: integer
@@ -1725,6 +1745,10 @@ components:
         - cashCounted
         - cashDiff
         - closedDays
+        - expenses
+        - opening
+        - days
+        - notClosed
         - sellers
       type: object
     StoresLiveOutputBody:

@@ -13,7 +13,8 @@ import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { Badge } from "@tea-pos/ui/Badge";
 import { STEP_ARROW, stepIcon } from "@tea-pos/ui/MonthStepper";
-import { ListDivider, ListSection } from "@tea-pos/ui/ListSection";
+import { ListSection } from "@tea-pos/ui/ListSection";
+import { Tile } from "@tea-pos/ui/Tile";
 import { useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { useSlug } from "@tea-pos/shell/tenant";
 
@@ -134,15 +135,17 @@ export function PeriodHome({ start }: { start: string }) {
                         <span className="size-11 shrink-0" />
                     )}
                 </div>
-                <div className="flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-gray-900">
-                    <CalendarClock size={18} className="text-brand shrink-0" />
-                    <span className="min-w-0 truncate">
+                <div className="flex items-center gap-2 rounded-xl bg-slate-100 p-1.5">
+                    <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand/10">
+                        <CalendarClock size={18} className="text-brand" />
+                    </span>
+                    <p className="flex-1 min-w-0 truncate text-base font-bold text-gray-900">
                         {left <= 0 && toPay > 0
                             ? t("pay.payDay").replace("{n}", String(toPay))
                             : `${t(left > 0 ? "pay.nextShort" : "pay.payDate")} ${payDate(p.payoutDate, locale)}`}
-                    </span>
+                    </p>
                     {left > 0 && (
-                        <span className="ml-auto shrink-0 font-medium">
+                        <span className="shrink-0 rounded-lg bg-orange-100 px-2 py-0.5 text-sm font-bold text-orange-700">
                             {daysLeftText(t, left)}
                         </span>
                     )}
@@ -188,7 +191,6 @@ export function PeriodHome({ start }: { start: string }) {
                     ))}
                 </ListSection>
             )}
-            {people.length > 0 && <ListDivider />}
 
             <SettingsGroup>
                 <SettingsRow
@@ -208,14 +210,7 @@ export function PeriodHome({ start }: { start: string }) {
 
 const plain = (amount: number) => formatMoney(amount).replace(/^Rp\s*/, "");
 
-const Tile = ({ label, value, className }: { label: string; value: string; className: string }) => (
-    <div className={`min-w-0 rounded-lg p-2 ${className}`}>
-        <p className="text-xs font-semibold text-gray-900 truncate">{label}</p>
-        <p className="text-base font-bold text-gray-900 truncate">{value}</p>
-    </div>
-);
-
-/** A person in the period: who, what is next, cups, and the sum as three tiles, before any tap. */
+/** A person in the period: who, what is next and the total up top, what makes it up as tiles. */
 function PersonCard({ person: x, start }: { person: Person; start: string }) {
     const t = useT();
     const slug = useSlug();
@@ -227,33 +222,37 @@ function PersonCard({ person: x, start }: { person: Person; start: string }) {
             className="block bg-white rounded-xl p-3 space-y-2.5 active:bg-gray-50"
         >
             <div className="flex items-center gap-3">
-                <Avatar url={x.avatarUrl} square />
-                <div className="flex-1 min-w-0">
+                <Avatar url={x.avatarUrl} />
+                <div className="flex-1 min-w-0 space-y-1">
                     <p className="font-bold text-gray-900 truncate">{x.name}</p>
-                    <p className="text-sm text-gray-900 truncate">
-                        {x.cups} {t("pay.cupsUnit")}
-                        {reviewed > 0 &&
-                            ` · ${t("pay.approvedOf")
-                                .replace("{a}", String(x.approved))
-                                .replace("{n}", String(reviewed))}`}
-                    </p>
+                    <div className="flex flex-wrap gap-1">
+                        <Badge>
+                            {x.status !== "pending"
+                                ? t(x.status === "skipped" ? "pay.skipped" : "pay.paid")
+                                : x.pending > 0
+                                  ? t("pay.waiting").replace("{n}", String(x.pending))
+                                  : t("pay.readyBadge")}
+                        </Badge>
+                        {reviewed > 0 && (
+                            <Badge>
+                                {x.approved}/{reviewed} ✓
+                            </Badge>
+                        )}
+                    </div>
                 </div>
-                <Badge>
-                    {x.status !== "pending"
-                        ? t(x.status === "skipped" ? "pay.skipped" : "pay.paid")
-                        : x.pending > 0
-                          ? t("pay.waiting").replace("{n}", String(x.pending))
-                          : t("pay.readyBadge")}
-                </Badge>
+                <div className="shrink-0 space-y-1 text-right">
+                    <p className="text-xs font-semibold text-gray-900">{t("pay.total")}</p>
+                    <p className="font-bold text-green-600">{formatMoney(x.total)}</p>
+                </div>
             </div>
             <div className="grid grid-cols-3 gap-1.5">
+                <Tile label={t("pay.cups")} value={String(x.cups)} className="bg-blue-100" />
                 <Tile
                     label={t("pay.commission")}
                     value={plain(x.commissions)}
                     className="bg-teal-100"
                 />
                 <Tile label={t("pay.claims")} value={plain(x.claims)} className="bg-purple-100" />
-                <Tile label={t("pay.total")} value={plain(x.total)} className="bg-green-100" />
             </div>
         </Link>
     );

@@ -35,7 +35,12 @@ SELECT s.id, s.name, s.status,
     COALESCE(c.cups, 0)::bigint AS cups,
     COALESCE(m.counted, 0)::bigint AS cash_counted,
     COALESCE(m.diff, 0)::bigint AS cash_diff,
-    COALESCE(m.days, 0)::int AS closed_days
+    COALESCE(m.days, 0)::int AS closed_days,
+    COALESCE(m.expenses, 0)::bigint AS expenses,
+    COALESCE(m.opening, 0)::bigint AS opening,
+    COALESCE(m.total_days, 0)::int AS summary_days,
+    COALESCE(m.not_closed, 0)::int AS not_closed,
+    m.closed_at::timestamp AS closed_at
 FROM stores s
 LEFT JOIN store_sessions ss ON ss.store_id = s.id AND ss.status = 'active'
 LEFT JOIN users u ON u.id = ss.user_id
@@ -51,11 +56,17 @@ LEFT JOIN LATERAL (
     WHERE o.store_id = s.id AND o.created_at >= @day_start AND o.created_at < @day_end
 ) c ON true
 LEFT JOIN LATERAL (
-    -- The cash counted at closing: only closed days have it.
-    SELECT sum(d.actual_cash) AS counted, sum(d.actual_cash - d.expected_cash) AS diff, count(*) AS days
+    -- The cash counted at closing (only closed days have it) and every day's expenses.
+    SELECT sum(d.actual_cash) FILTER (WHERE d.closed_at IS NOT NULL) AS counted,
+        sum(d.actual_cash - d.expected_cash) FILTER (WHERE d.closed_at IS NOT NULL) AS diff,
+        count(d.actual_cash) FILTER (WHERE d.closed_at IS NOT NULL) AS days,
+        sum(d.total_expenses) AS expenses,
+        sum(d.opening_balance) AS opening,
+        count(*) AS total_days,
+        count(*) FILTER (WHERE d.closed_at IS NULL) AS not_closed,
+        max(d.closed_at) AS closed_at
     FROM store_daily_summaries d
     WHERE d.store_id = s.id AND d.date BETWEEN @from_date::date AND @to_date::date
-        AND d.closed_at IS NOT NULL AND d.actual_cash IS NOT NULL
 ) m ON true
 WHERE s.tenant_id = @tenant_id
 ORDER BY ss.started_at IS NULL, s.name;

@@ -39,7 +39,7 @@ export function PersonPage({ userId }: { userId: string }) {
             {canWrite && !p.owner && <HeaderActions actions={[{ kind: "edit", to: "edit" }]} />}
 
             <div className="bg-white rounded-2xl p-3 flex items-center gap-3">
-                <Avatar url={p.avatarUrl} size={48} square />
+                <Avatar url={p.avatarUrl} size={48} />
                 <div className="flex-1 min-w-0">
                     <p className="text-lg font-semibold text-gray-900 leading-tight truncate">
                         {p.name}

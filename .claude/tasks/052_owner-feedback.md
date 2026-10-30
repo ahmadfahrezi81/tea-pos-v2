@@ -1,6 +1,6 @@
 # Task 052 — The owner's feedback round
 
-**Status: round 1 released in 2026.10.6. Round 2, from production (2026-10-30), in four PRs: quick fixes, Pay, Store, personal details.**
+**Status: rounds 1 and 2 released (2026.10.6, 2026.10.7); rounds 3 and 4 next.**
 
 ## The goal
 
@@ -105,6 +105,16 @@ The owner's walkthrough ended here; build these now. The owner does 2, 3 and 5's
 14. **One image preview everywhere:** today the payslip's receipt has no close button and a day's photo has its X on the image. One `ImagePreview` in `packages/ui`: full screen on black, a top bar with the title on the left and the X on the right (as Slack), the image fitted under it; a tap outside the image or back closes it. The receipt, the day's photos and any other preview use it
 
 **Round 3, investigated:** the chart read only the first store: `storeId` was sent repeated while Huma expected commas (`query:"storeId,explode"` now, with a test). The update sheet was slow because it waited for the new worker to finish downloading; v1 asks `/api/version` first. Now `version.json` (static, uncached, `versionFile` in `packages/config/vite.ts`) is the question, on open, foreground and a tap, at most once a minute; a different answer shows the sheet at once and starts the download; Update waits up to 10 s, then drops the old worker and reloads from the network; a declined build is not asked again. Docs: `/api/docs` on a laptop only.
+
+## Round 4 (2026-10-31)
+
+1. **The divider line between lists and menu rows goes:** the container and spacing separate them
+2. **Store's date selector is the heading:** no Today label above the numbers
+3. **The save footer's bottom padding, at last:** every earlier cut was on bottom sheets. Screens under a tab halve the shell footer's home bar gap; the bar is `px-4 py-3`, on the form footer, the route's CTA and the payslip's Pay bar. The tab bar keeps its full gap
+4. **The payout row copies the seller bar:** icon in its own square, bold text, an orange pill for the days left
+5. **Pay card:** name and pills, Total above its amount at the top right, tiles for Cups, Commission and Claims (`Tile` in `packages/ui`)
+6. **One avatar shape:** the header's proportion, about 29%, at every size; no round or square option
+7. **Store card, by what the business measures:** a status pill under the name always (open, closed with its time, not closed in red, days closed). One day: Opening, + Sales, − Expenses, the total top right (Expected while open), a red bar when the cash is off. Several days: Sales top right; Cups, Expenses, Cash off. `stores/live` gains opening, days, notClosed, closedAt and expenses in the same join
 
 ## Done when
 

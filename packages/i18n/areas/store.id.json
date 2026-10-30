@@ -127,7 +127,7 @@
         "helpRange": "Rentang tanggal",
         "helpRangeBody": "Satu rentang untuk semua layar Toko.\nPilih preset atau hari sendiri; bawaannya hari ini.\nHari selalu mengikuti zona waktu toko.",
         "helpHome": "Beranda",
-        "helpHomeBody": "Total hanya menghitung toko asli: toko demo dan tutup permanen tidak dihitung.\nSetiap toko menampilkan penjualan dan penjualnya.\nBuka atau Tutup hanya tampil untuk hari ini.",
+        "helpHomeBody": "Total hanya menghitung toko asli: toko demo dan tutup permanen tidak dihitung.\nSatu hari: saldo awal + penjualan − pengeluaran menjadi total di kanan atas; saat masih buka itu perkiraannya.\nBeberapa hari: penjualan di kanan atas, dengan cup, pengeluaran, dan selisih kas.\nLabel di bawah nama menunjukkan bagaimana hari itu berjalan; merah perlu dilihat.",
         "helpStore": "Satu toko",
         "helpStoreBody": "Angka yang sama untuk toko itu, dengan pesanan terbarunya.\nLihat semua membuka setiap pesanan di rentang itu.\nPer hari membuka kas dan pengeluaran tiap hari.",
         "helpFresh": "Seberapa baru",

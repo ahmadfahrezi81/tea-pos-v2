@@ -270,8 +270,6 @@
         "sellerSince": "{name} · sejak {time}",
         "closedAt": "Tutup {when}",
         "notOpened": "Belum pernah buka",
-        "demo": "Demo",
-        "inactive": "Berhenti",
         "byHour": "per jam",
         "sales": "Total Penjualan",
         "cups": "Cups",
@@ -301,9 +299,19 @@
         "oneDay": "1 hari",
         "stores": "Toko",
         "cash": "Kas",
-        "cashMatches": "cocok",
-        "cashShort": "kurang {amount}",
-        "cashOver": "lebih {amount}",
-        "salesShort": "Penjualan"
+        "cashShort": "Kas kurang {amount}",
+        "cashOver": "Kas lebih {amount}",
+        "salesShort": "Penjualan",
+        "expenses": "Pengeluaran",
+        "expected": "Perkiraan",
+        "total": "Total",
+        "opening": "Saldo awal",
+        "cashOff": "Selisih kas",
+        "openAt": "Buka · {time}",
+        "closedAtTime": "Tutup · {time}",
+        "notClosed": "Belum ditutup",
+        "didntOpen": "Tidak buka",
+        "nNotClosed": "{n} belum ditutup",
+        "daysClosed": "{n} dari {m} hari ditutup"
     }
 }

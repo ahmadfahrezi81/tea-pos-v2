@@ -33,7 +33,7 @@ export function SearchBox({ value, onChange }: { value: string; onChange: (v: st
 function Person({ s }: { s: Staff }) {
     return (
         <div className="bg-white rounded-xl p-4 flex items-center gap-4">
-            <Avatar url={s.avatarUrl} size={56} square />
+            <Avatar url={s.avatarUrl} size={56} />
             <div className="flex-1 min-w-0 space-y-0.5">
                 <p className="text-lg font-semibold text-gray-900 truncate">{s.name}</p>
                 <p className="text-sm text-gray-900 truncate">{s.email}</p>

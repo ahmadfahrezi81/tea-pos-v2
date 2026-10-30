@@ -1,15 +1,15 @@
 import type { components } from "@tea-pos/api-client";
-import { formatDay, formatMoney, formatTime } from "@tea-pos/format";
+import { formatDay, formatMoney, formatTime, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { useSlug } from "@tea-pos/shell/tenant";
 import { Badge } from "@tea-pos/ui/Badge";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
-import { ICON } from "@tea-pos/ui/icon";
-import { ListDivider, ListSection } from "@tea-pos/ui/ListSection";
+import { ListSection } from "@tea-pos/ui/ListSection";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { Tile } from "@tea-pos/ui/Tile";
 import { Link } from "@tanstack/react-router";
-import { ChartNoAxesCombined, ChevronRight, CircleHelp, ReceiptText } from "lucide-react";
+import { ChartNoAxesCombined, CircleHelp, ReceiptText } from "lucide-react";
 
 import { RangeBar, useRange } from "./range";
 import { RangePanel } from "./RangePanel";
@@ -45,12 +45,10 @@ export function StoreList() {
             ) : (
                 <ListSection title={t("store.stores")} count={shown.length}>
                     {shown.map((s) => (
-                        <StoreCard key={s.id} store={s} slug={slug} live={isToday} />
+                        <StoreCard key={s.id} store={s} slug={slug} />
                     ))}
                 </ListSection>
             )}
-
-            {shown && shown.length > 0 && <ListDivider />}
 
             <SettingsGroup>
                 <SettingsRow
@@ -75,10 +73,47 @@ export function StoreList() {
     );
 }
 
-function StoreCard({ store: s, slug, live }: { store: Store; slug: string; live: boolean }) {
+function useStatus() {
     const t = useT();
     const locale = useLocale();
-    const { from, to } = useRange();
+    return (
+        s: Store,
+        r: { single: boolean; isToday: boolean; open: boolean; today: boolean },
+    ): { text: string; alert: boolean } => {
+        const time = (at?: string | null) => (at ? formatTime(at, locale) : "");
+        if (r.open)
+            return {
+                text: t("store.openAt").replace("{time}", time(s.openSince)),
+                alert: false,
+            };
+        // Today's day is not late while the store is still selling.
+        const unclosed = s.notClosed - (s.open && r.today ? 1 : 0);
+        if (r.single) {
+            if (s.days === 0)
+                return { text: t(r.isToday ? "store.notOpened" : "store.didntOpen"), alert: false };
+            if (unclosed > 0) return { text: t("store.notClosed"), alert: true };
+            return {
+                text: t("store.closedAtTime").replace("{time}", time(s.closedAt)),
+                alert: false,
+            };
+        }
+        if (s.days === 0) return { text: t("store.didntOpen"), alert: false };
+        if (unclosed > 0)
+            return { text: t("store.nNotClosed").replace("{n}", String(unclosed)), alert: true };
+        return {
+            text: t("store.daysClosed")
+                .replace("{n}", String(s.days - s.notClosed))
+                .replace("{m}", String(s.days)),
+            alert: false,
+        };
+    };
+}
+
+function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
+    const t = useT();
+    const { from, to, single, isToday } = useRange();
+    const open = isToday && s.open;
+    const pill = useStatus()(s, { single, isToday, open, today: to === localDate() });
     return (
         <Link
             to="/$tenant/store/$storeId"
@@ -86,44 +121,75 @@ function StoreCard({ store: s, slug, live }: { store: Store; slug: string; live:
             search={{ from, to }}
             className="block rounded-xl bg-white p-3 space-y-2.5 active:scale-[0.99]"
         >
-            <div className="flex items-center gap-2">
-                <p className="flex-1 min-w-0 truncate text-lg font-bold text-gray-900">{s.name}</p>
-                {live && <OpenBadge store={s} />}
-                <ChevronRight size={ICON} strokeWidth={2.5} className="text-brand/90 shrink-0" />
+            <div className="flex items-center gap-3">
+                <div className="flex-1 min-w-0 space-y-1">
+                    <p className="text-lg font-bold text-gray-900 truncate">{s.name}</p>
+                    <StatusPill {...pill} />
+                </div>
+                <div className="shrink-0 space-y-1 text-right">
+                    <p className="text-xs font-semibold text-gray-900">
+                        {t(!single ? "store.salesShort" : open ? "store.expected" : "store.total")}
+                    </p>
+                    <p className="font-bold text-green-600">
+                        {!single
+                            ? formatMoney(s.sales)
+                            : open
+                              ? formatMoney(s.opening + s.sales - s.expenses)
+                              : s.closedDays > 0
+                                ? formatMoney(s.cashCounted)
+                                : "—"}
+                    </p>
+                </div>
             </div>
-            <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-100 p-2.5">
-                <Figure
-                    label={t("store.salesShort")}
-                    value={plain(s.sales)}
-                    color="text-green-600"
-                />
-                <Figure label={t("store.orders")} value={String(s.orders)} color="text-blue-600" />
-                <Figure label={t("store.cups")} value={String(s.cups)} color="text-orange-600" />
-            </div>
-            {s.closedDays > 0 && (
-                <div className="flex items-center justify-between gap-2 px-1 text-sm text-gray-900">
-                    <span>
-                        {t("store.cash")}{" "}
-                        <span className="font-bold">{formatMoney(s.cashCounted)}</span>
-                    </span>
-                    {s.cashDiff === 0 ? (
-                        <span className="font-semibold text-green-600">
-                            ✓ {t("store.cashMatches")}
-                        </span>
-                    ) : (
-                        <span className="font-semibold text-red-600">
-                            {t(s.cashDiff < 0 ? "store.cashShort" : "store.cashOver").replace(
-                                "{amount}",
-                                formatMoney(Math.abs(s.cashDiff)),
-                            )}
-                        </span>
-                    )}
+            {single ? (
+                <div className="grid grid-cols-3 gap-1.5">
+                    <Tile
+                        label={t("store.opening")}
+                        value={plain(s.opening)}
+                        className="bg-slate-100"
+                    />
+                    <Tile
+                        label={`+ ${t("store.salesShort")}`}
+                        value={plain(s.sales)}
+                        className="bg-blue-100"
+                    />
+                    <Tile
+                        label={`− ${t("store.expenses")}`}
+                        value={plain(s.expenses)}
+                        className="bg-purple-100"
+                    />
+                </div>
+            ) : (
+                <div className="grid grid-cols-3 gap-1.5">
+                    <Tile
+                        label={t("store.cups")}
+                        value={String(s.cups)}
+                        className="bg-orange-100"
+                    />
+                    <Tile
+                        label={t("store.expenses")}
+                        value={plain(s.expenses)}
+                        className="bg-purple-100"
+                    />
+                    <Tile
+                        label={t("store.cashOff")}
+                        value={
+                            s.cashDiff === 0
+                                ? "0"
+                                : `${s.cashDiff < 0 ? "−" : "+"}${plain(Math.abs(s.cashDiff))}`
+                        }
+                        className={s.cashDiff === 0 ? "bg-green-100" : "bg-red-100"}
+                    />
                 </div>
             )}
-            {s.sellers.length > 0 ? (
-                <Sellers sellers={s.sellers} />
-            ) : (
-                live && <p className="px-1 text-sm text-gray-900">{closedLine(s, t, locale)}</p>
+            {s.sellers.length > 0 && <Sellers sellers={s.sellers} />}
+            {single && s.cashDiff !== 0 && (
+                <p className="rounded-xl bg-red-100 px-3 py-1.5 text-sm font-bold text-red-700">
+                    {t(s.cashDiff < 0 ? "store.cashShort" : "store.cashOver").replace(
+                        "{amount}",
+                        formatMoney(Math.abs(s.cashDiff)),
+                    )}
+                </p>
             )}
         </Link>
     );
@@ -131,12 +197,14 @@ function StoreCard({ store: s, slug, live }: { store: Store; slug: string; live:
 
 const plain = (amount: number) => formatMoney(amount).replace(/^Rp\s*/, "");
 
-function Figure({ label, value, color }: { label: string; value: string; color: string }) {
-    return (
-        <div className="min-w-0">
-            <p className="text-xs font-medium text-gray-900 truncate">{label}</p>
-            <p className={`text-lg font-bold truncate ${color}`}>{value}</p>
-        </div>
+/** The line under a store's name: did its day, or days, go as they should? */
+function StatusPill({ text, alert }: { text: string; alert: boolean }) {
+    return alert ? (
+        <span className="inline-flex items-center rounded-sm bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-700">
+            {text}
+        </span>
+    ) : (
+        <Badge>{text}</Badge>
     );
 }
 

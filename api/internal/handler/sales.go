@@ -66,8 +66,14 @@ func registerSales(api huma.API, d Deps) {
 			s := contract.StoreLive{
 				ID: r.ID.String(), Name: r.Name, Status: r.Status, Open: r.OpenSince.Valid,
 				Orders: r.Orders, Cups: r.Cups, Sales: r.Sales,
-				CashCounted: r.CashCounted, CashDiff: r.CashDiff, ClosedDays: int(r.ClosedDays),
+				CashCounted: r.CashCounted, CashDiff: r.CashDiff, ClosedDays: int(r.ClosedDays), Expenses: r.Expenses,
+				Opening: r.Opening, Days: int(r.SummaryDays), NotClosed: int(r.NotClosed),
 				Sellers: sellers[r.ID.String()],
+			}
+			if r.ClosedAt.Valid {
+				// The old tables hold UTC without a zone.
+				at := r.ClosedAt.Time.UTC()
+				s.ClosedAt = &at
 			}
 			if s.Sellers == nil {
 				s.Sellers = []contract.DaySeller{}

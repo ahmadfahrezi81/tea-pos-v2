@@ -44,7 +44,7 @@ export function StorePage() {
                 <div className="rounded-2xl bg-white p-4 flex items-center gap-3">
                     {store.open ? (
                         <>
-                            <Avatar url={store.sellerAvatar} size={40} square />
+                            <Avatar url={store.sellerAvatar} size={40} />
                             <div className="flex-1 min-w-0">
                                 <p className="truncate font-semibold text-gray-900">
                                     {t("store.isSelling").replace("{name}", store.sellerName ?? "")}
