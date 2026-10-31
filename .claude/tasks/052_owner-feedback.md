@@ -163,6 +163,10 @@ Fixed live: the loading bar is 3px and sits inside the header, with 8px above an
 
 The owner swapped the tenant's owner by SQL on production, and consolidates duplicate accounts by turning them inactive.
 
+## After 2026.10.10
+
+- **The production check failed a good release:** with no Go changes the API rightly stays on its last commit, but the check demanded the release's. It compares commits only when the release deployed the API; otherwise the API just has to answer
+
 ## Done when
 
 - Typecheck, lint, build and bundle size pass
