@@ -87,8 +87,9 @@ export function usePayWrite<V extends object>(
         {
             onSuccess: () =>
                 void queryClient.invalidateQueries({
+                    // A person's page shows their commission and claims.
                     predicate: (q) =>
-                        String(q.queryKey[1] ?? "").includes("/pay/") || q.queryKey[0] === "me",
+                        /\/pay\/|\/uac/.test(String(q.queryKey[1] ?? "")) || q.queryKey[0] === "me",
                 }),
         },
     );
@@ -130,6 +131,18 @@ export const writes = {
             .PUT("/tenants/{tenant}/pay/staff/{userId}/commission-type", {
                 params: { path: { tenant, userId } },
                 body: { commissionTypeId },
+                headers: key(k),
+            })
+            .then(ok),
+    setStaffClaims: (
+        tenant: string,
+        { userId, claimTypeIds }: { userId: string; claimTypeIds: string[] },
+        k: string,
+    ) =>
+        api
+            .PUT("/tenants/{tenant}/pay/staff/{userId}/claim-types", {
+                params: { path: { tenant, userId } },
+                body: { claimTypeIds },
                 headers: key(k),
             })
             .then(ok),

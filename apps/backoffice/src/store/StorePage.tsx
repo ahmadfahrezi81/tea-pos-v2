@@ -26,7 +26,7 @@ export function StorePage() {
     const slug = useSlug();
     const storeId = useStoreId();
     const { from, to, single, isToday } = useRange();
-    const { stores, totals } = useScopeStores(from, to);
+    const { stores } = useScopeStores(from, to);
     const store = stores?.[0];
     const orders = useLatestOrders(from, to);
     // Only one day needs them here, to go straight to its detail; a range's list loads when opened.
@@ -66,7 +66,7 @@ export function StorePage() {
                 </div>
             )}
 
-            <RangePanel totals={totals} />
+            <RangePanel stores={stores} />
 
             {store && !isToday && store.sellers.length > 0 && (
                 <div className="rounded-2xl bg-white p-3">

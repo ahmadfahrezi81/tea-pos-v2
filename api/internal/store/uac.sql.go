@@ -198,7 +198,15 @@ SELECT u.id, u.full_name, u.email, COALESCE(u.avatar_url, '')::text AS avatar_ur
     a.status, coalesce(t.owner_id = u.id, false)::bool AS is_owner,
     coalesce((SELECT x.access FROM user_app_access x WHERE x.tenant_id = a.tenant_id AND x.user_id = u.id AND x.app = 'seller'), '')::text AS seller_access,
     coalesce((SELECT x.access FROM user_app_access x WHERE x.tenant_id = a.tenant_id AND x.user_id = u.id AND x.app = 'backoffice'), '')::text AS backoffice_access,
-    EXISTS (SELECT 1 FROM user_app_access x WHERE x.tenant_id = a.tenant_id AND x.user_id = u.id) AS has_levels,
+    (a.levels_set OR EXISTS (SELECT 1 FROM user_app_access x WHERE x.tenant_id = a.tenant_id AND x.user_id = u.id))::bool AS has_levels,
+    coalesce(c.id::text, '')::text AS commission_type_id,
+    coalesce(c.name, '')::text AS commission_name,
+    coalesce(c.rate_per_cup, 0)::bigint AS commission_rate,
+    coalesce(ARRAY(
+        SELECT e.claim_config_id FROM payroll_user_claim_assignments e
+        JOIN payroll_claim_configs cc ON cc.id = e.claim_config_id AND cc.is_enabled
+        WHERE e.tenant_id = a.tenant_id AND e.user_id = u.id ORDER BY cc.name
+    ), '{}')::uuid[] AS claim_type_ids,
     coalesce(ARRAY(
         SELECT s.id FROM user_store_assignments sa JOIN stores s ON s.id = sa.store_id
         WHERE sa.user_id = u.id AND s.tenant_id = a.tenant_id ORDER BY s.name
@@ -206,6 +214,8 @@ SELECT u.id, u.full_name, u.email, COALESCE(u.avatar_url, '')::text AS avatar_ur
 FROM user_tenant_assignments a
 JOIN users u ON u.id = a.user_id
 JOIN tenants t ON t.id = a.tenant_id
+LEFT JOIN payroll_user_info i ON i.tenant_id = a.tenant_id AND i.user_id = a.user_id
+LEFT JOIN payroll_commission_configs c ON c.id = i.commission_config_id
 WHERE a.tenant_id = $1 AND ($2::uuid IS NULL OR u.id = $2)
 ORDER BY a.status, u.full_name
 `
@@ -228,6 +238,10 @@ type ListTenantPeopleRow struct {
 	SellerAccess     string
 	BackofficeAccess string
 	HasLevels        bool
+	CommissionTypeID string
+	CommissionName   string
+	CommissionRate   int64
+	ClaimTypeIds     []pgtype.UUID
 	StoreIds         []pgtype.UUID
 }
 
@@ -254,6 +268,10 @@ func (q *Queries) ListTenantPeople(ctx context.Context, arg ListTenantPeoplePara
 			&i.SellerAccess,
 			&i.BackofficeAccess,
 			&i.HasLevels,
+			&i.CommissionTypeID,
+			&i.CommissionName,
+			&i.CommissionRate,
+			&i.ClaimTypeIds,
 			&i.StoreIds,
 		); err != nil {
 			return nil, err
@@ -305,7 +323,7 @@ func (q *Queries) SetAppAccess(ctx context.Context, arg SetAppAccessParams) erro
 }
 
 const setMembershipStatus = `-- name: SetMembershipStatus :execrows
-UPDATE user_tenant_assignments SET status = $1 WHERE tenant_id = $2 AND user_id = $3
+UPDATE user_tenant_assignments SET status = $1, levels_set = true WHERE tenant_id = $2 AND user_id = $3
 `
 
 type SetMembershipStatusParams struct {

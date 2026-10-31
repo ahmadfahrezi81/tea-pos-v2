@@ -100,9 +100,9 @@ SELECT t.id, a.status, coalesce(t.owner_id = a.user_id, false)::bool AS is_owner
         SELECT x.access FROM user_app_access x
         WHERE x.tenant_id = t.id AND x.user_id = a.user_id AND x.app = $1::text
     ), '')::text AS access,
-    EXISTS (
+    (a.levels_set OR EXISTS (
         SELECT 1 FROM user_app_access x WHERE x.tenant_id = t.id AND x.user_id = a.user_id
-    ) AS has_levels,
+    ))::bool AS has_levels,
     (SELECT u.status FROM users u WHERE u.id = a.user_id)::text AS user_status
 FROM tenants t
 JOIN user_tenant_assignments a ON a.tenant_id = t.id
@@ -125,8 +125,8 @@ type GetUserTenantRow struct {
 }
 
 // The tenant behind a slug, only if the user is assigned to it, with their membership, whether they
-// own it, their level in the app (” for none) and whether they have any level row there at all
-// (people v1 added after the backfill have none: Go falls back to users.role for them).
+// own it, their level in the app (” for none) and whether their levels were ever set there
+// (people v1 added after the backfill have not: Go falls back to users.role for them).
 func (q *Queries) GetUserTenant(ctx context.Context, arg GetUserTenantParams) (GetUserTenantRow, error) {
 	row := q.db.QueryRow(ctx, getUserTenant, arg.App, arg.Slug, arg.UserID)
 	var i GetUserTenantRow

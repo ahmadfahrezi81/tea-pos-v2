@@ -31,6 +31,26 @@ func (q *Queries) AddClaimEligible(ctx context.Context, arg AddClaimEligiblePara
 	return err
 }
 
+const addUserClaims = `-- name: AddUserClaims :exec
+INSERT INTO payroll_user_claim_assignments (tenant_id, user_id, claim_config_id)
+SELECT $1, $2, c FROM unnest($3::uuid[]) AS c
+WHERE NOT EXISTS (
+    SELECT 1 FROM payroll_user_claim_assignments e
+    WHERE e.tenant_id = $1 AND e.user_id = $2 AND e.claim_config_id = c
+)
+`
+
+type AddUserClaimsParams struct {
+	TenantID pgtype.UUID
+	UserID   pgtype.UUID
+	ClaimIds []pgtype.UUID
+}
+
+func (q *Queries) AddUserClaims(ctx context.Context, arg AddUserClaimsParams) error {
+	_, err := q.db.Exec(ctx, addUserClaims, arg.TenantID, arg.UserID, arg.ClaimIds)
+	return err
+}
+
 const claimTypeInTenant = `-- name: ClaimTypeInTenant :one
 SELECT EXISTS (SELECT 1 FROM payroll_claim_configs WHERE id = $1 AND tenant_id = $2)
 `
@@ -62,6 +82,22 @@ func (q *Queries) CommissionTypeUsable(ctx context.Context, arg CommissionTypeUs
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const countClaimTypesInTenant = `-- name: CountClaimTypesInTenant :one
+SELECT count(*)::int FROM payroll_claim_configs WHERE tenant_id = $1 AND id = ANY($2::uuid[])
+`
+
+type CountClaimTypesInTenantParams struct {
+	TenantID pgtype.UUID
+	Ids      []pgtype.UUID
+}
+
+func (q *Queries) CountClaimTypesInTenant(ctx context.Context, arg CountClaimTypesInTenantParams) (int32, error) {
+	row := q.db.QueryRow(ctx, countClaimTypesInTenant, arg.TenantID, arg.Ids)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const countPeriodPayouts = `-- name: CountPeriodPayouts :one
@@ -455,6 +491,25 @@ type RemoveClaimEligibleParams struct {
 // Everyone not in the list loses it (no history kept: eligibility carries none).
 func (q *Queries) RemoveClaimEligible(ctx context.Context, arg RemoveClaimEligibleParams) error {
 	_, err := q.db.Exec(ctx, removeClaimEligible, arg.TenantID, arg.ClaimConfigID, arg.UserIds)
+	return err
+}
+
+const removeUserClaims = `-- name: RemoveUserClaims :exec
+DELETE FROM payroll_user_claim_assignments e
+USING payroll_claim_configs c
+WHERE c.id = e.claim_config_id AND c.is_enabled
+  AND e.tenant_id = $1 AND e.user_id = $2 AND NOT (e.claim_config_id = ANY($3::uuid[]))
+`
+
+type RemoveUserClaimsParams struct {
+	TenantID pgtype.UUID
+	UserID   pgtype.UUID
+	ClaimIds []pgtype.UUID
+}
+
+// Everything not listed goes; a disabled type is not on the screen, so it stays as it was.
+func (q *Queries) RemoveUserClaims(ctx context.Context, arg RemoveUserClaimsParams) error {
+	_, err := q.db.Exec(ctx, removeUserClaims, arg.TenantID, arg.UserID, arg.ClaimIds)
 	return err
 }
 

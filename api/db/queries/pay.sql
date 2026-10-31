@@ -118,5 +118,23 @@ WHERE NOT EXISTS (
     WHERE e.tenant_id = @tenant_id AND e.claim_config_id = @claim_config_id AND e.user_id = u
 );
 
+-- name: RemoveUserClaims :exec
+-- Everything not listed goes; a disabled type is not on the screen, so it stays as it was.
+DELETE FROM payroll_user_claim_assignments e
+USING payroll_claim_configs c
+WHERE c.id = e.claim_config_id AND c.is_enabled
+  AND e.tenant_id = @tenant_id AND e.user_id = @user_id AND NOT (e.claim_config_id = ANY(@claim_ids::uuid[]));
+
+-- name: AddUserClaims :exec
+INSERT INTO payroll_user_claim_assignments (tenant_id, user_id, claim_config_id)
+SELECT @tenant_id, @user_id, c FROM unnest(@claim_ids::uuid[]) AS c
+WHERE NOT EXISTS (
+    SELECT 1 FROM payroll_user_claim_assignments e
+    WHERE e.tenant_id = @tenant_id AND e.user_id = @user_id AND e.claim_config_id = c
+);
+
+-- name: CountClaimTypesInTenant :one
+SELECT count(*)::int FROM payroll_claim_configs WHERE tenant_id = @tenant_id AND id = ANY(@ids::uuid[]);
+
 -- name: CountUsersInTenant :one
 SELECT count(*)::int FROM user_tenant_assignments WHERE tenant_id = @tenant_id AND user_id = ANY(@user_ids::uuid[]);

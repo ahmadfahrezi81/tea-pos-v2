@@ -27,7 +27,7 @@ export function Panel({
                     {beside}
                 </div>
             )}
-            <div className="panel rounded-2xl bg-white p-4 space-y-3">{children}</div>
+            <div className="panel rounded-2xl bg-white p-3 space-y-3">{children}</div>
         </section>
     );
 }

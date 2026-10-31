@@ -474,6 +474,7 @@ type UserTenantAssignment struct {
 	UserID    pgtype.UUID
 	CreatedAt pgtype.Timestamptz
 	Status    string
+	LevelsSet bool
 }
 
 type WeatherHour struct {

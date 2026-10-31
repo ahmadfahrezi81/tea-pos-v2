@@ -13,7 +13,7 @@ import { ChartNoAxesCombined, CircleHelp, ReceiptText } from "lucide-react";
 
 import { RangeBar, useRange } from "./range";
 import { RangePanel } from "./RangePanel";
-import { ALL, useScopeStores } from "./sales";
+import { ALL, dayCash, plain, useScopeStores } from "./sales";
 import { Sellers } from "./Sellers";
 
 type Store = components["schemas"]["StoreLive"];
@@ -26,7 +26,7 @@ export function StoreList() {
     const t = useT();
     const slug = useSlug();
     const { from, to, isToday } = useRange();
-    const { stores, totals } = useScopeStores(from, to);
+    const { stores } = useScopeStores(from, to);
     // Today shows who is open first (the API's order); a past range, who sold most.
     const shown = isToday ? stores : stores && [...stores].sort((a, b) => b.sales - a.sales);
     const search = { from, to };
@@ -34,7 +34,7 @@ export function StoreList() {
     return (
         <div className="flex flex-col gap-3">
             <RangeBar />
-            <RangePanel totals={totals} />
+            <RangePanel stores={stores} />
 
             {!shown ? (
                 Array.from({ length: 3 }).map((_, i) => (
@@ -134,9 +134,9 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
                         {!single
                             ? formatMoney(s.sales)
                             : open
-                              ? formatMoney(s.opening + s.sales - s.expenses)
+                              ? formatMoney(dayCash(s, true))
                               : s.closedDays > 0
-                                ? formatMoney(s.cashCounted)
+                                ? formatMoney(dayCash(s, false))
                                 : "—"}
                     </p>
                 </div>
@@ -194,8 +194,6 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
         </Link>
     );
 }
-
-const plain = (amount: number) => formatMoney(amount).replace(/^Rp\s*/, "");
 
 /** The line under a store's name: did its day, or days, go as they should? */
 function StatusPill({ text, alert }: { text: string; alert: boolean }) {

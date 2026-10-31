@@ -123,6 +123,26 @@ The owner's walkthrough ended here; build these now. The owner does 2, 3 and 5's
 13. **No update sheet:** in use, the finished toast counts down 5 seconds and reloads by itself, the owner's call, knowing it drops an unsaved cart or form. The idle sheet stays
 14. **No failure buttons:** a download past 60 s closes the page or toast and the app stays usable; the next open tries again; a second failure clears and reloads by itself, only if the new build can be fetched. After a 426 the page stays until it gets through
 
+## Round 5 (2026-10-31), fixed live
+
+1. **Less space under the header:** the shell's content has 12px top padding, was 16px, and the header 8px bottom padding, was 12px, on every screen
+2. **Card lists have no padding, only an 8px gap:** `ListSection`, on Store and Pay
+3. **Panel padding 12px, was 16px:** `Panel`, on every screen that uses it
+4. **Loading bar runs between the page's padding (trying it):** 16px in from each side, with rounded ends.
+
+### To build, all at once in one PR
+
+1. **Store's top card sums up the store cards below:** drop Orders; Cups, Expenses and Expected or Total (Cash off over several days), in the store cards' `Tile`
+2. **Store's date range reads as the page's heading and as the place to choose:** no white bar: a large title, the dates under it, a chevron and a calendar button
+3. **Pay: a recap card between the week switcher and Payouts:** the total to send, with total cups, commission and claims
+4. **A person's edit is one place, and shorter:** status, apps and stores, plus their commission and claims set there, not by going out to Pay; no Edit button or edit screen: the person's page lists it all, each row opens a short sheet (`Segmented` for levels, tighter store rows)
+5. **An admin can rename a person and change their phone** (not email). No remove: inactive is the remove
+5b. **Inactive means None in every app (bug):** today an inactive person stays Member in Seller. Levels and stores are cleared on turning off, and `levels_set` keeps None from falling back to `users.role`, also for an active person set to None everywhere
+5c. **People hides inactive people by default:** the Show inactive people filter starts off
+8. **App info moves from Account to More:** a section of its own, with Update app
+6. **More of a person shows from the outside:** at a glance in the People list, without opening them
+7. **No menu behind Edit:** the rows are the menu; the owner may come back to this
+
 ## Done when
 
 - Typecheck, lint, build and bundle size pass

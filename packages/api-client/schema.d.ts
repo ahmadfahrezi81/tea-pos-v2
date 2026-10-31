@@ -518,6 +518,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{tenant}/pay/staff/{userId}/claim-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set which claim types a staff member may claim: everyone listed, no other */
+        put: operations["setStaffClaims"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{tenant}/pay/staff/{userId}/commission-type": {
         parameters: {
             query?: never;
@@ -648,6 +665,23 @@ export interface paths {
         get: operations["getUacPerson"];
         /** Set a person's levels per app, stores and status, at once */
         put: operations["setUacPerson"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/uac/people/{userId}/details": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Change a person's name and phone */
+        put: operations["setUacDetails"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1500,12 +1534,21 @@ export interface components {
             /** @enum {string} */
             frequency: "weekly" | "bi_weekly" | "four_weekly";
         };
+        SetStaffClaimsInputBody: {
+            /** @description Exactly these enabled claim types */
+            claimTypeIds: string[];
+        };
         SetStaffCommissionInputBody: {
             /**
              * Format: uuid
              * @description Null takes it away
              */
             commissionTypeId: string | null;
+        };
+        SetUacDetailsInputBody: {
+            fullName: string;
+            /** @description Empty clears it */
+            phone: string;
         };
         SettlePayoutInputBody: {
             /** @description For the staff member, on their payslip; cannot be changed after */
@@ -1614,6 +1657,16 @@ export interface components {
             access: components["schemas"]["MeAccess"];
             active: boolean;
             avatarUrl?: string;
+            /** @description Enabled claim types they may claim */
+            claimTypeIds: string[];
+            commissionName?: string;
+            /**
+             * Format: int64
+             * @description Rupiah per cup; 0 without a type
+             */
+            commissionRate: number;
+            /** Format: uuid */
+            commissionTypeId?: string;
             email: string;
             /** Format: uuid */
             id: string;
@@ -2829,6 +2882,40 @@ export interface operations {
             };
         };
     };
+    setStaffClaims: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetStaffClaimsInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     setStaffCommission: {
         parameters: {
             query?: never;
@@ -3121,6 +3208,42 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["UacPersonChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UacPerson"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    setUacDetails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetUacDetailsInputBody"];
             };
         };
         responses: {

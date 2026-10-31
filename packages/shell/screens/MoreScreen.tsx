@@ -1,6 +1,6 @@
 import { useT } from "@tea-pos/i18n/react";
 import { toast } from "@tea-pos/ui/toast";
-import { Download, ScrollText } from "lucide-react";
+import { Download, Info, ScrollText } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { currentVersion, useAppUpdate } from "../frame/AppUpdate";
@@ -28,6 +28,8 @@ export function MoreScreen({ rows }: { rows?: ReactNode }) {
                     label={t("more.patchNotes")}
                     dot={unseen}
                 />
+            </SettingsGroup>
+            <SettingsGroup title={t("more.app")}>
                 <SettingsRow
                     icon={<Download {...rowIcon} />}
                     label={t("more.updateApp")}
@@ -38,6 +40,11 @@ export function MoreScreen({ rows }: { rows?: ReactNode }) {
                             if (result === "offline") toast(t("more.updateOffline"));
                         });
                     }}
+                />
+                <SettingsRow
+                    to={`/${slug}/app-info`}
+                    icon={<Info {...rowIcon} />}
+                    label={t("status.title")}
                 />
             </SettingsGroup>
         </div>

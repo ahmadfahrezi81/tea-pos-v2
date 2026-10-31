@@ -1,23 +1,26 @@
+import type { components } from "@tea-pos/api-client";
 import { formatCalendarDay, formatMoney } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { Panel, PanelLabel } from "@tea-pos/ui/Panel";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { Tile } from "@tea-pos/ui/Tile";
 
 import { useRange } from "./range";
-import { useSalesDays, useSalesHours } from "./sales";
+import { dayCash, plain, useSalesDays, useSalesHours } from "./sales";
 
 const TILE = "rounded-xl bg-slate-100 p-3";
 
-/** A range over the picked stores: sales, Cups and Orders tiles, and cups by hour (one day) or by day. */
-export function RangePanel({
-    totals,
-}: {
-    totals: { sales: number; cups: number; orders: number } | undefined;
-}) {
+type Store = components["schemas"]["StoreLive"];
+
+/**
+ * The store cards below added up: sales, cups, expenses, then cash (one day) or how far it was off
+ * (several), and cups by hour (one day) or by day.
+ */
+export function RangePanel({ stores }: { stores: Store[] | undefined }) {
     const t = useT();
     const locale = useLocale();
-    const { from, to, single } = useRange();
+    const { from, to, single, isToday } = useRange();
     const hours = useSalesHours(single ? from : "");
     const days = useSalesDays(single ? "" : from, to);
     const points = single
@@ -31,20 +34,47 @@ export function RangePanel({
               label: formatCalendarDay(d.date, locale, "dayMonth"),
               value: d.cups,
           }));
+    const sum = (of: (s: Store) => number) => (stores ?? []).reduce((n, s) => n + of(s), 0);
+    const anyOpen = isToday && stores?.some((s) => s.open);
+    const cashOff = sum((s) => s.cashDiff);
+    const value = (text: string) => (stores ? text : "–");
     return (
         <Panel>
-            {totals ? (
-                <p className="px-1 text-3xl font-bold text-gray-900">{formatMoney(totals.sales)}</p>
+            {stores ? (
+                <p className="px-1 text-3xl font-bold text-gray-900">
+                    {formatMoney(sum((s) => s.sales))}
+                </p>
             ) : (
                 <Skeleton className="h-9 w-44 rounded" />
             )}
-            <div className="grid grid-cols-2 gap-2">
-                {(["cups", "orders"] as const).map((k) => (
-                    <div key={k} className={TILE}>
-                        <p className="text-sm text-gray-900">{t(`store.${k}`)}</p>
-                        <p className="text-xl font-bold text-gray-900">{totals?.[k] ?? "–"}</p>
-                    </div>
-                ))}
+            <div className="grid grid-cols-3 gap-1.5">
+                <Tile
+                    label={t("store.cups")}
+                    value={value(String(sum((s) => s.cups)))}
+                    className="bg-orange-100"
+                />
+                <Tile
+                    label={t("store.expenses")}
+                    value={value(plain(sum((s) => s.expenses)))}
+                    className="bg-purple-100"
+                />
+                {single ? (
+                    <Tile
+                        label={t(anyOpen ? "store.expected" : "store.total")}
+                        value={value(plain(sum((s) => dayCash(s, isToday && s.open))))}
+                        className="bg-green-100"
+                    />
+                ) : (
+                    <Tile
+                        label={t("store.cashOff")}
+                        value={value(
+                            cashOff === 0
+                                ? "0"
+                                : `${cashOff < 0 ? "−" : "+"}${plain(Math.abs(cashOff))}`,
+                        )}
+                        className={cashOff === 0 ? "bg-green-100" : "bg-red-100"}
+                    />
+                )}
             </div>
             {points &&
                 (points.length > 0 ? (

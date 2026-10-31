@@ -90,6 +90,14 @@ type SetStaffCommissionInput struct {
 	}
 }
 
+type SetStaffClaimsInput struct {
+	Tenant string `path:"tenant"`
+	UserID string `path:"userId" format:"uuid"`
+	Body   struct {
+		ClaimTypeIDs []string `json:"claimTypeIds" nullable:"false" maxItems:"100" doc:"Exactly these enabled claim types"`
+	}
+}
+
 type ClaimType struct {
 	ID                 string   `json:"id" format:"uuid"`
 	Name               string   `json:"name"`
