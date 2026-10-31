@@ -442,10 +442,12 @@ export function MobileShell({
                             </main>
 
                             {/* Page slot, route CTA, then tabs; white only when something is in it. */}
-                            <footer className="shrink-0 pb-[env(safe-area-inset-bottom)] [&:has(>:not(:empty))]:bg-white [&:has(>.is-occupied)]:bg-white">
+                            <footer
+                                className={`shrink-0 ${currentIsSubPage ? "pb-[calc(env(safe-area-inset-bottom)*0.5)]" : "pb-[env(safe-area-inset-bottom)]"} [&:has(>:not(:empty))]:bg-white [&:has(>.is-occupied)]:bg-white`}
+                            >
                                 <div ref={setFooterSlotEl} />
                                 {footerCtaLabel && (
-                                    <div className="bg-white border-t border-gray-200 p-4">
+                                    <div className="bg-white border-t border-gray-200 px-4 py-3">
                                         <button
                                             onClick={() => navigate(`${pathname}/add`)}
                                             className="w-full bg-brand text-white py-4 rounded-xl font-semibold text-base active:scale-[0.98] transition-transform"

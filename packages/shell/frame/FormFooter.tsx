@@ -53,7 +53,7 @@ export function FormFooter({
     return (
         <>
             <FooterSlot>
-                <div className="bg-white border-t border-gray-200 p-4">
+                <div className="bg-white border-t border-gray-200 px-4 py-3">
                     <ActionButton
                         action={() => {
                             if (!confirmTitle) return onSubmit();
@@ -132,7 +132,7 @@ export function ConfirmSheet({
             onClose={onCancel}
             dim="bg-black/40"
             label={title}
-            className="p-5 space-y-4"
+            className="px-5 pt-5 pb-2.5 space-y-4"
         >
             <div className="flex justify-center">
                 <div className="w-8 h-1 rounded-full bg-gray-300" />

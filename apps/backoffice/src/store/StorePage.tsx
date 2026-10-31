@@ -12,11 +12,9 @@ import { ChartNoAxesCombined } from "lucide-react";
 
 import { RangeBar, useRange } from "./range";
 import { RangePanel } from "./RangePanel";
-import { useDays, useRangeOrders, useScopeStores, useStoreId } from "./sales";
+import { useDays, useLatestOrders, useScopeStores, useStoreId } from "./sales";
 import { Sellers } from "./Sellers";
 import { closedLine, OpenBadge } from "./StoreList";
-
-const LATEST = 5;
 
 /**
  * One store over the range: who is on (today), the numbers, the latest orders coming in, then
@@ -30,8 +28,9 @@ export function StorePage() {
     const { from, to, single, isToday } = useRange();
     const { stores, totals } = useScopeStores(from, to);
     const store = stores?.[0];
-    const orders = useRangeOrders(from, to);
-    const days = useDays(from, to);
+    const orders = useLatestOrders(from, to);
+    // Only one day needs them here, to go straight to its detail; a range's list loads when opened.
+    const days = useDays(from, to, single);
     const search = { from, to };
     // One day of one store: straight to its detail, there is no list to scroll.
     const onlyDay = single && days.data?.days.length === 1 ? days.data.days[0] : undefined;
@@ -45,7 +44,7 @@ export function StorePage() {
                 <div className="rounded-2xl bg-white p-4 flex items-center gap-3">
                     {store.open ? (
                         <>
-                            <Avatar url={store.sellerAvatar} size={40} square />
+                            <Avatar url={store.sellerAvatar} size={40} />
                             <div className="flex-1 min-w-0">
                                 <p className="truncate font-semibold text-gray-900">
                                     {t("store.isSelling").replace("{name}", store.sellerName ?? "")}
@@ -91,27 +90,25 @@ export function StorePage() {
                     <Skeleton className="h-40 rounded-2xl" />
                 ) : (
                     <ListCard>
-                        {(orders.data ?? []).length === 0 ? (
+                        {(orders.data?.items ?? []).length === 0 ? (
                             <p className="py-4 text-gray-900">{t("store.noSales")}</p>
                         ) : (
-                            (orders.data ?? [])
-                                .slice(0, LATEST)
-                                .map((o) => (
-                                    <ListRow
-                                        key={o.id}
-                                        title={
-                                            single
-                                                ? formatTime(o.at, locale)
-                                                : formatDateTime(o.at, locale)
-                                        }
-                                        subtitle={`${o.cups} ${t("store.cupsUnit")}${o.seller ? ` · ${o.seller}` : ""}`}
-                                        trailing={
-                                            <span className="font-bold text-gray-900">
-                                                {formatMoney(o.total)}
-                                            </span>
-                                        }
-                                    />
-                                ))
+                            (orders.data?.items ?? []).map((o) => (
+                                <ListRow
+                                    key={o.id}
+                                    title={
+                                        single
+                                            ? formatTime(o.at, locale)
+                                            : formatDateTime(o.at, locale)
+                                    }
+                                    subtitle={`${o.cups} ${t("store.cupsUnit")}${o.seller ? ` · ${o.seller}` : ""}`}
+                                    trailing={
+                                        <span className="font-bold text-gray-900">
+                                            {formatMoney(o.total)}
+                                        </span>
+                                    }
+                                />
+                            ))
                         )}
                     </ListCard>
                 )}

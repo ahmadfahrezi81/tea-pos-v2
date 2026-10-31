@@ -57,6 +57,13 @@ func TestSalesDays(t *testing.T) {
 		t.Errorf("the 2nd: %+v", d)
 	}
 	// One store.
+	// Several stores: every one named counts, not only the first.
+	_, both := get("from=2026-10-01&to=2026-10-01&storeId=" + storeANorth + "&storeId=" + storeACentral)
+	_, north := get("from=2026-10-01&to=2026-10-01&storeId=" + storeANorth)
+	_, central := get("from=2026-10-01&to=2026-10-01&storeId=" + storeACentral)
+	if len(both) != 1 || len(north) != 1 || len(central) != 1 || both[0].Stores != north[0].Stores+central[0].Stores {
+		t.Errorf("two stores: %+v, %+v, %+v", both, north, central)
+	}
 	if _, days := get("from=2026-10-01&to=2026-10-01&storeId=" + storeANorth); len(days) != 1 || days[0].Sales != 30000 {
 		t.Errorf("North: %+v", days)
 	}

@@ -13,3 +13,18 @@ export function DetailRow({ label, children }: { label: string; children: ReactN
         </div>
     );
 }
+
+/** A tight card of `InfoRow`s, as a payslip's details. */
+export function InfoList({ children }: { children: ReactNode }) {
+    return <div className="bg-white rounded-2xl px-4 py-3 space-y-2.5">{children}</div>;
+}
+
+/** One line: the label on the left, the value on the right, cut short rather than wrapped. */
+export function InfoRow({ label, children }: { label: string; children: ReactNode }) {
+    return (
+        <div className="flex items-center justify-between gap-4 text-[15px] text-gray-900">
+            <span className="shrink-0">{label}</span>
+            <span className="min-w-0 truncate text-right font-medium">{children}</span>
+        </div>
+    );
+}

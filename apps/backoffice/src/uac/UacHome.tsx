@@ -75,7 +75,7 @@ export function UacHome() {
                                         params: { tenant: slug, id: r.id },
                                     })
                                 }
-                                leading={<Avatar url={r.avatarUrl} square />}
+                                leading={<Avatar url={r.avatarUrl} />}
                                 title={r.name}
                                 subtitle={t("uac.askedAt").replace(
                                     "{when}",
@@ -120,7 +120,7 @@ export function UacHome() {
                                           params: { tenant: slug, userId: p.id },
                                       })
                                   }
-                                  leading={<Avatar url={p.avatarUrl} square />}
+                                  leading={<Avatar url={p.avatarUrl} />}
                                   title={p.name}
                                   subtitle={<Badges person={p} />}
                               />

@@ -105,7 +105,10 @@
         "locationFeedback": "Feedback Lokasi",
         "patchNotes": "Catatan Rilis",
         "noStores": "Belum ada toko yang ditugaskan.",
-        "default": "Utama"
+        "default": "Utama",
+        "updateApp": "Perbarui aplikasi",
+        "updateLatest": "Sudah versi terbaru.",
+        "updateOffline": "Tidak ada koneksi. Coba lagi saat online."
     },
     "whatsNew": {
         "title": "Yang Baru",
@@ -159,15 +162,8 @@
         "edit": "Ubah",
         "moreActions": "Aksi lainnya",
         "refreshNow": "Muat Ulang Sekarang",
-        "refreshing": "Memuat ulang...",
         "maintenance": "Sedang Perbaikan",
         "maintenanceSub": "Kami sedang melakukan pembaruan untuk meningkatkan pengalaman Anda. Kami akan segera kembali.",
-        "update": {
-            "title": "Pembaruan Tersedia",
-            "body": "Versi baru sudah siap. Muat ulang untuk memakainya.",
-            "infoTitle": "Yang Anda dapat",
-            "infoBody": "Perbaikan dan peningkatan terbaru. Memuat ulang hanya sebentar dan pekerjaan Anda tetap aman."
-        },
         "inactivity": {
             "title": "Perlu Dimuat Ulang",
             "body": "Anda sudah lama tidak aktif — muat ulang agar data tetap terbaru.",
@@ -188,7 +184,12 @@
         "noAccessTitle": "Belum punya akses",
         "noAccessBody": "Minta bergabung ke usaha ini. Admin akan mengizinkanmu masuk.",
         "requestAccess": "Minta akses",
-        "requestSent": "Permintaan terkirim. Kamu bisa masuk setelah admin menyetujuinya."
+        "requestSent": "Permintaan terkirim. Kamu bisa masuk setelah admin menyetujuinya.",
+        "updating": "Memperbarui {app}",
+        "updateDownloading": "Mengunduh pembaruan",
+        "updateDone": "Selesai. Memulai ulang…",
+        "updateRestartIn": "Selesai. Memulai ulang dalam {n}",
+        "updateKeepOpen": "Biarkan aplikasi tetap terbuka"
     },
     "signIn": {
         "google": "Lanjutkan dengan Google",
@@ -207,11 +208,11 @@
     "status": {
         "title": "Info aplikasi",
         "api": "API",
-        "commit": "Commit",
+        "commit": "Commit API",
         "app": "Aplikasi",
         "ok": "Terhubung",
         "down": "Tidak terjangkau",
-        "version": "Versi"
+        "version": "Versi API"
     },
     "errors": {
         "account_inactive": "Akun ini tidak aktif. Hubungi pemilik.",
@@ -270,8 +271,6 @@
         "sellerSince": "{name} · sejak {time}",
         "closedAt": "Tutup {when}",
         "notOpened": "Belum pernah buka",
-        "demo": "Demo",
-        "inactive": "Berhenti",
         "byHour": "per jam",
         "sales": "Total Penjualan",
         "cups": "Cups",
@@ -298,6 +297,22 @@
         "noSales": "Tidak ada penjualan di rentang ini",
         "totalCups": "Cup per hari",
         "totals": "Total",
-        "oneDay": "1 hari"
+        "oneDay": "1 hari",
+        "stores": "Toko",
+        "cash": "Kas",
+        "cashShort": "Kas kurang {amount}",
+        "cashOver": "Kas lebih {amount}",
+        "salesShort": "Penjualan",
+        "expenses": "Pengeluaran",
+        "expected": "Perkiraan",
+        "total": "Total",
+        "opening": "Saldo awal",
+        "cashOff": "Selisih kas",
+        "openAt": "Buka · {time}",
+        "closedAtTime": "Tutup · {time}",
+        "notClosed": "Belum ditutup",
+        "didntOpen": "Tidak buka",
+        "nNotClosed": "{n} belum ditutup",
+        "daysClosed": "{n} dari {m} hari ditutup"
     }
 }

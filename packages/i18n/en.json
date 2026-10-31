@@ -105,7 +105,10 @@
         "locationFeedback": "Location Feedback",
         "patchNotes": "Patch Notes",
         "noStores": "No stores assigned yet.",
-        "default": "Default"
+        "default": "Default",
+        "updateApp": "Update app",
+        "updateLatest": "You are on the latest version.",
+        "updateOffline": "No connection. Try again when you are online."
     },
     "whatsNew": {
         "title": "What's New",
@@ -159,15 +162,8 @@
         "edit": "Edit",
         "moreActions": "More actions",
         "refreshNow": "Refresh Now",
-        "refreshing": "Refreshing...",
         "maintenance": "Under Maintenance",
         "maintenanceSub": "We're making some updates to improve your experience. We'll be back shortly.",
-        "update": {
-            "title": "Update Available",
-            "body": "A new version is ready. Refresh to load it.",
-            "infoTitle": "What you get",
-            "infoBody": "The latest improvements and fixes. Refreshing takes a moment and keeps your work."
-        },
         "inactivity": {
             "title": "Refresh Required",
             "body": "You've been inactive — refresh to avoid stale data.",
@@ -188,7 +184,12 @@
         "noAccessTitle": "No access yet",
         "noAccessBody": "Ask to join this business. An admin will let you in.",
         "requestAccess": "Request access",
-        "requestSent": "Request sent. You'll get in once an admin approves it."
+        "requestSent": "Request sent. You'll get in once an admin approves it.",
+        "updating": "Updating {app}",
+        "updateDownloading": "Downloading update",
+        "updateDone": "Updated. Restarting…",
+        "updateRestartIn": "Updated. Restarting in {n}",
+        "updateKeepOpen": "Please keep the app open"
     },
     "signIn": {
         "google": "Continue with Google",
@@ -207,11 +208,11 @@
     "status": {
         "title": "App info",
         "api": "API",
-        "commit": "Commit",
+        "commit": "API commit",
         "app": "App",
         "ok": "Connected",
         "down": "Unreachable",
-        "version": "Version"
+        "version": "API version"
     },
     "errors": {
         "account_inactive": "This account isn't active. Ask the owner.",
@@ -270,8 +271,6 @@
         "sellerSince": "{name} · since {time}",
         "closedAt": "Closed {when}",
         "notOpened": "Not opened yet",
-        "demo": "Demo",
-        "inactive": "Shut down",
         "byHour": "by hour",
         "sales": "Total Sales",
         "cups": "Cups",
@@ -298,6 +297,22 @@
         "noSales": "No sales in this range",
         "totalCups": "Cups by day",
         "totals": "Totals",
-        "oneDay": "1 day"
+        "oneDay": "1 day",
+        "stores": "Stores",
+        "cash": "Cash",
+        "cashShort": "Cash short {amount}",
+        "cashOver": "Cash over {amount}",
+        "salesShort": "Sales",
+        "expenses": "Expenses",
+        "expected": "Expected",
+        "total": "Total",
+        "opening": "Opening",
+        "cashOff": "Cash off",
+        "openAt": "Open · {time}",
+        "closedAtTime": "Closed · {time}",
+        "notClosed": "Not closed",
+        "didntOpen": "Didn't open",
+        "nNotClosed": "{n} not closed",
+        "daysClosed": "{n} of {m} days closed"
     }
 }

@@ -254,7 +254,7 @@ export function DaySessions({ id }: { id: string }) {
                 <div key={s.id} className="bg-white rounded-2xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
-                            <Avatar url={s.avatarUrl} size={36} square />
+                            <Avatar url={s.avatarUrl} size={36} />
                             <p className="font-bold text-gray-900">
                                 {s.userName || t("common.unknown")}
                             </p>

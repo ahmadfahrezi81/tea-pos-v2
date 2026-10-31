@@ -1519,17 +1519,57 @@ export interface components {
             status: "paid" | "skipped";
         };
         StoreLive: {
+            /**
+             * Format: int64
+             * @description Cash counted at closing, over the range's closed days
+             */
+            cashCounted: number;
+            /**
+             * Format: int64
+             * @description Counted minus expected on those days; negative is short
+             */
+            cashDiff: number;
+            /**
+             * Format: date-time
+             * @description The range's latest closing
+             */
+            closedAt?: string;
+            /**
+             * Format: int64
+             * @description Days in the range closed with cash counted
+             */
+            closedDays: number;
             /** Format: int64 */
             cups: number;
+            /**
+             * Format: int64
+             * @description Days in the range the store opened
+             */
+            days: number;
+            /**
+             * Format: int64
+             * @description Spent over the range
+             */
+            expenses: number;
             /** Format: uuid */
             id: string;
             /** Format: date-time */
             lastClosed?: string;
             name: string;
+            /**
+             * Format: int64
+             * @description Of those, not closed (today's, while it is open, included)
+             */
+            notClosed: number;
             /** @description Someone is selling there now */
             open: boolean;
             /** Format: date-time */
             openSince?: string;
+            /**
+             * Format: int64
+             * @description Opening balances added up: meaningful for one day
+             */
+            opening: number;
             /** Format: int64 */
             orders: number;
             /** Format: int64 */

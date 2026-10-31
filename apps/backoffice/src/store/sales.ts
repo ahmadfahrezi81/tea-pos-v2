@@ -43,7 +43,7 @@ export function useSalesDays(from: string, to: string) {
 }
 
 /** The picked stores' days in a range, newest first, with expenses and who worked. */
-export function useDays(from: string, to: string) {
+export function useDays(from: string, to: string, enabled = true) {
     const scope = useStoreScope();
     return $api.useQuery(
         "get",
@@ -54,7 +54,7 @@ export function useDays(from: string, to: string) {
                 query: { from, to, storeId: scope?.storeId },
             },
         },
-        { enabled: !!scope, staleTime: STALE.COOL },
+        { enabled: !!scope && enabled, staleTime: STALE.COOL },
     );
 }
 
@@ -174,6 +174,27 @@ export function useRangeOrders(from: string, to: string) {
     );
 }
 
+/** A store page's snippet: only the newest few. Refetched while a live range is on screen. */
+export function useLatestOrders(from: string, to: string) {
+    const scope = useStoreScope();
+    return $api.useQuery(
+        "get",
+        "/tenants/{tenant}/orders",
+        {
+            params: {
+                path: { tenant: scope?.tenant ?? "" },
+                query: { from, to, storeId: scope?.storeId, limit: 5 },
+            },
+        },
+        {
+            enabled: !!scope,
+            staleTime: STALE.WARM,
+            refetchInterval: to === localDate() ? 60_000 : false,
+            meta: { live: ["order"] },
+        },
+    );
+}
+
 /** Every store, with a range's sales. v1 writes without telling the hub, so it refetches every minute while on screen. */
 export function useStoresLive(from: string, to: string) {
     const tenant = useSlug();
@@ -184,7 +205,8 @@ export function useStoresLive(from: string, to: string) {
         {
             enabled: !!tenant,
             staleTime: STALE.WARM,
-            refetchInterval: 60_000,
+            // A past range does not change.
+            refetchInterval: to === localDate() ? 60_000 : false,
             meta: { live: ["order"] },
         },
     );

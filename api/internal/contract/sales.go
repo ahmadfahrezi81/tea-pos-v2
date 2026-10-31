@@ -4,7 +4,7 @@ import "time"
 
 // Stores is which stores a Store screen adds up: the ones named, or every store of the tenant.
 type Stores struct {
-	StoreIDs []string `query:"storeId" format:"uuid" maxItems:"100" doc:"Repeat for several; none is every store of the tenant (All stores)"`
+	StoreIDs []string `query:"storeId,explode" format:"uuid" maxItems:"100" doc:"Repeat for several; none is every store of the tenant (All stores)"`
 }
 
 type SalesDaysInput = RangeInput
@@ -50,5 +50,13 @@ type StoreLive struct {
 	Orders       int64       `json:"orders"`
 	Cups         int64       `json:"cups"`
 	Sales        int64       `json:"sales"`
+	CashCounted  int64       `json:"cashCounted" doc:"Cash counted at closing, over the range's closed days"`
+	CashDiff     int64       `json:"cashDiff" doc:"Counted minus expected on those days; negative is short"`
+	ClosedDays   int         `json:"closedDays" doc:"Days in the range closed with cash counted"`
+	Expenses     int64       `json:"expenses" doc:"Spent over the range"`
+	Opening      int64       `json:"opening" doc:"Opening balances added up: meaningful for one day"`
+	Days         int         `json:"days" doc:"Days in the range the store opened"`
+	NotClosed    int         `json:"notClosed" doc:"Of those, not closed (today's, while it is open, included)"`
+	ClosedAt     *time.Time  `json:"closedAt,omitempty" doc:"The range's latest closing"`
 	Sellers      []DaySeller `json:"sellers" nullable:"false" doc:"Who sold here today and their cups, the most first; the seller on shift is in it even before their first order"`
 }

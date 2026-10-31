@@ -2,7 +2,7 @@ import type { components } from "@tea-pos/api-client";
 import { formatCalendarDay, formatMoney, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { CalendarClock, ChevronLeft, ChevronRight, CircleHelp, Settings } from "lucide-react";
 
 import { daysLeft, daysLeftText, weeks } from "./dates";
@@ -13,7 +13,9 @@ import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { Badge } from "@tea-pos/ui/Badge";
 import { STEP_ARROW, stepIcon } from "@tea-pos/ui/MonthStepper";
-import { SectionLabel } from "@tea-pos/ui/SectionLabel";
+import { ListSection } from "@tea-pos/ui/ListSection";
+import { Tile } from "@tea-pos/ui/Tile";
+import { useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { useSlug } from "@tea-pos/shell/tenant";
 
 type Person = components["schemas"]["Payout"];
@@ -29,6 +31,8 @@ export function PeriodHome({ start }: { start: string }) {
     const t = useT();
     const locale = useLocale();
     const slug = useSlug();
+    const navigate = useNavigate();
+    const card = useRef<HTMLDivElement>(null);
     const { data: p } = usePayPeriodAt(start);
     // From the current period, the one before while anyone in it is still unpaid: pay day lands there.
     const { data: before } = usePayPeriodAt(start === "current" && p ? p.previous : "");
@@ -49,9 +53,53 @@ export function PeriodHome({ start }: { start: string }) {
     const done = people.filter((x) => x.status !== "pending");
     const toPay = people.filter(isReady).length;
 
+    const go = (period: string) =>
+        void navigate({
+            to: "/$tenant/pay",
+            params: { tenant: slug },
+            search: { period },
+            replace: true,
+        });
+    // Swiping the period card changes period; only here, so the page scrolls as ever.
+    const swipe = {
+        start: (e: ReactPointerEvent) => {
+            const el = card.current;
+            if (!el || (e.target as Element).closest("a")) return;
+            const { clientX: x0, clientY: y0 } = e;
+            let dx = 0;
+            let dy = 0;
+            const move = (m: PointerEvent) => {
+                dx = m.clientX - x0;
+                dy = m.clientY - y0;
+                // The card leans the way it can go, and barely past the current period.
+                const room = dx < 0 && !p.next ? 0.05 : 0.3;
+                el.style.transition = "none";
+                el.style.transform = `translateX(${dx * room}px)`;
+            };
+            const end = (u: PointerEvent) => {
+                window.removeEventListener("pointermove", move);
+                window.removeEventListener("pointerup", end);
+                window.removeEventListener("pointercancel", end);
+                el.style.transition = "transform 200ms ease-out";
+                el.style.transform = "";
+                if (u.type !== "pointerup" || Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy))
+                    return;
+                if (dx > 0) go(p.previous);
+                else if (p.next) go(p.next);
+            };
+            window.addEventListener("pointermove", move);
+            window.addEventListener("pointerup", end);
+            window.addEventListener("pointercancel", end);
+        },
+    };
+
     return (
         <div className="space-y-4">
-            <div className="rounded-2xl bg-white p-3">
+            <div
+                ref={card}
+                onPointerDown={swipe.start}
+                className="rounded-2xl bg-white p-3 space-y-3 touch-pan-y"
+            >
                 <div className="flex items-center justify-between">
                     <Link
                         to="/$tenant/pay"
@@ -87,23 +135,21 @@ export function PeriodHome({ start }: { start: string }) {
                         <span className="size-11 shrink-0" />
                     )}
                 </div>
-            </div>
-
-            <div className="bg-white p-3 rounded-2xl flex items-center gap-3">
-                <div className="size-11 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
-                    <CalendarClock size={ICON} className="text-brand" />
-                </div>
-                <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">
+                <div className="flex items-center gap-2 rounded-xl bg-slate-100 p-1.5">
+                    <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand/10">
+                        <CalendarClock size={18} className="text-brand" />
+                    </span>
+                    <p className="flex-1 min-w-0 truncate text-base font-bold text-gray-900">
                         {left <= 0 && toPay > 0
                             ? t("pay.payDay").replace("{n}", String(toPay))
-                            : t(left > 0 ? "pay.nextPayout" : "pay.payDate")}
+                            : `${t(left > 0 ? "pay.nextShort" : "pay.payDate")} ${payDate(p.payoutDate, locale)}`}
                     </p>
-                    <p className="text-lg font-bold text-gray-900">
-                        {payDate(p.payoutDate, locale)}
-                    </p>
+                    {left > 0 && (
+                        <span className="shrink-0 rounded-lg bg-orange-100 px-2 py-0.5 text-sm font-bold text-orange-700">
+                            {daysLeftText(t, left)}
+                        </span>
+                    )}
                 </div>
-                {left > 0 && <Badge>{daysLeftText(t, left)}</Badge>}
             </div>
 
             {before && before.people.some((x) => x.status === "pending" && x.total > 0) && (
@@ -131,16 +177,19 @@ export function PeriodHome({ start }: { start: string }) {
             {people.length === 0 && (
                 <EmptyState title={t("pay.noPeople")} body={t("pay.noPeopleBody")} />
             )}
-            {open.map((x) => (
-                <PersonCard key={x.id} person={x} start={p.start} />
-            ))}
+            {open.length > 0 && (
+                <ListSection title={t("pay.payoutsList")} count={open.length}>
+                    {open.map((x) => (
+                        <PersonCard key={x.id} person={x} start={p.start} />
+                    ))}
+                </ListSection>
+            )}
             {done.length > 0 && (
-                <div className="space-y-2">
-                    {open.length > 0 && <SectionLabel>{t("pay.done")}</SectionLabel>}
+                <ListSection title={t("pay.done")} count={done.length}>
                     {done.map((x) => (
                         <PersonCard key={x.id} person={x} start={p.start} />
                     ))}
-                </div>
+                </ListSection>
             )}
 
             <SettingsGroup>
@@ -159,22 +208,9 @@ export function PeriodHome({ start }: { start: string }) {
     );
 }
 
-const Tile = ({
-    label,
-    value,
-    className,
-}: {
-    label: string;
-    value: string | number;
-    className: string;
-}) => (
-    <div className={`p-2 rounded-lg ${className}`}>
-        <p className="text-xs font-semibold text-gray-900">{label}</p>
-        <p className="text-lg font-bold text-gray-900">{value}</p>
-    </div>
-);
+const plain = (amount: number) => formatMoney(amount).replace(/^Rp\s*/, "");
 
-/** A person in the period, as v1's card: who, what is next, and the numbers before any tap. */
+/** A person in the period: who, what is next and the total up top, what makes it up as tiles. */
 function PersonCard({ person: x, start }: { person: Person; start: string }) {
     const t = useT();
     const slug = useSlug();
@@ -183,46 +219,40 @@ function PersonCard({ person: x, start }: { person: Person; start: string }) {
         <Link
             to="/$tenant/pay/$start/$userId"
             params={{ tenant: slug, start, userId: x.userId }}
-            className="block bg-white rounded-2xl p-3 space-y-3 active:bg-gray-50"
+            className="block bg-white rounded-xl p-3 space-y-2.5 active:bg-gray-50"
         >
             <div className="flex items-center gap-3">
-                <Avatar url={x.avatarUrl} square />
-                <p className="flex-1 min-w-0 text-lg font-bold text-gray-900 truncate">{x.name}</p>
-                <div className="flex flex-col items-end gap-1 shrink-0">
-                    <Badge>
-                        {x.status !== "pending"
-                            ? t(x.status === "skipped" ? "pay.skipped" : "pay.paid")
-                            : x.pending > 0
-                              ? t("pay.waiting").replace("{n}", String(x.pending))
-                              : t("pay.readyBadge")}
-                    </Badge>
-                    {reviewed > 0 && (
-                        <span className="text-xs font-medium text-gray-900">
-                            {t("pay.approvedOf")
-                                .replace("{a}", String(x.approved))
-                                .replace("{n}", String(reviewed))}
-                        </span>
-                    )}
+                <Avatar url={x.avatarUrl} />
+                <div className="flex-1 min-w-0 space-y-1">
+                    <p className="font-bold text-gray-900 truncate">{x.name}</p>
+                    <div className="flex flex-wrap gap-1">
+                        <Badge>
+                            {x.status !== "pending"
+                                ? t(x.status === "skipped" ? "pay.skipped" : "pay.paid")
+                                : x.pending > 0
+                                  ? t("pay.waiting").replace("{n}", String(x.pending))
+                                  : t("pay.readyBadge")}
+                        </Badge>
+                        {reviewed > 0 && (
+                            <Badge>
+                                {x.approved}/{reviewed} ✓
+                            </Badge>
+                        )}
+                    </div>
+                </div>
+                <div className="shrink-0 space-y-1 text-right">
+                    <p className="text-xs font-semibold text-gray-900">{t("pay.total")}</p>
+                    <p className="font-bold text-green-600">{formatMoney(x.total)}</p>
                 </div>
             </div>
-            <div className="grid grid-cols-4 gap-2 bg-slate-50 rounded-xl p-2">
-                <Tile label={t("pay.orders")} value={x.orders} className="bg-orange-100" />
-                <Tile label={t("pay.cups")} value={x.cups} className="bg-blue-100" />
+            <div className="grid grid-cols-3 gap-1.5">
+                <Tile label={t("pay.cups")} value={String(x.cups)} className="bg-blue-100" />
                 <Tile
                     label={t("pay.commission")}
-                    value={formatMoney(x.commissions)}
-                    className="bg-teal-100 col-span-2"
+                    value={plain(x.commissions)}
+                    className="bg-teal-100"
                 />
-                <Tile
-                    label={t("pay.claims")}
-                    value={formatMoney(x.claims)}
-                    className="bg-purple-100 col-span-2"
-                />
-                <Tile
-                    label={t("pay.total")}
-                    value={formatMoney(x.total)}
-                    className="bg-green-100 col-span-2"
-                />
+                <Tile label={t("pay.claims")} value={plain(x.claims)} className="bg-purple-100" />
             </div>
         </Link>
     );

@@ -25,6 +25,8 @@
         "./icon": "./lib/icon.ts",
         "./ListRow": "./layout/ListRow.tsx",
         "./LoadMore": "./feedback/LoadMore.tsx",
+        "./ImagePreview": "./feedback/ImagePreview.tsx",
+        "./ListSection": "./layout/ListSection.tsx",
         "./MonthStepper": "./controls/MonthStepper.tsx",
         "./motion": "./lib/motion.ts",
         "./Panel": "./layout/Panel.tsx",
@@ -34,6 +36,7 @@
         "./Sheet": "./layout/Sheet.tsx",
         "./shrinkPhoto": "./photo/shrink.ts",
         "./Skeleton": "./feedback/Skeleton.tsx",
+        "./Tile": "./controls/Tile.tsx",
         "./toast": "./toast/Toast.tsx",
         "./weather": "./lib/weather.ts"
     },

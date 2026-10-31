@@ -116,7 +116,6 @@
         "rejectX": "Reject {x}?",
         "commissionWord": "commission",
         "claimWord": "claim",
-        "approvedOf": "{a} / {n} approved",
         "claim": "Claim",
         "claims": "Claims",
         "commission": "Commission",
@@ -215,6 +214,8 @@
         "helpPaying": "Paying",
         "helpPayingBody": "Open a person to see the breakdown, then pay or skip.\nPay: saves the transfer screenshot and closes the period for them.\nSkip: closes it with no transfer.\nA paid or skipped period can no longer change.",
         "helpSetup": "Setting it up",
-        "helpSetupBody": "Commission and claim types: in Pay Settings.\nA person's commission and bank: on their page in People.\nPay schedule: in More, Advanced."
+        "helpSetupBody": "Commission and claim types: in Pay Settings.\nA person's commission and bank: on their page in People.\nPay schedule: in More, Advanced.",
+        "payoutsList": "Payouts",
+        "nextShort": "Payout"
     }
 }
