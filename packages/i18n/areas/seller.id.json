@@ -197,5 +197,15 @@
         "notFound": "Notifikasi tidak ditemukan",
         "noHourlyData": "Tidak ada data per jam",
         "now": "Sekarang"
+    },
+    "gate": {
+        "notOpen": "Toko belum dibuka",
+        "notOpenSub": "Buka toko untuk mulai menerima pesanan hari ini.",
+        "openStore": "Buka Toko",
+        "closed": "Toko sudah tutup",
+        "closedSub": "Sesi hari ini telah berakhir.",
+        "takenBy": "Sesi sudah diambil alih oleh",
+        "askCode": "Minta kode 2 digit dari penjual saat ini untuk mengambil alih.",
+        "takeOver": "Ambil Alih"
     }
 }

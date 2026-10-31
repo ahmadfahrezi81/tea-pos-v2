@@ -24,6 +24,8 @@ import { Route as ShellTenantWhatsNewRouteImport } from './routes/_shell/$tenant
 import { Route as ShellTenantAccountIndexRouteImport } from './routes/_shell/$tenant/account/index'
 import { Route as ShellTenantAccountDetailsRouteImport } from './routes/_shell/$tenant/account/details'
 import { Route as ShellTenantAccountLanguageRouteImport } from './routes/_shell/$tenant/account/language'
+import { Route as ShellTenantManageIndexRouteImport } from './routes/_shell/$tenant/manage/index'
+import { Route as ShellTenantManageOpenRouteImport } from './routes/_shell/$tenant/manage/open'
 
 const ShellRoute = ShellRouteImport.update({
   id: '/_shell',
@@ -101,6 +103,16 @@ const ShellTenantAccountLanguageRoute =
     path: '/account/language',
     getParentRoute: () => ShellTenantRoute,
   } as any)
+const ShellTenantManageIndexRoute = ShellTenantManageIndexRouteImport.update({
+  id: '/manage/',
+  path: '/manage/',
+  getParentRoute: () => ShellTenantRoute,
+} as any)
+const ShellTenantManageOpenRoute = ShellTenantManageOpenRouteImport.update({
+  id: '/manage/open',
+  path: '/manage/open',
+  getParentRoute: () => ShellTenantRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof ShellIndexRoute
@@ -116,7 +128,9 @@ export interface FileRoutesByFullPath {
   '/$tenant/': typeof ShellTenantIndexRoute
   '/$tenant/account/details': typeof ShellTenantAccountDetailsRoute
   '/$tenant/account/language': typeof ShellTenantAccountLanguageRoute
+  '/$tenant/manage/open': typeof ShellTenantManageOpenRoute
   '/$tenant/account/': typeof ShellTenantAccountIndexRoute
+  '/$tenant/manage/': typeof ShellTenantManageIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -131,7 +145,9 @@ export interface FileRoutesByTo {
   '/$tenant': typeof ShellTenantIndexRoute
   '/$tenant/account/details': typeof ShellTenantAccountDetailsRoute
   '/$tenant/account/language': typeof ShellTenantAccountLanguageRoute
+  '/$tenant/manage/open': typeof ShellTenantManageOpenRoute
   '/$tenant/account': typeof ShellTenantAccountIndexRoute
+  '/$tenant/manage': typeof ShellTenantManageIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -149,7 +165,9 @@ export interface FileRoutesById {
   '/_shell/$tenant/': typeof ShellTenantIndexRoute
   '/_shell/$tenant/account/details': typeof ShellTenantAccountDetailsRoute
   '/_shell/$tenant/account/language': typeof ShellTenantAccountLanguageRoute
+  '/_shell/$tenant/manage/open': typeof ShellTenantManageOpenRoute
   '/_shell/$tenant/account/': typeof ShellTenantAccountIndexRoute
+  '/_shell/$tenant/manage/': typeof ShellTenantManageIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -167,7 +185,9 @@ export interface FileRouteTypes {
     | '/$tenant/'
     | '/$tenant/account/details'
     | '/$tenant/account/language'
+    | '/$tenant/manage/open'
     | '/$tenant/account/'
+    | '/$tenant/manage/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -182,7 +202,9 @@ export interface FileRouteTypes {
     | '/$tenant'
     | '/$tenant/account/details'
     | '/$tenant/account/language'
+    | '/$tenant/manage/open'
     | '/$tenant/account'
+    | '/$tenant/manage'
   id:
     | '__root__'
     | '/_shell'
@@ -199,7 +221,9 @@ export interface FileRouteTypes {
     | '/_shell/$tenant/'
     | '/_shell/$tenant/account/details'
     | '/_shell/$tenant/account/language'
+    | '/_shell/$tenant/manage/open'
     | '/_shell/$tenant/account/'
+    | '/_shell/$tenant/manage/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -314,6 +338,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellTenantAccountLanguageRouteImport
       parentRoute: typeof ShellTenantRoute
     }
+    '/_shell/$tenant/manage/': {
+      id: '/_shell/$tenant/manage/'
+      path: '/manage'
+      fullPath: '/$tenant/manage/'
+      preLoaderRoute: typeof ShellTenantManageIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/manage/open': {
+      id: '/_shell/$tenant/manage/open'
+      path: '/manage/open'
+      fullPath: '/$tenant/manage/open'
+      preLoaderRoute: typeof ShellTenantManageOpenRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
   }
 }
 
@@ -328,7 +366,9 @@ interface ShellTenantRouteChildren {
   ShellTenantIndexRoute: typeof ShellTenantIndexRoute
   ShellTenantAccountDetailsRoute: typeof ShellTenantAccountDetailsRoute
   ShellTenantAccountLanguageRoute: typeof ShellTenantAccountLanguageRoute
+  ShellTenantManageOpenRoute: typeof ShellTenantManageOpenRoute
   ShellTenantAccountIndexRoute: typeof ShellTenantAccountIndexRoute
+  ShellTenantManageIndexRoute: typeof ShellTenantManageIndexRoute
 }
 
 const ShellTenantRouteChildren: ShellTenantRouteChildren = {
@@ -342,7 +382,9 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
   ShellTenantIndexRoute: ShellTenantIndexRoute,
   ShellTenantAccountDetailsRoute: ShellTenantAccountDetailsRoute,
   ShellTenantAccountLanguageRoute: ShellTenantAccountLanguageRoute,
+  ShellTenantManageOpenRoute: ShellTenantManageOpenRoute,
   ShellTenantAccountIndexRoute: ShellTenantAccountIndexRoute,
+  ShellTenantManageIndexRoute: ShellTenantManageIndexRoute,
 }
 
 const ShellTenantRouteWithChildren = ShellTenantRoute._addFileChildren(

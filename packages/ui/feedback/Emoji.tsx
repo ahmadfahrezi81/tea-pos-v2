@@ -1,4 +1,6 @@
 import alarmClock from "../emoji/alarm-clock.svg";
+import convenienceStore from "../emoji/convenience-store.svg";
+import lockedWithKey from "../emoji/locked-with-key.svg";
 import ghost from "../emoji/ghost.svg";
 import refresh from "../emoji/counterclockwise-arrows-button.svg";
 import floppyDisk from "../emoji/floppy-disk.svg";
@@ -15,6 +17,8 @@ const sources = {
     receipt,
     alarmClock,
     ghost,
+    convenienceStore,
+    lockedWithKey,
 } as const;
 
 export type EmojiName = keyof typeof sources;

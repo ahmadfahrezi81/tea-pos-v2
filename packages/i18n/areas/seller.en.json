@@ -197,5 +197,15 @@
         "notFound": "Notification not found",
         "noHourlyData": "No hourly data available",
         "now": "Now"
+    },
+    "gate": {
+        "notOpen": "Store not open yet",
+        "notOpenSub": "Open the store to start taking orders today.",
+        "openStore": "Open Store",
+        "closed": "Store is closed",
+        "closedSub": "Today's session has ended.",
+        "takenBy": "Session already taken by",
+        "askCode": "Ask the current seller for their 2-digit code to take over.",
+        "takeOver": "Take Over"
     }
 }

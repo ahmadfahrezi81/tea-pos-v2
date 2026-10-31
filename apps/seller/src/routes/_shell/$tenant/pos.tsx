@@ -1,8 +1,10 @@
+import { loadArea } from "@tea-pos/i18n";
 import { createFileRoute } from "@tanstack/react-router";
-import { comingSoon } from "@tea-pos/shell/ComingSoonScreen";
 
-// Built in a later step (the RFC's build order).
+import { POS } from "../../../home/POS";
+
 export const Route = createFileRoute("/_shell/$tenant/pos")({
+    loader: () => loadArea("seller"),
     staticData: { shell: { titleKey: "nav.pos", parent: null } },
-    component: comingSoon("nav.pos"),
+    component: POS,
 });
