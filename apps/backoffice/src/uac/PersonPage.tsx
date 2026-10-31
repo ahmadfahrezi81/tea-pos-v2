@@ -16,14 +16,13 @@ import { toast } from "@tea-pos/ui/toast";
 import { useMe } from "@tea-pos/api-client/me";
 import { ConfirmSheet, FormFooter } from "@tea-pos/shell/FormFooter";
 import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
-import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
+import { LogOutButton, rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { useAccess, useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { useRouter } from "@tanstack/react-router";
 import {
     BadgePercent,
     Check,
     LayoutGrid,
-    LogOut,
     Pencil,
     ReceiptText,
     Store,
@@ -246,18 +245,13 @@ function LogoutRow({ person: p }: { person: Person }) {
     const logout = useLogoutPerson(p.id);
     const [asking, setAsking] = useState(false);
     return (
-        <SettingsGroup>
-            <SettingsRow
-                icon={<LogOut {...rowIcon} />}
-                label={t("uac.logout")}
-                right={<></>}
-                onClick={() => setAsking(true)}
-            />
+        <div className="flex justify-center pt-4">
+            <LogOutButton label={t("common.logout")} onClick={() => setAsking(true)} />
             <ConfirmSheet
                 open={asking}
                 title={t("uac.logoutTitle").replace("{name}", p.name)}
                 message={t("uac.logoutBody")}
-                label={t("uac.logout")}
+                label={t("common.logout")}
                 busyLabel={t("uac.saving")}
                 tone="orange"
                 onConfirm={async () => {
@@ -268,7 +262,7 @@ function LogoutRow({ person: p }: { person: Person }) {
                 onError={() => setAsking(false)}
                 onCancel={() => setAsking(false)}
             />
-        </SettingsGroup>
+        </div>
     );
 }
 

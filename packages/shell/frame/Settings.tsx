@@ -71,5 +71,17 @@ export function SettingsGroup({ title, children }: { title?: string; children: R
     );
 }
 
+/** The red Log Out at the foot of a page: Account's, and a person's. */
+export function LogOutButton({ label, onClick }: { label: string; onClick: () => void }) {
+    return (
+        <button
+            onClick={onClick}
+            className="bg-red-500 text-white py-3 px-16 rounded-xl font-semibold text-base active:scale-[0.98] transition-transform"
+        >
+            {label}
+        </button>
+    );
+}
+
 /** A row's icon, as the old apps draw them. */
 export const rowIcon = { size: ICON, strokeWidth: 2, className: "text-gray-900" } as const;

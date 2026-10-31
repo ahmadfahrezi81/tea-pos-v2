@@ -76,7 +76,6 @@
         "onTitle": "Turn {name} back on?",
         "onBody": "They start with no apps or stores: pick them next.",
         "confirmTitle": "Save {name}'s changes?",
-        "logout": "Log out everywhere",
         "logoutTitle": "Log {name} out?",
         "logoutBody": "They are signed out of every app on every phone. They can sign in again.",
         "loggedOut": "{name} is logged out."
