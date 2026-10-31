@@ -1,6 +1,6 @@
 # Task 052 — The owner's feedback round
 
-**Status: rounds 1 and 2 released (2026.10.6, 2026.10.7); rounds 3 and 4 next.**
+**Status: all seven rounds released (2026.10.11).**
 
 ## The goal
 

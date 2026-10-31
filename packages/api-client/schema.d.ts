@@ -209,23 +209,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/tenants/{tenant}/feedbacks": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Where customers asked for a store, newest first */
-        get: operations["listFeedbacks"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/tenants/{tenant}/files": {
         parameters: {
             query?: never;
@@ -535,6 +518,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{tenant}/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What the stores sell */
+        get: operations["listProducts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{tenant}/sales/days": {
         parameters: {
             query?: never;
@@ -597,6 +597,91 @@ export interface paths {
         get: operations["storesLive"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/stores/{storeId}/gate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Today at a store: open it, resume, take over or sell */
+        get: operations["getStoreGate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/stores/{storeId}/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open a store for today: its day and the caller's session, together */
+        post: operations["openStore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/stores/{storeId}/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save an order, its items and the day's totals, together */
+        post: operations["createOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/stores/{storeId}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start selling at a store that is open with nobody on it */
+        post: operations["resumeStore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/stores/{storeId}/take-over": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take over from whoever is selling, with their code */
+        post: operations["takeOverStore"];
         delete?: never;
         options?: never;
         head?: never;
@@ -894,6 +979,15 @@ export interface components {
             /** @description Uppercase letters, digits and underscores */
             slug: string;
         };
+        CreateOrderInputBody: {
+            items: components["schemas"]["Item"][];
+        };
+        CreateOrderOutputBody: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int64 */
+            total: number;
+        };
         Day: {
             /**
              * Format: int64
@@ -1096,7 +1190,7 @@ export interface components {
              * @example day_already_closed
              * @enum {string}
              */
-            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_cursor" | "bad_level" | "bad_proof" | "bad_range" | "bad_request" | "blank_name" | "claim_not_found" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_yourself" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_not_found" | "person_not_found" | "proof_required" | "request_not_found" | "route_not_found" | "staff_not_found" | "store_not_found" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
+            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_claim_code" | "bad_cursor" | "bad_level" | "bad_proof" | "bad_range" | "bad_request" | "blank_name" | "claim_not_found" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_closed" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "no_session" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_your_store" | "not_yourself" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_not_found" | "person_not_found" | "product_changed" | "proof_required" | "request_not_found" | "route_not_found" | "session_taken" | "staff_not_found" | "store_already_opened" | "store_not_found" | "store_not_open" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
             details?: string[] | null;
             /** @example The day is already closed */
             message: string;
@@ -1112,24 +1206,6 @@ export interface components {
             /** Format: uuid */
             session: string;
         };
-        Feedback: {
-            /** Format: date-time */
-            at: string;
-            /** Format: uuid */
-            id: string;
-            /** Format: double */
-            latitude: number;
-            locationDisplay: string;
-            locationName: string;
-            /** Format: double */
-            longitude: number;
-            notes?: string;
-            userName?: string;
-        };
-        FeedbacksOutputBody: {
-            /** @description Newest first */
-            feedbacks: components["schemas"]["Feedback"][];
-        };
         HealthOutputBody: {
             /** @example a1b2c3d */
             commit: string;
@@ -1137,6 +1213,17 @@ export interface components {
             status: string;
             /** @example 2026.10.3 */
             version: string;
+        };
+        Item: {
+            /** Format: uuid */
+            productId: string;
+            /** Format: int32 */
+            quantity: number;
+            /**
+             * Format: int32
+             * @description As the phone showed it: a changed price is refused, never charged silently
+             */
+            unitPrice: number;
         };
         Me: {
             /** @description Slugs of the tenants the user asked to join, still waiting */
@@ -1212,6 +1299,14 @@ export interface components {
              * @description When the account was made
              */
             since?: string;
+        };
+        OpenStoreInputBody: {
+            /** @description How many of each note */
+            cashBreakdown?: {
+                [key: string]: number;
+            };
+            /** Format: int64 */
+            openingBalance: number;
         };
         Order: {
             /** Format: date-time */
@@ -1452,6 +1547,20 @@ export interface components {
             status: "pending" | "approved" | "rejected";
             storeName?: string;
         };
+        Product: {
+            /** Format: uuid */
+            categoryId?: string;
+            /** Format: uuid */
+            id: string;
+            imageUrl?: string;
+            name: string;
+            /** Format: int64 */
+            price: number;
+        };
+        ProductsOutputBody: {
+            /** @description Most popular first */
+            products: components["schemas"]["Product"][];
+        };
         RejectRequestInputBody: {
             /** @description Also drop this person's later asks, quietly */
             block: boolean;
@@ -1560,6 +1669,40 @@ export interface components {
              */
             status: "paid" | "skipped";
         };
+        StoreGate: {
+            claimCode?: string;
+            /** Format: date-time */
+            closedAt?: string;
+            /** Format: int64 */
+            cups: number;
+            /** Format: date */
+            date: string;
+            /** Format: uuid */
+            dayId?: string;
+            /** Format: int64 */
+            expectedCash: number;
+            /** Format: int64 */
+            expenses: number;
+            /**
+             * @description no_day: open it; closed: done for today; no_session: resume; open: someone is selling
+             * @enum {string}
+             */
+            gate: "no_day" | "closed" | "no_session" | "open";
+            /** Format: int64 */
+            openingBalance: number;
+            /** Format: int64 */
+            orders: number;
+            /** Format: int64 */
+            sales: number;
+            sellerAvatar?: string;
+            /** Format: uuid */
+            sellerId?: string;
+            sellerName?: string;
+            /** Format: uuid */
+            sessionId?: string;
+            /** Format: date-time */
+            startedAt?: string;
+        };
         StoreLive: {
             /**
              * Format: int64
@@ -1645,6 +1788,9 @@ export interface components {
         TeaWasteOutputBody: {
             /** @description Only days whose tea was measured at closing */
             days: components["schemas"]["TeaWasteDay"][];
+        };
+        TransferSessionInputBody: {
+            claimCode: string;
         };
         UacOutputBody: {
             /** @description Active first, then by name */
@@ -2156,39 +2302,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DaySessionsOutputBody"];
-                };
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    listFeedbacks: {
-        parameters: {
-            query?: {
-                limit?: number;
-            };
-            header?: never;
-            path: {
-                tenant: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["FeedbacksOutputBody"];
                 };
             };
             /** @description Error */
@@ -2918,6 +3031,37 @@ export interface operations {
             };
         };
     };
+    listProducts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     salesDays: {
         parameters: {
             query: {
@@ -3050,6 +3194,178 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StoresLiveOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getStoreGate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                storeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreGate"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    openStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                storeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpenStoreInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreGate"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                storeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateOrderInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateOrderOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    resumeStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                storeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreGate"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    takeOverStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                storeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransferSessionInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreGate"];
                 };
             };
             /** @description Error */
