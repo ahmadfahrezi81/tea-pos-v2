@@ -167,6 +167,32 @@ The owner swapped the tenant's owner by SQL on production, and consolidates dupl
 
 - **The production check failed a good release:** with no Go changes the API rightly stays on its last commit, but the check demanded the release's. It compares commits only when the release deployed the API; otherwise the API just has to answer
 
+## Round 7 (2026-10-31)
+
+### To build, all at once in one PR
+
+1. **Store's top card:** the Sales figure in green, as the store cards' totals (`text-green-600`)
+2. **The loading bar is the initial load's bar:** it stretches and shrinks as it runs, as Google's, and just goes when done: no stop at the centre, no expansion, no blink; it lagged and blipped out in the middle on the owner's iPhone
+3. **Pay's Total payout row hides with nobody to pay:** a period without people shows only the week and the empty message, not a row with just a date
+4. **Store's date heading is bigger:** the title at 22px, was 18px; the first design's 24px was about right
+5. **The owner can change their own stores:** apps stay full access, stores are theirs to pick. Today the screen locks them, and the API refuses the owner's levels as it reads them (seller shows admin); fix both, with a test
+6. **Forms sit in a white card:** Account's Personal details as a person's Name and phone (`Panel`, the same field font); check every other form for the same
+7. **Space under a Save footer on inner pages:** 75% of the phone's home bar, was 50% (about 25px on an iPhone)
+8. **A person's top card:** name, email and date only; the phone is on the Name and phone row
+### API and code, to explore and clean up
+
+Found by reading and a scan, then fixed:
+
+- **A claim type's Eligibility list:** only people active here (`/pay/staff`'s status is now the tenant's), and any role
+- **A person's page no longer reads every staff member for one bank row:** the bank comes on the one-person read
+- **`api/db/schema.sql` re-dumped**
+- **15 Pay words no screen used:** removed
+- **Log out everywhere on a person's page:** an admin signs someone out with a confirm (`POST .../uac/people/{userId}/logout`), not the owner unless the owner asks, not themselves there
+- **Kept:** `GET /feedbacks`, `POST /auth/logout-everywhere`. `GET /pay/payouts` removed, unused since Pay went by period
+- **More tests before the cutover:** e2e reads every Store, Pay and People screen through the forwarder, tenant and app boundaries, one write (log someone out); integration: other tenants on every write about a person, the bank on one person only
+- **Good:** all queries are used; no query per row in a request
+- **Not checked:** query speed against production's data, indexes
+
 ## Done when
 
 - Typecheck, lint, build and bundle size pass

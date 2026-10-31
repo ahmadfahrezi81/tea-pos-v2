@@ -34,7 +34,7 @@ type PayStaff struct {
 	Email          string          `json:"email"`
 	AvatarURL      string          `json:"avatarUrl,omitempty"`
 	Role           string          `json:"role" example:"USER"`
-	Status         string          `json:"status" example:"active"`
+	Status         string          `json:"status" enum:"active,inactive" doc:"In this tenant"`
 	CommissionType *CommissionType `json:"commissionType,omitempty"`
 	Bank           Bank            `json:"bank" doc:"Set by the staff member in the seller app"`
 }

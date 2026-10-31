@@ -6,6 +6,7 @@ import { CopyButton } from "@tea-pos/ui/CopyButton";
 import { DetailList, DetailRow as Row } from "@tea-pos/ui/DetailList";
 import { Field } from "@tea-pos/ui/form/Field";
 import { TextInput } from "@tea-pos/ui/form/TextInput";
+import { Panel } from "@tea-pos/ui/Panel";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -76,16 +77,18 @@ function DetailsForm({ user, onDone }: { user: Me["user"]; onDone: () => void })
         { onSuccess: () => queryClient.invalidateQueries({ queryKey: ME_KEY }) },
     );
     return (
-        <div className="space-y-4">
-            <Field label={t("account.firstName")} required>
-                <TextInput value={first} onChange={setFirst} />
-            </Field>
-            <Field label={t("account.lastName")}>
-                <TextInput value={last} onChange={setLast} />
-            </Field>
-            <Field label={t("account.phoneNumber")}>
-                <TextInput value={phone} onChange={setPhone} inputMode="tel" />
-            </Field>
+        <>
+            <Panel>
+                <Field label={t("account.firstName")} required>
+                    <TextInput value={first} onChange={setFirst} />
+                </Field>
+                <Field label={t("account.lastName")}>
+                    <TextInput value={last} onChange={setLast} />
+                </Field>
+                <Field label={t("account.phoneNumber")}>
+                    <TextInput value={phone} onChange={setPhone} inputMode="tel" />
+                </Field>
+            </Panel>
             <FormFooter
                 label={t("common.save")}
                 busyLabel={t("account.saving")}
@@ -100,6 +103,6 @@ function DetailsForm({ user, onDone }: { user: Me["user"]; onDone: () => void })
                     onDone();
                 }}
             />
-        </div>
+        </>
     );
 }

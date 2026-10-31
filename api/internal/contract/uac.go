@@ -34,6 +34,7 @@ type UacPerson struct {
 	CommissionName   string   `json:"commissionName,omitempty"`
 	CommissionRate   int64    `json:"commissionRate" doc:"Rupiah per cup; 0 without a type"`
 	ClaimTypeIDs     []string `json:"claimTypeIds" nullable:"false" doc:"Enabled claim types they may claim"`
+	Bank             *Bank    `json:"bank,omitempty" doc:"Only when reading one person; set by them in the seller app"`
 }
 
 type UacPersonInput struct {
@@ -56,6 +57,11 @@ type SetUacPersonInput struct {
 	Tenant string `path:"tenant"`
 	UserID string `path:"userId" format:"uuid"`
 	Body   UacPersonChange
+}
+
+type UacLogoutInput struct {
+	Tenant string `path:"tenant"`
+	UserID string `path:"userId" format:"uuid"`
 }
 
 // SetUacDetailsInput is what an admin may change of what a person sets for themselves.

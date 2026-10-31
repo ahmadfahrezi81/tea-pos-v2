@@ -1,6 +1,6 @@
 // The navigation progress bar, outside React so the shell never re-renders for it.
 // idle → loading (until the route commits) → landing (until first requests answer
-// and the page is on screen) → done (fill, pulse, fade) → idle. Every wait is capped.
+// and the page is on screen) → done (fade) → idle. Every wait is capped.
 
 type State = "idle" | "loading" | "landing" | "done";
 
@@ -12,10 +12,8 @@ const DONE_CAP_MS = 1_500;
 const PAINT_WAIT_MAX_MS = 400;
 /** Unbroken frames needed after a commit before the bar ends. */
 const QUIET_MS = 200;
-/** One crossing of the short bar (nav-progress.css); it is centred halfway through. */
-const LOOP_MS = 1100;
-/** Past the centre by more than this, stopping there would show. */
-const LATE_MS = 60;
+/** A fast page still shows some bar, not a flash: only the bar waits, the page is already there. */
+const MIN_RUN_MS = 400;
 /** A frame gap longer than this means the browser drew nothing. */
 const FRAME_GAP_MS = 100;
 
@@ -26,6 +24,7 @@ let cap: ReturnType<typeof setTimeout> | undefined;
 /** Loading cap. Its own slot so later navigations can't keep resetting it. */
 let watchdog: ReturnType<typeof setTimeout> | undefined;
 let settleFrame = 0;
+let startedAt = 0;
 let cancelPaint = () => {};
 /** First-load requests in flight, per run. */
 let pending = 0;
@@ -79,7 +78,6 @@ function animations() {
     const named = (name: string) => all.find((a) => (a as CSSAnimation).animationName === name);
     return {
         crawl: named("nav-crawl"),
-        fill: named("nav-fill"),
         settle: named("nav-settle"),
     };
 }
@@ -87,11 +85,11 @@ function animations() {
 // Animations are only played and paused, never created mid-navigation (on a slow
 // phone a new one froze), and only from here (mixing with CSS made WebKit replay them).
 function drive(previous: State, next: State) {
-    const { crawl, fill, settle } = animations();
+    const { crawl, settle } = animations();
     const fresh = next === "loading" && (previous === "idle" || previous === "done");
     if (next === "idle" || fresh) {
         // Parked at zero: off-screen, and drawing nothing.
-        for (const animation of [crawl, fill, settle]) {
+        for (const animation of [crawl, settle]) {
             if (!animation) continue;
             animation.pause();
             animation.currentTime = 0;
@@ -100,39 +98,24 @@ function drive(previous: State, next: State) {
     if (fresh) {
         crawl?.play();
     } else if (next === "done") {
-        // Timed to arrive here; a late timer is put right, too small to see.
-        if (crawl) {
-            crawl.pause();
-            crawl.currentTime = LOOP_MS / 2;
-        }
-        fill?.play();
         settle?.play();
     }
 }
 
-/** Ms until the short bar is next centred; 0 without one (reduced motion). */
-function untilCentred(): number {
-    const time = Number(animations().crawl?.currentTime ?? NaN);
-    return Number.isNaN(time) ? 0 : (LOOP_MS / 2 - (time % LOOP_MS) + LOOP_MS) % LOOP_MS;
-}
-
-/** Ends the run once a frame has painted and the short bar reaches the centre, so the ending is seen. */
+/** Ends the run once a frame has painted, so the ending is seen, and the bar has shown a moment. */
 function finish() {
     cancelWaits();
-    const end = () => {
-        clearTimeout(watchdog);
-        setState("done");
-        armCap(DONE_CAP_MS, () => setState("idle"));
-    };
-    const wait = (again: boolean) => {
-        const timer = setTimeout(() => {
-            // A busy phone woke this late: one more crossing rather than a visible jump back.
-            if (again && LOOP_MS - untilCentred() > LATE_MS) wait(false);
-            else end();
-        }, untilCentred());
+    cancelPaint = whenPainted(() => {
+        const timer = setTimeout(
+            () => {
+                clearTimeout(watchdog);
+                setState("done");
+                armCap(DONE_CAP_MS, () => setState("idle"));
+            },
+            Math.max(0, MIN_RUN_MS - (performance.now() - startedAt)),
+        );
         cancelPaint = () => clearTimeout(timer);
-    };
-    cancelPaint = whenPainted(() => wait(true));
+    });
 }
 
 /** Enters loading. A running bar keeps its crawl; a settled one restarts. */
@@ -142,6 +125,7 @@ function begin() {
     generation += 1;
     pending = 0;
     if (!isRunning()) {
+        startedAt = performance.now();
         clearTimeout(watchdog);
         watchdog = setTimeout(() => {
             if (import.meta.env.DEV) {

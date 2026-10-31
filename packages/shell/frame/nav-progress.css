@@ -15,8 +15,8 @@
     pointer-events: none;
     /* Never hidden with opacity, so its layer stays alive; at rest it sits off-screen. */
     will-change: transform, opacity;
-    /* Done: one pulse, then gone. The controller goes idle on its animationend. */
-    animation: nav-settle 650ms 280ms forwards;
+    /* Done: it fades where it is. The controller goes idle on its animationend. */
+    animation: nav-settle 180ms ease-out forwards;
     animation-play-state: paused;
 }
 
@@ -32,22 +32,12 @@
     animation-fill-mode: forwards;
 }
 
-/* Crawl: a short bar crossing on repeat, so a slow phone never looks stuck. Its duration is LOOP_MS
-   in navProgress.ts: halfway through, it is centred, and the fill grows from there. */
+/* The splash's bar (boot.css): full width, so its edges stretch and shrink it as it crosses. */
 .nav-progress > .crawl {
-    right: 75%;
     animation-name: nav-crawl;
-    animation-duration: 1100ms;
-    animation-timing-function: linear;
+    animation-duration: 1500ms;
+    animation-timing-function: ease-in-out;
     animation-iteration-count: infinite;
-}
-
-/* Fill: on done, grows from the middle to both sides, out of the crawl stopped there. */
-.nav-progress > .fill {
-    transform: scaleX(0);
-    animation-name: nav-fill;
-    animation-duration: 280ms;
-    animation-timing-function: ease-out;
 }
 
 @keyframes nav-crawl {
@@ -55,27 +45,12 @@
         transform: translate3d(-100%, 0, 0);
     }
     to {
-        transform: translate3d(400%, 0, 0);
-    }
-}
-
-@keyframes nav-fill {
-    to {
-        transform: scaleX(1);
+        transform: translate3d(100%, 0, 0);
     }
 }
 
 @keyframes nav-settle {
-    0% {
-        opacity: 1;
-    }
-    35% {
-        opacity: 0.45;
-    }
-    70% {
-        opacity: 1;
-    }
-    100% {
+    to {
         opacity: 0;
     }
 }
@@ -157,7 +132,7 @@
     }
 }
 
-/* Reduced motion: a still bar, full when done, then a fade. */
+/* Reduced motion: a still bar, then a fade. */
 @media (prefers-reduced-motion: reduce) {
     .nav-progress,
     .nav-progress * {
@@ -165,10 +140,6 @@
     }
 
     .nav-progress:is([data-state="loading"], [data-state="landing"]) > .crawl {
-        transform: translate3d(150%, 0, 0);
-    }
-
-    .nav-progress[data-state="done"] > .fill {
         transform: none;
     }
 

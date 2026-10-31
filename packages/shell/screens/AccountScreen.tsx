@@ -7,7 +7,7 @@ import { useState } from "react";
 
 import { ConfirmSheet } from "../frame/FormFooter";
 import { signOut } from "../session/session";
-import { rowIcon, SettingsRow } from "../frame/Settings";
+import { LogOutButton, rowIcon, SettingsRow } from "../frame/Settings";
 import { useSlug } from "../session/tenant";
 import { APP_VERSION } from "../lib/version";
 
@@ -52,12 +52,7 @@ export function AccountScreen() {
             </div>
 
             <div className="mt-auto pt-4 flex flex-col items-center gap-3">
-                <button
-                    onClick={() => setConfirm(true)}
-                    className="bg-red-500 text-white py-3 px-16 rounded-xl font-semibold text-base active:scale-[0.98] transition-transform"
-                >
-                    {t("common.logout")}
-                </button>
+                <LogOutButton label={t("common.logout")} onClick={() => setConfirm(true)} />
                 <span className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 font-mono text-xs text-gray-700">
                     {t("status.version")}: v{APP_VERSION}
                 </span>

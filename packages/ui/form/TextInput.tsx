@@ -7,7 +7,7 @@ export function TextInput({
     onChange,
     placeholder,
     type = "text",
-    className = "text-xl font-bold",
+    className = "text-base font-medium",
     inputMode,
 }: {
     value: string;

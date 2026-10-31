@@ -75,6 +75,9 @@
         "offBody": "Semua aplikasi dan toko di sini dicabut. Penjualan dan gajinya tetap ada.",
         "onTitle": "Aktifkan lagi {name}?",
         "onBody": "Mulai tanpa aplikasi dan toko: pilih setelah ini.",
-        "confirmTitle": "Simpan perubahan {name}?"
+        "confirmTitle": "Simpan perubahan {name}?",
+        "logoutTitle": "Logout {name}?",
+        "logoutBody": "Keluar dari semua aplikasi di semua HP. Mereka bisa masuk lagi.",
+        "loggedOut": "{name} sudah logout."
     }
 }

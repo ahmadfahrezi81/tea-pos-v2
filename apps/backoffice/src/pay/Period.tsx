@@ -149,24 +149,26 @@ export function PeriodHome({ start }: { start: string }) {
                         <span className="size-11 shrink-0" />
                     )}
                 </div>
-                <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 rounded-xl bg-slate-100 p-2.5">
-                    <p className="truncate text-sm font-medium text-gray-900">
-                        {people.length > 0 && t("pay.totalPayout")}
-                    </p>
-                    <p className="text-right text-sm font-medium text-gray-900">
-                        {payDate(p.payoutDate, locale)}
-                    </p>
-                    <p className="truncate text-lg font-bold leading-tight text-green-600">
-                        {people.length > 0 && formatMoney(allPaid ? paid : toSend)}
-                    </p>
-                    {status && (
-                        <span
-                            className={`justify-self-end rounded-lg px-2 py-0.5 text-sm font-bold ${allPaid ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}
-                        >
-                            {status}
-                        </span>
-                    )}
-                </div>
+                {people.length > 0 && (
+                    <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 rounded-xl bg-slate-100 p-2.5">
+                        <p className="truncate text-sm font-medium text-gray-900">
+                            {t("pay.totalPayout")}
+                        </p>
+                        <p className="text-right text-sm font-medium text-gray-900">
+                            {payDate(p.payoutDate, locale)}
+                        </p>
+                        <p className="truncate text-lg font-bold leading-tight text-green-600">
+                            {formatMoney(allPaid ? paid : toSend)}
+                        </p>
+                        {status && (
+                            <span
+                                className={`justify-self-end rounded-lg px-2 py-0.5 text-sm font-bold ${allPaid ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}
+                            >
+                                {status}
+                            </span>
+                        )}
+                    </div>
+                )}
             </div>
 
             {before && before.people.some((x) => x.status === "pending" && x.total > 0) && (
