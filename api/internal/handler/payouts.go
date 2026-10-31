@@ -26,30 +26,6 @@ func registerPayouts(api huma.API, d Deps) {
 		return huma.Operation{OperationID: id, Method: method, Path: "/tenants/{tenant}/pay" + path, Summary: summary, Tags: []string{"pay"}}
 	}
 
-	route(api, op("listPayouts", http.MethodGet, "/payouts", "Staff payouts overlapping a month, with their totals"), payAccess,
-		func(ctx context.Context, in *contract.PayoutsInput) (*contract.PayoutsOutput, error) {
-			caller, _ := auth.CallerFrom(ctx)
-			first, err := time.Parse("2006-01", in.Month)
-			if err != nil {
-				return nil, errBadRange
-			}
-			rows, err := d.Queries.ListPayouts(ctx, store.ListPayoutsParams{TenantID: caller.TenantID, FromDate: date(first), ToDate: date(first.AddDate(0, 1, -1))})
-			if err != nil {
-				return nil, err
-			}
-			out := &contract.PayoutsOutput{}
-			out.Body.Payouts = make([]contract.Payout, len(rows))
-			for i, r := range rows {
-				out.Body.Payouts[i] = contract.Payout{
-					ID: r.ID.String(), UserID: r.UserID.String(), Name: r.FullName, AvatarURL: r.AvatarUrl.String,
-					NonSeller: r.NonSeller, Status: r.Status, Start: day0(r.StartDate), End: day0(r.EndDate), PaidAt: tsz(r.PaidAt),
-					Commissions: r.Commissions, Claims: r.Claims, Total: r.Commissions + r.Claims, Cups: r.Cups, Orders: r.Orders,
-					Approved: int(r.CommissionsApproved + r.ClaimsApproved), Pending: int(r.Pending),
-				}
-			}
-			return out, nil
-		})
-
 	route(api, op("getPayslip", http.MethodGet, "/payouts/{id}", "A payout with every commission and claim in it"), payAccess,
 		func(ctx context.Context, in *contract.PayoutInput) (*contract.PayslipOutput, error) {
 			caller, _ := auth.CallerFrom(ctx)

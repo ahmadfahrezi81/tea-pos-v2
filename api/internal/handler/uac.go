@@ -71,7 +71,9 @@ func registerUac(api huma.API, d Deps) {
 			if err != nil {
 				return nil, err
 			}
-			return &contract.UacPersonOutput{Body: uacPerson(p)}, nil
+			out := uacPerson(p)
+			out.Bank = &contract.Bank{Name: p.BankName, AccountNumber: p.BankAccountNumber, AccountHolder: p.BankAccountHolder}
+			return &contract.UacPersonOutput{Body: out}, nil
 		})
 
 	route(api, op("setUacPerson", http.MethodPut, "/people/{userId}", "Set a person's levels per app, stores and status, at once"), uacWrite,
@@ -118,6 +120,26 @@ func registerUac(api huma.API, d Deps) {
 				return nil, err
 			}
 			return &contract.UacPersonOutput{Body: uacPerson(p)}, nil
+		})
+
+	logout := op("logoutUacPerson", http.MethodPost, "/people/{userId}/logout", "Sign a person out of every app on every phone")
+	logout.DefaultStatus = http.StatusNoContent
+	route(api, logout, uacWrite,
+		func(ctx context.Context, in *contract.UacLogoutInput) (*struct{}, error) {
+			caller, _ := auth.CallerFrom(ctx)
+			q := idem.Queries(ctx, d.Queries)
+			p, err := person(ctx, q, caller.TenantID, in.UserID)
+			if err != nil {
+				return nil, err
+			}
+			if p.IsOwner && p.ID != caller.UserID {
+				return nil, errOwnerKept
+			}
+			// Through Sessions, not the write's q: it also forgets them in its memory.
+			if err := d.Sessions.DeleteAll(ctx, p.ID); err != nil {
+				return nil, err
+			}
+			return nil, realtime.Announce(ctx, q, realtime.Event{Topic: realtime.UserTopic(p.ID.String()), Kind: realtime.SignedOut})
 		})
 
 	route(api, huma.Operation{
@@ -247,14 +269,23 @@ func setPerson(ctx context.Context, q *store.Queries, caller auth.Caller, p stor
 		// Off is off: None in every app and no stores, also after turning them back on.
 		c.Access, c.StoreIDs = contract.MeAccess{}, nil
 	}
+	if p.IsOwner {
+		// The page shows an owner as admin in every app, and sends that back; stored as the app offers it.
+		if c.Access.Seller == string(auth.Admin) {
+			c.Access.Seller = string(auth.Member)
+		}
+		if !c.Active || c.Access.Seller != string(auth.Member) || c.Access.Backoffice != string(auth.Admin) {
+			return errOwnerKept
+		}
+		if p.ID != caller.UserID && !sameStores(p.StoreIds, c.StoreIDs) {
+			return errOwnerKept
+		}
+	}
 	levels := map[string]string{"seller": c.Access.Seller, "backoffice": c.Access.Backoffice}
 	for app, level := range levels {
 		if level != "" && !slices.Contains(auth.Levels[app], auth.Level(level)) {
 			return errBadLevel
 		}
-	}
-	if p.IsOwner && (!c.Active || c.Access.Seller != string(auth.Member) || c.Access.Backoffice != string(auth.Admin)) {
-		return errOwnerKept
 	}
 	if p.ID == caller.UserID && !c.Active {
 		return errNotYourself
@@ -302,6 +333,17 @@ func setPerson(ctx context.Context, q *store.Queries, caller auth.Caller, p stor
 		return err
 	}
 	return announcePerson(ctx, q, caller, p.ID)
+}
+
+func sameStores(have []pgtype.UUID, want []string) bool {
+	got := make([]string, len(have))
+	for i, id := range have {
+		got[i] = id.String()
+	}
+	w := slices.Clone(want)
+	slices.Sort(got)
+	slices.Sort(w)
+	return slices.Equal(got, slices.Compact(w))
 }
 
 func announcePerson(ctx context.Context, q *store.Queries, caller auth.Caller, id pgtype.UUID) error {

@@ -407,13 +407,19 @@ jobs:
                       detail: "[tea-pos](https://tea-pos.lykostech.app) · [tea-office](https://tea-office.lykostech.app)",
                   }
             - id: check
+              env:
+                  SERVICES: ${{ needs.plan.outputs.services }}
               run: |
                   got=$(curl -fsS https://api-production-f3625.up.railway.app/health | jq -r .commit || true)
                   rows=""
                   ok=true
                   row() { rows+="| $1 | $2 | $3 |"$'\n'; [ "$1" = "✅" ] || ok=false; }
                   check() { if [ "$2" = "$3" ]; then row ✅ "$1" "$4"; else row ❌ "$1" "$5"; fi; }
-                  check "API runs the release" "$got" "$GITHUB_SHA" "\`${GITHUB_SHA:0:7}\`" "${got:+\`${got:0:7}\`}${got:-no answer}"
+                  # A release without Go changes leaves the API on its last commit: it only has to answer.
+                  case "$SERVICES" in
+                      *api*) check "API runs the release" "$got" "$GITHUB_SHA" "\`${GITHUB_SHA:0:7}\`" "${got:+\`${got:0:7}\`}${got:-no answer}" ;;
+                      *) if [ -n "$got" ]; then row ✅ "API unchanged" "\`${got:0:7}\`"; else row ❌ "API unchanged" "no answer"; fi ;;
+                  esac
                   for app in tea-pos tea-office; do
                       # "|| true": a down app must become a ❌ row, not stop the step before the comment.
                       code=$(curl -s -o /dev/null -w '%{http_code}' "https://$app.lykostech.app/api/health" || true)

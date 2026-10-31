@@ -1,4 +1,4 @@
--- migrations through: 20261022165043
+-- migrations through: 20261031073254
 --
 -- PostgreSQL database dump
 --
@@ -31,6 +31,29 @@ CREATE SCHEMA public;
 --
 
 COMMENT ON SCHEMA public IS 'standard public schema';
+
+
+--
+-- Name: river; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA river;
+
+
+--
+-- Name: river_job_state; Type: TYPE; Schema: river; Owner: -
+--
+
+CREATE TYPE river.river_job_state AS ENUM (
+    'available',
+    'cancelled',
+    'completed',
+    'discarded',
+    'pending',
+    'retryable',
+    'running',
+    'scheduled'
+);
 
 
 --
@@ -150,6 +173,43 @@ CREATE FUNCTION public.user_tenant_ids() RETURNS uuid[]
     WHERE user_id = auth.uid()
   );
 $$;
+
+
+--
+-- Name: river_job_state_in_bitmask(bit, river.river_job_state); Type: FUNCTION; Schema: river; Owner: -
+--
+
+CREATE FUNCTION river.river_job_state_in_bitmask(bitmask bit, state river.river_job_state) RETURNS boolean
+    LANGUAGE sql IMMUTABLE
+    AS $$
+    SELECT CASE state
+        WHEN 'available' THEN get_bit(bitmask, 7)
+        WHEN 'cancelled' THEN get_bit(bitmask, 6)
+        WHEN 'completed' THEN get_bit(bitmask, 5)
+        WHEN 'discarded' THEN get_bit(bitmask, 4)
+        WHEN 'pending'   THEN get_bit(bitmask, 3)
+        WHEN 'retryable' THEN get_bit(bitmask, 2)
+        WHEN 'running'   THEN get_bit(bitmask, 1)
+        WHEN 'scheduled' THEN get_bit(bitmask, 0)
+        ELSE 0
+    END = 1;
+$$;
+
+
+--
+-- Name: idempotency_keys; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.idempotency_keys (
+    user_id uuid NOT NULL,
+    key text NOT NULL,
+    request_hash bytea NOT NULL,
+    status smallint,
+    content_type text,
+    body bytea,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT idempotency_keys_key_check CHECK (((char_length(key) >= 8) AND (char_length(key) <= 100)))
+);
 
 
 --
@@ -493,6 +553,22 @@ CREATE TABLE public.stores (
 
 
 --
+-- Name: tenant_access_requests; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tenant_access_requests (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    decided_by uuid,
+    decided_at timestamp with time zone,
+    CONSTRAINT tenant_access_requests_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'blocked'::text])))
+);
+
+
+--
 -- Name: tenant_activity_logs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -573,7 +649,23 @@ CREATE TABLE public.tenants (
     updated_at timestamp with time zone DEFAULT now(),
     slug text NOT NULL,
     pay_frequency text DEFAULT 'bi_weekly'::text NOT NULL,
+    owner_id uuid,
     CONSTRAINT tenants_pay_frequency_check CHECK ((pay_frequency = ANY (ARRAY['weekly'::text, 'bi_weekly'::text, 'four_weekly'::text])))
+);
+
+
+--
+-- Name: user_app_access; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_app_access (
+    tenant_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    app text NOT NULL,
+    access text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT user_app_access_check CHECK ((((app = 'seller'::text) AND (access = 'member'::text)) OR ((app = 'backoffice'::text) AND (access = ANY (ARRAY['guest'::text, 'admin'::text])))))
 );
 
 
@@ -598,7 +690,10 @@ CREATE TABLE public.user_tenant_assignments (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     user_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now()
+    created_at timestamp with time zone DEFAULT now(),
+    status text DEFAULT 'active'::text NOT NULL,
+    levels_set boolean DEFAULT false NOT NULL,
+    CONSTRAINT user_tenant_assignments_status_check CHECK ((status = ANY (ARRAY['active'::text, 'inactive'::text])))
 );
 
 
@@ -658,6 +753,146 @@ CREATE TABLE public.weather_hourly (
 
 
 --
+-- Name: weather_hours; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.weather_hours (
+    cell text NOT NULL,
+    date date NOT NULL,
+    hour smallint NOT NULL,
+    temperature numeric NOT NULL,
+    precipitation_probability numeric NOT NULL,
+    weather_code integer NOT NULL,
+    observed boolean DEFAULT false NOT NULL,
+    fetched_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT weather_hours_hour_check CHECK (((hour >= 0) AND (hour <= 23)))
+);
+
+
+--
+-- Name: river_job; Type: TABLE; Schema: river; Owner: -
+--
+
+CREATE TABLE river.river_job (
+    id bigint NOT NULL,
+    state river.river_job_state DEFAULT 'available'::river.river_job_state NOT NULL,
+    attempt smallint DEFAULT 0 NOT NULL,
+    max_attempts smallint DEFAULT 25 NOT NULL,
+    attempted_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    finalized_at timestamp with time zone,
+    scheduled_at timestamp with time zone DEFAULT now() NOT NULL,
+    priority smallint DEFAULT 1 NOT NULL,
+    args jsonb NOT NULL,
+    attempted_by text[],
+    errors jsonb[],
+    kind text NOT NULL,
+    metadata jsonb DEFAULT '{}'::jsonb NOT NULL,
+    queue text DEFAULT 'default'::text NOT NULL,
+    tags character varying(255)[] DEFAULT '{}'::character varying[] NOT NULL,
+    unique_key bytea,
+    unique_states bit(8),
+    CONSTRAINT finalized_or_finalized_at_null CHECK ((((finalized_at IS NULL) AND (state <> ALL (ARRAY['cancelled'::river.river_job_state, 'completed'::river.river_job_state, 'discarded'::river.river_job_state]))) OR ((finalized_at IS NOT NULL) AND (state = ANY (ARRAY['cancelled'::river.river_job_state, 'completed'::river.river_job_state, 'discarded'::river.river_job_state]))))),
+    CONSTRAINT kind_length CHECK (((char_length(kind) > 0) AND (char_length(kind) < 128))),
+    CONSTRAINT max_attempts_is_positive CHECK ((max_attempts > 0)),
+    CONSTRAINT priority_in_range CHECK (((priority >= 1) AND (priority <= 4))),
+    CONSTRAINT queue_length CHECK (((char_length(queue) > 0) AND (char_length(queue) < 128)))
+);
+
+
+--
+-- Name: river_job_id_seq; Type: SEQUENCE; Schema: river; Owner: -
+--
+
+CREATE SEQUENCE river.river_job_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: river_job_id_seq; Type: SEQUENCE OWNED BY; Schema: river; Owner: -
+--
+
+ALTER SEQUENCE river.river_job_id_seq OWNED BY river.river_job.id;
+
+
+--
+-- Name: river_leader; Type: TABLE; Schema: river; Owner: -
+--
+
+CREATE UNLOGGED TABLE river.river_leader (
+    elected_at timestamp with time zone NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    leader_id text NOT NULL,
+    name text DEFAULT 'default'::text NOT NULL,
+    CONSTRAINT leader_id_length CHECK (((char_length(leader_id) > 0) AND (char_length(leader_id) < 128))),
+    CONSTRAINT name_length CHECK ((name = 'default'::text))
+);
+
+
+--
+-- Name: river_notification; Type: TABLE; Schema: river; Owner: -
+--
+
+CREATE TABLE river.river_notification (
+    id bigint NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    payload text NOT NULL,
+    topic text NOT NULL,
+    CONSTRAINT topic_length CHECK (((length(topic) > 0) AND (length(topic) < 128)))
+);
+
+
+--
+-- Name: river_notification_id_seq; Type: SEQUENCE; Schema: river; Owner: -
+--
+
+CREATE SEQUENCE river.river_notification_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: river_notification_id_seq; Type: SEQUENCE OWNED BY; Schema: river; Owner: -
+--
+
+ALTER SEQUENCE river.river_notification_id_seq OWNED BY river.river_notification.id;
+
+
+--
+-- Name: river_queue; Type: TABLE; Schema: river; Owner: -
+--
+
+CREATE TABLE river.river_queue (
+    name text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    metadata jsonb DEFAULT '{}'::jsonb NOT NULL,
+    paused_at timestamp with time zone,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+--
+-- Name: river_job id; Type: DEFAULT; Schema: river; Owner: -
+--
+
+ALTER TABLE ONLY river.river_job ALTER COLUMN id SET DEFAULT nextval('river.river_job_id_seq'::regclass);
+
+
+--
+-- Name: river_notification id; Type: DEFAULT; Schema: river; Owner: -
+--
+
+ALTER TABLE ONLY river.river_notification ALTER COLUMN id SET DEFAULT nextval('river.river_notification_id_seq'::regclass);
+
+
+--
 -- Name: tenant_activity_logs activity_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -703,6 +938,14 @@ ALTER TABLE ONLY public.store_daily_summary_photos
 
 ALTER TABLE ONLY public.store_expenses
     ADD CONSTRAINT expenses_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: idempotency_keys idempotency_keys_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.idempotency_keys
+    ADD CONSTRAINT idempotency_keys_pkey PRIMARY KEY (user_id, key);
 
 
 --
@@ -938,6 +1181,14 @@ ALTER TABLE ONLY public.store_requests
 
 
 --
+-- Name: tenant_access_requests tenant_access_requests_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_access_requests
+    ADD CONSTRAINT tenant_access_requests_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: tenants tenants_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -951,6 +1202,14 @@ ALTER TABLE ONLY public.tenants
 
 ALTER TABLE ONLY public.tenants
     ADD CONSTRAINT tenants_slug_key UNIQUE (slug);
+
+
+--
+-- Name: user_app_access user_app_access_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_app_access
+    ADD CONSTRAINT user_app_access_pkey PRIMARY KEY (tenant_id, user_id, app);
 
 
 --
@@ -1002,6 +1261,46 @@ ALTER TABLE ONLY public.weather_hourly
 
 
 --
+-- Name: weather_hours weather_hours_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.weather_hours
+    ADD CONSTRAINT weather_hours_pkey PRIMARY KEY (cell, date, hour);
+
+
+--
+-- Name: river_job river_job_pkey; Type: CONSTRAINT; Schema: river; Owner: -
+--
+
+ALTER TABLE ONLY river.river_job
+    ADD CONSTRAINT river_job_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: river_leader river_leader_pkey; Type: CONSTRAINT; Schema: river; Owner: -
+--
+
+ALTER TABLE ONLY river.river_leader
+    ADD CONSTRAINT river_leader_pkey PRIMARY KEY (name);
+
+
+--
+-- Name: river_notification river_notification_pkey; Type: CONSTRAINT; Schema: river; Owner: -
+--
+
+ALTER TABLE ONLY river.river_notification
+    ADD CONSTRAINT river_notification_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: river_queue river_queue_pkey; Type: CONSTRAINT; Schema: river; Owner: -
+--
+
+ALTER TABLE ONLY river.river_queue
+    ADD CONSTRAINT river_queue_pkey PRIMARY KEY (name);
+
+
+--
 -- Name: activity_logs_store_id_created_at_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1048,6 +1347,13 @@ CREATE INDEX customer_feedbacks_seller_id_idx ON public.tenant_customer_feedback
 --
 
 CREATE INDEX customer_feedbacks_tenant_id_idx ON public.tenant_customer_feedbacks USING btree (tenant_id);
+
+
+--
+-- Name: idempotency_keys_created_at_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idempotency_keys_created_at_idx ON public.idempotency_keys USING btree (created_at);
 
 
 --
@@ -1240,6 +1546,13 @@ CREATE INDEX store_sessions_tenant_id_user_id_started_at_idx ON public.store_ses
 
 
 --
+-- Name: tenant_access_requests_pending_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX tenant_access_requests_pending_idx ON public.tenant_access_requests USING btree (tenant_id, user_id) WHERE (status = 'pending'::text);
+
+
+--
 -- Name: tenant_activity_logs_tenant_summary_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1251,6 +1564,69 @@ CREATE INDEX tenant_activity_logs_tenant_summary_idx ON public.tenant_activity_l
 --
 
 CREATE UNIQUE INDEX unique_daily_summary_store_date ON public.store_daily_summaries USING btree (store_id, date, tenant_id);
+
+
+--
+-- Name: user_app_access_user_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX user_app_access_user_id_idx ON public.user_app_access USING btree (user_id, app);
+
+
+--
+-- Name: river_job_args_index; Type: INDEX; Schema: river; Owner: -
+--
+
+CREATE INDEX river_job_args_index ON river.river_job USING gin (args);
+
+
+--
+-- Name: river_job_kind; Type: INDEX; Schema: river; Owner: -
+--
+
+CREATE INDEX river_job_kind ON river.river_job USING btree (kind);
+
+
+--
+-- Name: river_job_metadata_index; Type: INDEX; Schema: river; Owner: -
+--
+
+CREATE INDEX river_job_metadata_index ON river.river_job USING gin (metadata);
+
+
+--
+-- Name: river_job_prioritized_fetching_index; Type: INDEX; Schema: river; Owner: -
+--
+
+CREATE INDEX river_job_prioritized_fetching_index ON river.river_job USING btree (state, queue, priority, scheduled_at, id);
+
+
+--
+-- Name: river_job_state_and_finalized_at_index; Type: INDEX; Schema: river; Owner: -
+--
+
+CREATE INDEX river_job_state_and_finalized_at_index ON river.river_job USING btree (state, finalized_at) WHERE (finalized_at IS NOT NULL);
+
+
+--
+-- Name: river_job_unique_idx; Type: INDEX; Schema: river; Owner: -
+--
+
+CREATE UNIQUE INDEX river_job_unique_idx ON river.river_job USING btree (unique_key) WHERE ((unique_key IS NOT NULL) AND (unique_states IS NOT NULL) AND river.river_job_state_in_bitmask(unique_states, state));
+
+
+--
+-- Name: river_notification_created_at_idx; Type: INDEX; Schema: river; Owner: -
+--
+
+CREATE INDEX river_notification_created_at_idx ON river.river_notification USING btree (created_at);
+
+
+--
+-- Name: river_notification_topic_id_idx; Type: INDEX; Schema: river; Owner: -
+--
+
+CREATE INDEX river_notification_topic_id_idx ON river.river_notification USING btree (topic, id);
 
 
 --
@@ -1402,6 +1778,14 @@ ALTER TABLE ONLY public.store_expenses
 
 ALTER TABLE ONLY public.tenant_products
     ADD CONSTRAINT fk_products_category_id FOREIGN KEY (category_id) REFERENCES public.tenant_product_categories(id) ON DELETE SET NULL;
+
+
+--
+-- Name: idempotency_keys idempotency_keys_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.idempotency_keys
+    ADD CONSTRAINT idempotency_keys_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
@@ -1821,11 +2205,51 @@ ALTER TABLE ONLY public.store_requests
 
 
 --
+-- Name: tenant_access_requests tenant_access_requests_decided_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_access_requests
+    ADD CONSTRAINT tenant_access_requests_decided_by_fkey FOREIGN KEY (decided_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: tenant_access_requests tenant_access_requests_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_access_requests
+    ADD CONSTRAINT tenant_access_requests_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tenant_access_requests tenant_access_requests_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_access_requests
+    ADD CONSTRAINT tenant_access_requests_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: tenant_activity_logs tenant_activity_logs_daily_summary_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.tenant_activity_logs
     ADD CONSTRAINT tenant_activity_logs_daily_summary_id_fkey FOREIGN KEY (daily_summary_id) REFERENCES public.store_daily_summaries(id) ON DELETE SET NULL;
+
+
+--
+-- Name: tenants tenants_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenants
+    ADD CONSTRAINT tenants_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: user_app_access user_app_access_tenant_id_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_app_access
+    ADD CONSTRAINT user_app_access_tenant_id_user_id_fkey FOREIGN KEY (tenant_id, user_id) REFERENCES public.user_tenant_assignments(tenant_id, user_id) ON DELETE CASCADE;
 
 
 --
@@ -1961,6 +2385,12 @@ CREATE POLICY "daily_summary_photos: tenant read" ON public.store_daily_summary_
 
 CREATE POLICY "expenses: tenant read" ON public.store_expenses FOR SELECT USING ((tenant_id = ANY (public.user_tenant_ids())));
 
+
+--
+-- Name: idempotency_keys; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.idempotency_keys ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: store_order_items order_items: tenant read; Type: POLICY; Schema: public; Owner: -
@@ -2171,6 +2601,12 @@ CREATE POLICY "tenant members can read commission types" ON public.payroll_commi
 
 
 --
+-- Name: tenant_access_requests; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.tenant_access_requests ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: tenant_activity_logs; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -2243,6 +2679,12 @@ CREATE POLICY "tenants: tenant read" ON public.tenants FOR SELECT USING ((id = A
 
 
 --
+-- Name: user_app_access; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.user_app_access ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: user_store_assignments; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -2313,6 +2755,12 @@ ALTER TABLE public.weather_hourly ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "weather_hourly: authenticated read" ON public.weather_hourly FOR SELECT USING ((auth.role() = 'authenticated'::text));
 
+
+--
+-- Name: weather_hours; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.weather_hours ENABLE ROW LEVEL SECURITY;
 
 --
 -- PostgreSQL database dump complete

@@ -357,7 +357,7 @@ func (q *Queries) ListCommissionTypes(ctx context.Context, tenantID pgtype.UUID)
 }
 
 const listPayStaff = `-- name: ListPayStaff :many
-SELECT u.id, u.full_name, u.email, u.avatar_url, u.role, u.status,
+SELECT u.id, u.full_name, u.email, u.avatar_url, u.role, a.status,
     i.commission_config_id, c.name AS commission_name, c.slug AS commission_slug, c.rate_per_cup,
     i.bank_name, i.bank_account_number, i.bank_account_holder
 FROM user_tenant_assignments a

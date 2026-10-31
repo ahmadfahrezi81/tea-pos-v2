@@ -78,6 +78,19 @@ export function useSetDetails(userId: string) {
     );
 }
 
+/** Signs a person out of every app on every phone. */
+export function useLogoutPerson(userId: string) {
+    const tenant = useSlug();
+    return useApiMutation<unknown, object>(async (_, headers) => {
+        const res = await api.POST("/tenants/{tenant}/uac/people/{userId}/logout", {
+            params: { path: { tenant, userId } },
+            headers,
+        });
+        if (res.error) throw res.error;
+        return null;
+    });
+}
+
 export function useUacRequest(id: string) {
     const tenant = useSlug();
     return $api.useQuery(

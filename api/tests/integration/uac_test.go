@@ -191,3 +191,116 @@ func TestUacOffAndNone(t *testing.T) {
 		t.Errorf("unknown claim type: %d %s", s, c)
 	}
 }
+
+// TestUacOwnerStores: the owner picks their own stores, sending back the levels the page shows them;
+// another admin cannot change them.
+func TestUacOwnerStores(t *testing.T) {
+	pool := testkit.DB(t)
+	ctx := context.Background()
+	if _, err := pool.Exec(ctx, `UPDATE tenants SET owner_id = $1 WHERE slug = 'tenant-a'`, testkit.AdminA); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `INSERT INTO user_app_access (tenant_id, user_id, app, access)
+		SELECT id, $1, 'backoffice', 'admin' FROM tenants WHERE slug = 'tenant-a'
+		ON CONFLICT (tenant_id, user_id, app) DO UPDATE SET access = 'admin'`, testkit.SellerA); err != nil {
+		t.Fatal(err)
+	}
+	a := testkit.NewAPI(t, pool, "")
+	owner := testkit.Session(a.SignIn(t, testkit.AdminA, "backoffice"))
+	other := testkit.Session(a.SignIn(t, testkit.SellerA, "backoffice"))
+	put := func(who *http.Cookie, key, stores string) (int, string) {
+		resp := a.Send(t, http.MethodPut, "/tenants/tenant-a/uac/people/"+testkit.AdminA, "backoffice",
+			`{"access":{"seller":"admin","backoffice":"admin"},"storeIds":[`+stores+`],"active":true}`,
+			[]string{"Idempotency-Key: owner-stores-" + key}, who)
+		return resp.StatusCode, code(t, resp)
+	}
+	if s, c := put(owner, "1", fmt.Sprintf("%q", storeANorth)); s != 200 {
+		t.Fatalf("the owner's stores: %d %s", s, c)
+	}
+	var seller string
+	if err := pool.QueryRow(ctx, `SELECT access FROM user_app_access WHERE user_id = $1 AND app = 'seller'`, testkit.AdminA).Scan(&seller); err != nil || seller != "member" {
+		t.Errorf("seller level stored: %q %v", seller, err)
+	}
+	if s, c := put(other, "2", ""); s != 422 || c != "owner_kept" {
+		t.Errorf("another admin changing them: %d %s", s, c)
+	}
+}
+
+// TestUacLogout: an admin signs someone out everywhere; a guest cannot, nor can an admin sign out the owner.
+func TestUacLogout(t *testing.T) {
+	pool := testkit.DB(t)
+	if _, err := pool.Exec(context.Background(), `UPDATE tenants SET owner_id = $1 WHERE slug = 'tenant-a'`, testkit.AdminA); err != nil {
+		t.Fatal(err)
+	}
+	a := testkit.NewAPI(t, pool, "")
+	admin := testkit.Session(a.SignIn(t, testkit.AdminA, "backoffice"))
+	guest := testkit.Session(a.SignIn(t, testkit.GuestA, "backoffice"))
+	seller := testkit.Session(a.SignIn(t, testkit.SellerA, "seller"))
+	logout := func(who *http.Cookie, user, key string) int {
+		resp := a.Send(t, http.MethodPost, "/tenants/tenant-a/uac/people/"+user+"/logout", "backoffice", "",
+			[]string{"Idempotency-Key: uac-logout-" + key}, who)
+		defer resp.Body.Close()
+		return resp.StatusCode
+	}
+	if s := logout(guest, testkit.SellerA, "1"); s != 403 {
+		t.Errorf("a guest: %d", s)
+	}
+	if s := a.Request(t, http.MethodGet, "/me", "seller", seller).StatusCode; s != 200 {
+		t.Fatalf("still signed in: %d", s)
+	}
+	if s := logout(admin, testkit.SellerA, "2"); s != 204 {
+		t.Fatalf("logout: %d", s)
+	}
+	if s := a.Request(t, http.MethodGet, "/me", "seller", seller).StatusCode; s != 401 {
+		t.Errorf("after logout /me: %d", s)
+	}
+}
+
+// TestUacOtherTenant: an admin reaches nobody outside their tenant, on any write about a person.
+func TestUacOtherTenant(t *testing.T) {
+	pool := testkit.DB(t)
+	a := testkit.NewAPI(t, pool, "")
+	admin := testkit.Session(a.SignIn(t, testkit.AdminA, "backoffice"))
+	writes := []struct{ method, path, body string }{
+		{http.MethodPut, "/uac/people/" + testkit.SellerB, `{"access":{"seller":"","backoffice":""},"storeIds":[],"active":false}`},
+		{http.MethodPut, "/uac/people/" + testkit.SellerB + "/details", `{"fullName":"X","phone":""}`},
+		{http.MethodPost, "/uac/people/" + testkit.SellerB + "/logout", ""},
+		{http.MethodPut, "/pay/staff/" + testkit.SellerB + "/claim-types", `{"claimTypeIds":[]}`},
+		{http.MethodPut, "/pay/staff/" + testkit.SellerB + "/commission-type", `{"commissionTypeId":null}`},
+	}
+	for i, w := range writes {
+		resp := a.Send(t, w.method, "/tenants/tenant-a"+w.path, "backoffice", w.body,
+			[]string{fmt.Sprintf("Idempotency-Key: uac-other-%04d", i)}, admin)
+		if s, c := resp.StatusCode, code(t, resp); s != 404 {
+			t.Errorf("%s %s: %d %s", w.method, w.path, s, c)
+		}
+	}
+	seller := testkit.Session(a.SignIn(t, testkit.SellerB, "seller"))
+	if s := a.Request(t, http.MethodGet, "/me", "seller", seller).StatusCode; s != 200 {
+		t.Errorf("Seller B was signed out: %d", s)
+	}
+}
+
+// TestUacBankOnOnePerson: the bank comes with one person, never with the list.
+func TestUacBankOnOnePerson(t *testing.T) {
+	pool := testkit.DB(t)
+	if _, err := pool.Exec(context.Background(), `INSERT INTO payroll_user_info (tenant_id, user_id, bank_name)
+		SELECT id, $1, 'BCA' FROM tenants WHERE slug = 'tenant-a'
+		ON CONFLICT (tenant_id, user_id) DO UPDATE SET bank_name = 'BCA'`, testkit.SellerA); err != nil {
+		t.Fatal(err)
+	}
+	a := testkit.NewAPI(t, pool, "")
+	admin := testkit.Session(a.SignIn(t, testkit.AdminA, "backoffice"))
+	var one contract.UacPerson
+	_ = json.NewDecoder(a.Request(t, http.MethodGet, "/tenants/tenant-a/uac/people/"+testkit.SellerA, "backoffice", admin).Body).Decode(&one)
+	if one.Bank == nil || one.Bank.Name != "BCA" {
+		t.Errorf("one person: %+v", one.Bank)
+	}
+	var list contract.UacOutput
+	_ = json.NewDecoder(a.Request(t, http.MethodGet, "/tenants/tenant-a/uac", "backoffice", admin).Body).Decode(&list.Body)
+	for _, p := range list.Body.People {
+		if p.Bank != nil {
+			t.Errorf("the list shows %s's bank", p.Name)
+		}
+	}
+}

@@ -1,16 +1,5 @@
 package contract
 
-type PayoutsInput struct {
-	Tenant string `path:"tenant"`
-	Month  string `query:"month" required:"true" pattern:"^[0-9]{4}-[0-9]{2}$" example:"2026-10"`
-}
-
-type PayoutsOutput struct {
-	Body struct {
-		Payouts []Payout `json:"payouts" nullable:"false" doc:"Overlapping the month, newest period first"`
-	}
-}
-
 // Payout is one person's pay for one period: the sums of its approved rows.
 type Payout struct {
 	ID          string `json:"id" format:"uuid"`

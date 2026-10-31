@@ -75,6 +75,9 @@
         "offBody": "They lose every app and store here. Their sales and pay stay.",
         "onTitle": "Turn {name} back on?",
         "onBody": "They start with no apps or stores: pick them next.",
-        "confirmTitle": "Save {name}'s changes?"
+        "confirmTitle": "Save {name}'s changes?",
+        "logoutTitle": "Log {name} out?",
+        "logoutBody": "They are signed out of every app on every phone. They can sign in again.",
+        "loggedOut": "{name} is logged out."
     }
 }

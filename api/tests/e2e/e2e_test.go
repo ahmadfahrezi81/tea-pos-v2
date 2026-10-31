@@ -6,6 +6,7 @@ package e2e
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/cookiejar"
 	"os"
@@ -22,6 +23,9 @@ func env(key, fallback string) string {
 	}
 	return fallback
 }
+
+// seller@test-a.test in seed.sql.
+const sellerA = "0000e2e0-0000-0000-0001-00000000000a"
 
 var (
 	seller     = env("E2E_SELLER_URL", "https://tea-pos-staging.lykostech.app")
@@ -224,5 +228,66 @@ func TestPay_AdminSeesThePeriodAndStaff(t *testing.T) {
 		if resp, body := admin.do(http.MethodGet, path, "", nil); resp.StatusCode != http.StatusOK {
 			t.Errorf("%s: %d %v", path, resp.StatusCode, body["code"])
 		}
+	}
+}
+
+// Every Store, Pay and People read the backoffice opens answers through the forwarder.
+func TestBackoffice_EveryTabAnswers(t *testing.T) {
+	admin := newPhone(t, backoffice)
+	mustSignIn(t, admin, "admin@test-a.test")
+	today := time.Now().In(time.FixedZone("WIB", 7*3600)).Format(time.DateOnly)
+	week := "from=" + today + "&to=" + today
+	for _, path := range []string{
+		"/stores/live?" + week,
+		"/sales/hours?date=" + today,
+		"/sales/products?" + week,
+		"/tea-waste?" + week,
+		"/days?" + week,
+		"/weather",
+		"/feedbacks",
+		"/pay/periods/current",
+		"/pay/claim-types",
+		"/uac",
+		"/uac/people/" + sellerA,
+	} {
+		if resp, body := admin.do(http.MethodGet, "/tenants/test-a"+path, "", nil); resp.StatusCode != http.StatusOK {
+			t.Errorf("%s: %d %v", path, resp.StatusCode, body["code"])
+		}
+	}
+}
+
+// A tenant's numbers and people stay inside it, and a seller cannot read People or Pay.
+func TestBackoffice_Boundaries(t *testing.T) {
+	admin := newPhone(t, backoffice)
+	mustSignIn(t, admin, "admin@test-a.test")
+	if resp, _ := admin.do(http.MethodGet, "/tenants/test-b/uac", "", nil); resp.StatusCode == http.StatusOK {
+		t.Error("admin of test-a read test-b's people")
+	}
+	if resp, _ := admin.do(http.MethodGet, "/tenants/test-b/pay/staff", "", nil); resp.StatusCode == http.StatusOK {
+		t.Error("admin of test-a read test-b's staff")
+	}
+	p := newPhone(t, seller)
+	mustSignIn(t, p, "seller@test-a.test")
+	for _, path := range []string{"/uac", "/pay/staff", "/pay/periods/current"} {
+		if resp, _ := p.do(http.MethodGet, "/tenants/test-a"+path, "", nil); resp.StatusCode != http.StatusForbidden {
+			t.Errorf("seller on %s: %d, want 403", path, resp.StatusCode)
+		}
+	}
+}
+
+// A write through the forwarder: an admin logs someone out, saved once per key.
+func TestPeople_AdminLogsSomeoneOut(t *testing.T) {
+	p := newPhone(t, seller)
+	mustSignIn(t, p, "seller@test-a.test")
+	p.me()
+	admin := newPhone(t, backoffice)
+	mustSignIn(t, admin, "admin@test-a.test")
+	key := map[string]string{"Idempotency-Key": fmt.Sprintf("e2e-logout-%d", time.Now().UnixNano())}
+	path := "/tenants/test-a/uac/people/" + sellerA + "/logout"
+	if resp, body := admin.do(http.MethodPost, path, "", key); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("logout: %d %v", resp.StatusCode, body["code"])
+	}
+	if resp, _ := p.do(http.MethodGet, "/me", "", nil); resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("their /me after: %d, want 401", resp.StatusCode)
 	}
 }
