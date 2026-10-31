@@ -22,10 +22,10 @@ export type PeopleFilter = {
     inactive: boolean;
 };
 
-export const NO_FILTER: PeopleFilter = { seller: "any", backoffice: "any", inactive: true };
+export const NO_FILTER: PeopleFilter = { seller: "any", backoffice: "any", inactive: false };
 
 export const isFiltered = (f: PeopleFilter) =>
-    f.seller !== "any" || f.backoffice !== "any" || !f.inactive;
+    f.seller !== "any" || f.backoffice !== "any" || f.inactive;
 
 /** The owner counts as every app's top level. */
 export function matches(f: PeopleFilter, p: Person): boolean {

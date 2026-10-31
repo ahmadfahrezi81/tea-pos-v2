@@ -10,7 +10,6 @@
         "editCommissionType": "Edit Commission Type",
         "newClaimType": "New Claim Type",
         "editClaimType": "Edit Claim Type",
-        "setCommission": "Set Commission",
         "nextPayout": "Next expected payout",
         "lastDay": "last day",
         "daysLeft": "{n}d left",
@@ -37,8 +36,6 @@
         "saving": "Saving...",
         "creating": "Creating...",
         "edit": "Edit",
-        "confirmStaffCommission": "Save pay settings?",
-        "confirmStaffCommissionSub": "This changes their commission type for future closed days.",
         "name": "Name",
         "slug": "Slug",
         "slugAuto": "Slug (auto-formatted)",
@@ -216,6 +213,7 @@
         "helpSetup": "Setting it up",
         "helpSetupBody": "Commission and claim types: in Pay Settings.\nA person's commission and bank: on their page in People.\nPay schedule: in More, Advanced.",
         "payoutsList": "Payouts",
-        "nextShort": "Payout"
+        "nextShort": "Payout",
+        "recap": "Recap"
     }
 }

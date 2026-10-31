@@ -1,7 +1,7 @@
 import { $api, api } from "@tea-pos/api-client";
 import { useInfiniteList } from "@tea-pos/api-client/list";
 import { STALE } from "@tea-pos/api-client/query";
-import { localDate } from "@tea-pos/format";
+import { formatMoney, localDate } from "@tea-pos/format";
 import { useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { useParams, type SearchSchemaInput } from "@tanstack/react-router";
 
@@ -224,3 +224,12 @@ export function useScopeStores(from: string, to: string) {
         totals: stores && { sales: sum("sales"), cups: sum("cups"), orders: sum("orders") },
     };
 }
+
+/** Rupiah without the `Rp`, for a tile. */
+export const plain = (amount: number) => formatMoney(amount).replace(/^Rp\s*/, "");
+
+/** A store's cash for one day: what it should hold while open, then what was counted. */
+export const dayCash = (
+    s: { opening: number; sales: number; expenses: number; cashCounted: number },
+    open: boolean,
+) => (open ? s.opening + s.sales - s.expenses : s.cashCounted);

@@ -54,6 +54,30 @@ export function useSetPerson(userId: string) {
     );
 }
 
+/** Changes a person's name and phone, then UAC and /me refetch. */
+export function useSetDetails(userId: string) {
+    const tenant = useSlug();
+    const queryClient = useQueryClient();
+    return useApiMutation<unknown, { fullName: string; phone: string }>(
+        async (body, headers) => {
+            const res = await api.PUT("/tenants/{tenant}/uac/people/{userId}/details", {
+                params: { path: { tenant, userId } },
+                body,
+                headers,
+            });
+            if (res.error) throw res.error;
+            return res.data;
+        },
+        {
+            onSuccess: () =>
+                void queryClient.invalidateQueries({
+                    predicate: (q) =>
+                        String(q.queryKey[1] ?? "").includes("/uac") || q.queryKey[0] === "me",
+                }),
+        },
+    );
+}
+
 export function useUacRequest(id: string) {
     const tenant = useSlug();
     return $api.useQuery(

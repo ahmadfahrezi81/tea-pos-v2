@@ -1629,6 +1629,18 @@ components:
       required:
         - frequency
       type: object
+    SetStaffClaimsInputBody:
+      additionalProperties: false
+      properties:
+        claimTypeIds:
+          description: Exactly these enabled claim types
+          items:
+            type: string
+          maxItems: 100
+          type: array
+      required:
+        - claimTypeIds
+      type: object
     SetStaffCommissionInputBody:
       additionalProperties: false
       properties:
@@ -1640,6 +1652,20 @@ components:
             - "null"
       required:
         - commissionTypeId
+      type: object
+    SetUacDetailsInputBody:
+      additionalProperties: false
+      properties:
+        fullName:
+          maxLength: 200
+          type: string
+        phone:
+          description: Empty clears it
+          maxLength: 30
+          type: string
+      required:
+        - fullName
+        - phone
       type: object
     SettlePayoutInputBody:
       additionalProperties: false
@@ -1817,6 +1843,20 @@ components:
           type: boolean
         avatarUrl:
           type: string
+        claimTypeIds:
+          description: Enabled claim types they may claim
+          items:
+            type: string
+          type: array
+        commissionName:
+          type: string
+        commissionRate:
+          description: Rupiah per cup; 0 without a type
+          format: int64
+          type: integer
+        commissionTypeId:
+          format: uuid
+          type: string
         email:
           type: string
         id:
@@ -1844,6 +1884,8 @@ components:
         - owner
         - access
         - storeIds
+        - commissionRate
+        - claimTypeIds
       type: object
     UacPersonChange:
       additionalProperties: false
@@ -3221,6 +3263,45 @@ paths:
         level: guest
         tenant: true
         signedIn: true
+  /tenants/{tenant}/pay/staff/{userId}/claim-types:
+    put:
+      operationId: setStaffClaims
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetStaffClaimsInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "Set which claim types a staff member may claim: everyone listed, no other"
+      tags:
+        - pay
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
   /tenants/{tenant}/pay/staff/{userId}/commission-type:
     put:
       operationId: setStaffCommission
@@ -3633,6 +3714,49 @@ paths:
                 $ref: "#/components/schemas/Error"
           description: Error
       summary: Set a person's levels per app, stores and status, at once
+      tags:
+        - uac
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/uac/people/{userId}/details:
+    put:
+      operationId: setUacDetails
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetUacDetailsInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UacPerson"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Change a person's name and phone
       tags:
         - uac
       x-access:

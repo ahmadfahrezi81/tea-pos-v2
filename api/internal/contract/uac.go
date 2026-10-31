@@ -29,6 +29,11 @@ type UacPerson struct {
 	Owner     bool     `json:"owner"`
 	Access    MeAccess `json:"access"`
 	StoreIDs  []string `json:"storeIds" nullable:"false"`
+	// What the People list shows at a glance; set under Pay.
+	CommissionTypeID string   `json:"commissionTypeId,omitempty" format:"uuid"`
+	CommissionName   string   `json:"commissionName,omitempty"`
+	CommissionRate   int64    `json:"commissionRate" doc:"Rupiah per cup; 0 without a type"`
+	ClaimTypeIDs     []string `json:"claimTypeIds" nullable:"false" doc:"Enabled claim types they may claim"`
 }
 
 type UacPersonInput struct {
@@ -51,6 +56,16 @@ type SetUacPersonInput struct {
 	Tenant string `path:"tenant"`
 	UserID string `path:"userId" format:"uuid"`
 	Body   UacPersonChange
+}
+
+// SetUacDetailsInput is what an admin may change of what a person sets for themselves.
+type SetUacDetailsInput struct {
+	Tenant string `path:"tenant"`
+	UserID string `path:"userId" format:"uuid"`
+	Body   struct {
+		FullName string `json:"fullName" maxLength:"200"`
+		Phone    string `json:"phone" maxLength:"30" doc:"Empty clears it"`
+	}
 }
 
 // AskAccessInput asks a tenant, by the slug in its address, to let the caller in.
