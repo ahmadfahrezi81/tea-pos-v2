@@ -107,8 +107,7 @@
         "noStores": "No stores assigned yet.",
         "default": "Default",
         "updateApp": "Update app",
-        "updateTitle": "Update the app now?",
-        "updateBody": "Downloads the latest version again. Anything unsaved is lost.",
+        "updateLatest": "You are on the latest version.",
         "updateOffline": "No connection. Try again when you are online."
     },
     "whatsNew": {
@@ -163,15 +162,8 @@
         "edit": "Edit",
         "moreActions": "More actions",
         "refreshNow": "Refresh Now",
-        "refreshing": "Refreshing...",
         "maintenance": "Under Maintenance",
         "maintenanceSub": "We're making some updates to improve your experience. We'll be back shortly.",
-        "update": {
-            "title": "Update Available",
-            "body": "A new version has downloaded. Reload to use it.",
-            "infoTitle": "What you get",
-            "infoBody": "Reloading takes a moment. Finish what you are doing first: anything unsaved is lost."
-        },
         "inactivity": {
             "title": "Refresh Required",
             "body": "You've been inactive — refresh to avoid stale data.",
@@ -196,10 +188,8 @@
         "updating": "Updating {app}",
         "updateDownloading": "Downloading update",
         "updateDone": "Updated. Restarting…",
-        "updateKeepOpen": "Please keep the app open",
-        "updateRetry": "Try again",
-        "updateContinue": "Continue for now",
-        "updateFailed": "Update failed"
+        "updateRestartIn": "Updated. Restarting in {n}",
+        "updateKeepOpen": "Please keep the app open"
     },
     "signIn": {
         "google": "Continue with Google",
