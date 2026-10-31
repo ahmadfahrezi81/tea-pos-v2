@@ -54,13 +54,15 @@ export function PersonPage({ userId }: { userId: string }) {
     const t = useT();
     const locale = useLocale();
     const slug = useSlug();
-    const { canWrite } = useAccess();
+    const { canWrite, owner } = useAccess();
     const stores = useTenant()?.tenant.stores ?? [];
     const { data: p } = useUacPerson(userId);
     const { data: claimTypes } = useClaimTypes();
     if (!p) return <Skeleton className="h-60 rounded-2xl" />;
     // The owner keeps full access, and someone turned off has none to change.
     const access = canWrite && !p.owner && p.active;
+    // Their stores are for the owner alone to change.
+    const storesOpen = canWrite && p.active && (!p.owner || owner);
     const level = (app: "seller" | "backoffice") =>
         `${t(app === "seller" ? "uac.seller" : "uac.office")}: ${t(`uac.${p.access[app] || "none"}` as MessageKey)}`;
     const row = (
@@ -121,7 +123,7 @@ export function PersonPage({ userId }: { userId: string }) {
                         .filter((s) => p.storeIds.includes(s.id))
                         .map((s) => s.name)
                         .join(", ") || t("uac.noStores"),
-                    access,
+                    storesOpen,
                 )}
                 {row(
                     "commission",
@@ -152,7 +154,7 @@ export function PersonPage({ userId }: { userId: string }) {
 /** One of a person's settings on its own page; saved only after the footer's sheet says yes. */
 export function PersonSetting({ userId, part }: { userId: string; part: Part }) {
     const { data } = useUacPerson(userId);
-    const { canWrite } = useAccess();
+    const { canWrite, owner } = useAccess();
     if (!data) return <Skeleton className="h-60 rounded-2xl" />;
     // Keyed by what was saved, so a change from elsewhere starts the form again.
     const key = JSON.stringify(data);
@@ -165,7 +167,7 @@ export function PersonSetting({ userId, part }: { userId: string; part: Part }) 
             key={key}
             person={data}
             fields={part === "apps" ? AppLevels : StoreChecks}
-            canWrite={canWrite && !data.owner && data.active}
+            canWrite={canWrite && data.active && (!data.owner || (part === "stores" && owner))}
         />
     );
 }
@@ -253,19 +255,10 @@ function DetailsForm({ person: p, canWrite }: FormProps) {
         <>
             <Panel>
                 <Field label={t("pay.name")} required>
-                    <TextInput
-                        value={fullName}
-                        onChange={setName}
-                        className="text-base font-medium"
-                    />
+                    <TextInput value={fullName} onChange={setName} />
                 </Field>
                 <Field label={t("account.phoneNumber")}>
-                    <TextInput
-                        value={phone}
-                        onChange={setPhone}
-                        inputMode="tel"
-                        className="text-base font-medium"
-                    />
+                    <TextInput value={phone} onChange={setPhone} inputMode="tel" />
                 </Field>
             </Panel>
             {canWrite && (

@@ -394,7 +394,6 @@ export function MobileShell({
                             <div className="relative h-0 shrink-0">
                                 <div ref={attachBar} className="nav-progress" aria-hidden>
                                     <span className="crawl" />
-                                    <span className="fill" />
                                 </div>
                             </div>
 
@@ -446,7 +445,7 @@ export function MobileShell({
 
                             {/* Page slot, route CTA, then tabs; white only when something is in it. */}
                             <footer
-                                className={`shrink-0 ${currentIsSubPage ? "pb-[calc(env(safe-area-inset-bottom)*0.5)]" : "pb-[env(safe-area-inset-bottom)]"} [&:has(>:not(:empty))]:bg-white [&:has(>.is-occupied)]:bg-white`}
+                                className={`shrink-0 ${currentIsSubPage ? "pb-[calc(env(safe-area-inset-bottom)*0.75)]" : "pb-[env(safe-area-inset-bottom)]"} [&:has(>:not(:empty))]:bg-white [&:has(>.is-occupied)]:bg-white`}
                             >
                                 <div ref={setFooterSlotEl} />
                                 {footerCtaLabel && (

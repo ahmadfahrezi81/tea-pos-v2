@@ -87,7 +87,7 @@ export function RangeBar() {
             >
                 <span className="flex-1 min-w-0">
                     <span className="flex items-center gap-1">
-                        <span className="text-lg font-bold tracking-tight text-gray-900 truncate">
+                        <span className="text-[22px] leading-tight font-bold tracking-tight text-gray-900 truncate">
                             {label}
                         </span>
                         <ChevronDown

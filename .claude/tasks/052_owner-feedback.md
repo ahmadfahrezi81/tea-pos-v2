@@ -167,6 +167,29 @@ The owner swapped the tenant's owner by SQL on production, and consolidates dupl
 
 - **The production check failed a good release:** with no Go changes the API rightly stays on its last commit, but the check demanded the release's. It compares commits only when the release deployed the API; otherwise the API just has to answer
 
+## Round 7 (2026-10-31)
+
+### To build, all at once in one PR
+
+1. **Store's top card:** the Sales figure in green, as the store cards' totals (`text-green-600`)
+2. **The loading bar is the initial load's bar:** it stretches and shrinks as it runs, as Google's, and just goes when done: no stop at the centre, no expansion, no blink; it lagged and blipped out in the middle on the owner's iPhone
+3. **Pay's Total payout row hides with nobody to pay:** a period without people shows only the week and the empty message, not a row with just a date
+4. **Store's date heading is bigger:** the title at 22px, was 18px; the first design's 24px was about right
+5. **The owner can change their own stores:** apps stay full access, stores are theirs to pick. Today the screen locks them, and the API refuses the owner's levels as it reads them (seller shows admin); fix both, with a test
+6. **Forms sit in a white card:** Account's Personal details as a person's Name and phone (`Panel`, the same field font); check every other form for the same
+7. **Space under a Save footer on inner pages:** 75% of the phone's home bar, was 50% (about 25px on an iPhone)
+### API and code, to explore and clean up
+
+Findings from reading and a scan, nothing changed yet; the owner picks:
+
+- **A claim type's Eligibility list:** shows inactive people, and hides anyone with `users.role` ADMIN, so it disagrees with a person's Claims page
+- **A person's page reads every staff member for one bank row** (`/pay/staff`): bank details belong on the one-person read
+- **`api/db/schema.sql` is five migrations behind:** `pending.sql` is 459 lines; re-dump it
+- **Routes no app calls:** `GET /pay/payouts`, `GET /feedbacks`, `POST /auth/logout-everywhere`
+- **15 Pay words no screen uses**
+- **Good:** all 97 queries are used; no query per row in a request (the one loop over stores' weather runs in the worker)
+- **Not checked:** query speed against production's data, indexes
+
 ## Done when
 
 - Typecheck, lint, build and bundle size pass

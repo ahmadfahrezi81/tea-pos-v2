@@ -134,7 +134,7 @@ function ReadOnly({ value }: { value: string }) {
 }
 
 const Card = ({ children }: { children: ReactNode }) => (
-    <div className="bg-white rounded-xl p-4 space-y-4">{children}</div>
+    <div className="bg-white rounded-2xl p-3 space-y-3">{children}</div>
 );
 const ErrorLine = ({ text }: { text: string | null }) =>
     text ? <p className="text-sm text-red-500">{text}</p> : null;
@@ -154,7 +154,6 @@ export function CommissionTypeAdd() {
                         value={name}
                         onChange={setName}
                         placeholder={t("pay.commissionNameHint")}
-                        className="text-base font-medium"
                     />
                 </Field>
                 <Field label={t("pay.slugAuto")} required>
@@ -162,7 +161,6 @@ export function CommissionTypeAdd() {
                         value={slug}
                         onChange={(v) => setSlug(slugify(v))}
                         placeholder="SELLER_STANDARD"
-                        className="text-base font-medium"
                     />
                 </Field>
                 <Field label={t("pay.ratePerCup")}>
@@ -223,11 +221,7 @@ export function CommissionTypeEdit({ id }: { id: string }) {
                     />
                 </div>
                 <Field label={t("pay.name")} required>
-                    <TextInput
-                        value={form.name}
-                        onChange={(name) => setForm({ ...form, name })}
-                        className="text-base font-medium"
-                    />
+                    <TextInput value={form.name} onChange={(name) => setForm({ ...form, name })} />
                 </Field>
                 <SlugField slug={type.slug} />
                 <Field label={t("pay.ratePerCup")}>
@@ -336,7 +330,6 @@ export function ClaimTypeAdd() {
                         value={name}
                         onChange={setName}
                         placeholder={t("pay.claimNameHint")}
-                        className="text-base font-medium"
                     />
                 </Field>
                 <Field label={t("pay.slugAuto")} required>
@@ -344,7 +337,6 @@ export function ClaimTypeAdd() {
                         value={slug}
                         onChange={(v) => setSlug(slugify(v))}
                         placeholder="LUNCH_ALLOWANCE"
-                        className="text-base font-medium"
                     />
                 </Field>
                 <Field label={t("pay.amount")}>
@@ -455,11 +447,7 @@ export function ClaimTypeEdit({ id }: { id: string }) {
                     />
                 </div>
                 <Field label={t("pay.name")} required>
-                    <TextInput
-                        value={form.name}
-                        onChange={(name) => setForm({ ...form, name })}
-                        className="text-base font-medium"
-                    />
+                    <TextInput value={form.name} onChange={(name) => setForm({ ...form, name })} />
                 </Field>
                 <SlugField slug={type.slug} />
                 <Field label={t("pay.amount")}>

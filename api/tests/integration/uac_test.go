@@ -191,3 +191,37 @@ func TestUacOffAndNone(t *testing.T) {
 		t.Errorf("unknown claim type: %d %s", s, c)
 	}
 }
+
+// TestUacOwnerStores: the owner picks their own stores, sending back the levels the page shows them;
+// another admin cannot change them.
+func TestUacOwnerStores(t *testing.T) {
+	pool := testkit.DB(t)
+	ctx := context.Background()
+	if _, err := pool.Exec(ctx, `UPDATE tenants SET owner_id = $1 WHERE slug = 'tenant-a'`, testkit.AdminA); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `INSERT INTO user_app_access (tenant_id, user_id, app, access)
+		SELECT id, $1, 'backoffice', 'admin' FROM tenants WHERE slug = 'tenant-a'
+		ON CONFLICT (tenant_id, user_id, app) DO UPDATE SET access = 'admin'`, testkit.SellerA); err != nil {
+		t.Fatal(err)
+	}
+	a := testkit.NewAPI(t, pool, "")
+	owner := testkit.Session(a.SignIn(t, testkit.AdminA, "backoffice"))
+	other := testkit.Session(a.SignIn(t, testkit.SellerA, "backoffice"))
+	put := func(who *http.Cookie, key, stores string) (int, string) {
+		resp := a.Send(t, http.MethodPut, "/tenants/tenant-a/uac/people/"+testkit.AdminA, "backoffice",
+			`{"access":{"seller":"admin","backoffice":"admin"},"storeIds":[`+stores+`],"active":true}`,
+			[]string{"Idempotency-Key: owner-stores-" + key}, who)
+		return resp.StatusCode, code(t, resp)
+	}
+	if s, c := put(owner, "1", fmt.Sprintf("%q", storeANorth)); s != 200 {
+		t.Fatalf("the owner's stores: %d %s", s, c)
+	}
+	var seller string
+	if err := pool.QueryRow(ctx, `SELECT access FROM user_app_access WHERE user_id = $1 AND app = 'seller'`, testkit.AdminA).Scan(&seller); err != nil || seller != "member" {
+		t.Errorf("seller level stored: %q %v", seller, err)
+	}
+	if s, c := put(other, "2", ""); s != 422 || c != "owner_kept" {
+		t.Errorf("another admin changing them: %d %s", s, c)
+	}
+}
