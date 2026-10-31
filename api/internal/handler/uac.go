@@ -71,7 +71,9 @@ func registerUac(api huma.API, d Deps) {
 			if err != nil {
 				return nil, err
 			}
-			return &contract.UacPersonOutput{Body: uacPerson(p)}, nil
+			out := uacPerson(p)
+			out.Bank = &contract.Bank{Name: p.BankName, AccountNumber: p.BankAccountNumber, AccountHolder: p.BankAccountHolder}
+			return &contract.UacPersonOutput{Body: out}, nil
 		})
 
 	route(api, op("setUacPerson", http.MethodPut, "/people/{userId}", "Set a person's levels per app, stores and status, at once"), uacWrite,
@@ -118,6 +120,26 @@ func registerUac(api huma.API, d Deps) {
 				return nil, err
 			}
 			return &contract.UacPersonOutput{Body: uacPerson(p)}, nil
+		})
+
+	logout := op("logoutUacPerson", http.MethodPost, "/people/{userId}/logout", "Sign a person out of every app on every phone")
+	logout.DefaultStatus = http.StatusNoContent
+	route(api, logout, uacWrite,
+		func(ctx context.Context, in *contract.UacLogoutInput) (*struct{}, error) {
+			caller, _ := auth.CallerFrom(ctx)
+			q := idem.Queries(ctx, d.Queries)
+			p, err := person(ctx, q, caller.TenantID, in.UserID)
+			if err != nil {
+				return nil, err
+			}
+			if p.IsOwner && p.ID != caller.UserID {
+				return nil, errOwnerKept
+			}
+			// Through Sessions, not the write's q: it also forgets them in its memory.
+			if err := d.Sessions.DeleteAll(ctx, p.ID); err != nil {
+				return nil, err
+			}
+			return nil, realtime.Announce(ctx, q, realtime.Event{Topic: realtime.UserTopic(p.ID.String()), Kind: realtime.SignedOut})
 		})
 
 	route(api, huma.Operation{

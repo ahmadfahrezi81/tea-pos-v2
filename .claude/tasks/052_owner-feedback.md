@@ -180,14 +180,15 @@ The owner swapped the tenant's owner by SQL on production, and consolidates dupl
 7. **Space under a Save footer on inner pages:** 75% of the phone's home bar, was 50% (about 25px on an iPhone)
 ### API and code, to explore and clean up
 
-Findings from reading and a scan, nothing changed yet; the owner picks:
+Found by reading and a scan, then fixed:
 
-- **A claim type's Eligibility list:** shows inactive people, and hides anyone with `users.role` ADMIN, so it disagrees with a person's Claims page
-- **A person's page reads every staff member for one bank row** (`/pay/staff`): bank details belong on the one-person read
-- **`api/db/schema.sql` is five migrations behind:** `pending.sql` is 459 lines; re-dump it
-- **Routes no app calls:** `GET /pay/payouts`, `GET /feedbacks`, `POST /auth/logout-everywhere`
-- **15 Pay words no screen uses**
-- **Good:** all 97 queries are used; no query per row in a request (the one loop over stores' weather runs in the worker)
+- **A claim type's Eligibility list:** only people active here (`/pay/staff`'s status is now the tenant's), and any role
+- **A person's page no longer reads every staff member for one bank row:** the bank comes on the one-person read
+- **`api/db/schema.sql` re-dumped**
+- **15 Pay words no screen used:** removed
+- **Log out everywhere on a person's page:** an admin signs someone out with a confirm (`POST .../uac/people/{userId}/logout`), not the owner unless the owner asks, not themselves there
+- **Kept:** `GET /feedbacks`, `POST /auth/logout-everywhere`. `GET /pay/payouts`, unused since Pay went by period, the owner decides
+- **Good:** all queries are used; no query per row in a request
 - **Not checked:** query speed against production's data, indexes
 
 ## Done when

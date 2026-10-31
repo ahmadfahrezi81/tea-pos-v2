@@ -199,6 +199,9 @@ SELECT u.id, u.full_name, u.email, COALESCE(u.avatar_url, '')::text AS avatar_ur
     coalesce((SELECT x.access FROM user_app_access x WHERE x.tenant_id = a.tenant_id AND x.user_id = u.id AND x.app = 'seller'), '')::text AS seller_access,
     coalesce((SELECT x.access FROM user_app_access x WHERE x.tenant_id = a.tenant_id AND x.user_id = u.id AND x.app = 'backoffice'), '')::text AS backoffice_access,
     (a.levels_set OR EXISTS (SELECT 1 FROM user_app_access x WHERE x.tenant_id = a.tenant_id AND x.user_id = u.id))::bool AS has_levels,
+    coalesce(i.bank_name, '')::text AS bank_name,
+    coalesce(i.bank_account_number, '')::text AS bank_account_number,
+    coalesce(i.bank_account_holder, '')::text AS bank_account_holder,
     coalesce(c.id::text, '')::text AS commission_type_id,
     coalesce(c.name, '')::text AS commission_name,
     coalesce(c.rate_per_cup, 0)::bigint AS commission_rate,
@@ -226,23 +229,26 @@ type ListTenantPeopleParams struct {
 }
 
 type ListTenantPeopleRow struct {
-	ID               pgtype.UUID
-	FullName         string
-	Email            string
-	AvatarUrl        string
-	Role             string
-	Phone            string
-	CreatedAt        pgtype.Timestamp
-	Status           string
-	IsOwner          bool
-	SellerAccess     string
-	BackofficeAccess string
-	HasLevels        bool
-	CommissionTypeID string
-	CommissionName   string
-	CommissionRate   int64
-	ClaimTypeIds     []pgtype.UUID
-	StoreIds         []pgtype.UUID
+	ID                pgtype.UUID
+	FullName          string
+	Email             string
+	AvatarUrl         string
+	Role              string
+	Phone             string
+	CreatedAt         pgtype.Timestamp
+	Status            string
+	IsOwner           bool
+	SellerAccess      string
+	BackofficeAccess  string
+	HasLevels         bool
+	BankName          string
+	BankAccountNumber string
+	BankAccountHolder string
+	CommissionTypeID  string
+	CommissionName    string
+	CommissionRate    int64
+	ClaimTypeIds      []pgtype.UUID
+	StoreIds          []pgtype.UUID
 }
 
 // Everyone in the tenant with what auth.LevelIn reads, and their stores here.
@@ -268,6 +274,9 @@ func (q *Queries) ListTenantPeople(ctx context.Context, arg ListTenantPeoplePara
 			&i.SellerAccess,
 			&i.BackofficeAccess,
 			&i.HasLevels,
+			&i.BankName,
+			&i.BankAccountNumber,
+			&i.BankAccountHolder,
 			&i.CommissionTypeID,
 			&i.CommissionName,
 			&i.CommissionRate,

@@ -689,6 +689,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{tenant}/uac/people/{userId}/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign a person out of every app on every phone */
+        post: operations["logoutUacPerson"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{tenant}/uac/requests/{id}": {
         parameters: {
             query?: never;
@@ -1325,8 +1342,11 @@ export interface components {
             name: string;
             /** @example USER */
             role: string;
-            /** @example active */
-            status: string;
+            /**
+             * @description In this tenant
+             * @enum {string}
+             */
+            status: "active" | "inactive";
         };
         PayStaffOutputBody: {
             /** @description Every user of the tenant, admins included; by name */
@@ -1657,6 +1677,8 @@ export interface components {
             access: components["schemas"]["MeAccess"];
             active: boolean;
             avatarUrl?: string;
+            /** @description Only when reading one person; set by them in the seller app */
+            bank?: components["schemas"]["Bank"];
             /** @description Enabled claim types they may claim */
             claimTypeIds: string[];
             commissionName?: string;
@@ -3255,6 +3277,36 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["UacPerson"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    logoutUacPerson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

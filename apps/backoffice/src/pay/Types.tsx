@@ -420,7 +420,7 @@ export function ClaimTypeEdit({ id }: { id: string }) {
     if (!type || !form)
         return <p className="p-4 text-sm text-gray-900">{t("pay.claimTypeNotFound")}</p>;
     const current = picked ?? new Set(eligible?.userIds ?? []);
-    const people = (staff?.staff ?? []).filter((s) => s.role !== "ADMIN");
+    const people = (staff?.staff ?? []).filter((s) => s.status === "active");
     const shown = search.trim()
         ? people.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()))
         : people;

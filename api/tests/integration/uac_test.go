@@ -225,3 +225,33 @@ func TestUacOwnerStores(t *testing.T) {
 		t.Errorf("another admin changing them: %d %s", s, c)
 	}
 }
+
+// TestUacLogout: an admin signs someone out everywhere; a guest cannot, nor can an admin sign out the owner.
+func TestUacLogout(t *testing.T) {
+	pool := testkit.DB(t)
+	if _, err := pool.Exec(context.Background(), `UPDATE tenants SET owner_id = $1 WHERE slug = 'tenant-a'`, testkit.AdminA); err != nil {
+		t.Fatal(err)
+	}
+	a := testkit.NewAPI(t, pool, "")
+	admin := testkit.Session(a.SignIn(t, testkit.AdminA, "backoffice"))
+	guest := testkit.Session(a.SignIn(t, testkit.GuestA, "backoffice"))
+	seller := testkit.Session(a.SignIn(t, testkit.SellerA, "seller"))
+	logout := func(who *http.Cookie, user, key string) int {
+		resp := a.Send(t, http.MethodPost, "/tenants/tenant-a/uac/people/"+user+"/logout", "backoffice", "",
+			[]string{"Idempotency-Key: uac-logout-" + key}, who)
+		defer resp.Body.Close()
+		return resp.StatusCode
+	}
+	if s := logout(guest, testkit.SellerA, "1"); s != 403 {
+		t.Errorf("a guest: %d", s)
+	}
+	if s := a.Request(t, http.MethodGet, "/me", "seller", seller).StatusCode; s != 200 {
+		t.Fatalf("still signed in: %d", s)
+	}
+	if s := logout(admin, testkit.SellerA, "2"); s != 204 {
+		t.Fatalf("logout: %d", s)
+	}
+	if s := a.Request(t, http.MethodGet, "/me", "seller", seller).StatusCode; s != 401 {
+		t.Errorf("after logout /me: %d", s)
+	}
+}

@@ -1199,8 +1199,10 @@ components:
             - USER
           type: string
         status:
-          examples:
+          description: In this tenant
+          enum:
             - active
+            - inactive
           type: string
       required:
         - id
@@ -1843,6 +1845,9 @@ components:
           type: boolean
         avatarUrl:
           type: string
+        bank:
+          $ref: "#/components/schemas/Bank"
+          description: Only when reading one person; set by them in the seller app
         claimTypeIds:
           description: Enabled claim types they may claim
           items:
@@ -3757,6 +3762,39 @@ paths:
                 $ref: "#/components/schemas/Error"
           description: Error
       summary: Change a person's name and phone
+      tags:
+        - uac
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/uac/people/{userId}/logout:
+    post:
+      operationId: logoutUacPerson
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Sign a person out of every app on every phone
       tags:
         - uac
       x-access:

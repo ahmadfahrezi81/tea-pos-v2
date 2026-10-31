@@ -9,7 +9,11 @@ import { Segmented } from "@tea-pos/ui/form/Segmented";
 import { Switch } from "@tea-pos/ui/form/Switch";
 import { TextInput } from "@tea-pos/ui/form/TextInput";
 import { Panel, PanelLabel } from "@tea-pos/ui/Panel";
+import { InfoList, InfoRow } from "@tea-pos/ui/DetailList";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { toast } from "@tea-pos/ui/toast";
+import { useMe } from "@tea-pos/api-client/me";
 import { ConfirmSheet, FormFooter } from "@tea-pos/shell/FormFooter";
 import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
@@ -19,6 +23,7 @@ import {
     BadgePercent,
     Check,
     LayoutGrid,
+    LogOut,
     Pencil,
     ReceiptText,
     Store,
@@ -26,10 +31,10 @@ import {
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import { PersonBank } from "../pay/Staff";
 import { useClaimTypes, useCommissionTypes, usePayWrite, writes } from "../pay/pay";
 import {
     storeGroups,
+    useLogoutPerson,
     useSetDetails,
     useSetPerson,
     useUacPerson,
@@ -58,7 +63,9 @@ export function PersonPage({ userId }: { userId: string }) {
     const stores = useTenant()?.tenant.stores ?? [];
     const { data: p } = useUacPerson(userId);
     const { data: claimTypes } = useClaimTypes();
+    const self = useMe().data?.user.id === userId;
     if (!p) return <Skeleton className="h-60 rounded-2xl" />;
+    const bank = p.bank;
     // The owner keeps full access, and someone turned off has none to change.
     const access = canWrite && !p.owner && p.active;
     // Their stores are for the owner alone to change.
@@ -146,7 +153,30 @@ export function PersonPage({ userId }: { userId: string }) {
                 )}
             </SettingsGroup>
 
-            <PersonBank id={p.id} />
+            <section className="space-y-2">
+                <SectionLabel>{t("pay.bankDetails")}</SectionLabel>
+                <InfoList>
+                    {bank?.name || bank?.accountNumber ? (
+                        <>
+                            {bank.name && <InfoRow label={t("pay.bank")}>{bank.name}</InfoRow>}
+                            {bank.accountNumber && (
+                                <InfoRow label={t("pay.accountNumber")}>
+                                    <span className="font-mono">{bank.accountNumber}</span>
+                                </InfoRow>
+                            )}
+                            {bank.accountHolder && (
+                                <InfoRow label={t("pay.accountHolder")}>
+                                    {bank.accountHolder}
+                                </InfoRow>
+                            )}
+                        </>
+                    ) : (
+                        <InfoRow label={t("pay.bankDetails")}>{t("pay.noBank")}</InfoRow>
+                    )}
+                </InfoList>
+            </section>
+
+            {canWrite && !self && (!p.owner || owner) && <LogoutRow person={p} />}
         </div>
     );
 }
@@ -211,6 +241,38 @@ function StatusRow({ person: p, editable }: { person: Person; editable: boolean 
                 onCancel={() => setAsking(false)}
             />
         </div>
+    );
+}
+
+/** Signs them out everywhere, for a lost phone; they can sign in again unless turned off too. */
+function LogoutRow({ person: p }: { person: Person }) {
+    const t = useT();
+    const logout = useLogoutPerson(p.id);
+    const [asking, setAsking] = useState(false);
+    return (
+        <SettingsGroup>
+            <SettingsRow
+                icon={<LogOut {...rowIcon} />}
+                label={t("uac.logout")}
+                right={<></>}
+                onClick={() => setAsking(true)}
+            />
+            <ConfirmSheet
+                open={asking}
+                title={t("uac.logoutTitle").replace("{name}", p.name)}
+                message={t("uac.logoutBody")}
+                label={t("uac.logout")}
+                busyLabel={t("uac.saving")}
+                tone="orange"
+                onConfirm={async () => {
+                    await logout.mutateAsync({});
+                    setAsking(false);
+                    toast(t("uac.loggedOut").replace("{name}", p.name));
+                }}
+                onError={() => setAsking(false)}
+                onCancel={() => setAsking(false)}
+            />
+        </SettingsGroup>
     );
 }
 
