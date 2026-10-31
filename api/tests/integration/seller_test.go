@@ -3,7 +3,6 @@
 package integration
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -72,14 +71,8 @@ func TestSellerDay(t *testing.T) {
 		t.Errorf("a refused order counted: %+v", g2)
 	}
 
-	// Someone not on this store's roster is refused outright.
-	other := testkit.Session(a.SignIn(t, testkit.GuestA, "seller"))
-	_ = other
-	var body map[string]any
 	if s, b := write(seller, "/take-over", `{"claimCode":"xx"}`); s != 403 {
 		t.Errorf("a wrong code: %d %s", s, b)
-	} else {
-		_ = json.Unmarshal(b, &body)
 	}
 	if s, b := write(seller, "/take-over", fmt.Sprintf(`{"claimCode":%q}`, g.ClaimCode)); s != 200 {
 		t.Errorf("the right code: %d %s", s, b)

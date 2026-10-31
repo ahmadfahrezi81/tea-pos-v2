@@ -11,7 +11,6 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
@@ -233,22 +232,23 @@ func registerSeller(api huma.API, d Deps) {
 			if err != nil {
 				return nil, err
 			}
+			// Checked first: an exception from the function would abort the write's transaction, and
+			// with it the saved answer. The function still locks the row against a race.
+			current, err := q.GetActiveStoreSession(ctx, store.GetActiveStoreSessionParams{StoreID: s, TenantID: caller.TenantID})
+			if errors.Is(err, pgx.ErrNoRows) {
+				return nil, errNoSession
+			}
+			if err != nil {
+				return nil, err
+			}
+			if current.ClaimCode != in.Body.ClaimCode {
+				return nil, errBadClaimCode
+			}
 			session, err := q.TransferStoreSession(ctx, store.TransferStoreSessionParams{
 				TenantID: caller.TenantID, StoreID: s, UserID: caller.UserID,
 				ClaimCode: in.Body.ClaimCode, NewClaimCode: claimCode(),
 			})
 			if err != nil {
-				var pg *pgconn.PgError
-				if errors.As(err, &pg) {
-					switch pg.Code {
-					case "PT403":
-						return nil, errBadClaimCode
-					case "PT404":
-						return nil, errNoSession
-					case "PT409":
-						return nil, errSessionTaken
-					}
-				}
 				return nil, err
 			}
 			if err := logStoreActivity(ctx, q, caller, s, session.DailySummaryID, "session_transferred", session.ID, "store_sessions",
