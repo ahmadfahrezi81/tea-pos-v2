@@ -255,3 +255,52 @@ func TestUacLogout(t *testing.T) {
 		t.Errorf("after logout /me: %d", s)
 	}
 }
+
+// TestUacOtherTenant: an admin reaches nobody outside their tenant, on any write about a person.
+func TestUacOtherTenant(t *testing.T) {
+	pool := testkit.DB(t)
+	a := testkit.NewAPI(t, pool, "")
+	admin := testkit.Session(a.SignIn(t, testkit.AdminA, "backoffice"))
+	writes := []struct{ method, path, body string }{
+		{http.MethodPut, "/uac/people/" + testkit.SellerB, `{"access":{"seller":"","backoffice":""},"storeIds":[],"active":false}`},
+		{http.MethodPut, "/uac/people/" + testkit.SellerB + "/details", `{"fullName":"X","phone":""}`},
+		{http.MethodPost, "/uac/people/" + testkit.SellerB + "/logout", ""},
+		{http.MethodPut, "/pay/staff/" + testkit.SellerB + "/claim-types", `{"claimTypeIds":[]}`},
+		{http.MethodPut, "/pay/staff/" + testkit.SellerB + "/commission-type", `{"commissionTypeId":null}`},
+	}
+	for i, w := range writes {
+		resp := a.Send(t, w.method, "/tenants/tenant-a"+w.path, "backoffice", w.body,
+			[]string{fmt.Sprintf("Idempotency-Key: uac-other-%04d", i)}, admin)
+		if s, c := resp.StatusCode, code(t, resp); s != 404 {
+			t.Errorf("%s %s: %d %s", w.method, w.path, s, c)
+		}
+	}
+	seller := testkit.Session(a.SignIn(t, testkit.SellerB, "seller"))
+	if s := a.Request(t, http.MethodGet, "/me", "seller", seller).StatusCode; s != 200 {
+		t.Errorf("Seller B was signed out: %d", s)
+	}
+}
+
+// TestUacBankOnOnePerson: the bank comes with one person, never with the list.
+func TestUacBankOnOnePerson(t *testing.T) {
+	pool := testkit.DB(t)
+	if _, err := pool.Exec(context.Background(), `INSERT INTO payroll_user_info (tenant_id, user_id, bank_name)
+		SELECT id, $1, 'BCA' FROM tenants WHERE slug = 'tenant-a'
+		ON CONFLICT (tenant_id, user_id) DO UPDATE SET bank_name = 'BCA'`, testkit.SellerA); err != nil {
+		t.Fatal(err)
+	}
+	a := testkit.NewAPI(t, pool, "")
+	admin := testkit.Session(a.SignIn(t, testkit.AdminA, "backoffice"))
+	var one contract.UacPerson
+	_ = json.NewDecoder(a.Request(t, http.MethodGet, "/tenants/tenant-a/uac/people/"+testkit.SellerA, "backoffice", admin).Body).Decode(&one)
+	if one.Bank == nil || one.Bank.Name != "BCA" {
+		t.Errorf("one person: %+v", one.Bank)
+	}
+	var list contract.UacOutput
+	_ = json.NewDecoder(a.Request(t, http.MethodGet, "/tenants/tenant-a/uac", "backoffice", admin).Body).Decode(&list.Body)
+	for _, p := range list.Body.People {
+		if p.Bank != nil {
+			t.Errorf("the list shows %s's bank", p.Name)
+		}
+	}
+}

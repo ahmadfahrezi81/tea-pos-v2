@@ -59,12 +59,12 @@ func TestPayouts(t *testing.T) {
 	a := testkit.NewAPI(t, pool, "")
 	c := &payClient{t: t, a: a, admin: testkit.Session(a.SignIn(t, testkit.AdminA, "backoffice"))}
 
-	// October: both of Seller A's payouts overlap it; Tenant B's is not listed.
-	var list struct{ Payouts []contract.Payout }
-	if s := c.get("/payouts?month=2026-10", &list); s != 200 || len(list.Payouts) != 2 {
-		t.Fatalf("list: %d %+v", s, list.Payouts)
+	// Its period: Seller A's open payout; Tenant B's is not listed.
+	var at contract.PayPeriodAt
+	if s := c.get("/periods/2026-10-12", &at); s != 200 || len(at.People) != 1 {
+		t.Fatalf("period: %d %+v", s, at.People)
 	}
-	open := list.Payouts[0]
+	open := at.People[0]
 	if open.ID != payoutOpen || open.Commissions != 50000 || open.Claims != 0 || open.Total != 50000 || open.Cups != 50 || open.Approved != 1 || open.Pending != 2 || open.NonSeller {
 		t.Errorf("open payout: %+v", open)
 	}

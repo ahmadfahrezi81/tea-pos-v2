@@ -1293,17 +1293,6 @@ components:
         - approved
         - pending
       type: object
-    PayoutsOutputBody:
-      additionalProperties: false
-      properties:
-        payouts:
-          description: Overlapping the month, newest period first
-          items:
-            $ref: "#/components/schemas/Payout"
-          type: array
-      required:
-        - payouts
-      type: object
     Payslip:
       additionalProperties: false
       properties:
@@ -2972,45 +2961,6 @@ paths:
         level: admin
         tenant: true
         idempotent: true
-        signedIn: true
-  /tenants/{tenant}/pay/payouts:
-    get:
-      operationId: listPayouts
-      parameters:
-        - in: path
-          name: tenant
-          required: true
-          schema:
-            type: string
-        - explode: false
-          in: query
-          name: month
-          required: true
-          schema:
-            examples:
-              - 2026-10
-            pattern: ^[0-9]{4}-[0-9]{2}$
-            type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PayoutsOutputBody"
-          description: OK
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-          description: Error
-      summary: Staff payouts overlapping a month, with their totals
-      tags:
-        - pay
-      x-access:
-        app: backoffice
-        level: guest
-        tenant: true
         signedIn: true
   /tenants/{tenant}/pay/payouts/{id}:
     get:

@@ -188,7 +188,8 @@ Found by reading and a scan, then fixed:
 - **`api/db/schema.sql` re-dumped**
 - **15 Pay words no screen used:** removed
 - **Log out everywhere on a person's page:** an admin signs someone out with a confirm (`POST .../uac/people/{userId}/logout`), not the owner unless the owner asks, not themselves there
-- **Kept:** `GET /feedbacks`, `POST /auth/logout-everywhere`. `GET /pay/payouts`, unused since Pay went by period, the owner decides
+- **Kept:** `GET /feedbacks`, `POST /auth/logout-everywhere`. `GET /pay/payouts` removed, unused since Pay went by period
+- **More tests before the cutover:** e2e reads every Store, Pay and People screen through the forwarder, tenant and app boundaries, one write (log someone out); integration: other tenants on every write about a person, the bank on one person only
 - **Good:** all queries are used; no query per row in a request
 - **Not checked:** query speed against production's data, indexes
 

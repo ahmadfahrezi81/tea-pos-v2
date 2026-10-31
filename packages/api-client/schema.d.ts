@@ -382,23 +382,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/tenants/{tenant}/pay/payouts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Staff payouts overlapping a month, with their totals */
-        get: operations["listPayouts"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/tenants/{tenant}/pay/payouts/{id}": {
         parameters: {
             query?: never;
@@ -1389,10 +1372,6 @@ export interface components {
             total: number;
             /** Format: uuid */
             userId: string;
-        };
-        PayoutsOutputBody: {
-            /** @description Overlapping the month, newest period first */
-            payouts: components["schemas"]["Payout"][];
         };
         Payslip: {
             /**
@@ -2627,39 +2606,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-            /** @description Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    listPayouts: {
-        parameters: {
-            query: {
-                month: string;
-            };
-            header?: never;
-            path: {
-                tenant: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PayoutsOutputBody"];
-                };
             };
             /** @description Error */
             default: {
