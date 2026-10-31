@@ -189,7 +189,8 @@
         "updating": "Memperbarui {app}",
         "updateDownloading": "Mengunduh pembaruan",
         "updateDone": "Selesai. Memulai ulang…",
-        "updateRestartIn": "Selesai. Memulai ulang dalam {n}",
+        "updateRestartIn": "Restart dalam {n}",
+        "updateRestart": "Restart",
         "updateKeepOpen": "Biarkan aplikasi tetap terbuka"
     },
     "signIn": {
@@ -221,6 +222,7 @@
         "bad_request": "Ada yang belum benar di formulir ini.",
         "conflict": "Ini sudah berubah. Muat ulang dan coba lagi.",
         "error": "Terjadi kesalahan.",
+        "read_only": "Hanya baca: terhubung ke production.",
         "files_unavailable": "Foto belum bisa diunggah. Coba lagi nanti.",
         "forbidden": "Anda tidak diizinkan melakukan ini.",
         "idempotency_key_required": "Terjadi kesalahan. Coba lagi.",
@@ -264,6 +266,9 @@
         "blank_name": "Nama tidak boleh kosong"
     },
     "store": {
+        "week": "Week",
+        "avgPerDay": "Rata-rata/hari",
+        "teaWaste": "Tea waste",
         "title": "Toko",
         "open": "Buka",
         "closed": "Tutup",
@@ -279,7 +284,7 @@
         "cupsUnit": "Cups",
         "noStores": "Belum ada toko",
         "rightNow": "Saat ini",
-        "cupsByHour": "Gelas per jam",
+        "cupsByHour": "Cups per jam",
         "dateRange": "Rentang tanggal",
         "today": "Hari ini",
         "yesterday": "Kemarin",

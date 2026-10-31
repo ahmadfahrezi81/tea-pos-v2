@@ -143,6 +143,26 @@ The owner's walkthrough ended here; build these now. The owner does 2, 3 and 5's
 6. **More of a person shows from the outside:** at a glance in the People list, without opening them
 7. **No menu behind Edit:** the rows are the menu; the owner may come back to this
 
+## Round 6 (2026-10-31)
+
+Fixed live: the loading bar is 3px and sits inside the header, with 8px above and 8px below. The content's top padding is 8px. A short bar loops left to right while loading; when the page is there it waits to reach the centre, stops, and grows from there to full width, blinks and goes.
+
+### To build, all at once in one PR
+
+1. **A person's settings are pages, not sheets:** each row on the person's page opens its own page (`/uac/<person>/apps`, and so on), with its save in the footer and a confirm sheet before it writes, as every write in the apps
+2. **The update lives in the header, not a floating toast:** on a tab's root it takes the title's place (the account icon stays), in a black box with progress and a small animation, an arrow dropping into a tray, a tick when done; on inner pages it does not show, the download carries on behind, and the countdown and reload wait until back on a root
+3. **Store's date range is a white strip:** two lines, the title, then the dates and the week (Week 44, for up to two weeks' range) under it, a chevron beside the title, an orange calendar icon on a soft orange tile on the right
+4. **Store's top card, again :** a small Sales label over a smaller figure, the size of a store's name; top right empty. Over several days three tiles, one figure each: Cups, Avg cups a day, Tea waste. No best day, no average cost. One day: Cups, Expected cash, Tea waste
+5. **Store's chart takes the full width :** no padding on the left, right or bottom of its tile, so it runs edge to edge, and a slightly lower height
+6. **A store's Latest orders:** the last 3, not 5, in a grey group as the lists before, so it takes less height
+7. **Pay's recap is in the week card:** one tight grey row, no icons, two columns of a small label over its figure: Total payout (what is left to send, or what was paid once all is paid) over the amount, the pay date over its state as a badge (days left, ready to pay, waiting, Paid); no separate card, no tiles
+8. **Advanced in More is for admins:** a guest in the office does not see the row
+9. **People list:** the avatar at the top of the row, not its middle; ordered owner, admins, office guests, sellers, no access, inactive, then by name
+
+10. **The refusal of `pnpm backoffice:prod` says so** (`errors.read_only`), not Something went wrong
+
+The owner swapped the tenant's owner by SQL on production, and consolidates duplicate accounts by turning them inactive.
+
 ## Done when
 
 - Typecheck, lint, build and bundle size pass

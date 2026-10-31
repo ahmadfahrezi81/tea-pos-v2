@@ -3,7 +3,7 @@ import { formatCalendarDay, formatMoney, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { CalendarClock, ChevronLeft, ChevronRight, CircleHelp, Settings } from "lucide-react";
+import { ChevronLeft, ChevronRight, CircleHelp, Settings } from "lucide-react";
 
 import { daysLeft, daysLeftText, weeks } from "./dates";
 import { payDate, usePayPeriodAt } from "./pay";
@@ -52,6 +52,20 @@ export function PeriodHome({ start }: { start: string }) {
     const open = people.filter((x) => x.status === "pending").sort((a, b) => b.pending - a.pending);
     const done = people.filter((x) => x.status !== "pending");
     const toPay = people.filter(isReady).length;
+    const toSend = open.reduce((n, x) => n + x.total, 0);
+    const paid = done.reduce((n, x) => n + (x.status === "paid" ? x.total : 0), 0);
+    const allPaid = open.length === 0 && paid > 0;
+    const waiting = open.reduce((n, x) => n + x.pending, 0);
+    // How the period stands, under its pay date; nothing when there is nothing to say.
+    const status = allPaid
+        ? t("pay.paid")
+        : left > 0
+          ? daysLeftText(t, left)
+          : toPay > 0
+            ? t("pay.payDay").replace("{n}", String(toPay))
+            : waiting > 0
+              ? t("pay.waiting").replace("{n}", String(waiting))
+              : "";
 
     const go = (period: string) =>
         void navigate({
@@ -135,18 +149,21 @@ export function PeriodHome({ start }: { start: string }) {
                         <span className="size-11 shrink-0" />
                     )}
                 </div>
-                <div className="flex items-center gap-2 rounded-xl bg-slate-100 p-1.5">
-                    <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand/10">
-                        <CalendarClock size={18} className="text-brand" />
-                    </span>
-                    <p className="flex-1 min-w-0 truncate text-base font-bold text-gray-900">
-                        {left <= 0 && toPay > 0
-                            ? t("pay.payDay").replace("{n}", String(toPay))
-                            : `${t(left > 0 ? "pay.nextShort" : "pay.payDate")} ${payDate(p.payoutDate, locale)}`}
+                <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 rounded-xl bg-slate-100 p-2.5">
+                    <p className="truncate text-sm font-medium text-gray-900">
+                        {people.length > 0 && t("pay.totalPayout")}
                     </p>
-                    {left > 0 && (
-                        <span className="shrink-0 rounded-lg bg-orange-100 px-2 py-0.5 text-sm font-bold text-orange-700">
-                            {daysLeftText(t, left)}
+                    <p className="text-right text-sm font-medium text-gray-900">
+                        {payDate(p.payoutDate, locale)}
+                    </p>
+                    <p className="truncate text-lg font-bold leading-tight text-green-600">
+                        {people.length > 0 && formatMoney(allPaid ? paid : toSend)}
+                    </p>
+                    {status && (
+                        <span
+                            className={`justify-self-end rounded-lg px-2 py-0.5 text-sm font-bold ${allPaid ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}
+                        >
+                            {status}
                         </span>
                     )}
                 </div>
@@ -173,8 +190,6 @@ export function PeriodHome({ start }: { start: string }) {
                     <ChevronRight size={ICON} />
                 </Link>
             )}
-
-            {people.length > 0 && <Recap people={people} />}
 
             {people.length === 0 && (
                 <EmptyState title={t("pay.noPeople")} body={t("pay.noPeopleBody")} />
@@ -212,37 +227,6 @@ export function PeriodHome({ start }: { start: string }) {
 
 const plain = (amount: number) => formatMoney(amount).replace(/^Rp\s*/, "");
 
-/** What a card adds up to, in one row of tiles. */
-function PayTiles({ cups, commissions, claims }: Pick<Person, "cups" | "commissions" | "claims">) {
-    const t = useT();
-    return (
-        <div className="grid grid-cols-3 gap-1.5">
-            <Tile label={t("pay.cups")} value={String(cups)} className="bg-blue-100" />
-            <Tile label={t("pay.commission")} value={plain(commissions)} className="bg-teal-100" />
-            <Tile label={t("pay.claims")} value={plain(claims)} className="bg-purple-100" />
-        </div>
-    );
-}
-
-/** The whole period at a glance: everyone below added up, and what there is to send. */
-function Recap({ people }: { people: Person[] }) {
-    const t = useT();
-    const sum = (k: "cups" | "commissions" | "claims" | "total") =>
-        people.reduce((n, x) => n + x[k], 0);
-    return (
-        <div className="bg-white rounded-2xl p-3 space-y-2.5">
-            <div className="flex items-center justify-between gap-3">
-                <p className="text-lg font-bold text-gray-900">{t("pay.recap")}</p>
-                <div className="shrink-0 space-y-1 text-right">
-                    <p className="text-xs font-semibold text-gray-900">{t("pay.total")}</p>
-                    <p className="font-bold text-green-600">{formatMoney(sum("total"))}</p>
-                </div>
-            </div>
-            <PayTiles cups={sum("cups")} commissions={sum("commissions")} claims={sum("claims")} />
-        </div>
-    );
-}
-
 /** A person in the period: who, what is next and the total up top, what makes it up as tiles. */
 function PersonCard({ person: x, start }: { person: Person; start: string }) {
     const t = useT();
@@ -278,7 +262,15 @@ function PersonCard({ person: x, start }: { person: Person; start: string }) {
                     <p className="font-bold text-green-600">{formatMoney(x.total)}</p>
                 </div>
             </div>
-            <PayTiles {...x} />
+            <div className="grid grid-cols-3 gap-1.5">
+                <Tile label={t("pay.cups")} value={String(x.cups)} className="bg-blue-100" />
+                <Tile
+                    label={t("pay.commission")}
+                    value={plain(x.commissions)}
+                    className="bg-teal-100"
+                />
+                <Tile label={t("pay.claims")} value={plain(x.claims)} className="bg-purple-100" />
+            </div>
         </Link>
     );
 }

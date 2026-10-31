@@ -7,15 +7,15 @@ import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { Tile } from "@tea-pos/ui/Tile";
 
 import { useRange } from "./range";
-import { dayCash, plain, useSalesDays, useSalesHours } from "./sales";
+import { dayCash, plain, useSalesDays, useSalesHours, useTeaWaste } from "./sales";
 
 const TILE = "rounded-xl bg-slate-100 p-3";
 
 type Store = components["schemas"]["StoreLive"];
 
 /**
- * The store cards below added up: sales, cups, expenses, then cash (one day) or how far it was off
- * (several), and cups by hour (one day) or by day.
+ * The store cards below added up. Sales, then one day: cups, cash and tea waste, cups by hour;
+ * several days: cups, cups a day and tea waste a day, cups by day.
  */
 export function RangePanel({ stores }: { stores: Store[] | undefined }) {
     const t = useT();
@@ -36,27 +36,31 @@ export function RangePanel({ stores }: { stores: Store[] | undefined }) {
           }));
     const sum = (of: (s: Store) => number) => (stores ?? []).reduce((n, s) => n + of(s), 0);
     const anyOpen = isToday && stores?.some((s) => s.open);
-    const cashOff = sum((s) => s.cashDiff);
     const value = (text: string) => (stores ? text : "–");
+    const cups = sum((s) => s.cups);
+    const daysSold = days.data?.days.filter((d) => d.cups > 0).length ?? 0;
+    // Only days whose tea was measured at closing, so today has none until it closes.
+    const measured = useTeaWaste(from, to).data?.days ?? [];
+    const litres = measured.length
+        ? `${(measured.reduce((n, d) => n + d.litres, 0) / measured.length).toLocaleString(locale, { maximumFractionDigits: 1 })} L`
+        : "–";
     return (
         <Panel>
-            {stores ? (
-                <p className="px-1 text-3xl font-bold text-gray-900">
-                    {formatMoney(sum((s) => s.sales))}
-                </p>
-            ) : (
-                <Skeleton className="h-9 w-44 rounded" />
-            )}
+            <div className="px-1">
+                <p className="text-sm font-medium text-gray-900">{t("store.salesShort")}</p>
+                {stores ? (
+                    <p className="text-lg font-bold text-gray-900">
+                        {formatMoney(sum((s) => s.sales))}
+                    </p>
+                ) : (
+                    <Skeleton className="h-7 w-36 rounded" />
+                )}
+            </div>
             <div className="grid grid-cols-3 gap-1.5">
                 <Tile
                     label={t("store.cups")}
-                    value={value(String(sum((s) => s.cups)))}
+                    value={value(String(cups))}
                     className="bg-orange-100"
-                />
-                <Tile
-                    label={t("store.expenses")}
-                    value={value(plain(sum((s) => s.expenses)))}
-                    className="bg-purple-100"
                 />
                 {single ? (
                     <Tile
@@ -66,25 +70,22 @@ export function RangePanel({ stores }: { stores: Store[] | undefined }) {
                     />
                 ) : (
                     <Tile
-                        label={t("store.cashOff")}
-                        value={value(
-                            cashOff === 0
-                                ? "0"
-                                : `${cashOff < 0 ? "−" : "+"}${plain(Math.abs(cashOff))}`,
-                        )}
-                        className={cashOff === 0 ? "bg-green-100" : "bg-red-100"}
+                        label={t("store.avgPerDay")}
+                        value={daysSold ? String(Math.round(cups / daysSold)) : "–"}
+                        className="bg-blue-100"
                     />
                 )}
+                <Tile label={t("store.teaWaste")} value={litres} className="bg-teal-100" />
             </div>
             {points &&
                 (points.length > 0 ? (
-                    <div className={TILE}>
-                        <PanelLabel>
-                            {t(single ? "store.cupsByHour" : "store.totalCups")}
-                        </PanelLabel>
-                        <div className="-mx-2 mt-2">
-                            <AreaChart points={points} unit={t("store.cupsUnit")} height={120} />
+                    <div className="overflow-hidden rounded-xl bg-slate-100">
+                        <div className="px-3 pt-3">
+                            <PanelLabel>
+                                {t(single ? "store.cupsByHour" : "store.totalCups")}
+                            </PanelLabel>
                         </div>
+                        <AreaChart points={points} unit={t("store.cupsUnit")} height={96} flush />
                     </div>
                 ) : (
                     <p className={`${TILE} text-sm text-gray-900`}>{t("store.noSales")}</p>
