@@ -12,6 +12,10 @@ const DONE_CAP_MS = 1_500;
 const PAINT_WAIT_MAX_MS = 400;
 /** Unbroken frames needed after a commit before the bar ends. */
 const QUIET_MS = 200;
+/** One crossing of the short bar (nav-progress.css); it is centred halfway through. */
+const LOOP_MS = 1100;
+/** Past the centre by more than this, stopping there would show. */
+const LATE_MS = 60;
 /** A frame gap longer than this means the browser drew nothing. */
 const FRAME_GAP_MS = 100;
 
@@ -59,8 +63,9 @@ function setState(next: State) {
     if (!bar) return;
     bar.dataset.state = next;
     drive(previous, next);
-    if (isRunning()) bar.parentElement?.setAttribute("aria-busy", "true");
-    else bar.parentElement?.removeAttribute("aria-busy");
+    const page = document.getElementById("shell-scroll");
+    if (isRunning()) page?.setAttribute("aria-busy", "true");
+    else page?.removeAttribute("aria-busy");
 }
 
 function armCap(ms: number, onExpire: () => void) {
@@ -74,7 +79,6 @@ function animations() {
     const named = (name: string) => all.find((a) => (a as CSSAnimation).animationName === name);
     return {
         crawl: named("nav-crawl"),
-        sheen: named("nav-sheen"),
         fill: named("nav-fill"),
         settle: named("nav-settle"),
     };
@@ -83,11 +87,11 @@ function animations() {
 // Animations are only played and paused, never created mid-navigation (on a slow
 // phone a new one froze), and only from here (mixing with CSS made WebKit replay them).
 function drive(previous: State, next: State) {
-    const { crawl, sheen, fill, settle } = animations();
+    const { crawl, fill, settle } = animations();
     const fresh = next === "loading" && (previous === "idle" || previous === "done");
     if (next === "idle" || fresh) {
         // Parked at zero: off-screen, and drawing nothing.
-        for (const animation of [crawl, sheen, fill, settle]) {
+        for (const animation of [crawl, fill, settle]) {
             if (!animation) continue;
             animation.pause();
             animation.currentTime = 0;
@@ -95,22 +99,40 @@ function drive(previous: State, next: State) {
     }
     if (fresh) {
         crawl?.play();
-        sheen?.play();
     } else if (next === "done") {
-        sheen?.pause();
+        // Timed to arrive here; a late timer is put right, too small to see.
+        if (crawl) {
+            crawl.pause();
+            crawl.currentTime = LOOP_MS / 2;
+        }
         fill?.play();
         settle?.play();
     }
 }
 
-/** Ends the run once a frame has painted, so the ending is seen. */
+/** Ms until the short bar is next centred; 0 without one (reduced motion). */
+function untilCentred(): number {
+    const time = Number(animations().crawl?.currentTime ?? NaN);
+    return Number.isNaN(time) ? 0 : (LOOP_MS / 2 - (time % LOOP_MS) + LOOP_MS) % LOOP_MS;
+}
+
+/** Ends the run once a frame has painted and the short bar reaches the centre, so the ending is seen. */
 function finish() {
     cancelWaits();
-    cancelPaint = whenPainted(() => {
+    const end = () => {
         clearTimeout(watchdog);
         setState("done");
         armCap(DONE_CAP_MS, () => setState("idle"));
-    });
+    };
+    const wait = (again: boolean) => {
+        const timer = setTimeout(() => {
+            // A busy phone woke this late: one more crossing rather than a visible jump back.
+            if (again && LOOP_MS - untilCentred() > LATE_MS) wait(false);
+            else end();
+        }, untilCentred());
+        cancelPaint = () => clearTimeout(timer);
+    };
+    cancelPaint = whenPainted(() => wait(true));
 }
 
 /** Enters loading. A running bar keeps its crawl; a settled one restarts. */

@@ -23,7 +23,7 @@
         "commissionType": "Jenis Komisi",
         "none": "Tidak ada",
         "noCommission": "Belum ada komisi",
-        "perCup": "{rate} / gelas",
+        "perCup": "{rate} / cup",
         "bankDetails": "Rekening Bank",
         "bank": "Bank",
         "accountNumber": "Nomor rekening",
@@ -39,7 +39,7 @@
         "name": "Nama",
         "slug": "Slug",
         "slugAuto": "Slug (otomatis)",
-        "ratePerCup": "Tarif per gelas",
+        "ratePerCup": "Tarif per cup",
         "enabled": "Aktif",
         "commissionNameHint": "mis. Penjual Standar",
         "claimNameHint": "mis. Uang Makan",
@@ -116,8 +116,8 @@
         "claim": "Klaim",
         "claims": "Klaim",
         "commission": "Komisi",
-        "cups": "Gelas",
-        "cupsUnit": "gelas",
+        "cups": "Cups",
+        "cupsUnit": "cups",
         "orders": "Pesanan",
         "total": "Total",
         "totalPay": "Total Gaji",
@@ -146,7 +146,7 @@
         "skip": "Lewati",
         "paymentDetails": "Rincian Pembayaran",
         "payslipId": "ID Slip Gaji",
-        "perCupLabel": "Per Gelas",
+        "perCupLabel": "Per Cup",
         "receipt": "Bukti transfer",
         "selectMonth": "Pilih Bulan",
         "showNonSellers": "Tampilkan non-penjual",
@@ -154,7 +154,7 @@
         "staff": "Staf",
         "staffLabel": "Staf",
         "statusLabel": "Status",
-        "week": "Minggu",
+        "week": "Week",
         "workDays": "Hari Kerja",
         "filters": {
             "all": "Semua",
@@ -202,7 +202,6 @@
         "advancedTitle": "Lanjutan",
         "advancedNote": "Pengaturan yang jarang dipakai. Perubahan di sini memengaruhi hari gajian semua staf.",
         "typesCount": "{n} jenis",
-        "payDate": "Tanggal gajian",
         "helpTitle": "Cara kerja gaji",
         "helpPeriod": "Periode",
         "helpPeriodBody": "Semua orang dibayar dengan jadwal yang sama.\nPanah untuk berpindah periode.\nTanggal gajian adalah sehari setelah periode berakhir.",
@@ -213,7 +212,6 @@
         "helpSetup": "Pengaturan",
         "helpSetupBody": "Jenis komisi dan klaim: di Pengaturan Gaji.\nKomisi dan bank seseorang: di halamannya di Orang.\nJadwal gaji: di Lainnya, Lanjutan.",
         "payoutsList": "Pembayaran",
-        "nextShort": "Pembayaran",
-        "recap": "Ringkasan"
+        "totalPayout": "Total pembayaran"
     }
 }

@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { navProgress } from "./navProgress";
 import { refreshGate } from "./refreshGate";
-import { UpdateBar, useAppUpdate } from "./AppUpdate";
+import { useAppUpdate } from "./AppUpdate";
 import { Drawer } from "@tea-pos/ui/Drawer";
 
 const INACTIVITY_LIMIT = 1000 * 60 * 20; // 20 minutes
@@ -15,26 +15,10 @@ const INACTIVITY_LIMIT = 1000 * 60 * 20; // 20 minutes
 // The only timer ticking on every screen, so a coarse one.
 const IDLE_CHECK_MS = 1000 * 10;
 
-// Seconds between a finished download and the reload.
-const RESTART_SECONDS = 5;
-
 // pointerdown covers touch, so a tap or a scroll counts as activity on a phone.
 const ACTIVITY_EVENTS = ["pointerdown", "mousemove", "keydown"] as const;
 
-/** Counts down, then reloads into the build that has finished downloading. */
-function UpdateCountdown({ onDone }: { onDone: () => void }) {
-    const t = useT();
-    const [left, setLeft] = useState(RESTART_SECONDS);
-    useEffect(() => {
-        if (left === 0) return onDone();
-        const timer = setTimeout(() => setLeft(left - 1), 1000);
-        return () => clearTimeout(timer);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [left]);
-    return <span>{t("shell.updateRestartIn").replace("{n}", String(left))}</span>;
-}
-
-/** The update toast and the idle sheet, for every app. */
+/** The idle sheet, for every app. */
 export function RefreshSheet() {
     const t = useT();
     const queryClient = useQueryClient();
@@ -85,29 +69,7 @@ export function RefreshSheet() {
         lastActivityRef.current = Date.now();
     };
 
-    const toast = update.phase !== "idle" && (
-        <div
-            role="status"
-            className="pointer-events-auto fixed inset-x-0 top-[calc(env(safe-area-inset-top)+8px)] z-50 mx-auto w-[calc(100%-24px)] max-w-[456px] rounded-xl bg-gray-900 px-3 py-2 text-white shadow-lg animate-drop-in"
-        >
-            {update.phase === "ready" ? (
-                <div className="text-sm font-semibold">
-                    <UpdateCountdown onDone={() => void update.apply()} />
-                </div>
-            ) : (
-                <div className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-3 text-sm font-semibold">
-                        <span>{t("shell.updateDownloading")}</span>
-                        {update.percent !== null && <span>{update.percent}%</span>}
-                    </div>
-                    <UpdateBar percent={update.percent} dark />
-                </div>
-            )}
-        </div>
-    );
-
-    // A full page or toast counting down outranks inactivity.
-    if (!showInactivityPrompt || update.phase === "ready") return toast || null;
+    if (!showInactivityPrompt || update.phase === "ready") return null;
 
     return (
         <Drawer onClose={handleDismiss} dim="bg-black/40" className="px-5 pt-5 pb-2.5 space-y-4">

@@ -7,6 +7,8 @@ import { useSearch, type SearchSchemaInput } from "@tanstack/react-router";
 import { CalendarDays, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
+import { isoWeek } from "../pay/dates";
+
 const isDay = (v: unknown): v is string => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
 
 /** A Store screen's `?from=&to=`: absent is today, so a plain address stays plain. */
@@ -45,6 +47,17 @@ export function useRange() {
         r.from === r.to
             ? formatCalendarDay(r.from, locale, "short")
             : `${formatCalendarDay(r.from, locale, "short")} – ${formatCalendarDay(r.to, locale, "short")}`;
+    // Short enough for one line: the weekday only for one day, the month once if it is the same.
+    const short =
+        from === to
+            ? formatCalendarDay(from, locale, "short")
+            : `${formatCalendarDay(from, locale, from.slice(0, 7) === to.slice(0, 7) ? "day" : "dayMonth")} – ${formatCalendarDay(to, locale)}`;
+    // Past two weeks the number says nothing, and would not fit.
+    const days = (Date.parse(to) - Date.parse(from)) / 86_400_000;
+    const week =
+        days < 14
+            ? `${t("store.week")} ${isoWeek(from)}${isoWeek(from) === isoWeek(to) ? "" : `-${isoWeek(to)}`}`
+            : "";
     return {
         from,
         to,
@@ -52,7 +65,9 @@ export function useRange() {
         /** One day, so charts go by hour and times need no date. */
         single: from === to,
         isToday: from === today && to === today,
-        label: preset ? t(`store.${preset.key}`) : dates({ from, to }),
+        label: preset ? t(`store.${preset.key}`) : short,
+        /** Beside the label: the days, unless the label is them, and the week. */
+        detail: [preset ? short : "", week].filter(Boolean).join(" · "),
         dates,
     };
 }
@@ -61,18 +76,18 @@ export function useRange() {
 export function RangeBar() {
     const t = useT();
     const locale = useLocale();
-    const { from, to, today, label, dates } = useRange();
+    const { from, to, today, label, detail, dates } = useRange();
     const set = useSetSearch();
     const [open, setOpen] = useState(false);
     return (
         <>
             <button
                 onClick={() => setOpen(true)}
-                className="w-full flex items-center gap-3 px-1 text-left active:opacity-70"
+                className="w-full flex items-center gap-2 rounded-2xl bg-white px-3 py-2.5 text-left active:bg-gray-50"
             >
                 <span className="flex-1 min-w-0">
                     <span className="flex items-center gap-1">
-                        <span className="text-2xl font-bold tracking-tight text-gray-900 truncate">
+                        <span className="text-lg font-bold tracking-tight text-gray-900 truncate">
                             {label}
                         </span>
                         <ChevronDown
@@ -81,14 +96,14 @@ export function RangeBar() {
                             className="text-brand/90 shrink-0"
                         />
                     </span>
-                    {label !== dates({ from, to }) && (
+                    {detail && (
                         <span className="block text-sm font-medium text-gray-900 truncate">
-                            {dates({ from, to })}
+                            {detail}
                         </span>
                     )}
                 </span>
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white">
-                    <CalendarDays size={ICON} className="text-gray-900" />
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand/10">
+                    <CalendarDays size={ICON} className="text-brand" />
                 </span>
             </button>
             <DateRangeSheet

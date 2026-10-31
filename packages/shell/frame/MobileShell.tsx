@@ -390,13 +390,16 @@ export function MobileShell({
                                 titleRef={setTitleSlotEl}
                             />
 
-                            {/* min-h-0 lets it shrink and scroll; overflow-hidden clips content pushed down by a pull. */}
-                            <main className="flex-1 min-h-0 relative overflow-hidden">
-                                {/* Always mounted; navProgress drives it, never React. */}
+                            {/* Always mounted; navProgress drives it, never React. Inside the header's bottom edge, so outside main's clip. */}
+                            <div className="relative h-0 shrink-0">
                                 <div ref={attachBar} className="nav-progress" aria-hidden>
                                     <span className="crawl" />
                                     <span className="fill" />
                                 </div>
+                            </div>
+
+                            {/* min-h-0 lets it shrink and scroll; overflow-hidden clips content pushed down by a pull. */}
+                            <main className="flex-1 min-h-0 relative overflow-hidden">
                                 {/* Behind the scroll container: sliding the content down uncovers it. */}
                                 <div
                                     ref={pullSpinnerRef}
@@ -435,7 +438,7 @@ export function MobileShell({
                                     id="shell-scroll"
                                     data-scroll-restoration-id="shell"
                                     // No native bounce where a pull moves the content (iOS would move it twice).
-                                    className={`absolute inset-0 overflow-y-auto p-4 pt-3 ${scrollPaddingBottom} ${refreshable ? "overscroll-y-none" : ""}`}
+                                    className={`absolute inset-0 overflow-y-auto p-4 pt-2 ${scrollPaddingBottom} ${refreshable ? "overscroll-y-none" : ""}`}
                                 >
                                     {ready && <Outlet />}
                                 </div>

@@ -6,16 +6,17 @@
 .nav-progress {
     position: absolute;
     inset-inline: 16px;
-    top: 0;
+    /* In the header, centred in the 19px under the title: 8px, the bar, 8px. */
+    bottom: 8px;
     z-index: 10;
-    height: 2.5px;
+    height: 3px;
     border-radius: 9999px;
     overflow: hidden;
     pointer-events: none;
     /* Never hidden with opacity, so its layer stays alive; at rest it sits off-screen. */
     will-change: transform, opacity;
     /* Done: one pulse, then gone. The controller goes idle on its animationend. */
-    animation: nav-settle 650ms 180ms forwards;
+    animation: nav-settle 650ms 280ms forwards;
     animation-play-state: paused;
 }
 
@@ -31,63 +32,36 @@
     animation-fill-mode: forwards;
 }
 
-/* Crawl: answers the tap fast, slows, never finishes on its own. */
+/* Crawl: a short bar crossing on repeat, so a slow phone never looks stuck. Its duration is LOOP_MS
+   in navProgress.ts: halfway through, it is centred, and the fill grows from there. */
 .nav-progress > .crawl {
-    overflow: hidden;
+    right: 75%;
     animation-name: nav-crawl;
-    animation-duration: 12s;
+    animation-duration: 1100ms;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
 }
 
-/* Fill: overtakes the crawl on done, wherever the crawl got to. */
+/* Fill: on done, grows from the middle to both sides, out of the crawl stopped there. */
 .nav-progress > .fill {
+    transform: scaleX(0);
     animation-name: nav-fill;
-    animation-duration: 180ms;
+    animation-duration: 280ms;
     animation-timing-function: ease-out;
 }
 
-/* Sheen: "still working" once the crawl has slowed; faster while landing. */
-.nav-progress > .crawl::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.6), transparent);
-    animation: nav-sheen 1400ms ease-in-out infinite paused;
-}
-
-.nav-progress[data-state="landing"] > .crawl::after {
-    animation-duration: 900ms;
-}
-
 @keyframes nav-crawl {
-    0% {
-        transform: translate3d(-100%, 0, 0);
-        animation-timing-function: ease-out;
-    }
-    2% {
-        transform: translate3d(-75%, 0, 0);
-        animation-timing-function: ease-out;
-    }
-    20% {
-        transform: translate3d(-35%, 0, 0);
-        animation-timing-function: ease-out;
-    }
-    100% {
-        transform: translate3d(-10%, 0, 0);
-    }
-}
-
-@keyframes nav-sheen {
     from {
         transform: translate3d(-100%, 0, 0);
     }
     to {
-        transform: translate3d(100%, 0, 0);
+        transform: translate3d(400%, 0, 0);
     }
 }
 
 @keyframes nav-fill {
     to {
-        transform: translate3d(0, 0, 0);
+        transform: scaleX(1);
     }
 }
 
@@ -168,16 +142,30 @@
         transform: rotate(270deg);
     }
 }
+/* The icon of an update in the header: an arrow dropping into its tray, on repeat. */
+.update-drop > svg {
+    animation: update-drop 1100ms cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@keyframes update-drop {
+    from {
+        transform: translate3d(0, -20px, 0);
+    }
+    55%,
+    to {
+        transform: translate3d(0, 2px, 0);
+    }
+}
+
 /* Reduced motion: a still bar, full when done, then a fade. */
 @media (prefers-reduced-motion: reduce) {
     .nav-progress,
-    .nav-progress *,
-    .nav-progress *::after {
+    .nav-progress * {
         animation: none !important;
     }
 
     .nav-progress:is([data-state="loading"], [data-state="landing"]) > .crawl {
-        transform: translate3d(-50%, 0, 0);
+        transform: translate3d(150%, 0, 0);
     }
 
     .nav-progress[data-state="done"] > .fill {
@@ -187,6 +175,10 @@
     .nav-progress[data-state="done"] {
         opacity: 0;
         transition: opacity 300ms;
+    }
+
+    .update-drop > svg {
+        animation: none;
     }
 
     /* A still three-quarter arc still says "working" without spinning. */
