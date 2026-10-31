@@ -10,10 +10,17 @@ import { useApp } from "../session/AppContext";
 
 /** Taps can fire in bursts; one check a minute is plenty for a deploy. */
 const CHECK_THROTTLE_MS = 60_000;
-/** How long a download may run before the full page offers a way out, or the toast a retry. */
+/** How long a download may run before it is left for the next open. */
 const DOWNLOAD_LIMIT_MS = 60_000;
+/**
+ * All files saved, but the phone never says a worker is waiting (seen on iPhone): how long to give it
+ * before calling the download done anyway.
+ */
+const SETTLE_MS = 5_000;
 /** How often the download's progress is read. */
 const PROGRESS_MS = 400;
+/** A longer gap between progress reads means the phone slept. */
+const PAUSED_MS = 5_000;
 /** After the new worker is told to take over, how long to wait for it before reloading anyway. */
 const TAKE_OVER_MS = 3_000;
 
@@ -60,6 +67,16 @@ const MAX_ATTEMPTS = 2;
 /** `backoffice@2026.10.8+a1b2c3d` as `2026.10.8`. */
 const versionOf = (build: string) => build.split("@")[1]?.split("+")[0] ?? "";
 
+async function currentRegistration(
+    known: ServiceWorkerRegistration | undefined,
+): Promise<ServiceWorkerRegistration | undefined> {
+    try {
+        return (await navigator.serviceWorker.getRegistration()) ?? known;
+    } catch {
+        return known;
+    }
+}
+
 /** Tells the waiting worker to take over and waits until it has, or `ms` has passed. */
 function takeOver(worker: ServiceWorker, ms: number): Promise<void> {
     return new Promise((resolve) => {
@@ -83,11 +100,17 @@ async function clearCaches(): Promise<void> {
 
 /**
  * The way out when the normal flow fails: no worker and no saved files, so the reload comes straight
- * from the network. Kept apart from it on purpose. False, changing nothing, when there is no signal:
- * without saved files the app could not open again.
+ * from the network. Kept apart from it on purpose. False, changing nothing, when the new build cannot
+ * be fetched: without saved files the app could not open again.
  */
-export async function forceUpdate(): Promise<boolean> {
+async function forceUpdate(): Promise<boolean> {
     if (!(await servedBuild())) return false;
+    try {
+        const entry = (await newWorkerFiles()).find((f) => /\/assets\/index-.*\.js/.test(f));
+        if (entry && !(await fetch(entry, { cache: "no-store" })).ok) return false;
+    } catch {
+        return false;
+    }
     const registrations = await navigator.serviceWorker?.getRegistrations().catch(() => []);
     await Promise.all((registrations ?? []).map((r) => r.unregister().catch(() => false)));
     await clearCaches();
@@ -119,10 +142,10 @@ async function newWorkerFiles(): Promise<string[]> {
 }
 
 /**
- * How the update is going. `downloading` runs behind the app, `ready` waits for the user;
- * `blocking` is the full page, `stuck` that page or the toast after the download's limit.
+ * How the update is going. `downloading` runs behind the app, `ready` counts down to the reload;
+ * `blocking` is the full page.
  */
-type Phase = "idle" | "downloading" | "ready" | "stuck";
+type Phase = "idle" | "downloading" | "ready";
 
 interface AppUpdate {
     phase: Phase;
@@ -130,10 +153,8 @@ interface AppUpdate {
     percent: number | null;
     /** Reloads into the new build, which has finished downloading. */
     apply: () => Promise<void>;
-    /** Asks again only on the next open. */
-    later: () => void;
-    /** Starts the download again. */
-    retry: () => void;
+    /** The Update app row: asks now, whatever was decided before. */
+    checkNow: () => Promise<"latest" | "offline" | "started">;
 }
 
 const AppUpdateContext = createContext<AppUpdate | null>(null);
@@ -142,15 +163,15 @@ const AppUpdateContext = createContext<AppUpdate | null>(null);
  * An update is a download: the app lives on the phone, and a reload alone is answered by the old
  * worker with the old files. A tiny version file is the question, asked on opening, on coming back
  * and on a tap, at most once a minute. On a fresh open a new build takes a full page until it is
- * in (nobody has started anything); in use it downloads behind a toast at the top, then a sheet
- * asks to reload, because a reload mid-order drops the cart. After a 426 this build is too old to
+ * in (nobody has started anything); in use it downloads behind a toast at the top, which then
+ * counts down and reloads. After a 426 this build is too old to
  * be safe, so the full page has no way out.
  */
 export function AppUpdateProvider({ children }: { children: ReactNode }) {
     const [phase, setPhase] = useState<Phase>("idle");
     const [percent, setPercent] = useState<number | null>(null);
     const [blocking, setBlocking] = useState(false);
-    const [forced, setForced] = useState(false);
+    const forced = useRef(false);
     const [version, setVersion] = useState("");
     const updateSW = useRef<(reload?: boolean) => Promise<void>>(async () => {});
     const registration = useRef<ServiceWorkerRegistration>(undefined);
@@ -179,9 +200,28 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
         const again = attempts(target.current) > 0;
         markAttempt(target.current);
         if (again && (await forceUpdate())) return;
-        const waiting = registration.current?.waiting;
-        if (waiting) await takeOver(waiting, TAKE_OVER_MS);
-        location.reload();
+        const reg = await currentRegistration(registration.current);
+        if (reg?.waiting) {
+            await takeOver(reg.waiting, TAKE_OVER_MS);
+            location.reload();
+            return;
+        }
+        // No worker to hand over to: only leaving the old one behind reaches the new build.
+        if (!(await forceUpdate())) location.reload();
+    };
+
+    // The limit passed. The first time wait for the next open; the second clears and reloads.
+    const giveUp = async () => {
+        const tries = attempts(target.current);
+        markAttempt(target.current);
+        if (forced.current) {
+            if (tries >= MAX_ATTEMPTS || !(await forceUpdate())) download();
+            return;
+        }
+        block(false);
+        quiet.current = true;
+        setPhase("idle");
+        if (tries > 0) await forceUpdate();
     };
 
     // Follows the new worker until it waits to take over, or the limit passes.
@@ -189,31 +229,43 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
         stopWatching.current();
         setPhase("downloading");
         setPercent(null);
-        const started = Date.now();
+        let started = 0;
+        let lastTick = 0;
         let pending: string[] | null = null;
         let total = 0;
         let stopped = false;
+        let savedAt = 0;
+        const finish = () => {
+            setPercent(100);
+            setPhase("ready");
+            if (blockingRef.current) void apply();
+        };
         const tick = async () => {
             if (stopped) return;
-            const reg = registration.current;
-            if (reg?.waiting) {
-                setPercent(100);
-                setPhase("ready");
-                if (blockingRef.current) void apply();
-                return;
-            }
-            if (Date.now() - started > DOWNLOAD_LIMIT_MS) return setPhase("stuck");
+            // Asked afresh each time: a phone may not update the object it handed out.
+            const reg = await currentRegistration(registration.current);
+            registration.current = reg;
+            if (reg?.waiting) return finish();
+            if (savedAt && Date.now() - savedAt > SETTLE_MS) return finish();
+            // Time behind a locked screen is not the download's.
+            const now = Date.now();
+            if (!started) started = lastTick = now;
+            if (now - lastTick > PAUSED_MS) started += now - lastTick;
+            lastTick = now;
+            if (now - started > DOWNLOAD_LIMIT_MS) return void giveUp();
             try {
                 if (!pending) {
                     const saved = await savedFiles();
                     pending = (await newWorkerFiles()).filter((f) => !saved.has(f));
                     total = pending.length;
+                    if (total === 0) savedAt = Date.now();
                 } else if (total > 0) {
                     const saved = await savedFiles();
                     const left = pending.filter((f) => !saved.has(f)).length;
                     // Only ever forward: the worker may move files between caches as it goes.
-                    const now = Math.round(((total - left) / total) * 100);
-                    setPercent((was) => Math.max(was ?? 0, now));
+                    const done = Math.round(((total - left) / total) * 100);
+                    setPercent((was) => Math.max(was ?? 0, done));
+                    if (left === 0 && !savedAt) savedAt = Date.now();
                 }
             } catch {
                 // Progress unknown: the bar just keeps moving.
@@ -300,7 +352,7 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
     useEffect(
         () =>
             onAppTooOld(() => {
-                setForced(true);
+                forced.current = true;
                 block(true);
                 // Asked first: this build must not keep reloading if the server stays ahead of it.
                 void servedBuild().then((build) => {
@@ -317,29 +369,20 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
         phase,
         percent,
         apply,
-        later: () => {
-            quiet.current = true;
-            stopWatching.current();
-            setPhase("idle");
+        checkNow: async () => {
+            const build = await servedBuild();
+            if (!build) return "offline";
+            if (build === APP_TAG) return "latest";
+            target.current = build;
+            setVersion(versionOf(build));
+            if (phaseRef.current === "idle") download();
+            return "started";
         },
-        retry: download,
     };
     return (
         <AppUpdateContext value={value}>
             {children}
-            {blocking && (
-                <UpdateScreen
-                    version={version}
-                    forced={forced}
-                    onExit={() => {
-                        block(false);
-                        value.later();
-                    }}
-                    onRetry={() => void forceUpdate()}
-                    phase={phase}
-                    percent={percent}
-                />
-            )}
+            {blocking && <UpdateScreen version={version} phase={phase} percent={percent} />}
         </AppUpdateContext>
     );
 }
@@ -371,18 +414,12 @@ export function UpdateBar({ percent, dark = false }: { percent: number | null; d
 /** The full page: what a fresh open sees while the new build comes in, like installing an app. */
 function UpdateScreen({
     version,
-    forced,
     phase,
     percent,
-    onExit,
-    onRetry,
 }: {
     version: string;
-    forced: boolean;
     phase: Phase;
     percent: number | null;
-    onExit: () => void;
-    onRetry: () => void;
 }) {
     const t = useT();
     const app = useApp();
@@ -413,26 +450,7 @@ function UpdateScreen({
                           : `${t("shell.updateDownloading")} ${percent}%`}
                 </p>
             </div>
-            {phase === "stuck" ? (
-                <div className="w-full max-w-xs space-y-2">
-                    <button
-                        onClick={onRetry}
-                        className="w-full rounded-xl bg-brand py-3.5 font-semibold text-white active:scale-[0.98]"
-                    >
-                        {t("shell.updateRetry")}
-                    </button>
-                    {!forced && (
-                        <button
-                            onClick={onExit}
-                            className="w-full py-3 font-medium text-gray-900 active:opacity-70"
-                        >
-                            {t("shell.updateContinue")}
-                        </button>
-                    )}
-                </div>
-            ) : (
-                <p className="text-sm text-gray-900">{t("shell.updateKeepOpen")}</p>
-            )}
+            <p className="text-sm text-gray-900">{t("shell.updateKeepOpen")}</p>
         </div>
     );
 }

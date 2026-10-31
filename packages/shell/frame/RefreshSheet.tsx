@@ -15,21 +15,30 @@ const INACTIVITY_LIMIT = 1000 * 60 * 20; // 20 minutes
 // The only timer ticking on every screen, so a coarse one.
 const IDLE_CHECK_MS = 1000 * 10;
 
-// Two reasons, one sheet: two popups racing each other would be worse.
-const COPY = {
-    update: { emoji: "sparkles", key: "shell.update" },
-    inactivity: { emoji: "refresh", key: "shell.inactivity" },
-} as const;
+// Seconds between a finished download and the reload.
+const RESTART_SECONDS = 5;
 
 // pointerdown covers touch, so a tap or a scroll counts as activity on a phone.
 const ACTIVITY_EVENTS = ["pointerdown", "mousemove", "keydown"] as const;
 
-/** The update sheet and the idle sheet, for every app. */
+/** Counts down, then reloads into the build that has finished downloading. */
+function UpdateCountdown({ onDone }: { onDone: () => void }) {
+    const t = useT();
+    const [left, setLeft] = useState(RESTART_SECONDS);
+    useEffect(() => {
+        if (left === 0) return onDone();
+        const timer = setTimeout(() => setLeft(left - 1), 1000);
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [left]);
+    return <span>{t("shell.updateRestartIn").replace("{n}", String(left))}</span>;
+}
+
+/** The update toast and the idle sheet, for every app. */
 export function RefreshSheet() {
     const t = useT();
     const queryClient = useQueryClient();
     const [showInactivityPrompt, setShowInactivityPrompt] = useState(false);
-    const [isRefreshing, setIsRefreshing] = useState(false);
     const update = useAppUpdate();
     // A ref: activity fires constantly and must not re-render.
     const lastActivityRef = useRef(0);
@@ -61,18 +70,8 @@ export function RefreshSheet() {
         return () => clearInterval(interval);
     }, []);
 
-    // An update outranks inactivity.
-    const reason = update.phase === "ready" ? "update" : showInactivityPrompt ? "inactivity" : null;
-
-    // An update needs new code, so a reload. Inactivity only needs fresh data: a
-    // refetch in place, so the POS cart (held in memory) survives.
+    // Inactivity only needs fresh data: a refetch in place, so the POS cart (held in memory) survives.
     const handleRefresh = () => {
-        if (reason === "update") {
-            setIsRefreshing(true);
-            void update.apply();
-            return;
-        }
-
         setShowInactivityPrompt(false);
         lastActivityRef.current = Date.now();
         // Marked so a pull right after does not refetch the same; never gated itself.
@@ -81,24 +80,19 @@ export function RefreshSheet() {
         navProgress.run(queryClient.invalidateQueries().catch(() => {}));
     };
 
-    // Clears the idle flag too, or dismissing an update swapped in the idle sheet.
     const handleDismiss = () => {
-        if (reason === "update") update.later();
         setShowInactivityPrompt(false);
         lastActivityRef.current = Date.now();
     };
 
-    const toast = (update.phase === "downloading" || update.phase === "stuck") && (
+    const toast = update.phase !== "idle" && (
         <div
             role="status"
             className="pointer-events-auto fixed inset-x-0 top-[calc(env(safe-area-inset-top)+8px)] z-50 mx-auto w-[calc(100%-24px)] max-w-[456px] rounded-xl bg-gray-900 px-3 py-2 text-white shadow-lg animate-drop-in"
         >
-            {update.phase === "stuck" ? (
-                <div className="flex items-center justify-between gap-3 text-sm font-semibold">
-                    <span>{t("shell.updateFailed")}</span>
-                    <button onClick={update.retry} className="underline active:opacity-70">
-                        {t("shell.updateRetry")}
-                    </button>
+            {update.phase === "ready" ? (
+                <div className="text-sm font-semibold">
+                    <UpdateCountdown onDone={() => void update.apply()} />
                 </div>
             ) : (
                 <div className="space-y-1.5">
@@ -112,8 +106,8 @@ export function RefreshSheet() {
         </div>
     );
 
-    if (!reason) return toast || null;
-    const { emoji, key } = COPY[reason];
+    // A full page or toast counting down outranks inactivity.
+    if (!showInactivityPrompt || update.phase === "ready") return toast || null;
 
     return (
         <Drawer onClose={handleDismiss} dim="bg-black/40" className="px-5 pt-5 pb-2.5 space-y-4">
@@ -127,12 +121,12 @@ export function RefreshSheet() {
                     className="pointer-events-none absolute inset-0"
                     style={DOT_GRID}
                 />
-                <Emoji name={emoji} size={88} className="relative" />
+                <Emoji name="refresh" size={88} className="relative" />
             </div>
 
             <div className="space-y-1 text-center">
-                <p className="text-xl font-bold text-gray-900">{t(`${key}.title`)}</p>
-                <p className="text-sm text-gray-600">{t(`${key}.body`)}</p>
+                <p className="text-xl font-bold text-gray-900">{t("shell.inactivity.title")}</p>
+                <p className="text-sm text-gray-600">{t("shell.inactivity.body")}</p>
             </div>
 
             <div className="flex items-start gap-3 rounded-xl bg-gray-50 p-4 text-left">
@@ -140,18 +134,19 @@ export function RefreshSheet() {
                     <Info size={18} className="text-blue-500" />
                 </div>
                 <div className="space-y-0.5">
-                    <p className="text-sm font-semibold text-gray-900">{t(`${key}.infoTitle`)}</p>
-                    <p className="text-sm text-gray-500">{t(`${key}.infoBody`)}</p>
+                    <p className="text-sm font-semibold text-gray-900">
+                        {t("shell.inactivity.infoTitle")}
+                    </p>
+                    <p className="text-sm text-gray-500">{t("shell.inactivity.infoBody")}</p>
                 </div>
             </div>
 
             <button
                 onClick={handleRefresh}
-                disabled={isRefreshing}
-                className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-brand text-white font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-60"
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-brand text-white font-semibold text-base active:scale-[0.98] transition-transform"
             >
-                <RefreshCw size={18} className={isRefreshing ? "animate-spin" : ""} />
-                {t(isRefreshing ? "shell.refreshing" : "shell.refreshNow")}
+                <RefreshCw size={18} />
+                {t("shell.refreshNow")}
             </button>
         </Drawer>
     );

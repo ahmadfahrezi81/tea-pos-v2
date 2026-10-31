@@ -118,6 +118,10 @@ The owner's walkthrough ended here; build these now. The owner does 2, 3 and 5's
 8. **Updates are downloads (bug, on staging: the sheet kept coming back and Reload stayed on the old build):** a reload alone is answered by the old worker. Now the new worker takes over first. A fresh open shows a full download page with progress, with Try again and Continue after 60 s (no way out on a 426). In use it downloads behind a toast at the top that cannot be closed, then a sheet asks to reload; Later lasts until the next open. Progress counts the new worker's files as they are saved
 9. **A way out by hand:** Update app in More, with the version: no worker and no saved files, then a reload from the network (`forceUpdate`). Refused with no signal. It only helps builds that have it
 10. **Update edge cases:** attempts per build survive the reload: a second try clears the worker and its files, and after two it stops asking until the next build, so no phone needs a reinstall or loops. A screen's code gone after a deploy reloads the page once. App info says API commit and App
+11. **The toast stayed at 100% on iPhone, no sheet (bug):** files were saved but the phone never reported a waiting worker. The registration is asked afresh each time; all files saved for 5 s counts as done; with no worker to hand over to, Reload clears the old one and reloads from the network
+12. **Update app in More uses the same flow:** no confirm sheet. Already latest: a toast. New version: the top toast. No signal: a toast, nothing changes.
+13. **No update sheet:** in use, the finished toast counts down 5 seconds and reloads by itself, the owner's call, knowing it drops an unsaved cart or form. The idle sheet stays
+14. **No failure buttons:** a download past 60 s closes the page or toast and the app stays usable; the next open tries again; a second failure clears and reloads by itself, only if the new build can be fetched. After a 426 the page stays until it gets through
 
 ## Done when
 
