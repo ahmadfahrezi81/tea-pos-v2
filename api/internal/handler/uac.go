@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"slices"
+	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/jackc/pgx/v5"
@@ -84,6 +85,35 @@ func registerUac(api huma.API, d Deps) {
 				return nil, err
 			}
 			p, err = person(ctx, idem.Queries(ctx, d.Queries), caller.TenantID, in.UserID)
+			if err != nil {
+				return nil, err
+			}
+			return &contract.UacPersonOutput{Body: uacPerson(p)}, nil
+		})
+
+	route(api, op("setUacDetails", http.MethodPut, "/people/{userId}/details", "Change a person's name and phone"), uacWrite,
+		func(ctx context.Context, in *contract.SetUacDetailsInput) (*contract.UacPersonOutput, error) {
+			caller, _ := auth.CallerFrom(ctx)
+			q := idem.Queries(ctx, d.Queries)
+			p, err := person(ctx, q, caller.TenantID, in.UserID)
+			if err != nil {
+				return nil, err
+			}
+			name := strings.TrimSpace(in.Body.FullName)
+			if name == "" {
+				return nil, errBlankName
+			}
+			if err := q.SetUserProfile(ctx, store.SetUserProfileParams{
+				ID:       p.ID,
+				FullName: pgtype.Text{String: name, Valid: true},
+				Phone:    pgtype.Text{String: strings.TrimSpace(in.Body.Phone), Valid: true},
+			}); err != nil {
+				return nil, err
+			}
+			if err := announcePerson(ctx, q, caller, p.ID); err != nil {
+				return nil, err
+			}
+			p, err = person(ctx, q, caller.TenantID, in.UserID)
 			if err != nil {
 				return nil, err
 			}
@@ -213,6 +243,10 @@ func person(ctx context.Context, q *store.Queries, tenant pgtype.UUID, userID st
 // setPerson writes everything about one person on q (the write's transaction), checked first:
 // levels the apps offer, the tenant's own stores, the owner untouched, nobody turning themselves off.
 func setPerson(ctx context.Context, q *store.Queries, caller auth.Caller, p store.ListTenantPeopleRow, c contract.UacPersonChange) error {
+	if !c.Active {
+		// Off is off: None in every app and no stores, also after turning them back on.
+		c.Access, c.StoreIDs = contract.MeAccess{}, nil
+	}
 	levels := map[string]string{"seller": c.Access.Seller, "backoffice": c.Access.Backoffice}
 	for app, level := range levels {
 		if level != "" && !slices.Contains(auth.Levels[app], auth.Level(level)) {
@@ -253,7 +287,7 @@ func setPerson(ctx context.Context, q *store.Queries, caller auth.Caller, p stor
 	status := "active"
 	if !c.Active {
 		// users.status can stay active for someone in another tenant: without stores, v1 shows them nothing here.
-		status, ids = "inactive", nil
+		status = "inactive"
 	}
 	if _, err := q.SetMembershipStatus(ctx, store.SetMembershipStatusParams{TenantID: caller.TenantID, UserID: p.ID, Status: status}); err != nil {
 		return err
@@ -267,8 +301,12 @@ func setPerson(ctx context.Context, q *store.Queries, caller auth.Caller, p stor
 	if err := q.SyncUserStatus(ctx, p.ID); err != nil {
 		return err
 	}
-	for _, topic := range []string{realtime.TenantTopic(caller.TenantID.String()), realtime.UserTopic(p.ID.String())} {
-		if err := realtime.Announce(ctx, q, realtime.Event{Topic: topic, Kind: accessChanged, ID: p.ID.String()}); err != nil {
+	return announcePerson(ctx, q, caller, p.ID)
+}
+
+func announcePerson(ctx context.Context, q *store.Queries, caller auth.Caller, id pgtype.UUID) error {
+	for _, topic := range []string{realtime.TenantTopic(caller.TenantID.String()), realtime.UserTopic(id.String())} {
+		if err := realtime.Announce(ctx, q, realtime.Event{Topic: topic, Kind: accessChanged, ID: id.String()}); err != nil {
 			return err
 		}
 	}
@@ -277,17 +315,22 @@ func setPerson(ctx context.Context, q *store.Queries, caller auth.Caller, p stor
 
 func uacPerson(p store.ListTenantPeopleRow) contract.UacPerson {
 	level := func(app, access string) string {
-		return string(auth.LevelIn(app, auth.Membership{Status: "active", Owner: p.IsOwner, Access: access, HasLevels: p.HasLevels, Role: p.Role}))
+		return string(auth.LevelIn(app, auth.Membership{Status: p.Status, Owner: p.IsOwner, Access: access, HasLevels: p.HasLevels, Role: p.Role}))
 	}
 	out := contract.UacPerson{
 		ID: p.ID.String(), Name: p.FullName, Email: p.Email, AvatarURL: p.AvatarUrl,
 		Phone: p.Phone, Since: since(p.CreatedAt),
 		Active: p.Status == "active", Owner: p.IsOwner,
-		Access:   contract.MeAccess{Seller: level("seller", p.SellerAccess), Backoffice: level("backoffice", p.BackofficeAccess)},
-		StoreIDs: make([]string, len(p.StoreIds)),
+		Access:           contract.MeAccess{Seller: level("seller", p.SellerAccess), Backoffice: level("backoffice", p.BackofficeAccess)},
+		StoreIDs:         make([]string, len(p.StoreIds)),
+		CommissionTypeID: p.CommissionTypeID, CommissionName: p.CommissionName, CommissionRate: p.CommissionRate,
+		ClaimTypeIDs: make([]string, len(p.ClaimTypeIds)),
 	}
 	for i, id := range p.StoreIds {
 		out.StoreIDs[i] = id.String()
+	}
+	for i, id := range p.ClaimTypeIds {
+		out.ClaimTypeIDs[i] = id.String()
 	}
 	return out
 }

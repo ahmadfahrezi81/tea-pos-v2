@@ -174,6 +174,8 @@ export function PeriodHome({ start }: { start: string }) {
                 </Link>
             )}
 
+            {people.length > 0 && <Recap people={people} />}
+
             {people.length === 0 && (
                 <EmptyState title={t("pay.noPeople")} body={t("pay.noPeopleBody")} />
             )}
@@ -210,6 +212,37 @@ export function PeriodHome({ start }: { start: string }) {
 
 const plain = (amount: number) => formatMoney(amount).replace(/^Rp\s*/, "");
 
+/** What a card adds up to, in one row of tiles. */
+function PayTiles({ cups, commissions, claims }: Pick<Person, "cups" | "commissions" | "claims">) {
+    const t = useT();
+    return (
+        <div className="grid grid-cols-3 gap-1.5">
+            <Tile label={t("pay.cups")} value={String(cups)} className="bg-blue-100" />
+            <Tile label={t("pay.commission")} value={plain(commissions)} className="bg-teal-100" />
+            <Tile label={t("pay.claims")} value={plain(claims)} className="bg-purple-100" />
+        </div>
+    );
+}
+
+/** The whole period at a glance: everyone below added up, and what there is to send. */
+function Recap({ people }: { people: Person[] }) {
+    const t = useT();
+    const sum = (k: "cups" | "commissions" | "claims" | "total") =>
+        people.reduce((n, x) => n + x[k], 0);
+    return (
+        <div className="bg-white rounded-2xl p-3 space-y-2.5">
+            <div className="flex items-center justify-between gap-3">
+                <p className="text-lg font-bold text-gray-900">{t("pay.recap")}</p>
+                <div className="shrink-0 space-y-1 text-right">
+                    <p className="text-xs font-semibold text-gray-900">{t("pay.total")}</p>
+                    <p className="font-bold text-green-600">{formatMoney(sum("total"))}</p>
+                </div>
+            </div>
+            <PayTiles cups={sum("cups")} commissions={sum("commissions")} claims={sum("claims")} />
+        </div>
+    );
+}
+
 /** A person in the period: who, what is next and the total up top, what makes it up as tiles. */
 function PersonCard({ person: x, start }: { person: Person; start: string }) {
     const t = useT();
@@ -245,15 +278,7 @@ function PersonCard({ person: x, start }: { person: Person; start: string }) {
                     <p className="font-bold text-green-600">{formatMoney(x.total)}</p>
                 </div>
             </div>
-            <div className="grid grid-cols-3 gap-1.5">
-                <Tile label={t("pay.cups")} value={String(x.cups)} className="bg-blue-100" />
-                <Tile
-                    label={t("pay.commission")}
-                    value={plain(x.commissions)}
-                    className="bg-teal-100"
-                />
-                <Tile label={t("pay.claims")} value={plain(x.claims)} className="bg-purple-100" />
-            </div>
+            <PayTiles {...x} />
         </Link>
     );
 }

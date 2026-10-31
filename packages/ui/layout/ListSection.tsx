@@ -15,7 +15,7 @@ export function ListSection({
     return (
         <section className="space-y-2">
             <SectionLabel>{count === undefined ? title : `${title} (${count})`}</SectionLabel>
-            <div className="rounded-2xl bg-slate-200/70 p-1.5 space-y-1.5">{children}</div>
+            <div className="rounded-2xl bg-slate-200/70 space-y-2">{children}</div>
         </section>
     );
 }

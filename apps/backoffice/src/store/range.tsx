@@ -57,7 +57,7 @@ export function useRange() {
     };
 }
 
-/** The selector at the top of a Store screen: what is picked; a tap opens the sheet. */
+/** The heading of a Store screen and its selector at once: what is picked; a tap opens the sheet. */
 export function RangeBar() {
     const t = useT();
     const locale = useLocale();
@@ -68,13 +68,27 @@ export function RangeBar() {
         <>
             <button
                 onClick={() => setOpen(true)}
-                className="w-full flex items-center gap-2 rounded-2xl bg-white px-4 py-3.5 active:bg-gray-50"
+                className="w-full flex items-center gap-3 px-1 text-left active:opacity-70"
             >
-                <CalendarDays size={ICON} className="text-gray-900 shrink-0" />
-                <span className="font-bold text-gray-900 truncate">{label}</span>
-                <ChevronDown size={ICON} className="text-brand/90 shrink-0" />
-                <span className="ml-auto text-sm font-medium text-gray-900 truncate">
-                    {dates({ from, to })}
+                <span className="flex-1 min-w-0">
+                    <span className="flex items-center gap-1">
+                        <span className="text-2xl font-bold tracking-tight text-gray-900 truncate">
+                            {label}
+                        </span>
+                        <ChevronDown
+                            size={ICON}
+                            strokeWidth={2.5}
+                            className="text-brand/90 shrink-0"
+                        />
+                    </span>
+                    {label !== dates({ from, to }) && (
+                        <span className="block text-sm font-medium text-gray-900 truncate">
+                            {dates({ from, to })}
+                        </span>
+                    )}
+                </span>
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white">
+                    <CalendarDays size={ICON} className="text-gray-900" />
                 </span>
             </button>
             <DateRangeSheet

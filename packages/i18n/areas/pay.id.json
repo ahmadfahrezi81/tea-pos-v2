@@ -10,7 +10,6 @@
         "editCommissionType": "Ubah Jenis Komisi",
         "newClaimType": "Jenis Klaim Baru",
         "editClaimType": "Ubah Jenis Klaim",
-        "setCommission": "Atur Komisi",
         "nextPayout": "Pembayaran berikutnya",
         "lastDay": "hari terakhir",
         "daysLeft": "{n} hari lagi",
@@ -37,8 +36,6 @@
         "saving": "Menyimpan...",
         "creating": "Membuat...",
         "edit": "Ubah",
-        "confirmStaffCommission": "Simpan pengaturan gaji?",
-        "confirmStaffCommissionSub": "Ini mengubah jenis komisinya untuk hari yang ditutup berikutnya.",
         "name": "Nama",
         "slug": "Slug",
         "slugAuto": "Slug (otomatis)",
@@ -216,6 +213,7 @@
         "helpSetup": "Pengaturan",
         "helpSetupBody": "Jenis komisi dan klaim: di Pengaturan Gaji.\nKomisi dan bank seseorang: di halamannya di Orang.\nJadwal gaji: di Lainnya, Lanjutan.",
         "payoutsList": "Pembayaran",
-        "nextShort": "Pembayaran"
+        "nextShort": "Pembayaran",
+        "recap": "Ringkasan"
     }
 }

@@ -181,9 +181,9 @@ SELECT t.id, t.slug, t.name, t.pay_frequency, a.status,
         SELECT x.access FROM user_app_access x
         WHERE x.tenant_id = t.id AND x.user_id = a.user_id AND x.app = 'backoffice'
     ), '')::text AS backoffice_access,
-    EXISTS (
+    (a.levels_set OR EXISTS (
         SELECT 1 FROM user_app_access x WHERE x.tenant_id = t.id AND x.user_id = a.user_id
-    ) AS has_levels
+    ))::bool AS has_levels
 FROM tenants t
 JOIN user_tenant_assignments a ON a.tenant_id = t.id
 WHERE a.user_id = $1 AND a.status = 'active'

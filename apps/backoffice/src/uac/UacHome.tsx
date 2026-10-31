@@ -1,4 +1,4 @@
-import { formatRelative } from "@tea-pos/format";
+import { formatMoney, formatRelative } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
@@ -45,13 +45,13 @@ export function UacHome() {
     const filter: PeopleFilter = {
         seller: level(seller, NO_FILTER.seller) as PeopleFilter["seller"],
         backoffice: level(office, NO_FILTER.backoffice) as PeopleFilter["backoffice"],
-        inactive: inactive !== "0",
+        inactive: inactive === "1",
     };
     const setFilter = (f: PeopleFilter) =>
         setSearchParams({
             seller: f.seller === "any" ? "" : f.seller || "none",
             office: f.backoffice === "any" ? "" : f.backoffice || "none",
-            inactive: f.inactive ? "" : "0",
+            inactive: f.inactive ? "1" : "",
         });
     const [filtering, setFiltering] = useState(false);
     const q = search.trim().toLowerCase();
@@ -149,20 +149,34 @@ function Badges({ person: p }: { person: Person }) {
     const t = useT();
     const level = (l: string) => t(`uac.${l}` as MessageKey);
     if (!p.active) return <Badge>{t("uac.inactive")}</Badge>;
-    if (p.owner) return <Badge>{t("uac.owner")}</Badge>;
-    if (!p.access.seller && !p.access.backoffice) return <Badge>{t("uac.noAccess")}</Badge>;
+    const count = (n: number, one: MessageKey, many: MessageKey) =>
+        t(n === 1 ? one : many).replace("{n}", String(n));
+    const glance = [
+        count(p.storeIds.length, "uac.oneStore", "uac.nStores"),
+        ...(p.commissionRate > 0
+            ? [t("uac.perCup").replace("{rate}", formatMoney(p.commissionRate))]
+            : []),
+        count(p.claimTypeIds.length, "uac.oneClaim", "uac.nClaims"),
+    ].join(" · ");
     return (
-        <span className="flex flex-wrap gap-1.5 pt-1">
-            {p.access.seller && (
-                <Badge>
-                    {t("uac.seller")} · {level(p.access.seller)}
-                </Badge>
-            )}
-            {p.access.backoffice && (
-                <Badge>
-                    {t("uac.office")} · {level(p.access.backoffice)}
-                </Badge>
-            )}
+        <span className="block space-y-1 pt-1">
+            <span className="flex flex-wrap gap-1.5">
+                {p.owner && <Badge>{t("uac.owner")}</Badge>}
+                {!p.owner && !p.access.seller && !p.access.backoffice && (
+                    <Badge>{t("uac.noAccess")}</Badge>
+                )}
+                {!p.owner && p.access.seller && (
+                    <Badge>
+                        {t("uac.seller")} · {level(p.access.seller)}
+                    </Badge>
+                )}
+                {!p.owner && p.access.backoffice && (
+                    <Badge>
+                        {t("uac.office")} · {level(p.access.backoffice)}
+                    </Badge>
+                )}
+            </span>
+            <span className="block text-xs text-gray-900">{glance}</span>
         </span>
     );
 }

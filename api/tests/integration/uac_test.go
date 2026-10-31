@@ -106,3 +106,88 @@ func TestUac(t *testing.T) {
 		}
 	}
 }
+
+// TestUacOffAndNone: off clears levels and stores and stays None when turned back on; None
+// everywhere does not fall back to users.role; an admin changes a name and phone, and a guest cannot.
+func TestUacOffAndNone(t *testing.T) {
+	pool := testkit.DB(t)
+	ctx := context.Background()
+	a := testkit.NewAPI(t, pool, "")
+	admin := testkit.Session(a.SignIn(t, testkit.AdminA, "backoffice"))
+	guest := testkit.Session(a.SignIn(t, testkit.GuestA, "backoffice"))
+	n := 0
+	send := func(who *http.Cookie, path, body string) (int, string) {
+		n++
+		resp := a.Send(t, http.MethodPut, "/tenants/tenant-a/uac/people/"+testkit.SellerA+path, "backoffice", body,
+			[]string{fmt.Sprintf("Idempotency-Key: uac-off-%04d", n)}, who)
+		return resp.StatusCode, code(t, resp)
+	}
+	get := func() contract.UacPerson {
+		var p contract.UacPerson
+		resp := a.Request(t, http.MethodGet, "/tenants/tenant-a/uac/people/"+testkit.SellerA, "backoffice", admin)
+		_ = json.NewDecoder(resp.Body).Decode(&p)
+		return p
+	}
+
+	body := fmt.Sprintf(`{"access":{"seller":"member","backoffice":""},"storeIds":[%q],"active":false}`, storeANorth)
+	if s, c := send(admin, "", body); s != 200 {
+		t.Fatalf("off: %d %s", s, c)
+	}
+	if p := get(); p.Active || p.Access.Seller != "" || p.Access.Backoffice != "" || len(p.StoreIDs) != 0 {
+		t.Errorf("off keeps access: %+v", p)
+	}
+	if s, c := send(admin, "", `{"access":{"seller":"","backoffice":""},"storeIds":[],"active":true}`); s != 200 {
+		t.Fatalf("on: %d %s", s, c)
+	}
+	if p := get(); !p.Active || p.Access.Seller != "" || p.Access.Backoffice != "" {
+		t.Errorf("None fell back to the role: %+v", p)
+	}
+
+	if s, c := send(guest, "/details", `{"fullName":"X","phone":""}`); s != 403 {
+		t.Errorf("a guest renaming: %d %s", s, c)
+	}
+	if s, c := send(admin, "/details", `{"fullName":"  ","phone":""}`); s != 400 || c != "blank_name" {
+		t.Errorf("blank name: %d %s", s, c)
+	}
+	if s, c := send(admin, "/details", `{"fullName":" New Name ","phone":" 0812 "}`); s != 200 {
+		t.Fatalf("details: %d %s", s, c)
+	}
+	if p := get(); p.Name != "New Name" || p.Phone != "0812" {
+		t.Errorf("details: %+v", p)
+	}
+
+	// Claims per person: exactly the listed enabled types; a disabled one stays; another tenant's refused.
+	var on, off string
+	seed := `INSERT INTO payroll_claim_configs (tenant_id, name, slug, frequency, amount, claim_source, is_enabled)
+		SELECT id, $1, $1, 'daily', 1000, 'manual', $2 FROM tenants WHERE slug = 'tenant-a' RETURNING id::text`
+	if err := pool.QueryRow(ctx, seed, "on-type", true).Scan(&on); err != nil {
+		t.Fatal(err)
+	}
+	if err := pool.QueryRow(ctx, seed, "off-type", false).Scan(&off); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `INSERT INTO payroll_user_claim_assignments (tenant_id, user_id, claim_config_id)
+		SELECT id, $1, $2 FROM tenants WHERE slug = 'tenant-a'`, testkit.SellerA, off); err != nil {
+		t.Fatal(err)
+	}
+	claims := func(body string) (int, string) {
+		n++
+		resp := a.Send(t, http.MethodPut, "/tenants/tenant-a/pay/staff/"+testkit.SellerA+"/claim-types", "backoffice", body,
+			[]string{fmt.Sprintf("Idempotency-Key: uac-off-%04d", n)}, admin)
+		return resp.StatusCode, code(t, resp)
+	}
+	if s, c := claims(fmt.Sprintf(`{"claimTypeIds":[%q]}`, on)); s >= 300 {
+		t.Fatalf("claims: %d %s", s, c)
+	}
+	if p := get(); len(p.ClaimTypeIDs) != 1 || p.ClaimTypeIDs[0] != on {
+		t.Errorf("claims shown: %+v", p.ClaimTypeIDs)
+	}
+	var kept int
+	_ = pool.QueryRow(ctx, `SELECT count(*) FROM payroll_user_claim_assignments WHERE user_id = $1 AND claim_config_id = $2`, testkit.SellerA, off).Scan(&kept)
+	if kept != 1 {
+		t.Errorf("a disabled claim type was dropped")
+	}
+	if s, c := claims(`{"claimTypeIds":["00000000-0000-0000-0000-000000000099"]}`); s != 404 {
+		t.Errorf("unknown claim type: %d %s", s, c)
+	}
+}

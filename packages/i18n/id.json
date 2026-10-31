@@ -106,6 +106,7 @@
         "patchNotes": "Catatan Rilis",
         "noStores": "Belum ada toko yang ditugaskan.",
         "default": "Utama",
+        "app": "Aplikasi",
         "updateApp": "Perbarui aplikasi",
         "updateLatest": "Sudah versi terbaru.",
         "updateOffline": "Tidak ada koneksi. Coba lagi saat online."

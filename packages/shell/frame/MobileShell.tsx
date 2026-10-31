@@ -435,7 +435,7 @@ export function MobileShell({
                                     id="shell-scroll"
                                     data-scroll-restoration-id="shell"
                                     // No native bounce where a pull moves the content (iOS would move it twice).
-                                    className={`absolute inset-0 overflow-y-auto p-4 ${scrollPaddingBottom} ${refreshable ? "overscroll-y-none" : ""}`}
+                                    className={`absolute inset-0 overflow-y-auto p-4 pt-3 ${scrollPaddingBottom} ${refreshable ? "overscroll-y-none" : ""}`}
                                 >
                                     {ready && <Outlet />}
                                 </div>

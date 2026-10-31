@@ -15,6 +15,7 @@ import (
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/domain"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/idem"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/realtime"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
 )
 
@@ -282,6 +283,39 @@ func registerPay(api huma.API, d Deps) {
 				return nil, err
 			}
 			return &contract.ClaimTypeOutput{Body: claimType(store.CreateClaimTypeRow(r))}, nil
+		})
+
+	route(api, op("setStaffClaims", http.MethodPut, "/staff/{userId}/claim-types", "Set which claim types a staff member may claim: everyone listed, no other"), payWrite,
+		func(ctx context.Context, in *contract.SetStaffClaimsInput) (*struct{}, error) {
+			caller, _ := auth.CallerFrom(ctx)
+			user, err := uuid(in.UserID, errStaffNotFound)
+			if err != nil {
+				return nil, err
+			}
+			if ok, err := d.Queries.UserInTenant(ctx, store.UserInTenantParams{TenantID: caller.TenantID, UserID: user}); err != nil || !ok {
+				return nil, orErr(err, errStaffNotFound)
+			}
+			ids := make([]pgtype.UUID, len(in.Body.ClaimTypeIDs))
+			for i, s := range in.Body.ClaimTypeIDs {
+				if ids[i], err = uuid(s, errClaimTypeNotFound); err != nil {
+					return nil, err
+				}
+			}
+			n, err := d.Queries.CountClaimTypesInTenant(ctx, store.CountClaimTypesInTenantParams{TenantID: caller.TenantID, Ids: ids})
+			if err != nil {
+				return nil, err
+			}
+			if int(n) != len(uniq(in.Body.ClaimTypeIDs)) {
+				return nil, errClaimTypeNotFound
+			}
+			q := idem.Queries(ctx, d.Queries)
+			if err := q.RemoveUserClaims(ctx, store.RemoveUserClaimsParams{TenantID: caller.TenantID, UserID: user, ClaimIds: ids}); err != nil {
+				return nil, err
+			}
+			if err := q.AddUserClaims(ctx, store.AddUserClaimsParams{TenantID: caller.TenantID, UserID: user, ClaimIds: ids}); err != nil {
+				return nil, err
+			}
+			return nil, realtime.Announce(ctx, q, realtime.Event{Topic: realtime.TenantTopic(caller.TenantID.String()), Kind: accessChanged, ID: in.UserID})
 		})
 
 	route(api, op("listClaimEligible", http.MethodGet, "/claim-types/{id}/eligible", "Who may claim a claim type"), payAccess,

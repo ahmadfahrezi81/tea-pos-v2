@@ -2,7 +2,7 @@ import { useMe } from "@tea-pos/api-client/me";
 import { useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { useQueryClient } from "@tanstack/react-query";
-import { Globe, Info, Pencil } from "lucide-react";
+import { Globe, Pencil } from "lucide-react";
 import { useState } from "react";
 
 import { ConfirmSheet } from "../frame/FormFooter";
@@ -12,7 +12,7 @@ import { useSlug } from "../session/tenant";
 import { APP_VERSION } from "../lib/version";
 
 /**
- * The old apps' Account: who is signed in, the settings rows (Personal details, Language, App info), then Log Out
+ * The old apps' Account: who is signed in, the settings rows (Personal details, Language), then Log Out
  * and the version at the bottom. The same in every app.
  */
 export function AccountScreen() {
@@ -47,11 +47,6 @@ export function AccountScreen() {
                         to={`/${slug}/account/language`}
                         icon={<Globe {...rowIcon} />}
                         label={t("account.language")}
-                    />
-                    <SettingsRow
-                        to={`/${slug}/account/info`}
-                        icon={<Info {...rowIcon} />}
-                        label={t("status.title")}
                     />
                 </div>
             </div>
