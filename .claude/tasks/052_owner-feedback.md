@@ -178,6 +178,7 @@ The owner swapped the tenant's owner by SQL on production, and consolidates dupl
 5. **The owner can change their own stores:** apps stay full access, stores are theirs to pick. Today the screen locks them, and the API refuses the owner's levels as it reads them (seller shows admin); fix both, with a test
 6. **Forms sit in a white card:** Account's Personal details as a person's Name and phone (`Panel`, the same field font); check every other form for the same
 7. **Space under a Save footer on inner pages:** 75% of the phone's home bar, was 50% (about 25px on an iPhone)
+8. **A person's top card:** name, email and date only; the phone is on the Name and phone row
 ### API and code, to explore and clean up
 
 Found by reading and a scan, then fixed:

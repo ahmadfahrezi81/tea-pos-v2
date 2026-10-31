@@ -96,11 +96,7 @@ export function PersonPage({ userId }: { userId: string }) {
                 <div className="flex-1 min-w-0 text-sm text-gray-900">
                     <p className="text-lg font-semibold leading-tight truncate">{p.name}</p>
                     <p className="truncate">{p.email}</p>
-                    <p className="truncate">
-                        {[p.phone, p.since && formatLongDate(p.since, locale)]
-                            .filter(Boolean)
-                            .join(" · ")}
-                    </p>
+                    {p.since && <p className="truncate">{formatLongDate(p.since, locale)}</p>}
                 </div>
             </div>
             {p.owner && <p className="px-1 text-sm text-gray-900">{t("uac.ownerNote")}</p>}
