@@ -14,6 +14,7 @@ export function ListRow({
     subtitle,
     trailing,
     onClick,
+    top = false,
 }: {
     leading?: ReactNode;
     title: ReactNode;
@@ -21,10 +22,16 @@ export function ListRow({
     /** Replaces the chevron: a status, a value, its own button. */
     trailing?: ReactNode;
     onClick?: () => void;
+    /** `leading` at the top of the row, not its middle. */
+    top?: boolean;
 }) {
     const body = (
         <>
-            {leading && <span className="shrink-0 flex items-center py-4">{leading}</span>}
+            {leading && (
+                <span className={`shrink-0 flex py-4 ${top ? "items-start" : "items-center"}`}>
+                    {leading}
+                </span>
+            )}
             <div className="flex-1 min-w-0 flex items-center gap-3 py-4 -mr-4 pr-4 border-b-2 border-slate-100 in-[.panel]:border-white group-last:border-b-0">
                 <div className="flex-1 min-w-0">
                     <div className="text-[17px] font-medium text-gray-900 truncate">{title}</div>

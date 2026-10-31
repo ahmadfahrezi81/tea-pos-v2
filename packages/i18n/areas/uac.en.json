@@ -74,6 +74,7 @@
         "offTitle": "Turn {name} off?",
         "offBody": "They lose every app and store here. Their sales and pay stay.",
         "onTitle": "Turn {name} back on?",
-        "onBody": "They start with no apps or stores: pick them next."
+        "onBody": "They start with no apps or stores: pick them next.",
+        "confirmTitle": "Save {name}'s changes?"
     }
 }

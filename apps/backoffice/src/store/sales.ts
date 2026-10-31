@@ -183,7 +183,7 @@ export function useLatestOrders(from: string, to: string) {
         {
             params: {
                 path: { tenant: scope?.tenant ?? "" },
-                query: { from, to, storeId: scope?.storeId, limit: 5 },
+                query: { from, to, storeId: scope?.storeId, limit: 3 },
             },
         },
         {

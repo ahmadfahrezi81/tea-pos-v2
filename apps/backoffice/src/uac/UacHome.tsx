@@ -25,7 +25,7 @@ import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
 /**
- * UAC's home, as the old Staff Payroll Info list: requests waiting on top, then everyone A to Z,
+ * UAC's home, as the old Staff Payroll Info list: requests waiting on top, then everyone by importance and A to Z,
  * searchable and filtered by app and level; each row says what the person reaches in each app;
  * How access works at the bottom.
  */
@@ -57,7 +57,7 @@ export function UacHome() {
     const q = search.trim().toLowerCase();
     const people = (data?.people ?? [])
         .filter((p) => matches(filter, p) && (!q || p.name.toLowerCase().includes(q)))
-        .sort((a, b) => a.name.localeCompare(b.name, locale));
+        .sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, locale));
     return (
         <div className="space-y-3">
             {data && data.requests.length > 0 && (
@@ -121,6 +121,7 @@ export function UacHome() {
                                       })
                                   }
                                   leading={<Avatar url={p.avatarUrl} />}
+                                  top
                                   title={p.name}
                                   subtitle={<Badges person={p} />}
                               />
@@ -142,6 +143,15 @@ export function UacHome() {
             />
         </div>
     );
+}
+
+/** Most responsibility first: the owner, admins, office guests, sellers, then the rest. */
+function rank(p: Person): number {
+    if (!p.active) return 5;
+    if (p.owner) return 0;
+    if (p.access.backoffice === "admin") return 1;
+    if (p.access.backoffice === "guest") return 2;
+    return p.access.seller ? 3 : 4;
 }
 
 /** What someone reaches, one badge per app with its level: `Seller · Member`, `Office · Admin`. */

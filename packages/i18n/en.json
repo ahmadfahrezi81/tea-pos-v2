@@ -189,7 +189,8 @@
         "updating": "Updating {app}",
         "updateDownloading": "Downloading update",
         "updateDone": "Updated. Restarting…",
-        "updateRestartIn": "Updated. Restarting in {n}",
+        "updateRestartIn": "Restarting in {n}",
+        "updateRestart": "Restart",
         "updateKeepOpen": "Please keep the app open"
     },
     "signIn": {
@@ -221,6 +222,7 @@
         "bad_request": "Something in this form isn't right.",
         "conflict": "This changed meanwhile. Refresh and try again.",
         "error": "Something went wrong.",
+        "read_only": "Read only: connected to production.",
         "files_unavailable": "Photos can't be uploaded right now. Try again soon.",
         "forbidden": "You're not allowed to do this.",
         "idempotency_key_required": "Something went wrong. Try again.",
@@ -264,6 +266,9 @@
         "blank_name": "A name cannot be blank"
     },
     "store": {
+        "week": "Week",
+        "avgPerDay": "Avg/day",
+        "teaWaste": "Tea waste",
         "title": "Store",
         "open": "Open",
         "closed": "Closed",

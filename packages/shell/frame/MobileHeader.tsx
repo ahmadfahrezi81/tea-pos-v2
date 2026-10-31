@@ -1,6 +1,9 @@
 import { useT } from "@tea-pos/i18n/react";
 import { ArrowLeft, UserCircle, X } from "lucide-react";
 
+import { useAppUpdate } from "./AppUpdate";
+import { UpdateHeader } from "./UpdateHeader";
+
 interface MobileHeaderProps {
     title: string;
     isSubPage: boolean;
@@ -32,6 +35,7 @@ export function MobileHeader({
     titleRef,
 }: MobileHeaderProps) {
     const t = useT();
+    const updating = useAppUpdate().phase !== "idle";
     const titleText = (
         <>
             <span className="group-has-[.is-occupied]:hidden">{title}</span>
@@ -39,7 +43,7 @@ export function MobileHeader({
         </>
     );
     return (
-        <header className="shrink-0 bg-slate-100 px-4 pb-2 pt-[calc(0.75rem_+_env(safe-area-inset-top))]">
+        <header className="shrink-0 bg-slate-100 px-4 pb-[19px] pt-[calc(0.75rem_+_env(safe-area-inset-top))]">
             {isSubPage ? (
                 <div className="flex items-center gap-2">
                     <button
@@ -63,9 +67,13 @@ export function MobileHeader({
                 </div>
             ) : (
                 <div className="flex items-center gap-2">
-                    <h1 className="group min-w-0 flex-1 truncate text-3xl font-extrabold tracking-tight text-gray-900">
-                        {titleText}
-                    </h1>
+                    {updating ? (
+                        <UpdateHeader />
+                    ) : (
+                        <h1 className="group min-w-0 flex-1 truncate text-3xl font-extrabold tracking-tight text-gray-900">
+                            {titleText}
+                        </h1>
+                    )}
                     <div
                         ref={actionsRef}
                         className="flex shrink-0 items-center justify-end gap-1"

@@ -19,6 +19,8 @@ interface Props {
     height?: number;
     /** Width per point; a month wider than the phone scrolls sideways. */
     slot?: number;
+    /** Edge to edge: no room at the ends, and few points stretch to the full width. */
+    flush?: boolean;
 }
 
 const PAD_TOP = 22;
@@ -37,17 +39,28 @@ export function AreaChart({
     unit,
     shape = "step",
     height = 150,
-    slot = 56,
+    slot: minSlot = 56,
+    flush = false,
 }: Props) {
     const scroll = useRef<HTMLDivElement>(null);
     const [picked, setPicked] = useState<number | null>(null);
-    const width = Math.max(points.length * slot + 2 * PAD_X, 280);
+    const [room, setRoom] = useState(0);
+    useEffect(() => {
+        const el = scroll.current;
+        if (!flush || !el) return;
+        const observer = new ResizeObserver(() => setRoom(el.clientWidth));
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [flush]);
+    const slot = flush ? Math.max(minSlot, room / Math.max(points.length, 1)) : minSlot;
+    const padX = flush ? 0 : PAD_X;
+    const width = flush ? points.length * slot : Math.max(points.length * slot + 2 * PAD_X, 280);
     const max = Math.max(1, ...points.map((p) => p.value));
     const peak = points.reduce(
         (best, p, i) => (p.value > (points[best]?.value ?? 0) ? i : best),
         0,
     );
-    const x = (i: number) => PAD_X + i * slot + slot / 2;
+    const x = (i: number) => padX + i * slot + slot / 2;
     const y = (v: number) => PAD_TOP + (1 - v / max) * (height - PAD_TOP - PAD_BOTTOM);
     const bottom = height - PAD_BOTTOM;
 

@@ -163,8 +163,8 @@ const AppUpdateContext = createContext<AppUpdate | null>(null);
  * An update is a download: the app lives on the phone, and a reload alone is answered by the old
  * worker with the old files. A tiny version file is the question, asked on opening, on coming back
  * and on a tap, at most once a minute. On a fresh open a new build takes a full page until it is
- * in (nobody has started anything); in use it downloads behind a toast at the top, which then
- * counts down and reloads. After a 426 this build is too old to
+ * in (nobody has started anything); in use it downloads behind the header of a tab's root, which
+ * then counts down and reloads. After a 426 this build is too old to
  * be safe, so the full page has no way out.
  */
 export function AppUpdateProvider({ children }: { children: ReactNode }) {

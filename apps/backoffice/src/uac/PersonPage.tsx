@@ -1,7 +1,6 @@
 import type { MessageKey } from "@tea-pos/i18n";
 import { formatLongDate, formatMoney } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { ActionButton } from "@tea-pos/ui/ActionButton";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { Callout } from "@tea-pos/ui/Callout";
 import { ChoiceList } from "@tea-pos/ui/ChoiceList";
@@ -10,12 +9,12 @@ import { Segmented } from "@tea-pos/ui/form/Segmented";
 import { Switch } from "@tea-pos/ui/form/Switch";
 import { TextInput } from "@tea-pos/ui/form/TextInput";
 import { Panel, PanelLabel } from "@tea-pos/ui/Panel";
-import { Sheet } from "@tea-pos/ui/Sheet";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
-import { ConfirmSheet } from "@tea-pos/shell/FormFooter";
+import { ConfirmSheet, FormFooter } from "@tea-pos/shell/FormFooter";
 import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
-import { useAccess, useTenant } from "@tea-pos/shell/tenant";
+import { useAccess, useSlug, useTenant } from "@tea-pos/shell/tenant";
+import { useRouter } from "@tanstack/react-router";
 import {
     BadgePercent,
     Check,
@@ -48,25 +47,24 @@ const HINTS: Record<string, MessageKey> = {
     admin: "uac.adminHint",
 };
 
-type Editing = "details" | "apps" | "stores" | "commission" | "claims";
+type Part = "details" | "apps" | "stores" | "commission" | "claims";
 
-/** A person, everything at a glance: each row opens its own short sheet, so one change is one tap. */
+/** A person, everything at a glance: each row opens its own page, whose save asks first. */
 export function PersonPage({ userId }: { userId: string }) {
     const t = useT();
     const locale = useLocale();
+    const slug = useSlug();
     const { canWrite } = useAccess();
     const stores = useTenant()?.tenant.stores ?? [];
     const { data: p } = useUacPerson(userId);
     const { data: claimTypes } = useClaimTypes();
-    const [editing, setEditing] = useState<Editing | null>(null);
     if (!p) return <Skeleton className="h-60 rounded-2xl" />;
-    const close = () => setEditing(null);
     // The owner keeps full access, and someone turned off has none to change.
     const access = canWrite && !p.owner && p.active;
     const level = (app: "seller" | "backoffice") =>
         `${t(app === "seller" ? "uac.seller" : "uac.office")}: ${t(`uac.${p.access[app] || "none"}` as MessageKey)}`;
     const row = (
-        key: Editing,
+        part: Part,
         icon: ReactNode,
         label: string,
         sublabel: string,
@@ -76,7 +74,7 @@ export function PersonPage({ userId }: { userId: string }) {
             icon={icon}
             label={label}
             sublabel={sublabel}
-            onClick={editable ? () => setEditing(key) : undefined}
+            to={editable ? `/${slug}/uac/${p.id}/${part}` : undefined}
             right={editable ? undefined : <></>}
         />
     );
@@ -147,23 +145,28 @@ export function PersonPage({ userId }: { userId: string }) {
             </SettingsGroup>
 
             <PersonBank id={p.id} />
-
-            <Sheet open={editing === "details"} onClose={close} title={t("uac.details")}>
-                <DetailsForm person={p} onDone={close} />
-            </Sheet>
-            <Sheet open={editing === "apps"} onClose={close} title={t("uac.apps")}>
-                <ChangeForm person={p} onDone={close} fields={AppLevels} />
-            </Sheet>
-            <Sheet open={editing === "stores"} onClose={close} title={t("uac.stores")}>
-                <ChangeForm person={p} onDone={close} fields={StoreChecks} />
-            </Sheet>
-            <Sheet open={editing === "commission"} onClose={close} title={t("pay.commissionType")}>
-                <CommissionForm person={p} onDone={close} />
-            </Sheet>
-            <Sheet open={editing === "claims"} onClose={close} title={t("pay.claims")}>
-                <ClaimsForm person={p} onDone={close} />
-            </Sheet>
         </div>
+    );
+}
+
+/** One of a person's settings on its own page; saved only after the footer's sheet says yes. */
+export function PersonSetting({ userId, part }: { userId: string; part: Part }) {
+    const { data } = useUacPerson(userId);
+    const { canWrite } = useAccess();
+    if (!data) return <Skeleton className="h-60 rounded-2xl" />;
+    // Keyed by what was saved, so a change from elsewhere starts the form again.
+    const key = JSON.stringify(data);
+    if (part === "details") return <DetailsForm key={key} person={data} canWrite={canWrite} />;
+    if (part === "commission")
+        return <CommissionForm key={key} person={data} canWrite={canWrite} />;
+    if (part === "claims") return <ClaimsForm key={key} person={data} canWrite={canWrite} />;
+    return (
+        <ChangeForm
+            key={key}
+            person={data}
+            fields={part === "apps" ? AppLevels : StoreChecks}
+            canWrite={canWrite && !data.owner && data.active}
+        />
     );
 }
 
@@ -209,51 +212,74 @@ function StatusRow({ person: p, editable }: { person: Person; editable: boolean 
     );
 }
 
-/** A sheet's save button, kept in view under a long list. */
-function SaveButton({ onSave, disabled }: { onSave: () => Promise<unknown>; disabled?: boolean }) {
+/** A setting's save in the footer, with its confirm sheet; then back to the person. */
+function Save({
+    person: p,
+    changed,
+    onSave,
+    access = false,
+}: {
+    person: Person;
+    changed: boolean;
+    onSave: () => Promise<unknown>;
+    /** Says it applies at once, not the pay settings' "from now on". */
+    access?: boolean;
+}) {
     const t = useT();
+    const router = useRouter();
     return (
-        <div className="sticky bottom-0 bg-white pt-3 pb-1">
-            <ActionButton
-                action={onSave}
-                onError={() => {}}
-                resetOnSuccess
-                busyLabel={t("uac.saving")}
-                disabled={disabled}
-                className="w-full rounded-xl bg-brand py-4 text-base font-semibold text-white disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[0.98]"
-            >
-                {t("uac.save")}
-            </ActionButton>
-        </div>
+        <FormFooter
+            label={t("uac.save")}
+            busyLabel={t("uac.saving")}
+            disabled={!changed}
+            confirmTitle={t("uac.confirmTitle").replace("{name}", p.name)}
+            note={access ? { title: t("uac.noteTitle"), body: t("uac.confirmBody") } : undefined}
+            onSubmit={async () => {
+                await onSave();
+                router.history.back();
+            }}
+        />
     );
 }
 
-function DetailsForm({ person: p, onDone }: { person: Person; onDone: () => void }) {
+type FormProps = { person: Person; canWrite: boolean };
+
+function DetailsForm({ person: p, canWrite }: FormProps) {
     const t = useT();
     const save = useSetDetails(p.id);
     const [fullName, setName] = useState(p.name);
     const [phone, setPhone] = useState(p.phone ?? "");
     return (
-        <div className="space-y-3">
-            <Field label={t("pay.name")} required>
-                <TextInput value={fullName} onChange={setName} className="text-base font-medium" />
-            </Field>
-            <Field label={t("account.phoneNumber")}>
-                <TextInput
-                    value={phone}
-                    onChange={setPhone}
-                    inputMode="tel"
-                    className="text-base font-medium"
+        <>
+            <Panel>
+                <Field label={t("pay.name")} required>
+                    <TextInput
+                        value={fullName}
+                        onChange={setName}
+                        className="text-base font-medium"
+                    />
+                </Field>
+                <Field label={t("account.phoneNumber")}>
+                    <TextInput
+                        value={phone}
+                        onChange={setPhone}
+                        inputMode="tel"
+                        className="text-base font-medium"
+                    />
+                </Field>
+            </Panel>
+            {canWrite && (
+                <Save
+                    person={p}
+                    access
+                    changed={
+                        !!fullName.trim() &&
+                        (fullName.trim() !== p.name || phone.trim() !== (p.phone ?? ""))
+                    }
+                    onSave={() => save.mutateAsync({ fullName, phone })}
                 />
-            </Field>
-            <SaveButton
-                disabled={!fullName.trim()}
-                onSave={async () => {
-                    await save.mutateAsync({ fullName, phone });
-                    onDone();
-                }}
-            />
-        </div>
+            )}
+        </>
     );
 }
 
@@ -264,101 +290,108 @@ type Fields = (props: {
 }) => ReactNode;
 
 /** Apps or stores: the rest of what the save sends stays as it is. */
-function ChangeForm({
-    person: p,
-    fields: Fields,
-    onDone,
-}: {
-    person: Person;
-    fields: Fields;
-    onDone: () => void;
-}) {
+function ChangeForm({ person: p, fields: Fields, canWrite }: FormProps & { fields: Fields }) {
     const save = useSetPerson(p.id);
-    const [change, setChange] = useState<Change>({
-        access: p.access,
-        storeIds: p.storeIds,
-        active: p.active,
-    });
+    const saved: Change = { access: p.access, storeIds: p.storeIds, active: p.active };
+    const [change, setChange] = useState<Change>(saved);
     return (
-        <div className="space-y-3">
-            <Fields
-                change={change}
-                set={(next) => setChange((c) => ({ ...c, ...next }))}
-                disabled={false}
-            />
-            <SaveButton
-                onSave={async () => {
-                    await save.mutateAsync(change);
-                    onDone();
-                }}
-            />
-        </div>
+        <>
+            <Panel>
+                <Fields
+                    change={change}
+                    set={(next) => setChange((c) => ({ ...c, ...next }))}
+                    disabled={!canWrite}
+                />
+            </Panel>
+            {canWrite && (
+                <Save
+                    person={p}
+                    access
+                    changed={JSON.stringify(change) !== JSON.stringify(saved)}
+                    onSave={() => save.mutateAsync(change)}
+                />
+            )}
+        </>
     );
 }
 
-function CommissionForm({ person: p, onDone }: { person: Person; onDone: () => void }) {
+function CommissionForm({ person: p, canWrite }: FormProps) {
     const t = useT();
     const { data } = useCommissionTypes();
     const save = usePayWrite(writes.setStaffCommission);
     const [picked, setPicked] = useState(p.commissionTypeId ?? "");
     if (!data) return <Skeleton className="h-40 rounded-xl" />;
     return (
-        <div className="space-y-3">
+        <>
             <ChoiceList
                 value={picked}
                 onChange={setPicked}
                 choices={[
-                    { value: "", label: t("pay.none"), sublabel: t("pay.noCommission") },
+                    {
+                        value: "",
+                        label: t("pay.none"),
+                        sublabel: t("pay.noCommission"),
+                        disabled: !canWrite,
+                    },
                     ...data.types
                         .filter((c) => c.enabled)
                         .map((c) => ({
                             value: c.id,
                             label: c.name,
                             sublabel: t("pay.perCup").replace("{rate}", formatMoney(c.ratePerCup)),
+                            disabled: !canWrite,
                         })),
                 ]}
             />
-            <SaveButton
-                onSave={async () => {
-                    await save.mutateAsync({ userId: p.id, commissionTypeId: picked || null });
-                    onDone();
-                }}
-            />
-        </div>
+            {canWrite && (
+                <Save
+                    person={p}
+                    changed={picked !== (p.commissionTypeId ?? "")}
+                    onSave={() =>
+                        save.mutateAsync({ userId: p.id, commissionTypeId: picked || null })
+                    }
+                />
+            )}
+        </>
     );
 }
 
-function ClaimsForm({ person: p, onDone }: { person: Person; onDone: () => void }) {
+function ClaimsForm({ person: p, canWrite }: FormProps) {
     const t = useT();
     const { data } = useClaimTypes();
     const save = usePayWrite(writes.setStaffClaims);
     const [picked, setPicked] = useState(p.claimTypeIds);
     if (!data) return <Skeleton className="h-40 rounded-xl" />;
     const enabled = data.types.filter((c) => c.enabled);
+    const same = (ids: string[]) => [...ids].sort().join();
     return (
-        <div className="space-y-3">
-            <div className="bg-slate-100 rounded-xl px-4 py-1">
-                {enabled.length === 0 ? (
-                    <p className="py-3 text-sm text-gray-900">{t("uac.noClaims")}</p>
-                ) : (
-                    enabled.map((c) => (
-                        <CheckRow
-                            key={c.id}
-                            label={c.name}
-                            sublabel={formatMoney(c.amount)}
-                            on={picked.includes(c.id)}
-                            onToggle={() => setPicked((ids) => toggled(ids, c.id))}
-                        />
-                    ))
-                )}
-            </div>
-            <SaveButton
-                onSave={async () => {
-                    await save.mutateAsync({ userId: p.id, claimTypeIds: picked });
-                    onDone();
-                }}
-            />
-        </div>
+        <>
+            <Panel>
+                <div className="bg-slate-100 rounded-xl px-4 py-1">
+                    {enabled.length === 0 ? (
+                        <p className="py-3 text-sm text-gray-900">{t("uac.noClaims")}</p>
+                    ) : (
+                        enabled.map((c) => (
+                            <CheckRow
+                                key={c.id}
+                                label={c.name}
+                                sublabel={formatMoney(c.amount)}
+                                disabled={!canWrite}
+                                on={picked.includes(c.id)}
+                                onToggle={() => setPicked((ids) => toggled(ids, c.id))}
+                            />
+                        ))
+                    )}
+                </div>
+            </Panel>
+            {canWrite && (
+                <Save
+                    person={p}
+                    changed={same(picked) !== same(p.claimTypeIds)}
+                    onSave={() => save.mutateAsync({ userId: p.id, claimTypeIds: picked })}
+                />
+            )}
+        </>
     );
 }
 

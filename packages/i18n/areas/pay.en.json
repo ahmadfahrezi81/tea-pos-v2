@@ -202,7 +202,6 @@
         "advancedTitle": "Advanced",
         "advancedNote": "Rare settings. A change here affects every staff member's payday.",
         "typesCount": "{n} types",
-        "payDate": "Pay date",
         "helpTitle": "How pay works",
         "helpPeriod": "The period",
         "helpPeriodBody": "Everyone is paid on the same schedule.\nThe arrows flip between periods.\nThe pay date is the day after a period ends.",
@@ -213,7 +212,6 @@
         "helpSetup": "Setting it up",
         "helpSetupBody": "Commission and claim types: in Pay Settings.\nA person's commission and bank: on their page in People.\nPay schedule: in More, Advanced.",
         "payoutsList": "Payouts",
-        "nextShort": "Payout",
-        "recap": "Recap"
+        "totalPayout": "Total payout"
     }
 }

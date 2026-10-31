@@ -89,28 +89,32 @@ export function StorePage() {
                 {orders.isPending ? (
                     <Skeleton className="h-40 rounded-2xl" />
                 ) : (
-                    <ListCard>
-                        {(orders.data?.items ?? []).length === 0 ? (
-                            <p className="py-4 text-gray-900">{t("store.noSales")}</p>
-                        ) : (
-                            (orders.data?.items ?? []).map((o) => (
-                                <ListRow
-                                    key={o.id}
-                                    title={
-                                        single
-                                            ? formatTime(o.at, locale)
-                                            : formatDateTime(o.at, locale)
-                                    }
-                                    subtitle={`${o.cups} ${t("store.cupsUnit")}${o.seller ? ` · ${o.seller}` : ""}`}
-                                    trailing={
-                                        <span className="font-bold text-gray-900">
-                                            {formatMoney(o.total)}
-                                        </span>
-                                    }
-                                />
-                            ))
-                        )}
-                    </ListCard>
+                    <div className="rounded-2xl bg-slate-200/70 p-1.5">
+                        <ListCard>
+                            {(orders.data?.items ?? []).length === 0 ? (
+                                <p className="py-4 text-gray-900">{t("store.noSales")}</p>
+                            ) : (
+                                (orders.data?.items ?? []).map((o) => (
+                                    <ListRow
+                                        key={o.id}
+                                        title={
+                                            <span className="text-[15px]">
+                                                {single
+                                                    ? formatTime(o.at, locale)
+                                                    : formatDateTime(o.at, locale)}
+                                                {` · ${o.cups} ${t("store.cupsUnit")}${o.seller ? ` · ${o.seller}` : ""}`}
+                                            </span>
+                                        }
+                                        trailing={
+                                            <span className="font-bold text-gray-900">
+                                                {formatMoney(o.total)}
+                                            </span>
+                                        }
+                                    />
+                                ))
+                            )}
+                        </ListCard>
+                    </div>
                 )}
             </div>
 
