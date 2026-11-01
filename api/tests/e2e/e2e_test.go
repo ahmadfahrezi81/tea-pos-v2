@@ -45,12 +45,39 @@ func newPhone(t *testing.T, app string) *phone {
 	return &phone{t: t, app: app, client: &http.Client{Jar: jar}}
 }
 
+// The API itself, as on a PR, where no app stands in front of it: the suite does the forwarder's job.
+var (
+	directAPI  = os.Getenv("E2E_API_URL")
+	edgeSecret = os.Getenv("E2E_EDGE_SECRET")
+)
+
+func (p *phone) url(path string) string {
+	if directAPI != "" {
+		return directAPI + path
+	}
+	return p.app + "/api" + path
+}
+
+func (p *phone) forward(req *http.Request) {
+	if directAPI == "" {
+		return
+	}
+	app := "seller"
+	if p.app == backoffice {
+		app = "backoffice"
+	}
+	req.Header.Set("X-Edge-Secret", edgeSecret)
+	req.Header.Set("X-App", app)
+	req.Header.Set("X-App-Origin", "http://localhost")
+}
+
 func (p *phone) do(method, path, body string, header map[string]string) (*http.Response, map[string]any) {
 	p.t.Helper()
-	req, err := http.NewRequest(method, p.app+"/api"+path, strings.NewReader(body))
+	req, err := http.NewRequest(method, p.url(path), strings.NewReader(body))
 	if err != nil {
 		p.t.Fatal(err)
 	}
+	p.forward(req)
 	if body != "" {
 		req.Header.Set("Content-Type", "application/json")
 	}

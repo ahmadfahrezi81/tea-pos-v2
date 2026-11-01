@@ -104,6 +104,9 @@ jobs:
             - run: cd api && go test -tags integration -count=1 ./tests/...
             # Again as staging builds it, with the test sign-in compiled in.
             - run: cd api && go test -tags integration,testlogin -count=1 -run 'TestTestSignIn|TestPermission' ./tests/...
+            # The whole system before the merge: this checkout's API, signed in as the test users. The
+            # same suite runs on staging after the merge, against the real Railway and Cloudflare.
+            - run: cd api && bash scripts/e2e-here.sh
 
     docker:
         runs-on: ubuntu-latest
