@@ -12,41 +12,57 @@ const base = {
     sections: {},
 };
 
-test("a passing deploy leads with the answer, hides skipped steps and folds the details", () => {
+test("a passing deploy leads with the answer, hides skipped steps, facts in sub-bullets", () => {
     const s = {
         ...base,
         steps: [
             { id: "config", name: "Railway config", state: "skipped", detail: "not changed" },
-            { id: "api", name: "API", state: "success", detail: "93 s" },
-            { id: "e2e", name: "End-to-end tests", state: "success", detail: "14 passed" },
+            {
+                id: "api",
+                name: "API",
+                state: "success",
+                detail: "[api](u) 93 s · [worker](u) 73 s",
+            },
+            { id: "e2e", name: "E2E", state: "success", detail: "14 passed" },
         ],
-        sections: { e2e: "Seller 2" },
+        sections: { e2e: "Sign-in 4, Seller 2" },
     };
     const out = render(s, "<!-- m -->", 180000).replace(/<!-- state:.*\n/, "");
-    assert.match(out, /### ✅ Staging runs this commit · `1233c76`/);
-    assert.match(out, /3 min/);
+    assert.match(
+        out,
+        /### ✅ Staging runs this commit\n<sub>`1233c76` · 3 min · \[run\]\(u\)<\/sub>/,
+    );
     assert.doesNotMatch(out, /Railway config/);
-    assert.match(out, /\*\*End-to-end tests\*\*: 14 passed/);
-    assert.match(out, /<details><summary>Details<\/summary>\n\nSeller 2/);
+    assert.match(out, /- ✅ API\n  - \[api\]\(u\) 93 s\n  - \[worker\]\(u\) 73 s/);
+    assert.match(out, /- ✅ E2E: 14 passed\n  - Sign-in 4, Seller 2/);
 });
 
-test("a failed deploy names the step first, unfolded, and says what did not run", () => {
+test("a failed deploy names the step first, says what did not run, and boxes the next step", () => {
     const s = {
         ...base,
         steps: [
             { id: "api", name: "API", state: "success", detail: "93 s" },
             { id: "apps", name: "Apps", state: "waiting", detail: "" },
-            { id: "e2e", name: "End-to-end tests", state: "failure", detail: "1 of 14 failed" },
+            { id: "e2e", name: "E2E", state: "failure", detail: "1 of 14 failed" },
         ],
-        sections: { e2e: "the reason", _: "**Next:** do this" },
+        sections: { e2e: "Backoffice: every tab answers: a reason", _: "**Next:** do this" },
     };
     const out = render(s, "<!-- m -->", 0);
-    assert.match(out, /### ❌ Deploy to staging failed: End-to-end tests/);
-    assert.ok(out.indexOf("End-to-end tests**") < out.indexOf("**API**"));
-    assert.match(out, /⏸ \*\*Apps\*\*: did not run/);
+    assert.match(out, /### ❌ Deploy to staging failed: E2E/);
+    assert.ok(out.indexOf("❌ E2E") < out.indexOf("✅ API"));
+    assert.match(out, /- ❌ E2E: 1 of 14 failed\n  - Backoffice: every tab answers: a reason/);
+    assert.match(out, /⏸ Apps: did not run/);
+    assert.match(out, /> \[!CAUTION\]\n> \*\*Next:\*\* do this/);
+});
+
+test("a table or a log stays a block, folded when passing and open when failing", () => {
+    const steps = [{ id: "check", name: "Production check", state: "success", detail: "ok" }];
+    const sections = { check: "| a | b |\n| - | - |" };
+    assert.match(render({ ...base, steps, sections }, "m", 0), /<details>/);
+    const failing = [{ ...steps[0], state: "failure" }];
+    const out = render({ ...base, steps: failing, sections }, "m", 0);
     assert.doesNotMatch(out, /<details>/);
-    assert.match(out, /the reason/);
-    assert.match(out, /\*\*Next:\*\* do this/);
+    assert.match(out, /\| a \| b \|/);
 });
 
 test("the state rides along, so another job can update it", () => {
@@ -70,7 +86,7 @@ test("e2e: all passing is a count and areas", () => {
         ]),
     );
     assert.equal(out.detail, "7 passed");
-    assert.equal(out.body, "Monitoring and health 2 · Sign-in 1 · Seller 2 · Backoffice 2");
+    assert.equal(out.body, "Monitoring and health 2, Sign-in 1, Seller 2\nBackoffice 2");
 });
 
 test("e2e: a failure shows its plain name and reason, and only its own", () => {
@@ -85,9 +101,7 @@ test("e2e: a failure shows its plain name and reason, and only its own", () => {
         ]),
     );
     assert.equal(out.detail, "1 of 2 failed");
-    assert.match(out.body, /\*\*Backoffice: every tab answers\*\*/);
-    assert.match(out.body, /\/feedbacks: 404 route_not_found/);
-    assert.doesNotMatch(out.body, /Seller/);
+    assert.equal(out.body, "Backoffice: every tab answers: /feedbacks: 404 route_not_found");
 });
 
 test("e2e: no tests at all says so, with the end of the log", () => {
@@ -109,25 +123,28 @@ const needs = () => ({
     benchmark: { result: "skipped", outputs: {} },
 });
 
-test("before the merge, passing: one line of checks, skipped ones left out", () => {
+test("before the merge, passing: a bullet per check, skipped ones left out", () => {
     const out = prComment({ needs: needs(), previews: { seller: "https://s" } });
     assert.equal(out.state, "success");
     assert.equal(out.title, "Ready to merge");
-    assert.match(out.body, /^Checks ✅ · Tests ✅ · Docker ✅ · Security ✅\n/);
-    assert.match(out.body, /Bundle: seller 139 KB/);
-    assert.match(out.body, /\[seller\]\(https:\/\/s\)/);
+    assert.match(out.body, /^- ✅ Checks\n- ✅ Tests\n- ✅ Docker\n- ✅ Security\n/);
+    assert.match(out.body, /- 📦 Bundle\n  - seller 139 KB\n  - backoffice 147 KB/);
     assert.doesNotMatch(out.body, /Next/);
+    const n = needs();
+    n.previews = passing();
+    const shown = prComment({ needs: n, previews: { seller: "https://s" } });
+    assert.match(shown.body, /- ✅ Previews\n  - \[seller\]\(https:\/\/s\)/);
 });
 
-test("before the merge, failing: the title names it, with the reason and the next step", () => {
+test("before the merge, failing: what failed first, its reason under it, then the next step", () => {
     const n = needs();
     n.integration = { result: "failure", outputs: {} };
-    const out = prComment({ needs: n, failures: "the log" });
+    const out = prComment({ needs: n, reasons: { integration: ["a reason"] }, log: "the log" });
     assert.equal(out.state, "failure");
     assert.equal(out.title, "Not ready: Tests");
-    assert.match(out.body, /Tests ❌/);
-    assert.match(out.body, /the log/);
-    assert.match(out.body, /Nothing has reached staging/);
+    assert.match(out.body, /^- ❌ Tests\n  - a reason\n- ✅ Checks/);
+    assert.match(out.body, /> \[!CAUTION\]\n> \*\*Next:\*\* fix it on this PR/);
+    assert.match(out.body, /<summary>Full log<\/summary>\n\nthe log/);
 });
 
 test("a release PR says so, and a failed benchmark never blocks it", () => {
@@ -136,6 +153,6 @@ test("a release PR says so, and a failed benchmark never blocks it", () => {
     n.benchmark = { result: "failure", outputs: { body: "numbers" } };
     const out = prComment({ needs: n, toMain: true });
     assert.equal(out.title, "Ready to release");
-    assert.match(out.body, /E2E: 14 passed/);
+    assert.match(out.body, /- ✅ E2E\n  - 14 passed/);
     assert.match(out.body, /<summary>Speed<\/summary>/);
 });

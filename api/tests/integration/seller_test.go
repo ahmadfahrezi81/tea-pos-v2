@@ -384,8 +384,3 @@ func TestOldDayOpen(t *testing.T) {
 		t.Errorf("a phone left on the menu: %d %s", s, b)
 	}
 }
-
-// Temporary: shows the PR's failure comment. Removed before merging.
-func TestTemporaryFailure(t *testing.T) {
-	t.Error("this test fails on purpose, to see the comment")
-}

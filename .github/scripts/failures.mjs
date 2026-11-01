@@ -31,21 +31,29 @@ function why(log) {
         .join("\n");
 }
 
-export async function report() {
+/** Each failed job of this run: its name, the step that failed, and its last log lines. */
+export async function failedJobs() {
     const res = await api(`/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=100`);
-    if (!res.ok) return `Could not read the run's jobs (${res.status}).`;
+    if (!res.ok) throw new Error(`could not read the run's jobs (${res.status})`);
     const { jobs } = await res.json();
     const failed = jobs.filter((j) => j.conclusion === "failure" && j.name.includes(FAILURES_JOB));
-    const parts = [];
-    for (const job of failed) {
-        const step = job.steps?.find((s) => s.conclusion === "failure")?.name ?? "before any step";
-        const log = await api(`/actions/jobs/${job.id}/logs`);
-        const text = log.ok ? why(await log.text()) : "(the log could not be read)";
-        parts.push(
-            `**\`${job.name}\`** failed at: ${step}\n\n<details open><summary>Last log lines</summary>\n\n~~~~\n${text}\n~~~~\n\n</details>`,
-        );
-    }
-    return parts.join("\n\n");
+    return Promise.all(
+        failed.map(async (job) => {
+            const log = await api(`/actions/jobs/${job.id}/logs`);
+            return {
+                name: job.name,
+                step: job.steps?.find((s) => s.conclusion === "failure")?.name ?? "before any step",
+                log: log.ok ? why(await log.text()) : "(the log could not be read)",
+            };
+        }),
+    );
+}
+
+export const asMarkdown = (jobs) =>
+    jobs.map((j) => `**\`${j.name}\`** failed at: ${j.step}\n\n~~~~\n${j.log}\n~~~~`).join("\n\n");
+
+async function report() {
+    return asMarkdown(await failedJobs());
 }
 
 export const safeReport = () => report().catch((e) => `Could not read the run: ${e.message}`);

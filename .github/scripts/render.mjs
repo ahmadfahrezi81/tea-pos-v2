@@ -25,16 +25,25 @@ function headline(s, state) {
     return `${s.title}: running`;
 }
 
+/** Facts as sub-bullets; a table or code stays a block of its own (null). */
+function subItems(text) {
+    if (!text) return [];
+    if (/~~~~|^\|/m.test(text)) return null;
+    return text.split(/\n| · /).filter(Boolean);
+}
+
+const next = (text) => `> [!CAUTION]\n> ${text}`;
+
 export function render(s, marker, now = Date.now()) {
     const state = overall(s);
     const done = state === "success" || state === "failure";
     const time = `${done ? "" : "running for "}${minutes(now - s.startedAt)}`;
-    const commit = s.commit ? ` · \`${s.commit.slice(0, 7)}\`` : "";
+    const small = [s.commit && `\`${s.commit.slice(0, 7)}\``, time, `[run](${s.run})`];
     const lines = [
         marker,
         `<!-- state:${JSON.stringify(s)} -->`,
-        `### ${ICON[state] ?? "⏳"} ${headline(s, state)}${commit}`,
-        `${time} · [run](${s.run})`,
+        `### ${ICON[state] ?? "⏳"} ${headline(s, state)}`,
+        `<sub>${small.filter(Boolean).join(" · ")}</sub>`,
         "",
     ];
     // What failed first; steps with nothing to do say nothing.
@@ -42,25 +51,24 @@ export function render(s, marker, now = Date.now()) {
     const shown = s.steps
         .filter((x) => x.state !== "skipped" && (x.state !== "waiting" || state === "failure"))
         .sort((a, b) => order[a.state] - order[b.state]);
+    const blocks = [];
     for (const x of shown) {
-        const mark = x.state === "success" ? "" : `${ICON[x.state]} `;
-        const note = x.state === "waiting" ? "did not run" : (x.detail ?? "");
-        lines.push(`- ${mark}**${x.name}**${note ? `: ${note}` : ""}`);
+        const facts = x.state === "waiting" ? ["did not run"] : (subItems(x.detail) ?? []);
+        const section = subItems(s.sections?.[x.id]);
+        const subs = section ?? [];
+        if (section === null) blocks.push(s.sections[x.id]);
+        // One short fact stays on the line; several go under it.
+        const inline = facts.length === 1 ? `: ${facts[0]}` : "";
+        lines.push(`- ${ICON[x.state] ?? ""} ${x.name}${inline}`);
+        for (const sub of [...(inline ? [] : facts), ...subs]) lines.push(`  - ${sub}`);
     }
     if (shown.length) lines.push("");
-    const sections = s.steps.map((x) => s.sections?.[x.id]).filter(Boolean);
-    if (sections.length) {
-        if (state === "failure") lines.push(...sections.flatMap((x) => [x, ""]));
-        else
-            lines.push(
-                "<details><summary>Details</summary>",
-                "",
-                ...sections.flatMap((x) => [x, ""]),
-                "</details>",
-                "",
-            );
+    for (const block of blocks) {
+        if (state === "failure") lines.push(block, "");
+        else lines.push("<details><summary>Details</summary>", "", block, "", "</details>", "");
     }
-    if (s.sections?._) lines.push(s.sections._, "");
+    const last = s.sections?._;
+    if (last) lines.push(state === "failure" && last.startsWith("**Next") ? next(last) : last, "");
     return lines.join("\n");
 }
 
@@ -75,12 +83,10 @@ function areaOf(name) {
 
 /** `TestBackoffice_EveryTabAnswers` as `Backoffice: every tab answers`. */
 function plainName(name) {
+    const spaced = (text) => text.replace(/([a-z])([A-Z])/g, "$1 $2");
     const [first, ...rest] = name.replace(/^Test/, "").split("_");
-    const words = rest
-        .join(" ")
-        .replace(/([a-z])([A-Z])/g, "$1 $2")
-        .toLowerCase();
-    return words ? `${first}: ${words}` : first;
+    const words = spaced(rest.join(" ")).toLowerCase();
+    return words ? `${spaced(first)}: ${words}` : spaced(first);
 }
 
 /** A `go test -v` log as a short line (`detail`) and what to show (`body`). */
@@ -108,18 +114,16 @@ export function e2eSummary(log) {
         return { detail: "did not run", body: tail ? `~~~~\n${tail}\n~~~~` : "" };
     }
     if (failed.length === 0) {
-        const list = [...areas].map(([area, n]) => `${area} ${n}`).join(" · ");
-        return { detail: `${total} passed`, body: list };
+        const list = [...areas].map(([area, n]) => `${area} ${n}`);
+        const rows = [];
+        for (let i = 0; i < list.length; i += 3) rows.push(list.slice(i, i + 3).join(", "));
+        return { detail: `${total} passed`, body: rows.join("\n") };
     }
     return {
         detail: `${failed.length} of ${total} failed`,
         body: failed
-            .map((f) =>
-                f.reasons.length
-                    ? `**${f.name}**\n\n~~~~\n${f.reasons.slice(0, 15).join("\n")}\n~~~~`
-                    : `**${f.name}**`,
-            )
-            .join("\n\n"),
+            .map((f) => (f.reasons[0] ? `${f.name}: ${f.reasons[0].slice(0, 200)}` : f.name))
+            .join("\n"),
     };
 }
 
@@ -133,21 +137,26 @@ const CHECKS = [
     ["migrations", "Migrations"],
 ];
 
-/** The one comment before a merge, from `needs` and the preview addresses. */
-export function prComment({ needs, previews = {}, failures = "", toMain = false }) {
+/** The one comment before a merge, from `needs`, the preview addresses and why jobs failed. */
+export function prComment({ needs, previews = {}, reasons = {}, log = "", toMain = false }) {
     const ran = CHECKS.filter(([id]) => needs[id] && needs[id].result !== "skipped");
-    const failed = ran.filter(([id]) => needs[id].result !== "success");
-    const row = ran
-        .map(([id, label]) => `${label} ${needs[id].result === "success" ? "✅" : "❌"}`)
-        .join(" · ");
+    const isFailed = ([id]) => needs[id].result !== "success";
+    const failed = ran.filter(isFailed);
     const out = (id, key) => needs[id]?.outputs?.[key];
-    const lines = [row, ""];
-    const facts = [];
-    if (out("e2e", "detail")) facts.push(`E2E: ${out("e2e", "detail")}`);
-    if (out("checks", "bundle")) facts.push(`Bundle: ${out("checks", "bundle")}`);
     const links = Object.entries(previews).map(([app, url]) => `[${app}](${url})`);
-    if (links.length) facts.push(`Preview: ${links.join(" · ")}`);
-    lines.push(...facts.map((f) => `- ${f}`), "");
+    const subs = { e2e: out("e2e", "detail") ? [out("e2e", "detail")] : [], previews: links };
+    const lines = [];
+    // What failed first.
+    for (const [id, label] of [...failed, ...ran.filter((c) => !isFailed(c))]) {
+        lines.push(`- ${isFailed([id]) ? "❌" : "✅"} ${label}`);
+        for (const sub of [...(reasons[id] ?? []), ...(subs[id] ?? [])]) lines.push(`  - ${sub}`);
+    }
+    const bundle = out("checks", "bundle");
+    if (bundle) {
+        lines.push("- 📦 Bundle");
+        for (const app of bundle.split(" · ")) lines.push(`  - ${app}`);
+    }
+    lines.push("");
     if (out("migrations", "list")) lines.push(out("migrations", "list"), "");
     if (out("benchmark", "body")) {
         lines.push(
@@ -160,12 +169,15 @@ export function prComment({ needs, previews = {}, failures = "", toMain = false 
         );
     }
     if (failed.length) {
-        lines.push(failures, "");
         lines.push(
-            toMain
-                ? "**Next:** fix it on staging and this PR picks it up. Production is untouched."
-                : "**Next:** fix it on this PR. Nothing has reached staging.",
+            next(
+                toMain
+                    ? "**Next:** fix it on staging and this PR picks it up. Production is untouched."
+                    : "**Next:** fix it on this PR. Nothing has reached staging.",
+            ),
+            "",
         );
+        if (log) lines.push("<details><summary>Full log</summary>", "", log, "", "</details>", "");
     }
     return {
         state: failed.length ? "failure" : "success",
