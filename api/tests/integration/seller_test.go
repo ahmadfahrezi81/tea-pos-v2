@@ -229,6 +229,24 @@ func TestSellerCloseDay(t *testing.T) {
 		}
 	}
 
+	// Both apps' reads, kept to the seller's own stores.
+	exec(`DELETE FROM user_store_assignments WHERE user_id = $1 AND store_id = $2`, testkit.SellerA, storeANorth)
+	for path, want := range map[string]int{
+		"/tenants/tenant-a/days/" + g.DayID:                                           200,
+		"/tenants/tenant-a/orders?from=2020-01-01&to=2020-01-02&storeId=" + storeACentral: 200,
+		"/tenants/tenant-a/orders?from=2020-01-01&to=2020-01-02&storeId=" + storeANorth:   403,
+		"/tenants/tenant-a/orders?from=2020-01-01&to=2020-01-02":                          403,
+	} {
+		if resp := a.Request(t, http.MethodGet, path, "seller", seller); resp.StatusCode != want {
+			t.Errorf("%s: %d, want %d", path, resp.StatusCode, want)
+		}
+	}
+	exec(`DELETE FROM user_store_assignments WHERE user_id = $1 AND store_id = $2`, testkit.SellerA, storeACentral)
+	if resp := a.Request(t, http.MethodGet, "/tenants/tenant-a/days/"+g.DayID, "seller", seller); resp.StatusCode != 404 {
+		t.Errorf("a day of a store no longer theirs: %d", resp.StatusCode)
+	}
+	exec(`INSERT INTO user_store_assignments (user_id, store_id) VALUES ($1, $2)`, testkit.SellerA, storeACentral)
+
 	if g := func() contract.StoreGate {
 		var g contract.StoreGate
 		decode(t, a.Request(t, http.MethodGet, "/tenants/tenant-a/stores/"+storeACentral+"/gate", "seller", seller), &g)

@@ -1,4 +1,5 @@
 import { $api, api } from "@tea-pos/api-client";
+import { useInfiniteList } from "@tea-pos/api-client/list";
 import { STALE } from "@tea-pos/api-client/query";
 import type { components } from "@tea-pos/api-client";
 import { useApiMutation } from "@tea-pos/shell/useApiMutation";
@@ -97,16 +98,53 @@ export type PhotoSlot =
 /** A day of this store in full; every phone on it follows the hub. */
 export function useStoreDay(dayId: string | undefined) {
     const tenant = useSlug();
-    const storeId = useStoreId();
     return $api.useQuery(
         "get",
-        "/tenants/{tenant}/stores/{storeId}/days/{dayId}",
-        { params: { path: { tenant, storeId, dayId: dayId ?? "" } } },
+        "/tenants/{tenant}/days/{id}",
+        { params: { path: { tenant, id: dayId ?? "" } } },
         {
-            enabled: !!tenant && !!storeId && !!dayId,
+            enabled: !!tenant && !!dayId,
             staleTime: STALE.QUICK,
             meta: { live: ["day", "order"] },
         },
+    );
+}
+
+/** A day's cups and orders per hour, and its totals. */
+export function useHours(date: string) {
+    const tenant = useSlug();
+    const storeId = useStoreId();
+    return $api.useQuery(
+        "get",
+        "/tenants/{tenant}/sales/hours",
+        { params: { path: { tenant }, query: { date, storeId: [storeId] } } },
+        { enabled: !!tenant && !!storeId, staleTime: STALE.WARM, meta: { live: ["order"] } },
+    );
+}
+
+/** A day's orders, newest first, a page at a time. */
+export function useDayOrders(date: string) {
+    const tenant = useSlug();
+    const storeId = useStoreId();
+    return useInfiniteList(
+        ["seller-orders", tenant, storeId, date],
+        async (cursor) => {
+            const { data, error } = await api.GET("/tenants/{tenant}/orders", {
+                params: {
+                    path: { tenant },
+                    query: {
+                        from: date,
+                        to: date,
+                        storeId: [storeId],
+                        cursor: cursor || undefined,
+                        limit: 30,
+                    },
+                },
+            });
+            if (error) throw error;
+            return data;
+        },
+        ["order"],
     );
 }
 

@@ -24,7 +24,7 @@ func registerOrders(api huma.API, d Deps) {
 		Path:        "/tenants/{tenant}/orders",
 		Summary:     "The orders of a range of days over one store or several, newest first, a page at a time",
 		Tags:        []string{"store"},
-	}, storeAccess, func(ctx context.Context, in *contract.DayOrdersInput) (*contract.DayOrdersOutput, error) {
+	}, dayReads, func(ctx context.Context, in *contract.DayOrdersInput) (*contract.DayOrdersOutput, error) {
 		caller, _ := auth.CallerFrom(ctx)
 		start, end, err := rangeBounds(in.From, in.To)
 		if err != nil {
@@ -77,7 +77,7 @@ func registerOrders(api huma.API, d Deps) {
 		Path:        "/tenants/{tenant}/sales/hours",
 		Summary:     "A day's cups and orders per hour, and its totals, over one store or several",
 		Tags:        []string{"store"},
-	}, storeAccess, func(ctx context.Context, in *contract.SalesHoursInput) (*contract.SalesHoursOutput, error) {
+	}, dayReads, func(ctx context.Context, in *contract.SalesHoursInput) (*contract.SalesHoursOutput, error) {
 		caller, _ := auth.CallerFrom(ctx)
 		start, end, err := dayBounds(in.Date)
 		if err != nil {

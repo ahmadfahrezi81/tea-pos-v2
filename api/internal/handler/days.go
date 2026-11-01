@@ -37,7 +37,7 @@ func registerDays(api huma.API, d Deps) {
 		Path:        "/tenants/{tenant}/days",
 		Summary:     "A range of the stores' days, with expenses and who worked",
 		Tags:        []string{"store"},
-	}, storeAccess, func(ctx context.Context, in *contract.DaysInput) (*contract.DaysOutput, error) {
+	}, dayReads, func(ctx context.Context, in *contract.DaysInput) (*contract.DaysOutput, error) {
 		caller, _ := auth.CallerFrom(ctx)
 		from, to, err := dateRange(in.From, in.To)
 		if err != nil {
@@ -97,13 +97,12 @@ func registerDays(api huma.API, d Deps) {
 		Path:        "/tenants/{tenant}/days/{id}",
 		Summary:     "One store's day: cash, expenses, who worked, photos, products",
 		Tags:        []string{"store"},
-	}, storeAccess, func(ctx context.Context, in *contract.DayInput) (*contract.DayOutput, error) {
-		caller, _ := auth.CallerFrom(ctx)
-		id, err := dayID(in.ID)
+	}, dayReads, func(ctx context.Context, in *contract.DayInput) (*contract.DayOutput, error) {
+		caller, id, err := ownDay(ctx, d.Queries, in.ID)
 		if err != nil {
 			return nil, err
 		}
-		return dayDetail(ctx, d, caller, id, nil)
+		return dayDetail(ctx, d, caller, id)
 	})
 
 	route(api, huma.Operation{
@@ -112,7 +111,7 @@ func registerDays(api huma.API, d Deps) {
 		Path:        "/tenants/{tenant}/days/{id}/activity",
 		Summary:     "What happened during a store's day, oldest first",
 		Tags:        []string{"store"},
-	}, storeAccess, func(ctx context.Context, in *contract.DayInput) (*contract.DayActivityOutput, error) {
+	}, dayReads, func(ctx context.Context, in *contract.DayInput) (*contract.DayActivityOutput, error) {
 		caller, id, err := ownDay(ctx, d.Queries, in.ID)
 		if err != nil {
 			return nil, err
@@ -151,7 +150,7 @@ func registerDays(api huma.API, d Deps) {
 		Path:        "/tenants/{tenant}/days/{id}/sessions",
 		Summary:     "Who held a store's day, and the handovers",
 		Tags:        []string{"store"},
-	}, storeAccess, func(ctx context.Context, in *contract.DayInput) (*contract.DaySessionsOutput, error) {
+	}, dayReads, func(ctx context.Context, in *contract.DayInput) (*contract.DaySessionsOutput, error) {
 		caller, id, err := ownDay(ctx, d.Queries, in.ID)
 		if err != nil {
 			return nil, err
@@ -179,17 +178,14 @@ func registerDays(api huma.API, d Deps) {
 	})
 }
 
-// dayDetail is one day in full; with onlyStore, only if it is that store's.
-func dayDetail(ctx context.Context, d Deps, caller auth.Caller, id pgtype.UUID, onlyStore *pgtype.UUID) (*contract.DayOutput, error) {
+// dayDetail is one day in full.
+func dayDetail(ctx context.Context, d Deps, caller auth.Caller, id pgtype.UUID) (*contract.DayOutput, error) {
 	r, err := d.Queries.GetDay(ctx, store.GetDayParams{ID: id, TenantID: caller.TenantID})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, errDayNotFound
 	}
 	if err != nil {
 		return nil, err
-	}
-	if onlyStore != nil && r.StoreID != *onlyStore {
-		return nil, errDayNotFound
 	}
 	ids := []pgtype.UUID{id}
 	var (
@@ -283,14 +279,20 @@ func dayID(s string) (pgtype.UUID, error) {
 	return id, nil
 }
 
-// ownDay is the caller and the day, when the day is the caller's tenant's.
+// ownDay is the caller and the day, when the day is the caller's tenant's and, from the seller
+// app, of a store they work at.
 func ownDay(ctx context.Context, q *store.Queries, s string) (auth.Caller, pgtype.UUID, error) {
 	caller, _ := auth.CallerFrom(ctx)
 	id, err := dayID(s)
 	if err != nil {
 		return caller, id, err
 	}
-	ok, err := q.DayInTenant(ctx, store.DayInTenantParams{ID: id, TenantID: caller.TenantID})
+	var ok bool
+	if caller.App == "seller" {
+		ok, err = q.DayAssigned(ctx, store.DayAssignedParams{ID: id, TenantID: caller.TenantID, UserID: caller.UserID})
+	} else {
+		ok, err = q.DayInTenant(ctx, store.DayInTenantParams{ID: id, TenantID: caller.TenantID})
+	}
 	if err == nil && !ok {
 		err = errDayNotFound
 	}

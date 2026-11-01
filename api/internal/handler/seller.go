@@ -339,20 +339,6 @@ func registerSeller(api huma.API, d Deps) {
 			return out, nil
 		})
 
-	route(api, op("getStoreDay", http.MethodGet, "/stores/{storeId}/days/{dayId}", "A day of a store the caller works at, in full"), sellerAccess,
-		func(ctx context.Context, in *contract.SellerDayInput) (*contract.DayOutput, error) {
-			caller, _ := auth.CallerFrom(ctx)
-			s, err := assignedStore(ctx, d.Queries, caller, in.StoreID)
-			if err != nil {
-				return nil, err
-			}
-			id, err := dayID(in.DayID)
-			if err != nil {
-				return nil, err
-			}
-			return dayDetail(ctx, d, caller, id, &s)
-		})
-
 	route(api, op("createExpense", http.MethodPost, "/stores/{storeId}/days/{dayId}/expenses", "Add an expense to the open day"), sellerWrite,
 		func(ctx context.Context, in *contract.CreateExpenseInput) (*contract.StoreGateOutput, error) {
 			caller, _ := auth.CallerFrom(ctx)

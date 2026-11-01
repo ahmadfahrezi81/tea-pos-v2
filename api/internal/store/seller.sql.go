@@ -153,6 +153,24 @@ func (q *Queries) CloseStoreDay(ctx context.Context, arg CloseStoreDayParams) er
 	return err
 }
 
+const countAssignedStores = `-- name: CountAssignedStores :one
+SELECT count(*) FROM user_store_assignments sa JOIN stores st ON st.id = sa.store_id
+WHERE sa.user_id = $1 AND st.tenant_id = $2 AND sa.store_id = ANY($3::uuid[])
+`
+
+type CountAssignedStoresParams struct {
+	UserID   pgtype.UUID
+	TenantID pgtype.UUID
+	Ids      []pgtype.UUID
+}
+
+func (q *Queries) CountAssignedStores(ctx context.Context, arg CountAssignedStoresParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countAssignedStores, arg.UserID, arg.TenantID, arg.Ids)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createDayAutoClaims = `-- name: CreateDayAutoClaims :many
 WITH hours AS (
     SELECT user_id, sum(GREATEST(0, EXTRACT(EPOCH FROM COALESCE(ended_at, now()) - started_at) / 3600))::numeric AS worked
@@ -452,6 +470,24 @@ func (q *Queries) CreateStoreSession(ctx context.Context, arg CreateStoreSession
 	var id pgtype.UUID
 	err := row.Scan(&id)
 	return id, err
+}
+
+const dayAssigned = `-- name: DayAssigned :one
+SELECT EXISTS (SELECT 1 FROM store_daily_summaries d JOIN user_store_assignments sa ON sa.store_id = d.store_id
+    WHERE d.id = $1 AND d.tenant_id = $2 AND sa.user_id = $3)
+`
+
+type DayAssignedParams struct {
+	ID       pgtype.UUID
+	TenantID pgtype.UUID
+	UserID   pgtype.UUID
+}
+
+func (q *Queries) DayAssigned(ctx context.Context, arg DayAssignedParams) (bool, error) {
+	row := q.db.QueryRow(ctx, dayAssigned, arg.ID, arg.TenantID, arg.UserID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 const dayFinalTotals = `-- name: DayFinalTotals :one

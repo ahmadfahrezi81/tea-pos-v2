@@ -197,3 +197,11 @@ FROM payroll_payouts p
 WHERE p.tenant_id = @tenant_id AND p.start_date = @start_date AND p.user_id = cl.user_id
   AND cl.tenant_id = @tenant_id AND cl.date >= @start_date AND cl.date <= @end_date AND cl.payout_id IS NULL
   AND cl.user_id IN (SELECT ss.user_id FROM store_sessions ss WHERE ss.daily_summary_id = @day_id AND ss.tenant_id = @tenant_id);
+
+-- name: CountAssignedStores :one
+SELECT count(*) FROM user_store_assignments sa JOIN stores st ON st.id = sa.store_id
+WHERE sa.user_id = @user_id AND st.tenant_id = @tenant_id AND sa.store_id = ANY(@ids::uuid[]);
+
+-- name: DayAssigned :one
+SELECT EXISTS (SELECT 1 FROM store_daily_summaries d JOIN user_store_assignments sa ON sa.store_id = d.store_id
+    WHERE d.id = @id AND d.tenant_id = @tenant_id AND sa.user_id = @user_id);

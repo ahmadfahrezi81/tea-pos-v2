@@ -84,13 +84,6 @@ type CreateOrderOutput struct {
 	}
 }
 
-// SellerDayInput is a day of a store the seller works at.
-type SellerDayInput struct {
-	Tenant  string `path:"tenant"`
-	StoreID string `path:"storeId" format:"uuid"`
-	DayID   string `path:"dayId" format:"uuid"`
-}
-
 type CreateExpenseInput struct {
 	Tenant  string `path:"tenant"`
 	StoreID string `path:"storeId" format:"uuid"`

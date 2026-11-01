@@ -23,6 +23,7 @@
         "./MobileShell": "./frame/MobileShell.tsx",
         "./MoreScreen": "./screens/MoreScreen.tsx",
         "./navProgress": "./frame/navProgress.ts",
+        "./OrderCard": "./screens/OrderCard.tsx",
         "./PersonalDetailsScreen": "./screens/PersonalDetailsScreen.tsx",
         "./refreshGate": "./frame/refreshGate.ts",
         "./RefreshSheet": "./frame/RefreshSheet.tsx",

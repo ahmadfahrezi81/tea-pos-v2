@@ -2494,8 +2494,6 @@ paths:
       tags:
         - store
       x-access:
-        app: backoffice
-        level: guest
         tenant: true
         signedIn: true
   /tenants/{tenant}/days/{id}:
@@ -2530,8 +2528,6 @@ paths:
       tags:
         - store
       x-access:
-        app: backoffice
-        level: guest
         tenant: true
         signedIn: true
   /tenants/{tenant}/days/{id}/activity:
@@ -2566,8 +2562,6 @@ paths:
       tags:
         - store
       x-access:
-        app: backoffice
-        level: guest
         tenant: true
         signedIn: true
   /tenants/{tenant}/days/{id}/sessions:
@@ -2602,8 +2596,6 @@ paths:
       tags:
         - store
       x-access:
-        app: backoffice
-        level: guest
         tenant: true
         signedIn: true
   /tenants/{tenant}/files:
@@ -2722,8 +2714,6 @@ paths:
       tags:
         - store
       x-access:
-        app: backoffice
-        level: guest
         tenant: true
         signedIn: true
   /tenants/{tenant}/pay/claim-types:
@@ -3515,8 +3505,6 @@ paths:
       tags:
         - store
       x-access:
-        app: backoffice
-        level: guest
         tenant: true
         signedIn: true
   /tenants/{tenant}/sales/hours:
@@ -3565,8 +3553,6 @@ paths:
       tags:
         - store
       x-access:
-        app: backoffice
-        level: guest
         tenant: true
         signedIn: true
   /tenants/{tenant}/sales/products:
@@ -3624,8 +3610,6 @@ paths:
       tags:
         - store
       x-access:
-        app: backoffice
-        level: guest
         tenant: true
         signedIn: true
   /tenants/{tenant}/stores/live:
@@ -3672,48 +3656,6 @@ paths:
       x-access:
         app: backoffice
         level: guest
-        tenant: true
-        signedIn: true
-  /tenants/{tenant}/stores/{storeId}/days/{dayId}:
-    get:
-      operationId: getStoreDay
-      parameters:
-        - in: path
-          name: tenant
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: storeId
-          required: true
-          schema:
-            format: uuid
-            type: string
-        - in: path
-          name: dayId
-          required: true
-          schema:
-            format: uuid
-            type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DayDetail"
-          description: OK
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-          description: Error
-      summary: A day of a store the caller works at, in full
-      tags:
-        - seller
-      x-access:
-        app: seller
-        level: member
         tenant: true
         signedIn: true
   /tenants/{tenant}/stores/{storeId}/days/{dayId}/close:
@@ -4128,8 +4070,6 @@ paths:
       tags:
         - store
       x-access:
-        app: backoffice
-        level: guest
         tenant: true
         signedIn: true
   /tenants/{tenant}/uac:
