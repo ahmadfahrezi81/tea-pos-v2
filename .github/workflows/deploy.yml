@@ -73,7 +73,8 @@ jobs:
                   title: Deploy to ${{ steps.plan.outputs.env }}
                   commit: ${{ github.sha }}
                   steps: config=Railway config,migrate=Migrations,api=API,apps=Apps,${{ steps.plan.outputs.env == 'production' && 'check=Production check' || 'e2e=E2E' }}
-                  done-text: ${{ steps.plan.outputs.env == 'production' && 'Production runs this release' || 'Staging runs this commit' }}
+                  done-text: ${{ steps.plan.outputs.env == 'production' && format('Released {0} to production', steps.plan.outputs.version) || 'Deployed to staging' }}
+                  idle-text: "${{ steps.plan.outputs.env == 'production' && format('Released {0}, nothing to deploy', steps.plan.outputs.version) || 'Staging checked, nothing to deploy' }}"
             # Steps with nothing to do say so at once.
             - if: steps.plan.outputs.config != 'true'
               uses: ./.github/actions/report
@@ -173,7 +174,7 @@ jobs:
                   pr: ${{ needs.plan.outputs.pr }}
                   step: config
                   state: ${{ job.status == 'success' && 'success' || 'failure' }}
-                  detail: ${{ job.status == 'success' && 'applied' || 'failed, see the run' }}
+                  detail: ${{ job.status == 'success' && 'applied' || 'not applied' }}
 
     migrate:
         needs: [plan, config]
@@ -266,7 +267,7 @@ jobs:
               id: result
               run: |
                   detail=$(jq -r 'select(.name) | "[\(.name)](\(.url)) \(if .status == "SUCCESS" then "\(.seconds) s" else .status end)"' deploy.jsonl 2>/dev/null | paste -sd, - | sed 's/,/ · /g')
-                  echo "detail=${detail:-did not start, see the run}" >> "$GITHUB_OUTPUT"
+                  echo "detail=${detail:-did not start}" >> "$GITHUB_OUTPUT"
                   { echo "log<<EOF"; echo '<details><summary>API: last log lines</summary>'; echo; echo '```'; tail -20 deploy.log 2>/dev/null; echo '```'; echo '</details>'; echo EOF; } >> "$GITHUB_OUTPUT"
             - if: always()
               uses: ./.github/actions/report
@@ -417,7 +418,7 @@ jobs:
                       me=$(curl -s "https://$app.lykostech.app/api/me" | jq -r .code 2>/dev/null || true)
                       check "$app /api/me signed out" "$me" not_signed_in "$me" "${me:-no answer}"
                   done
-                  if $ok; then echo "detail=API and both apps respond" >> "$GITHUB_OUTPUT"; else echo "detail=see below and docs/runbook.md" >> "$GITHUB_OUTPUT"; fi
+                  if $ok; then echo "detail=API and both apps respond" >> "$GITHUB_OUTPUT"; else echo "detail=not answering correctly, see below" >> "$GITHUB_OUTPUT"; fi
                   { echo "body<<EOF"; echo "| | Check | Result |"; echo "| --- | --- | --- |"; printf '%s' "$rows"; echo EOF; } >> "$GITHUB_OUTPUT"
                   echo "ok=$ok" >> "$GITHUB_OUTPUT"
             - uses: ./.github/actions/report
@@ -464,13 +465,13 @@ jobs:
                       pr: "${{ needs.plan.outputs.pr }}",
                       step: apps,
                       state: failure,
-                      detail: "failed: [see the run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})",
+                      detail: did not deploy,
                   }
+            # Writes the comment once more, now that it has failed: its headline and next step.
             - uses: ./.github/actions/report
               with:
                   section: deploy-${{ needs.plan.outputs.env }}
                   pr: ${{ needs.plan.outputs.pr }}
-                  body: "**Next:** fix it in a new PR; the next merge deploys again.${{ needs.plan.outputs.env == 'production' && ' To roll back, deploy the previous release: docs/runbook.md.' || '' }}"
 
     # The plan finds the PR, so its own failure has to find it here, or nothing is said at all.
     plan-failed:
