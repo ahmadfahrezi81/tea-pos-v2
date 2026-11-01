@@ -1,3 +1,4 @@
+import { LoadFailed } from "@tea-pos/shell/LoadFailed";
 import { uploadPhoto } from "@tea-pos/api-client/files";
 import { formatMoney } from "@tea-pos/format";
 import { useT } from "@tea-pos/i18n/react";
@@ -92,7 +93,7 @@ export function CloseDay({ oldDay }: { oldDay?: string }) {
     const skipPhotos = useFlag("ops-skip-manage-photos");
     const { data: gate } = useGate();
     const dayId = oldDay ?? (gate?.gate === "open" ? gate.dayId : undefined);
-    const { data: day, refetch } = useStoreDay(dayId);
+    const { data: day, error, refetch } = useStoreDay(dayId);
     const savePhoto = useSaveDayPhoto();
     const close = useCloseDay();
     const key = `close-day-step-${dayId}`;
@@ -120,6 +121,7 @@ export function CloseDay({ oldDay }: { oldDay?: string }) {
                 {t("manage.noOpenSummary")}
             </p>
         );
+    if (error && !day) return <LoadFailed error={error} />;
     if (!day) return <Skeleton className="h-64 rounded-2xl" />;
 
     const slot = step < REVIEW ? SLOTS[step] : undefined;

@@ -1,3 +1,4 @@
+import { LoadFailed } from "@tea-pos/shell/LoadFailed";
 import { addDays, formatCalendarDay, formatMoney, formatTime, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { OrderCard } from "@tea-pos/shell/OrderCard";
@@ -87,7 +88,9 @@ export function Orders() {
                 </div>
             )}
 
-            {orders.isPending ? (
+            {orders.error && list.length === 0 ? (
+                <LoadFailed error={orders.error} />
+            ) : orders.isPending ? (
                 Array.from({ length: 3 }).map((_, i) => (
                     <Skeleton key={i} delay={i * 80} className="h-24 rounded-2xl" />
                 ))

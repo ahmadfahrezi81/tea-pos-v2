@@ -286,6 +286,17 @@ func registerSeller(api huma.API, d Deps) {
 			if day.ClosedAt.Valid {
 				return nil, errDayClosed
 			}
+			// A phone left on the menu after a take-over: the sale would earn nobody a commission.
+			holder, err := q.DayHolder(ctx, store.DayHolderParams{DayID: day.ID, TenantID: caller.TenantID})
+			if err != nil {
+				return nil, err
+			}
+			if holder == "" {
+				return nil, errNoSession
+			}
+			if holder != caller.UserID.String() {
+				return nil, errSessionTaken
+			}
 
 			ids := make([]pgtype.UUID, len(in.Body.Items))
 			for i, it := range in.Body.Items {
@@ -414,8 +425,9 @@ func numeric(n int32) pgtype.Numeric {
 	return pgtype.Numeric{Int: big.NewInt(int64(n)), Valid: true}
 }
 
-// workingDay is the open day a write is about, locked: the caller works at the store, and if
-// someone is selling on that day, it is them. An old day left open has no such holder to wait for.
+// workingDay is the open day a write is about, locked: the caller works at the store, and today
+// only whoever is selling may touch it. An earlier day left open is anyone's there to close: its
+// holder has gone home, and nothing can open until it is closed.
 func workingDay(ctx context.Context, q *store.Queries, caller auth.Caller, storeID, id string) (pgtype.UUID, store.LockStoreDayRow, error) {
 	var day store.LockStoreDayRow
 	s, err := assignedStore(ctx, q, caller, storeID)
@@ -435,6 +447,9 @@ func workingDay(ctx context.Context, q *store.Queries, caller auth.Caller, store
 	}
 	if day.ClosedAt.Valid {
 		return s, day, errDayClosed
+	}
+	if !day.Date.Time.Equal(wibToday()) {
+		return s, day, nil
 	}
 	holder, err := q.DayHolder(ctx, store.DayHolderParams{DayID: day.ID, TenantID: caller.TenantID})
 	if err != nil {

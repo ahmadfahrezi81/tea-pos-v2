@@ -1,3 +1,4 @@
+import { LoadFailed } from "@tea-pos/shell/LoadFailed";
 import { useMe } from "@tea-pos/api-client/me";
 import { useT } from "@tea-pos/i18n/react";
 import { SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
@@ -14,10 +15,11 @@ import { StoreGate } from "./StoreGate";
 /** Manage: the session code, expenses and closing the day. No weather: chat brings that. */
 export function Manage() {
     const t = useT();
-    const { data: gate } = useGate();
+    const { data: gate, error } = useGate();
     const me = useMe().data;
     const slug = useSlug();
     const [shown, setShown] = useState(false);
+    if (error && !gate) return <LoadFailed error={error} />;
     if (!gate)
         return (
             <div className="space-y-4">

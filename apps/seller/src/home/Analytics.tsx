@@ -1,3 +1,4 @@
+import { LoadFailed } from "@tea-pos/shell/LoadFailed";
 import type { components } from "@tea-pos/api-client";
 import { addDays, formatDate, formatDay, formatMoney, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
@@ -33,7 +34,7 @@ export function Analytics() {
     const [month, setMonth] = useState(today.slice(0, 7));
     const from = `${month}-01`;
     const to = lastOfMonth(month);
-    const { data } = useMonthDays(from, to);
+    const { data, error } = useMonthDays(from, to);
     const { data: sales } = useMonthSales(from, to);
     const [dismissed, setDismissed] = useState(false);
     const [active, setActive] = useState<Day | null>(null);
@@ -128,7 +129,9 @@ export function Analytics() {
             )}
 
             <div className="space-y-3">
-                {!list ? (
+                {error && !list ? (
+                    <LoadFailed error={error} />
+                ) : !list ? (
                     Array.from({ length: 3 }).map((_, i) => (
                         <Skeleton key={i} delay={i * 80} className="h-48 rounded-2xl" />
                     ))

@@ -14,7 +14,7 @@ const WIB = 7 * 60;
 
 const minutesOf = (hhmm: string, fallback: number) => {
     const [h, m] = hhmm.split(":").map(Number);
-    return h === undefined || Number.isNaN(h) ? fallback : h * 60 + (m ?? 0);
+    return !hhmm || h === undefined || Number.isNaN(h) ? fallback : h * 60 + (m ?? 0);
 };
 /** The minute of the day in the stores' time zone. */
 const localMinutes = (at: number) => Math.floor(at / 60_000 + WIB) % (24 * 60);

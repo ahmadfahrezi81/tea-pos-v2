@@ -1,3 +1,4 @@
+import { LoadFailed } from "@tea-pos/shell/LoadFailed";
 import { formatMoney } from "@tea-pos/format";
 import { useT } from "@tea-pos/i18n/react";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
@@ -16,11 +17,13 @@ import { useAddExpense, useGate, useStoreDay } from "./home";
 export function Expenses() {
     const t = useT();
     const { data: gate } = useGate();
-    const { data: day } = useStoreDay(gate?.dayId);
+    const { data: day, error } = useStoreDay(gate?.dayId);
     return (
         <div className="flex-1 bg-white rounded-2xl flex flex-col min-h-full">
             <HeaderActions actions={[{ kind: "add", to: "add", own: true }]} />
-            {!day ? (
+            {error && !day ? (
+                <LoadFailed error={error} />
+            ) : !day ? (
                 <Skeleton className="h-40 rounded-2xl" />
             ) : day.expenseItems.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-center py-20">

@@ -1,3 +1,4 @@
+import { LoadFailed } from "@tea-pos/shell/LoadFailed";
 import type { components } from "@tea-pos/api-client";
 import {
     addDays,
@@ -43,8 +44,9 @@ const WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 export function MyPay() {
     const t = useT();
     const locale = useLocale();
-    const { data } = useMyPay();
+    const { data, error } = useMyPay();
     const [picked, setPicked] = useState<number>();
+    if (error && !data) return <LoadFailed error={error} />;
     if (!data)
         return (
             <div className="space-y-3">

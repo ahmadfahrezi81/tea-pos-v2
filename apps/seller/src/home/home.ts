@@ -61,7 +61,9 @@ function useStoreWrite<V extends object>(
             onSuccess: () =>
                 void queryClient.invalidateQueries({
                     predicate: (q) =>
-                        /\/stores\/|\/orders|\/days/.test(String(q.queryKey[1] ?? "")),
+                        /\/stores\/|\/orders|\/days|\/sales\/|\/my\//.test(
+                            String(q.queryKey[1] ?? ""),
+                        ),
                 }),
         },
     );

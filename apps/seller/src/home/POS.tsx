@@ -1,3 +1,4 @@
+import { LoadFailed } from "@tea-pos/shell/LoadFailed";
 import { useMe } from "@tea-pos/api-client/me";
 import { formatMoney } from "@tea-pos/format";
 import { useT } from "@tea-pos/i18n/react";
@@ -13,8 +14,9 @@ import { StoreGate } from "./StoreGate";
 
 /** The POS tab: the store's gate until it is the caller's, then the menu and the cart. */
 export function POS() {
-    const { data: gate } = useGate();
+    const { data: gate, error } = useGate();
     const me = useMe().data;
+    if (error && !gate) return <LoadFailed error={error} />;
     if (!gate)
         return (
             <div className="space-y-4">

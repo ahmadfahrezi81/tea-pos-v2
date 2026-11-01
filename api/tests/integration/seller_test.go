@@ -339,11 +339,12 @@ func TestOldDayOpen(t *testing.T) {
 	}
 	var old string
 	if err := pool.QueryRow(ctx, `INSERT INTO store_daily_summaries (store_id, tenant_id, opened_by, date) VALUES ($1, $2, $3, CURRENT_DATE - 3) RETURNING id::text`,
-		storeACentral, tenantA, testkit.SellerA).Scan(&old); err != nil {
+		storeACentral, tenantA, testkit.AdminA).Scan(&old); err != nil {
 		t.Fatal(err)
 	}
+	// Someone else held it and went home.
 	if _, err := pool.Exec(ctx, `INSERT INTO store_sessions (tenant_id, store_id, daily_summary_id, user_id, claim_code) VALUES ($1, $2, $3, $4, '11')`,
-		tenantA, storeACentral, old, testkit.SellerA); err != nil {
+		tenantA, storeACentral, old, testkit.AdminA); err != nil {
 		t.Fatal(err)
 	}
 	send := func(key, path, body string) (int, string) {
@@ -364,5 +365,22 @@ func TestOldDayOpen(t *testing.T) {
 	}
 	if s, b := send("old-day-0003", "/open", `{"openingBalance":0}`); s != 200 {
 		t.Errorf("open after: %d %s", s, b)
+	}
+	if s, b := send("old-day-0004", "/take-over", `{"claimCode":"xx"}`); s != 403 {
+		t.Errorf("a wrong code: %d %s", s, b)
+	}
+	var product string
+	if err := pool.QueryRow(ctx, `INSERT INTO tenant_products (name, price, tenant_id, status) VALUES ('Tea', 5000, $1, 'active') RETURNING id::text`, tenantA).Scan(&product); err != nil {
+		t.Fatal(err)
+	}
+	order := fmt.Sprintf(`{"items":[{"productId":%q,"quantity":1,"unitPrice":5000}]}`, product)
+	if s, b := send("old-day-0005", "/orders", order); s != 200 {
+		t.Errorf("the holder sells: %d %s", s, b)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE store_sessions SET user_id = $1 WHERE store_id = $2 AND status = 'active'`, testkit.AdminA, storeACentral); err != nil {
+		t.Fatal(err)
+	}
+	if s, b := send("old-day-0006", "/orders", order); s != 409 || !strings.Contains(b, "session_taken") {
+		t.Errorf("a phone left on the menu: %d %s", s, b)
 	}
 }

@@ -21,6 +21,7 @@
         "./HomeScreen": "./screens/HomeScreen.tsx",
         "./idle": "./lib/idle.ts",
         "./LanguageScreen": "./screens/LanguageScreen.tsx",
+        "./LoadFailed": "./screens/LoadFailed.tsx",
         "./MobileFooterNav": "./frame/MobileFooterNav.tsx",
         "./MobileHeader": "./frame/MobileHeader.tsx",
         "./MobileShell": "./frame/MobileShell.tsx",

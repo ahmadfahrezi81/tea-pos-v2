@@ -1,3 +1,4 @@
+import { LoadFailed } from "@tea-pos/shell/LoadFailed";
 import { uploadPhoto } from "@tea-pos/api-client/files";
 import { addDays, formatCalendarDay, formatMoney, localDate } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
@@ -54,7 +55,7 @@ export function MyClaims() {
     const locale = useLocale();
     const [month, setMonth] = useState(localDate().slice(0, 7));
     const { data: entitled } = useMyClaimTypes();
-    const { data: claims } = useMyClaims(`${month}-01`, lastOfMonth(month));
+    const { data: claims, error } = useMyClaims(`${month}-01`, lastOfMonth(month));
     return (
         <div className="space-y-3">
             <HeaderActions actions={[{ kind: "add", to: "add", own: true }]} />
@@ -102,7 +103,9 @@ export function MyClaims() {
             </div>
 
             <div className="bg-white rounded-2xl">
-                {!claims ? (
+                {error && !claims ? (
+                    <LoadFailed error={error} />
+                ) : !claims ? (
                     <Skeleton className="h-24 rounded-2xl" />
                 ) : claims.claims.length === 0 ? (
                     <div className="flex flex-col items-center justify-center text-center py-12">
