@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-import { e2eSummary, prComment, render } from "./render.mjs";
+import { CHECKS, e2eSummary, prComment, render } from "./render.mjs";
 
 const base = {
     title: "Deploy to staging",
@@ -218,4 +219,12 @@ test("a release PR says so, and a failed benchmark never blocks it", () => {
     assert.equal(out.title, "Ready to release");
     assert.match(out.body, /- ✅ E2E\n  - 14 passed/);
     assert.match(out.body, /<summary>Speed<\/summary>/);
+});
+
+// A job the comment job does not wait for is missing from the comment, even when it fails.
+test("the comment waits for every check it shows", () => {
+    const pr = readFileSync(new URL("../workflows/pr.yml", import.meta.url), "utf8");
+    const needs = pr.slice(pr.indexOf("    comment:")).match(/needs:\s*\[([^\]]*)\]/)[1];
+    const waits = needs.split(",").map((x) => x.trim());
+    for (const [id] of CHECKS) assert.ok(waits.includes(id), `comment does not wait for ${id}`);
 });

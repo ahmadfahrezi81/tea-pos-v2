@@ -168,7 +168,7 @@ export function e2eSummary(log) {
     };
 }
 
-const CHECKS = [
+export const CHECKS = [
     ["checks", "Format, lint, types, unit tests, build"],
     ["integration", "Integration and E2E tests"],
     ["docker", "Docker images"],
