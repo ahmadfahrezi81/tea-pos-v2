@@ -33,6 +33,8 @@ Railway → `production` → `backup` → **Run now**. A redeploy does not run i
 
 ## Deploy or roll back by hand
 
+**Deploy button:** GitHub → Actions → deploy → Run workflow, on `staging` or `main`. It deploys whatever has changed since the last deploy that passed, or everything with the box ticked. On `main`, migrations still wait for the Approve. It deploys the branch's latest commit; to go back to an older one, use the commands below.
+
 **Backend**, at any commit (the previous release's commit and version to roll back: `gh release list`, then `gh release view <version>`):
 
 ```bash

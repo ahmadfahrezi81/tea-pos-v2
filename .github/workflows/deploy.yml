@@ -1,4 +1,5 @@
-# Every deploy goes through here (the jobs: deploy-run.yml). A PR runs this file too, skipped by the
+# Every deploy goes through here (the jobs: deploy-run.yml): a merge, or by hand (Actions → deploy →
+# Run workflow, on staging or main), which catches up on whatever has not deployed. A PR runs this file too, skipped by the
 # guard: GitHub still checks the call before it starts, so a broken workflow shows on the PR, through
 # pr.yml's deploy-check job, instead of after the merge. This job's permissions must cover deploy-run's.
 name: deploy
@@ -8,6 +9,12 @@ on:
         branches: [staging, main]
     pull_request:
         branches: [staging, main]
+    workflow_dispatch:
+        inputs:
+            everything:
+                description: Redeploy everything, even what has not changed
+                type: boolean
+                default: false
 
 permissions:
     contents: read
@@ -19,11 +26,13 @@ concurrency:
 
 jobs:
     run:
-        if: github.event_name == 'push'
+        if: github.event_name != 'pull_request' && (github.ref_name == 'staging' || github.ref_name == 'main')
         permissions:
             actions: read
             contents: read
             pull-requests: write
             statuses: write
         uses: ./.github/workflows/deploy-run.yml
+        with:
+            everything: ${{ inputs.everything == true }}
         secrets: inherit
