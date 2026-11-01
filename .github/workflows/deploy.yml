@@ -359,18 +359,7 @@ jobs:
                   cd api && go test -tags e2e -count=1 -v ./tests/e2e/ 2>&1 | tee ../e2e.log
             - if: always()
               id: table
-              run: |
-                  passed=$(grep -c '^--- PASS' e2e.log 2>/dev/null || true)
-                  failed=$(grep -c '^--- FAIL' e2e.log 2>/dev/null || true)
-                  echo "detail=${passed:-0} passed${failed:+, $failed failed}" | sed 's/, 0 failed//' >> "$GITHUB_OUTPUT"
-                  {
-                      echo "body<<EOF"
-                      echo "| | Test | Time |"
-                      echo "| --- | --- | --- |"
-                      awk '/^--- (PASS|FAIL|SKIP)/ { icon = $2 == "PASS:" ? "✅" : $2 == "FAIL:" ? "❌" : "➖"; print "| " icon " | `" $3 "` | " $4 " |" }' e2e.log 2>/dev/null | tr -d '()'
-                      if [ "${{ steps.run.outcome }}" != success ]; then echo; echo '~~~~'; grep -E '^\s+\S+_test\.go:[0-9]+:' e2e.log 2>/dev/null | head -30; echo '~~~~'; echo; echo '<details><summary>e2e: last log lines</summary>'; echo; echo '```'; tail -20 e2e.log 2>/dev/null; echo '```'; echo '</details>'; fi
-                      echo EOF
-                  } >> "$GITHUB_OUTPUT"
+              run: node .github/scripts/e2e-summary.mjs e2e.log
             - if: always()
               run: |
                   if [ "${{ steps.run.outcome }}" = success ]; then state=success; else state=failure; fi
@@ -481,7 +470,7 @@ jobs:
               with:
                   section: deploy-${{ needs.plan.outputs.env }}
                   pr: ${{ needs.plan.outputs.pr }}
-                  body: "The steps still marked ⏸ did not run, because an earlier one failed. Fix it in a new PR; the next merge deploys again.${{ needs.plan.outputs.env == 'production' && ' To roll back, deploy the previous release: docs/runbook.md.' || '' }}"
+                  body: "**Next:** fix it in a new PR; the next merge deploys again.${{ needs.plan.outputs.env == 'production' && ' To roll back, deploy the previous release: docs/runbook.md.' || '' }}"
 
     # The plan finds the PR, so its own failure has to find it here, or nothing is said at all.
     plan-failed:

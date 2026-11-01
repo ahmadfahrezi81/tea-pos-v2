@@ -34,5 +34,6 @@ jobs:
                   title: Release source
                   commit: ${{ github.event.pull_request.head.sha }}
                   overall: ${{ steps.check.outcome == 'success' && 'success' || 'failure' }}
+                  update-only: ${{ steps.check.outcome == 'success' }}
                   done-text: From staging, title names the version
                   body: ${{ steps.check.outputs.why }}

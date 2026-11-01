@@ -1,5 +1,6 @@
 // Why a run failed, as Markdown for a PR comment: each failed job, its step and last log lines.
 import { appendFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const {
     GH_TOKEN,
@@ -30,7 +31,7 @@ function why(log) {
         .join("\n");
 }
 
-async function report() {
+export async function report() {
     const res = await api(`/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=100`);
     if (!res.ok) return `Could not read the run's jobs (${res.status}).`;
     const { jobs } = await res.json();
@@ -47,10 +48,14 @@ async function report() {
     return parts.join("\n\n");
 }
 
+export const safeReport = () => report().catch((e) => `Could not read the run: ${e.message}`);
+
 // Never fails the job: a comment without the reason still beats no comment.
-const body = await report().catch((e) => `Could not read the run: ${e.message}`);
-console.log(body);
-if (GITHUB_OUTPUT) {
-    const mark = `EOF_${Date.now()}`;
-    appendFileSync(GITHUB_OUTPUT, `body<<${mark}\n${body}\n${mark}\n`);
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    const body = await safeReport();
+    console.log(body);
+    if (GITHUB_OUTPUT) {
+        const mark = `EOF_${Date.now()}`;
+        appendFileSync(GITHUB_OUTPUT, `body<<${mark}\n${body}\n${mark}\n`);
+    }
 }

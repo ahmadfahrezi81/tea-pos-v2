@@ -1,0 +1,314 @@
+# Everything about a PR, in one workflow so one last job can write one comment. A change is tested
+# once, at its PR, against exactly what will merge (staging requires the PR to be up to date). Merges
+# only deploy (deploy.yml). A job's name is its required check in .github/rulesets: keep them.
+name: pr
+
+on:
+    pull_request:
+        branches: [staging, main]
+
+concurrency:
+    group: pr-${{ github.ref }}
+    cancel-in-progress: true
+
+# Jobs that need more ask for it themselves.
+permissions:
+    contents: read
+
+jobs:
+    # What this PR touches, and the comment that says it has started.
+    start:
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        permissions:
+            contents: read
+            pull-requests: write
+        outputs:
+            apps: ${{ steps.changes.outputs.apps }}
+            migrations: ${{ steps.changes.outputs.migrations }}
+        steps:
+            - uses: actions/checkout@v7
+            - id: changes
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  PR: ${{ github.event.pull_request.number }}
+              run: |
+                  files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --jq '.[].filename')
+                  has() { if grep -qE "$1" <<< "$files"; then echo true; else echo false; fi; }
+                  {
+                      echo "apps=$(has '^(apps/|packages/|api/openapi\.yaml$|pnpm-lock\.yaml$|\.github/workflows/pages\.yml$)')"
+                      echo "migrations=$(has '^supabase/migrations/')"
+                  } | tee -a "$GITHUB_OUTPUT"
+            - if: github.event.pull_request.user.login != 'dependabot[bot]'
+              uses: ./.github/actions/report
+              with:
+                  section: pr
+                  reset: "true"
+                  title: Running checks
+                  commit: ${{ github.event.pull_request.head.sha }}
+                  overall: running
+
+    checks:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        outputs:
+            bundle: ${{ steps.bundle.outputs.summary }}
+        steps:
+            - uses: actions/checkout@v7
+            - uses: pnpm/action-setup@v6
+            - uses: actions/setup-node@v7
+              with:
+                  node-version-file: .nvmrc
+                  cache: pnpm
+            - uses: actions/setup-go@v7
+              with:
+                  go-version-file: api/go.mod
+                  cache-dependency-path: api/go.sum
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm format:check
+            - run: pnpm lint
+            - run: pnpm typecheck
+            - run: pnpm test
+            - run: node --test ".github/scripts/*.test.mjs"
+            - run: pnpm build
+            - id: bundle
+              run: |
+                  BUNDLE_REPORT=bundle.md pnpm bundle-size || failed=1
+                  echo "summary=$(awk -F' *\\| *' '/^\| (seller|backoffice) /{printf "%s%s %s", sep, $2, $3; sep=" · "}' bundle.md)" >> "$GITHUB_OUTPUT"
+                  exit "${failed:-0}"
+            - run: pnpm --filter @tea-pos/api generate:check
+            - run: pnpm --filter @tea-pos/api-client generate:check
+            # A broken workflow file otherwise only shows up after the push; shellcheck reads its scripts.
+            - run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 .github/workflows/*.yml
+            # Fails only on vulnerabilities our code actually calls.
+            - run: cd api && go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+
+    integration:
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        services:
+            postgres:
+                image: postgres:17
+                env:
+                    POSTGRES_PASSWORD: postgres
+                ports: ["5432:5432"]
+                options: --health-cmd pg_isready --health-interval 2s --health-timeout 5s --health-retries 15
+        env:
+            TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+        steps:
+            - uses: actions/checkout@v7
+            - uses: actions/setup-go@v7
+              with:
+                  go-version-file: api/go.mod
+                  cache-dependency-path: api/go.sum
+            - run: cd api && go test -tags integration -count=1 ./tests/...
+            # Again as staging builds it, with the test sign-in compiled in.
+            - run: cd api && go test -tags integration,testlogin -count=1 -run 'TestTestSignIn|TestPermission' ./tests/...
+
+    docker:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - uses: actions/checkout@v7
+            - run: docker build --build-arg RAILWAY_GIT_COMMIT_SHA=${{ github.sha }} -t tea-pos-api .
+            # Production's image is built without tags: the test sign-in must not be in it.
+            - run: |
+                  id=$(docker create tea-pos-api) && docker cp "$id:/app/api" /tmp/api && docker rm "$id" >/dev/null
+                  if LC_ALL=C grep -a -q "/auth/test" /tmp/api; then echo "the production image contains the test sign-in"; exit 1; fi
+            - run: docker build -t tea-pos-backup ops/backup
+            - run: cd ops/backup && shellcheck --external-sources ./*.sh
+
+    # Fails a PR that adds a package with a known high or critical vulnerability. CodeQL runs from
+    # GitHub's default setup (repo settings), not from here.
+    dependency-review:
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        steps:
+            - uses: actions/checkout@v7
+            - uses: actions/dependency-review-action@v5
+              with:
+                  fail-on-severity: high
+
+    # Which migrations a merge into staging would run. They run in deploy.yml, before the API.
+    migrations:
+        needs: start
+        if: github.base_ref == 'staging' && needs.start.outputs.migrations == 'true' && github.event.pull_request.user.login != 'dependabot[bot]'
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        outputs:
+            list: ${{ steps.plan.outputs.list }}
+        steps:
+            - uses: actions/checkout@v7
+            - uses: supabase/setup-cli@v1
+              with:
+                  version: 2.121.0
+            - id: plan
+              env:
+                  DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+              run: |
+                  out=$(supabase db push --dry-run --db-url "$DATABASE_URL" 2>&1) || { echo "$out"; exit 1; }
+                  echo "$out"
+                  # Only the migration names; the CLI's update notice and progress lines are noise here.
+                  # shellcheck disable=SC2016 # the backticks are Markdown, not a command
+                  list=$(grep -oE '[0-9]{14}_[a-z0-9_]+\.sql' <<< "$out" | sed 's/^/- `/; s/$/`/' || true)
+                  {
+                      echo "list<<EOF"
+                      if [ -n "$list" ]; then echo "Merging runs these on the staging database, before its API deploys:"; echo; echo "$list"; else echo "Migrations: none to run, the staging database is up to date."; fi
+                      echo EOF
+                  } >> "$GITHUB_OUTPUT"
+
+    # Forks and Dependabot get no secrets, so no preview. Addresses come back as artifacts.
+    previews:
+        needs: start
+        if: github.base_ref == 'staging' && needs.start.outputs.apps == 'true' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]'
+        permissions:
+            contents: read
+        uses: ./.github/workflows/pages.yml
+        secrets: inherit
+
+    # A release: staging's deploy already ran the suite on exactly this code (deploy.yml sets the
+    # commit status "e2e on staging"), so this reads that result and runs the suite only without one.
+    e2e:
+        if: github.base_ref == 'main'
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        permissions:
+            contents: read
+            statuses: read
+        concurrency:
+            group: e2e-staging
+            cancel-in-progress: false
+        outputs:
+            detail: ${{ steps.report.outputs.detail }}
+        env:
+            TEST_LOGIN_KEY: ${{ secrets.TEST_LOGIN_KEY }}
+            GH_TOKEN: ${{ github.token }}
+            SHA: ${{ github.event.pull_request.head.sha }}
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  ref: ${{ github.event.pull_request.head.sha }}
+            # Staging's deploy of this commit: waits while it runs (up to 20 minutes).
+            - id: staging
+              run: |
+                  for _ in $(seq 80); do
+                      read -r state desc < <(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/statuses" \
+                          --jq 'map(select(.context == "e2e on staging"))[0] // {} | "\(.state // "none") \(.description // "")"')
+                      case "$state" in
+                          success | failure | error)
+                              echo "state=$state" >> "$GITHUB_OUTPUT"
+                              echo "detail=$desc, on staging" >> "$GITHUB_OUTPUT"
+                              exit 0 ;;
+                      esac
+                      sleep 15
+                  done
+                  echo "state=none" >> "$GITHUB_OUTPUT"
+            - if: steps.staging.outputs.state == 'none'
+              uses: actions/setup-go@v7
+              with:
+                  go-version-file: api/go.mod
+                  cache-dependency-path: api/go.sum
+            # The fake test users, idempotent; only test- tenants.
+            - if: steps.staging.outputs.state == 'none'
+              env:
+                  DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+              run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f api/tests/e2e/seed.sql
+            - id: run
+              if: steps.staging.outputs.state == 'none'
+              run: |
+                  set -o pipefail
+                  cd api && go test -tags e2e -count=1 -v ./tests/e2e/ 2>&1 | tee ../e2e.log
+            - if: always() && steps.staging.outputs.state == 'none'
+              id: table
+              run: node .github/scripts/e2e-summary.mjs e2e.log
+            - if: always()
+              id: report
+              env:
+                  FROM_STAGING: ${{ steps.staging.outputs.state }}
+                  STAGING_DETAIL: ${{ steps.staging.outputs.detail }}
+                  RAN: ${{ steps.run.outcome }}
+                  RAN_DETAIL: ${{ steps.table.outputs.detail }}
+              run: |
+                  if [ "$FROM_STAGING" = none ]; then
+                      echo "detail=$RAN_DETAIL, run here" >> "$GITHUB_OUTPUT"
+                      [ "$RAN" = success ]
+                  else
+                      echo "detail=$STAGING_DETAIL" >> "$GITHUB_OUTPUT"
+                      [ "$FROM_STAGING" = success ]
+                  fi
+
+    # Information for the Benchmark log, never blocking.
+    benchmark:
+        needs: e2e
+        if: github.base_ref == 'main'
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        continue-on-error: true
+        outputs:
+            body: ${{ steps.bench.outputs.body }}
+        env:
+            TEST_LOGIN_KEY: ${{ secrets.TEST_LOGIN_KEY }}
+            CHROME_PATH: /usr/bin/google-chrome
+            BENCH_REPORT: bench.md
+            BENCH_DEVICE: CI runner
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  ref: ${{ github.event.pull_request.head.sha }}
+            - uses: pnpm/action-setup@v6
+            - uses: actions/setup-node@v7
+              with:
+                  node-version-file: .nvmrc
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile
+            # runner.temp is only allowed inside steps, not in the job's env.
+            - env:
+                  BENCH_PROFILE: ${{ runner.temp }}/bench-profile
+              id: bench
+              run: |
+                  pnpm bench --test-user admin@test-a.test https://tea-office-staging.lykostech.app
+                  { echo "body<<EOF"; echo "CI runner numbers are a series of their own in the RFC's Benchmark log."; echo; cat bench.md; echo EOF; } >> "$GITHUB_OUTPUT"
+
+    # The one comment: every job's result, and why any failed.
+    comment:
+        needs:
+            [
+                start,
+                checks,
+                integration,
+                docker,
+                dependency-review,
+                migrations,
+                previews,
+                e2e,
+                benchmark,
+            ]
+        if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        permissions:
+            actions: read
+            contents: read
+            pull-requests: write
+        steps:
+            - uses: actions/checkout@v7
+            - if: needs.previews.result == 'success'
+              uses: actions/download-artifact@v4
+              with:
+                  pattern: preview-*
+                  merge-multiple: true
+                  path: previews
+            - id: comment
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  NEEDS: ${{ toJSON(needs) }}
+                  BASE: ${{ github.base_ref }}
+              run: node .github/scripts/pr-comment.mjs
+            - uses: ./.github/actions/report
+              with:
+                  section: pr
+                  title: ${{ steps.comment.outputs.title }}
+                  commit: ${{ github.event.pull_request.head.sha }}
+                  overall: ${{ steps.comment.outputs.state }}
+                  done-text: ${{ steps.comment.outputs.title }}
+                  body: ${{ steps.comment.outputs.body }}
