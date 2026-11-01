@@ -101,3 +101,35 @@ jobs:
                   overall: success
                   done-text: Ready
                   body: "${{ steps.deploy.outputs.url }} (on the staging API)"
+
+    # A preview that did not deploy says why, in its own comment.
+    failed:
+        needs: deploy
+        if: always() && github.event_name == 'pull_request' && needs.deploy.result == 'failure'
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        permissions:
+            actions: read
+            contents: read
+            pull-requests: write
+        strategy:
+            fail-fast: false
+            matrix:
+                app: [seller, backoffice]
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  ref: ${{ github.event.pull_request.head.sha }}
+            - id: why
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  FAILURES_JOB: ${{ matrix.app }}
+              run: node .github/scripts/failures.mjs
+            - if: steps.why.outputs.body
+              uses: ./.github/actions/report
+              with:
+                  section: preview-${{ matrix.app }}
+                  title: "Preview: ${{ matrix.app }}"
+                  commit: ${{ github.event.pull_request.head.sha }}
+                  overall: failure
+                  body: ${{ steps.why.outputs.body }}
