@@ -12,7 +12,7 @@ import { rememberUser, savedUser } from "./session";
  * the profile's language becomes the phone's copy (read by pickLocale before any
  * JavaScript, so later opens need no switch). Both are rare, so a reload is fine.
  */
-export function useMeSync(me: Me | undefined) {
+export function useMeSync(me: Me | undefined, fresh: boolean) {
     const queryClient = useQueryClient();
     const { locales } = useApp();
     const locale = useLocale();
@@ -27,6 +27,8 @@ export function useMeSync(me: Me | undefined) {
                 return;
             }
         }
+        // Never from the saved copy: it may hold the language just left, and each would undo the other.
+        if (!fresh) return;
         const language = locales.find((l) => l === me.user.language);
         if (!language || language === locale) return;
         try {
@@ -36,5 +38,5 @@ export function useMeSync(me: Me | undefined) {
             return;
         }
         window.location.reload();
-    }, [me, queryClient, locales, locale]);
+    }, [me, fresh, queryClient, locales, locale]);
 }
