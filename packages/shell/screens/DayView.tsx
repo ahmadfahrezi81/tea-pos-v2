@@ -1,4 +1,5 @@
-import type { components } from "@tea-pos/api-client";
+import { $api, type components } from "@tea-pos/api-client";
+import { STALE } from "@tea-pos/api-client/query";
 import { formatCalendarDay, formatDateTime, formatMoney } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
@@ -8,6 +9,8 @@ import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 import { ImageOff } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
+import { DaySessions } from "./DayActivity";
+import { useSlug } from "../session/tenant";
 import { Sellers } from "./Sellers";
 
 type Photo = components["schemas"]["DayPhoto"];
@@ -20,6 +23,33 @@ const CLOSING = [
     "closing:cups",
     "closing:tea",
 ] as const;
+
+/** A day from the address: the screen both apps open from their day's menu. */
+export function DayDetail({ id }: { id: string }) {
+    const t = useT();
+    const tenant = useSlug();
+    const { data: day, error } = $api.useQuery(
+        "get",
+        "/tenants/{tenant}/days/{id}",
+        { params: { path: { tenant, id } } },
+        { enabled: !!tenant && !!id, staleTime: STALE.COLD },
+    );
+    if (error)
+        return (
+            <p className="bg-white rounded-2xl p-4 text-sm text-gray-600">
+                {t("errors.day_not_found")}
+            </p>
+        );
+    if (!day)
+        return (
+            <div className="space-y-4">
+                {[160, 320, 120].map((h) => (
+                    <div key={h} className="bg-white rounded-2xl" style={{ height: h }} />
+                ))}
+            </div>
+        );
+    return <DayView day={day} />;
+}
 
 /**
  * One store's day, as the old seller app's Details: cash, expenses, who worked, notes, photos,
@@ -155,6 +185,12 @@ export function DayView({
             {day.sellers.length > 0 && (
                 <Section title={t("daily.whoWorked")}>
                     <Sellers sellers={day.sellers} />
+                </Section>
+            )}
+
+            {!counting && (
+                <Section title={t("analytics.sessions")}>
+                    <DaySessions id={day.id} />
                 </Section>
             )}
 

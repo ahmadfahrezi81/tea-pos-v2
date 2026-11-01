@@ -9,6 +9,8 @@
         "./AppUpdate": "./frame/AppUpdate.tsx",
         "./BootScreen": "./screens/BootScreen.tsx",
         "./ComingSoonScreen": "./screens/ComingSoonScreen.tsx",
+        "./DayActivity": "./screens/DayActivity.tsx",
+        "./DayCard": "./screens/DayCard.tsx",
         "./DayView": "./screens/DayView.tsx",
         "./errors": "./session/errors.ts",
         "./events": "./lib/events.ts",

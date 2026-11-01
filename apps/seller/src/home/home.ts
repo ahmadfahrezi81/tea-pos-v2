@@ -122,6 +122,33 @@ export function useHours(date: string) {
     );
 }
 
+/** The store's days in a month, newest first, and its cups per day. */
+export function useMonthDays(from: string, to: string) {
+    const tenant = useSlug();
+    const storeId = useStoreId();
+    return $api.useQuery(
+        "get",
+        "/tenants/{tenant}/days",
+        { params: { path: { tenant }, query: { from, to, storeId: [storeId] } } },
+        {
+            enabled: !!tenant && !!storeId,
+            staleTime: STALE.QUICK,
+            meta: { live: ["day", "order"] },
+        },
+    );
+}
+
+export function useMonthSales(from: string, to: string) {
+    const tenant = useSlug();
+    const storeId = useStoreId();
+    return $api.useQuery(
+        "get",
+        "/tenants/{tenant}/sales/days",
+        { params: { path: { tenant }, query: { from, to, storeId: [storeId] } } },
+        { enabled: !!tenant && !!storeId, staleTime: STALE.COOL },
+    );
+}
+
 /** A day's orders, newest first, a page at a time. */
 export function useDayOrders(date: string) {
     const tenant = useSlug();

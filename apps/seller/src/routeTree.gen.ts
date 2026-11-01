@@ -14,7 +14,6 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ShellIndexRouteImport } from './routes/_shell/index'
 import { Route as ShellTenantRouteImport } from './routes/_shell/$tenant'
 import { Route as ShellTenantIndexRouteImport } from './routes/_shell/$tenant/index'
-import { Route as ShellTenantAnalyticsRouteImport } from './routes/_shell/$tenant/analytics'
 import { Route as ShellTenantAppInfoRouteImport } from './routes/_shell/$tenant/app-info'
 import { Route as ShellTenantChatsRouteImport } from './routes/_shell/$tenant/chats'
 import { Route as ShellTenantOrdersRouteImport } from './routes/_shell/$tenant/orders'
@@ -23,6 +22,7 @@ import { Route as ShellTenantWhatsNewRouteImport } from './routes/_shell/$tenant
 import { Route as ShellTenantAccountIndexRouteImport } from './routes/_shell/$tenant/account/index'
 import { Route as ShellTenantAccountDetailsRouteImport } from './routes/_shell/$tenant/account/details'
 import { Route as ShellTenantAccountLanguageRouteImport } from './routes/_shell/$tenant/account/language'
+import { Route as ShellTenantAnalyticsIndexRouteImport } from './routes/_shell/$tenant/analytics/index'
 import { Route as ShellTenantManageIndexRouteImport } from './routes/_shell/$tenant/manage/index'
 import { Route as ShellTenantManageCloseRouteImport } from './routes/_shell/$tenant/manage/close'
 import { Route as ShellTenantManageOpenRouteImport } from './routes/_shell/$tenant/manage/open'
@@ -34,6 +34,8 @@ import { Route as ShellTenantMoreClaimsIndexRouteImport } from './routes/_shell/
 import { Route as ShellTenantMoreClaimsAddRouteImport } from './routes/_shell/$tenant/more/claims/add'
 import { Route as ShellTenantMoreEarningsIndexRouteImport } from './routes/_shell/$tenant/more/earnings/index'
 import { Route as ShellTenantMoreEarningsPayoutIdRouteImport } from './routes/_shell/$tenant/more/earnings/$payoutId'
+import { Route as ShellTenantAnalyticsDaysDayIdIndexRouteImport } from './routes/_shell/$tenant/analytics/days/$dayId/index'
+import { Route as ShellTenantAnalyticsDaysDayIdActivityRouteImport } from './routes/_shell/$tenant/analytics/days/$dayId/activity'
 
 const ShellRoute = ShellRouteImport.update({
   id: '/_shell',
@@ -57,11 +59,6 @@ const ShellTenantRoute = ShellTenantRouteImport.update({
 const ShellTenantIndexRoute = ShellTenantIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => ShellTenantRoute,
-} as any)
-const ShellTenantAnalyticsRoute = ShellTenantAnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
   getParentRoute: () => ShellTenantRoute,
 } as any)
 const ShellTenantAppInfoRoute = ShellTenantAppInfoRouteImport.update({
@@ -104,6 +101,12 @@ const ShellTenantAccountLanguageRoute =
   ShellTenantAccountLanguageRouteImport.update({
     id: '/account/language',
     path: '/account/language',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantAnalyticsIndexRoute =
+  ShellTenantAnalyticsIndexRouteImport.update({
+    id: '/analytics/',
+    path: '/analytics/',
     getParentRoute: () => ShellTenantRoute,
   } as any)
 const ShellTenantManageIndexRoute = ShellTenantManageIndexRouteImport.update({
@@ -167,12 +170,23 @@ const ShellTenantMoreEarningsPayoutIdRoute =
     path: '/more/earnings/$payoutId',
     getParentRoute: () => ShellTenantRoute,
   } as any)
+const ShellTenantAnalyticsDaysDayIdIndexRoute =
+  ShellTenantAnalyticsDaysDayIdIndexRouteImport.update({
+    id: '/analytics/days/$dayId/',
+    path: '/analytics/days/$dayId/',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantAnalyticsDaysDayIdActivityRoute =
+  ShellTenantAnalyticsDaysDayIdActivityRouteImport.update({
+    id: '/analytics/days/$dayId/activity',
+    path: '/analytics/days/$dayId/activity',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof ShellIndexRoute
   '/login': typeof LoginRoute
   '/$tenant': typeof ShellTenantRouteWithChildren
-  '/$tenant/analytics': typeof ShellTenantAnalyticsRoute
   '/$tenant/app-info': typeof ShellTenantAppInfoRoute
   '/$tenant/chats': typeof ShellTenantChatsRoute
   '/$tenant/orders': typeof ShellTenantOrdersRoute
@@ -185,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/$tenant/manage/open': typeof ShellTenantManageOpenRoute
   '/$tenant/more/stores': typeof ShellTenantMoreStoresRoute
   '/$tenant/account/': typeof ShellTenantAccountIndexRoute
+  '/$tenant/analytics/': typeof ShellTenantAnalyticsIndexRoute
   '/$tenant/manage/': typeof ShellTenantManageIndexRoute
   '/$tenant/more/': typeof ShellTenantMoreIndexRoute
   '/$tenant/manage/expense/add': typeof ShellTenantManageExpenseAddRoute
@@ -193,11 +208,12 @@ export interface FileRoutesByFullPath {
   '/$tenant/manage/expense/': typeof ShellTenantManageExpenseIndexRoute
   '/$tenant/more/claims/': typeof ShellTenantMoreClaimsIndexRoute
   '/$tenant/more/earnings/': typeof ShellTenantMoreEarningsIndexRoute
+  '/$tenant/analytics/days/$dayId/activity': typeof ShellTenantAnalyticsDaysDayIdActivityRoute
+  '/$tenant/analytics/days/$dayId/': typeof ShellTenantAnalyticsDaysDayIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/': typeof ShellIndexRoute
-  '/$tenant/analytics': typeof ShellTenantAnalyticsRoute
   '/$tenant/app-info': typeof ShellTenantAppInfoRoute
   '/$tenant/chats': typeof ShellTenantChatsRoute
   '/$tenant/orders': typeof ShellTenantOrdersRoute
@@ -210,6 +226,7 @@ export interface FileRoutesByTo {
   '/$tenant/manage/open': typeof ShellTenantManageOpenRoute
   '/$tenant/more/stores': typeof ShellTenantMoreStoresRoute
   '/$tenant/account': typeof ShellTenantAccountIndexRoute
+  '/$tenant/analytics': typeof ShellTenantAnalyticsIndexRoute
   '/$tenant/manage': typeof ShellTenantManageIndexRoute
   '/$tenant/more': typeof ShellTenantMoreIndexRoute
   '/$tenant/manage/expense/add': typeof ShellTenantManageExpenseAddRoute
@@ -218,6 +235,8 @@ export interface FileRoutesByTo {
   '/$tenant/manage/expense': typeof ShellTenantManageExpenseIndexRoute
   '/$tenant/more/claims': typeof ShellTenantMoreClaimsIndexRoute
   '/$tenant/more/earnings': typeof ShellTenantMoreEarningsIndexRoute
+  '/$tenant/analytics/days/$dayId/activity': typeof ShellTenantAnalyticsDaysDayIdActivityRoute
+  '/$tenant/analytics/days/$dayId': typeof ShellTenantAnalyticsDaysDayIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -225,7 +244,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_shell/$tenant': typeof ShellTenantRouteWithChildren
   '/_shell/': typeof ShellIndexRoute
-  '/_shell/$tenant/analytics': typeof ShellTenantAnalyticsRoute
   '/_shell/$tenant/app-info': typeof ShellTenantAppInfoRoute
   '/_shell/$tenant/chats': typeof ShellTenantChatsRoute
   '/_shell/$tenant/orders': typeof ShellTenantOrdersRoute
@@ -238,6 +256,7 @@ export interface FileRoutesById {
   '/_shell/$tenant/manage/open': typeof ShellTenantManageOpenRoute
   '/_shell/$tenant/more/stores': typeof ShellTenantMoreStoresRoute
   '/_shell/$tenant/account/': typeof ShellTenantAccountIndexRoute
+  '/_shell/$tenant/analytics/': typeof ShellTenantAnalyticsIndexRoute
   '/_shell/$tenant/manage/': typeof ShellTenantManageIndexRoute
   '/_shell/$tenant/more/': typeof ShellTenantMoreIndexRoute
   '/_shell/$tenant/manage/expense/add': typeof ShellTenantManageExpenseAddRoute
@@ -246,6 +265,8 @@ export interface FileRoutesById {
   '/_shell/$tenant/manage/expense/': typeof ShellTenantManageExpenseIndexRoute
   '/_shell/$tenant/more/claims/': typeof ShellTenantMoreClaimsIndexRoute
   '/_shell/$tenant/more/earnings/': typeof ShellTenantMoreEarningsIndexRoute
+  '/_shell/$tenant/analytics/days/$dayId/activity': typeof ShellTenantAnalyticsDaysDayIdActivityRoute
+  '/_shell/$tenant/analytics/days/$dayId/': typeof ShellTenantAnalyticsDaysDayIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -253,7 +274,6 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/$tenant'
-    | '/$tenant/analytics'
     | '/$tenant/app-info'
     | '/$tenant/chats'
     | '/$tenant/orders'
@@ -266,6 +286,7 @@ export interface FileRouteTypes {
     | '/$tenant/manage/open'
     | '/$tenant/more/stores'
     | '/$tenant/account/'
+    | '/$tenant/analytics/'
     | '/$tenant/manage/'
     | '/$tenant/more/'
     | '/$tenant/manage/expense/add'
@@ -274,11 +295,12 @@ export interface FileRouteTypes {
     | '/$tenant/manage/expense/'
     | '/$tenant/more/claims/'
     | '/$tenant/more/earnings/'
+    | '/$tenant/analytics/days/$dayId/activity'
+    | '/$tenant/analytics/days/$dayId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
     | '/'
-    | '/$tenant/analytics'
     | '/$tenant/app-info'
     | '/$tenant/chats'
     | '/$tenant/orders'
@@ -291,6 +313,7 @@ export interface FileRouteTypes {
     | '/$tenant/manage/open'
     | '/$tenant/more/stores'
     | '/$tenant/account'
+    | '/$tenant/analytics'
     | '/$tenant/manage'
     | '/$tenant/more'
     | '/$tenant/manage/expense/add'
@@ -299,13 +322,14 @@ export interface FileRouteTypes {
     | '/$tenant/manage/expense'
     | '/$tenant/more/claims'
     | '/$tenant/more/earnings'
+    | '/$tenant/analytics/days/$dayId/activity'
+    | '/$tenant/analytics/days/$dayId'
   id:
     | '__root__'
     | '/_shell'
     | '/login'
     | '/_shell/$tenant'
     | '/_shell/'
-    | '/_shell/$tenant/analytics'
     | '/_shell/$tenant/app-info'
     | '/_shell/$tenant/chats'
     | '/_shell/$tenant/orders'
@@ -318,6 +342,7 @@ export interface FileRouteTypes {
     | '/_shell/$tenant/manage/open'
     | '/_shell/$tenant/more/stores'
     | '/_shell/$tenant/account/'
+    | '/_shell/$tenant/analytics/'
     | '/_shell/$tenant/manage/'
     | '/_shell/$tenant/more/'
     | '/_shell/$tenant/manage/expense/add'
@@ -326,6 +351,8 @@ export interface FileRouteTypes {
     | '/_shell/$tenant/manage/expense/'
     | '/_shell/$tenant/more/claims/'
     | '/_shell/$tenant/more/earnings/'
+    | '/_shell/$tenant/analytics/days/$dayId/activity'
+    | '/_shell/$tenant/analytics/days/$dayId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -368,13 +395,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/$tenant/'
       preLoaderRoute: typeof ShellTenantIndexRouteImport
-      parentRoute: typeof ShellTenantRoute
-    }
-    '/_shell/$tenant/analytics': {
-      id: '/_shell/$tenant/analytics'
-      path: '/analytics'
-      fullPath: '/$tenant/analytics'
-      preLoaderRoute: typeof ShellTenantAnalyticsRouteImport
       parentRoute: typeof ShellTenantRoute
     }
     '/_shell/$tenant/app-info': {
@@ -431,6 +451,13 @@ declare module '@tanstack/react-router' {
       path: '/account/language'
       fullPath: '/$tenant/account/language'
       preLoaderRoute: typeof ShellTenantAccountLanguageRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/analytics/': {
+      id: '/_shell/$tenant/analytics/'
+      path: '/analytics'
+      fullPath: '/$tenant/analytics/'
+      preLoaderRoute: typeof ShellTenantAnalyticsIndexRouteImport
       parentRoute: typeof ShellTenantRoute
     }
     '/_shell/$tenant/manage/': {
@@ -510,11 +537,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellTenantMoreEarningsPayoutIdRouteImport
       parentRoute: typeof ShellTenantRoute
     }
+    '/_shell/$tenant/analytics/days/$dayId/': {
+      id: '/_shell/$tenant/analytics/days/$dayId/'
+      path: '/analytics/days/$dayId'
+      fullPath: '/$tenant/analytics/days/$dayId/'
+      preLoaderRoute: typeof ShellTenantAnalyticsDaysDayIdIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/analytics/days/$dayId/activity': {
+      id: '/_shell/$tenant/analytics/days/$dayId/activity'
+      path: '/analytics/days/$dayId/activity'
+      fullPath: '/$tenant/analytics/days/$dayId/activity'
+      preLoaderRoute: typeof ShellTenantAnalyticsDaysDayIdActivityRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
   }
 }
 
 interface ShellTenantRouteChildren {
-  ShellTenantAnalyticsRoute: typeof ShellTenantAnalyticsRoute
   ShellTenantAppInfoRoute: typeof ShellTenantAppInfoRoute
   ShellTenantChatsRoute: typeof ShellTenantChatsRoute
   ShellTenantOrdersRoute: typeof ShellTenantOrdersRoute
@@ -527,6 +567,7 @@ interface ShellTenantRouteChildren {
   ShellTenantManageOpenRoute: typeof ShellTenantManageOpenRoute
   ShellTenantMoreStoresRoute: typeof ShellTenantMoreStoresRoute
   ShellTenantAccountIndexRoute: typeof ShellTenantAccountIndexRoute
+  ShellTenantAnalyticsIndexRoute: typeof ShellTenantAnalyticsIndexRoute
   ShellTenantManageIndexRoute: typeof ShellTenantManageIndexRoute
   ShellTenantMoreIndexRoute: typeof ShellTenantMoreIndexRoute
   ShellTenantManageExpenseAddRoute: typeof ShellTenantManageExpenseAddRoute
@@ -535,10 +576,11 @@ interface ShellTenantRouteChildren {
   ShellTenantManageExpenseIndexRoute: typeof ShellTenantManageExpenseIndexRoute
   ShellTenantMoreClaimsIndexRoute: typeof ShellTenantMoreClaimsIndexRoute
   ShellTenantMoreEarningsIndexRoute: typeof ShellTenantMoreEarningsIndexRoute
+  ShellTenantAnalyticsDaysDayIdActivityRoute: typeof ShellTenantAnalyticsDaysDayIdActivityRoute
+  ShellTenantAnalyticsDaysDayIdIndexRoute: typeof ShellTenantAnalyticsDaysDayIdIndexRoute
 }
 
 const ShellTenantRouteChildren: ShellTenantRouteChildren = {
-  ShellTenantAnalyticsRoute: ShellTenantAnalyticsRoute,
   ShellTenantAppInfoRoute: ShellTenantAppInfoRoute,
   ShellTenantChatsRoute: ShellTenantChatsRoute,
   ShellTenantOrdersRoute: ShellTenantOrdersRoute,
@@ -551,6 +593,7 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
   ShellTenantManageOpenRoute: ShellTenantManageOpenRoute,
   ShellTenantMoreStoresRoute: ShellTenantMoreStoresRoute,
   ShellTenantAccountIndexRoute: ShellTenantAccountIndexRoute,
+  ShellTenantAnalyticsIndexRoute: ShellTenantAnalyticsIndexRoute,
   ShellTenantManageIndexRoute: ShellTenantManageIndexRoute,
   ShellTenantMoreIndexRoute: ShellTenantMoreIndexRoute,
   ShellTenantManageExpenseAddRoute: ShellTenantManageExpenseAddRoute,
@@ -559,6 +602,10 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
   ShellTenantManageExpenseIndexRoute: ShellTenantManageExpenseIndexRoute,
   ShellTenantMoreClaimsIndexRoute: ShellTenantMoreClaimsIndexRoute,
   ShellTenantMoreEarningsIndexRoute: ShellTenantMoreEarningsIndexRoute,
+  ShellTenantAnalyticsDaysDayIdActivityRoute:
+    ShellTenantAnalyticsDaysDayIdActivityRoute,
+  ShellTenantAnalyticsDaysDayIdIndexRoute:
+    ShellTenantAnalyticsDaysDayIdIndexRoute,
 }
 
 const ShellTenantRouteWithChildren = ShellTenantRoute._addFileChildren(

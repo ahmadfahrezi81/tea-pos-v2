@@ -83,15 +83,15 @@ const writeStep = (key: string, step: number | null) => {
     }
 };
 
-/** Closing the day: a photo per step (a count on cups and tea), then the review and the cash. */
-export function CloseDay() {
+/** Closing today, or an `oldDay` left open: a photo per step (a count on cups and tea), then the review and the cash. */
+export function CloseDay({ oldDay }: { oldDay?: string }) {
     const t = useT();
     const slug = useSlug();
     const storeId = useStoreId();
     const navigate = useNavigate();
     const skipPhotos = useFlag("ops-skip-manage-photos");
     const { data: gate } = useGate();
-    const dayId = gate?.gate === "open" ? gate.dayId : undefined;
+    const dayId = oldDay ?? (gate?.gate === "open" ? gate.dayId : undefined);
     const { data: day, refetch } = useStoreDay(dayId);
     const savePhoto = useSaveDayPhoto();
     const close = useCloseDay();
@@ -114,7 +114,7 @@ export function CloseDay() {
         writeStep(key, next);
     };
 
-    if (gate && !dayId)
+    if ((gate && !dayId) || day?.closedAt)
         return (
             <p className="bg-white rounded-2xl p-6 text-center text-sm text-gray-500">
                 {t("manage.noOpenSummary")}
@@ -192,7 +192,7 @@ export function CloseDay() {
                                 writeStep(key, null);
                                 toast(t("manage.dayClosed"));
                                 await navigate({
-                                    to: "/$tenant/manage",
+                                    to: oldDay ? "/$tenant/analytics" : "/$tenant/manage",
                                     params: { tenant: slug },
                                     replace: true,
                                 });

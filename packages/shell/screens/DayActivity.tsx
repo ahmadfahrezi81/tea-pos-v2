@@ -1,3 +1,6 @@
+import { $api } from "@tea-pos/api-client";
+import { STALE } from "@tea-pos/api-client/query";
+import { useSlug } from "../session/tenant";
 import type { components } from "@tea-pos/api-client";
 import { formatMoney, formatTime } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
@@ -20,11 +23,30 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { PhotoTile } from "@tea-pos/shell/DayView";
-import { useDayActivity, useDaySessions } from "./sales";
+import { PhotoTile } from "./DayView";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { Badge } from "@tea-pos/ui/Badge";
+
+function useDayActivity(id: string) {
+    const tenant = useSlug();
+    return $api.useQuery(
+        "get",
+        "/tenants/{tenant}/days/{id}/activity",
+        { params: { path: { tenant, id } } },
+        { enabled: !!tenant && !!id, staleTime: STALE.COOL },
+    );
+}
+
+function useDaySessions(id: string) {
+    const tenant = useSlug();
+    return $api.useQuery(
+        "get",
+        "/tenants/{tenant}/days/{id}/sessions",
+        { params: { path: { tenant, id } } },
+        { enabled: !!tenant && !!id, staleTime: STALE.COOL },
+    );
+}
 
 type Event = components["schemas"]["DayEvent"];
 type Session = components["schemas"]["DaySession"];
