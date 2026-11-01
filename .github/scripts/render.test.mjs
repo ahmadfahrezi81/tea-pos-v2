@@ -104,6 +104,20 @@ test("e2e: a failure shows its plain name and reason, and only its own", () => {
     assert.equal(out.body, "Backoffice: every tab answers: /feedbacks: 404 route_not_found");
 });
 
+test("without -v the reason follows the result, and log lines after it are not reasons", () => {
+    const out = e2eSummary(
+        log([
+            "--- FAIL: TestTemporaryFailure (0.00s)",
+            "    seller_test.go:390: fails on purpose",
+            "2026/11/01 INFO request method=GET",
+            "    other_test.go:1: belongs to nobody",
+            "FAIL",
+        ]),
+    );
+    assert.equal(out.detail, "1 of 1 failed");
+    assert.equal(out.body, "Temporary Failure: fails on purpose");
+});
+
 test("e2e: no tests at all says so, with the end of the log", () => {
     const out = e2eSummary("# build failed\nundefined: foo\n");
     assert.equal(out.detail, "did not run");

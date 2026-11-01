@@ -20,7 +20,7 @@ if (Object.values(needs).some((n) => n.result === "failure")) {
         log = asMarkdown(jobs);
         for (const job of jobs) {
             const id = job.name.split(" ")[0];
-            const tests = e2eSummary(job.log);
+            const tests = e2eSummary(job.full);
             const failing = tests.detail.includes("failed");
             reasons[id] = failing ? tests.body.split("\n") : [`Failed at: ${job.step}`];
         }

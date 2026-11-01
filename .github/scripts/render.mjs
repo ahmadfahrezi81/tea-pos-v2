@@ -94,19 +94,26 @@ export function e2eSummary(log) {
     const failed = [];
     const areas = new Map();
     let total = 0;
+    // With -v a test's reasons come before its result line; without it, after.
     let reasons = [];
+    let after = null;
     for (const line of log.split("\n")) {
         const why = line.match(/^\s+\S+_test\.go:\d+: (.*)$/);
         if (why) {
-            reasons.push(why[1]);
+            (after ? after.reasons : reasons).push(why[1]);
             continue;
         }
+        after = null;
         const result = line.match(/^--- (PASS|FAIL|SKIP): (\S+)/);
         if (!result) continue;
         total++;
         const area = areaOf(result[2]);
         areas.set(area, (areas.get(area) ?? 0) + 1);
-        if (result[1] === "FAIL") failed.push({ name: plainName(result[2]), reasons });
+        if (result[1] === "FAIL") {
+            const test = { name: plainName(result[2]), reasons };
+            failed.push(test);
+            if (reasons.length === 0) after = test;
+        }
         reasons = [];
     }
     if (total === 0) {
