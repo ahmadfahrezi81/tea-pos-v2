@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { PhotoTile } from "./DayDetail";
+import { PhotoTile } from "@tea-pos/shell/DayView";
 import { useDayActivity, useDaySessions } from "./sales";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { EmptyState } from "@tea-pos/ui/EmptyState";

@@ -53,6 +53,7 @@ type OpenStoreInput struct {
 	Body    struct {
 		OpeningBalance int64            `json:"openingBalance" minimum:"0"`
 		CashBreakdown  map[string]int64 `json:"cashBreakdown,omitempty" required:"false" doc:"How many of each note"`
+		PhotoURL       string           `json:"photoUrl,omitempty" required:"false" maxLength:"1000" doc:"The opening photo's address from POST /files (purpose daily_photo)"`
 	}
 }
 
@@ -80,5 +81,42 @@ type CreateOrderOutput struct {
 	Body struct {
 		ID    string `json:"id" format:"uuid"`
 		Total int64  `json:"total"`
+	}
+}
+
+// SellerDayInput is a day of a store the seller works at.
+type SellerDayInput struct {
+	Tenant  string `path:"tenant"`
+	StoreID string `path:"storeId" format:"uuid"`
+	DayID   string `path:"dayId" format:"uuid"`
+}
+
+type CreateExpenseInput struct {
+	Tenant  string `path:"tenant"`
+	StoreID string `path:"storeId" format:"uuid"`
+	DayID   string `path:"dayId" format:"uuid"`
+	Body    struct {
+		Type   string `json:"type" minLength:"1" maxLength:"100"`
+		Amount int32  `json:"amount" minimum:"1"`
+	}
+}
+
+type SaveDayPhotoInput struct {
+	Tenant  string `path:"tenant"`
+	StoreID string `path:"storeId" format:"uuid"`
+	DayID   string `path:"dayId" format:"uuid"`
+	Type    string `path:"type" enum:"opening,closing:ice,closing:syrup,closing:bags,closing:cups,closing:tea"`
+	Body    struct {
+		URL      string       `json:"url,omitempty" required:"false" maxLength:"1000" doc:"The address from POST /files (purpose daily_photo); empty keeps the photo and changes the quantity"`
+		Quantity *DayQuantity `json:"quantity,omitempty" required:"false"`
+	}
+}
+
+type CloseDayInput struct {
+	Tenant  string `path:"tenant"`
+	StoreID string `path:"storeId" format:"uuid"`
+	DayID   string `path:"dayId" format:"uuid"`
+	Body    struct {
+		ActualCash int32 `json:"actualCash" minimum:"0"`
 	}
 }

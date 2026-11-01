@@ -23,3 +23,11 @@ The seller app is v1's, minus this list. RFC: Seller v2 (https://app.notion.com/
 ## Step list
 
 The RFC holds the keep, change, cut and later tables. Order: remove `GET /feedbacks`; basics; store sessions; POS and orders; close day and expenses; earnings and claims; analytics and At a Glance; product images last.
+
+## Decisions while building close day
+
+- **The close is one transaction:** totals, sessions ended, commissions, automatic claims, payouts. v1 saved the day and swallowed a pay failure; here a failure undoes the close and the seller tries again
+- **A claim type with amount 0 is skipped,** since the table refuses it and that would undo the close
+- **A slot holds one photo:** retaking replaces the row. The old file stays in Storage, so the day's Activity can still show it
+- **Resuming a store asks for no new photo** (v1 asked for a second opening photo)
+- Expenses and the close refuse anyone but the session's holder on that day

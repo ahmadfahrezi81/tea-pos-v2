@@ -77,7 +77,14 @@
         "cameraStep1": "Buka Pengaturan di ponsel Anda",
         "cameraStep2": "Buka Aplikasi → browser Anda",
         "cameraStep3": "Ketuk Izin → Kamera → Izinkan",
-        "cameraStep4": "Kembali dan coba lagi"
+        "cameraStep4": "Kembali dan coba lagi",
+        "dayClosed": "Hari berhasil ditutup!",
+        "expenseTypes": {
+            "ice": "Es",
+            "electricity": "Listrik",
+            "custom": "Lainnya"
+        },
+        "expenseCustomPlaceholder": "mis. Perbaikan, Transportasi..."
     },
     "cart": {
         "title": "Keranjang",

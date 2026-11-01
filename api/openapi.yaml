@@ -203,6 +203,16 @@ components:
       required:
         - types
       type: object
+    CloseDayInputBody:
+      additionalProperties: false
+      properties:
+        actualCash:
+          format: int32
+          minimum: 0
+          type: integer
+      required:
+        - actualCash
+      type: object
     CommissionType:
       additionalProperties: false
       properties:
@@ -299,6 +309,21 @@ components:
         - name
         - slug
         - ratePerCup
+      type: object
+    CreateExpenseInputBody:
+      additionalProperties: false
+      properties:
+        amount:
+          format: int32
+          minimum: 1
+          type: integer
+        type:
+          maxLength: 100
+          minLength: 1
+          type: string
+      required:
+        - type
+        - amount
       type: object
     CreateOrderInputBody:
       additionalProperties: false
@@ -725,6 +750,7 @@ components:
             - bad_claim_code
             - bad_cursor
             - bad_level
+            - bad_photo
             - bad_proof
             - bad_range
             - bad_request
@@ -1028,6 +1054,10 @@ components:
           format: int64
           minimum: 0
           type: integer
+        photoUrl:
+          description: The opening photo's address from POST /files (purpose daily_photo)
+          maxLength: 1000
+          type: string
       required:
         - openingBalance
       type: object
@@ -1655,6 +1685,16 @@ components:
           type: array
       required:
         - products
+      type: object
+    SaveDayPhotoInputBody:
+      additionalProperties: false
+      properties:
+        quantity:
+          $ref: "#/components/schemas/DayQuantity"
+        url:
+          description: The address from POST /files (purpose daily_photo); empty keeps the photo and changes the quantity
+          maxLength: 1000
+          type: string
       type: object
     SetClaimEligibleInputBody:
       additionalProperties: false
@@ -3633,6 +3673,203 @@ paths:
         app: backoffice
         level: guest
         tenant: true
+        signedIn: true
+  /tenants/{tenant}/stores/{storeId}/days/{dayId}:
+    get:
+      operationId: getStoreDay
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: storeId
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: dayId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DayDetail"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: A day of a store the caller works at, in full
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/stores/{storeId}/days/{dayId}/close:
+    post:
+      operationId: closeStoreDay
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: storeId
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: dayId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CloseDayInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreGate"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "Close a day: final totals, sessions ended, commissions, claims and payouts, together"
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/stores/{storeId}/days/{dayId}/expenses:
+    post:
+      operationId: createExpense
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: storeId
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: dayId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateExpenseInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreGate"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Add an expense to the open day
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/stores/{storeId}/days/{dayId}/photos/{type}:
+    put:
+      operationId: saveDayPhoto
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: storeId
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: dayId
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: type
+          required: true
+          schema:
+            enum:
+              - opening
+              - closing:ice
+              - closing:syrup
+              - closing:bags
+              - closing:cups
+              - closing:tea
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveDayPhotoInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Save a day's photo in its slot, replacing the one there
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        idempotent: true
         signedIn: true
   /tenants/{tenant}/stores/{storeId}/gate:
     get:

@@ -45,6 +45,52 @@ func (q *Queries) ActiveProductPrices(ctx context.Context, arg ActiveProductPric
 	return items, nil
 }
 
+const addDayPhoto = `-- name: AddDayPhoto :one
+INSERT INTO store_daily_summary_photos (daily_summary_id, store_id, tenant_id, type, url, quantity)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id
+`
+
+type AddDayPhotoParams struct {
+	DailySummaryID pgtype.UUID
+	StoreID        pgtype.UUID
+	TenantID       pgtype.UUID
+	Type           string
+	Url            string
+	Quantity       []byte
+}
+
+func (q *Queries) AddDayPhoto(ctx context.Context, arg AddDayPhotoParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, addDayPhoto,
+		arg.DailySummaryID,
+		arg.StoreID,
+		arg.TenantID,
+		arg.Type,
+		arg.Url,
+		arg.Quantity,
+	)
+	var id pgtype.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const addExpenseToDay = `-- name: AddExpenseToDay :exec
+UPDATE store_daily_summaries
+SET total_expenses = total_expenses + $1::int, expected_cash = expected_cash - $1::int
+WHERE id = $2 AND tenant_id = $3
+`
+
+type AddExpenseToDayParams struct {
+	Amount   int32
+	ID       pgtype.UUID
+	TenantID pgtype.UUID
+}
+
+func (q *Queries) AddExpenseToDay(ctx context.Context, arg AddExpenseToDayParams) error {
+	_, err := q.db.Exec(ctx, addExpenseToDay, arg.Amount, arg.ID, arg.TenantID)
+	return err
+}
+
 const addOrderToDay = `-- name: AddOrderToDay :exec
 UPDATE store_daily_summaries
 SET total_sales = total_sales + $1, total_orders = total_orders + 1,
@@ -68,6 +114,223 @@ func (q *Queries) AddOrderToDay(ctx context.Context, arg AddOrderToDayParams) er
 		arg.TenantID,
 	)
 	return err
+}
+
+const closeStoreDay = `-- name: CloseStoreDay :exec
+UPDATE store_daily_summaries SET
+    total_sales = $1, total_orders = $2, total_cups = $3, total_expenses = $4,
+    expected_cash = $5, actual_cash = $6, variance = $7,
+    closed_at = now() AT TIME ZONE 'UTC', closed_by = $8
+WHERE id = $9 AND tenant_id = $10
+`
+
+type CloseStoreDayParams struct {
+	Sales        int32
+	Orders       int32
+	Cups         int32
+	Expenses     pgtype.Numeric
+	ExpectedCash int32
+	ActualCash   pgtype.Int4
+	Variance     pgtype.Int4
+	ClosedBy     pgtype.UUID
+	ID           pgtype.UUID
+	TenantID     pgtype.UUID
+}
+
+func (q *Queries) CloseStoreDay(ctx context.Context, arg CloseStoreDayParams) error {
+	_, err := q.db.Exec(ctx, closeStoreDay,
+		arg.Sales,
+		arg.Orders,
+		arg.Cups,
+		arg.Expenses,
+		arg.ExpectedCash,
+		arg.ActualCash,
+		arg.Variance,
+		arg.ClosedBy,
+		arg.ID,
+		arg.TenantID,
+	)
+	return err
+}
+
+const createDayAutoClaims = `-- name: CreateDayAutoClaims :many
+WITH hours AS (
+    SELECT user_id, sum(GREATEST(0, EXTRACT(EPOCH FROM COALESCE(ended_at, now()) - started_at) / 3600))::numeric AS worked
+    FROM store_sessions WHERE daily_summary_id = $4 AND tenant_id = $1
+    GROUP BY user_id
+), due AS (
+    SELECT h.user_id, h.worked, c.id AS config_id, c.frequency, c.amount,
+        CASE WHEN c.claim_source = 'auto_submit' THEN 'pending'
+             WHEN h.worked >= c.auto_threshold_hours THEN 'approved'
+             ELSE 'rejected' END AS status
+    FROM hours h
+    JOIN payroll_user_claim_assignments a ON a.user_id = h.user_id AND a.tenant_id = $1
+    JOIN payroll_claim_configs c ON c.id = a.claim_config_id
+    WHERE c.is_enabled AND c.claim_source <> 'manual' AND c.amount > 0
+      AND (CASE WHEN c.claim_source = 'auto_submit'
+                THEN c.auto_threshold_hours IS NULL OR h.worked >= c.auto_threshold_hours
+                ELSE c.auto_threshold_hours IS NOT NULL END)
+)
+INSERT INTO payroll_claims (tenant_id, user_id, store_id, claim_config_id, frequency, amount, date, status, daily_summary_id, hours_worked)
+SELECT $1::uuid, user_id, $2::uuid, config_id, frequency, amount, $3::date, status, $4::uuid, worked
+FROM due
+ON CONFLICT DO NOTHING
+RETURNING id, user_id, claim_config_id, amount
+`
+
+type CreateDayAutoClaimsParams struct {
+	TenantID pgtype.UUID
+	StoreID  pgtype.UUID
+	Date     pgtype.Date
+	DayID    pgtype.UUID
+}
+
+type CreateDayAutoClaimsRow struct {
+	ID            pgtype.UUID
+	UserID        pgtype.UUID
+	ClaimConfigID pgtype.UUID
+	Amount        pgtype.Numeric
+}
+
+// The automatic claims of everyone who held the day, by their hours. auto_submit waits for review
+// once the hours are met (no threshold: always); auto decides itself. A claim of nothing is
+// skipped, since the table refuses one and that would undo the close.
+func (q *Queries) CreateDayAutoClaims(ctx context.Context, arg CreateDayAutoClaimsParams) ([]CreateDayAutoClaimsRow, error) {
+	rows, err := q.db.Query(ctx, createDayAutoClaims,
+		arg.TenantID,
+		arg.StoreID,
+		arg.Date,
+		arg.DayID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CreateDayAutoClaimsRow
+	for rows.Next() {
+		var i CreateDayAutoClaimsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.ClaimConfigID,
+			&i.Amount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const createDayCommissions = `-- name: CreateDayCommissions :many
+WITH people AS (
+    SELECT DISTINCT user_id FROM store_sessions WHERE daily_summary_id = $3 AND tenant_id = $1
+), sold AS (
+    SELECT s.user_id, count(DISTINCT o.id)::int AS orders, COALESCE(sum(i.quantity), 0)::int AS cups
+    FROM store_sessions s
+    JOIN store_orders o ON o.user_id = s.user_id AND o.store_id = s.store_id AND o.tenant_id = s.tenant_id
+        AND o.created_at >= s.started_at AT TIME ZONE 'UTC'
+        AND o.created_at < COALESCE(s.ended_at, now()) AT TIME ZONE 'UTC'
+    LEFT JOIN store_order_items i ON i.order_id = o.id
+    WHERE s.daily_summary_id = $3 AND s.tenant_id = $1
+    GROUP BY s.user_id
+)
+INSERT INTO payroll_commissions (tenant_id, store_id, user_id, daily_summary_id, date, total_cups, total_orders,
+    rate_per_cup, commission_config_id, total_commission, status)
+SELECT $1::uuid, $2::uuid, p.user_id, $3::uuid, $4::date, COALESCE(sold.cups, 0), COALESCE(sold.orders, 0),
+    COALESCE(cc.rate_per_cup, 0), info.commission_config_id, COALESCE(sold.cups, 0) * COALESCE(cc.rate_per_cup, 0),
+    CASE WHEN cc.slug = $5 THEN 'approved' ELSE 'pending' END
+FROM people p
+LEFT JOIN sold ON sold.user_id = p.user_id
+LEFT JOIN payroll_user_info info ON info.user_id = p.user_id AND info.tenant_id = $1
+LEFT JOIN payroll_commission_configs cc ON cc.id = info.commission_config_id
+ON CONFLICT DO NOTHING
+RETURNING id, user_id, total_cups, total_orders, rate_per_cup, total_commission
+`
+
+type CreateDayCommissionsParams struct {
+	TenantID      pgtype.UUID
+	StoreID       pgtype.UUID
+	DayID         pgtype.UUID
+	Date          pgtype.Date
+	NonSellerSlug string
+}
+
+type CreateDayCommissionsRow struct {
+	ID              pgtype.UUID
+	UserID          pgtype.UUID
+	TotalCups       int32
+	TotalOrders     int32
+	RatePerCup      pgtype.Numeric
+	TotalCommission pgtype.Numeric
+}
+
+// One row per person who held the day, even with no cups, as an empty day is still reviewed. Their
+// cups are their orders inside their own sessions. A rate of nothing is kept pending unless the
+// type is the reserved non-seller one: a person with no type at all is what review must catch.
+func (q *Queries) CreateDayCommissions(ctx context.Context, arg CreateDayCommissionsParams) ([]CreateDayCommissionsRow, error) {
+	rows, err := q.db.Query(ctx, createDayCommissions,
+		arg.TenantID,
+		arg.StoreID,
+		arg.DayID,
+		arg.Date,
+		arg.NonSellerSlug,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CreateDayCommissionsRow
+	for rows.Next() {
+		var i CreateDayCommissionsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.TotalCups,
+			&i.TotalOrders,
+			&i.RatePerCup,
+			&i.TotalCommission,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const createExpense = `-- name: CreateExpense :one
+INSERT INTO store_expenses (daily_summary_id, store_id, type, amount, tenant_id, user_id)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id
+`
+
+type CreateExpenseParams struct {
+	DailySummaryID pgtype.UUID
+	StoreID        pgtype.UUID
+	Type           string
+	Amount         int32
+	TenantID       pgtype.UUID
+	UserID         pgtype.UUID
+}
+
+func (q *Queries) CreateExpense(ctx context.Context, arg CreateExpenseParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, createExpense,
+		arg.DailySummaryID,
+		arg.StoreID,
+		arg.Type,
+		arg.Amount,
+		arg.TenantID,
+		arg.UserID,
+	)
+	var id pgtype.UUID
+	err := row.Scan(&id)
+	return id, err
 }
 
 const createOrder = `-- name: CreateOrder :one
@@ -191,6 +454,58 @@ func (q *Queries) CreateStoreSession(ctx context.Context, arg CreateStoreSession
 	return id, err
 }
 
+const dayFinalTotals = `-- name: DayFinalTotals :one
+SELECT
+    (SELECT COALESCE(sum(total_amount), 0)::int FROM store_orders o WHERE o.daily_summary_id = $1 AND o.tenant_id = $2) AS sales,
+    (SELECT count(*)::int FROM store_orders o WHERE o.daily_summary_id = $1 AND o.tenant_id = $2) AS orders,
+    (SELECT COALESCE(sum(i.quantity), 0)::int FROM store_order_items i JOIN store_orders o ON o.id = i.order_id
+        WHERE o.daily_summary_id = $1 AND o.tenant_id = $2) AS cups,
+    (SELECT COALESCE(sum(e.amount), 0)::int FROM store_expenses e WHERE e.daily_summary_id = $1 AND e.tenant_id = $2) AS expenses
+`
+
+type DayFinalTotalsParams struct {
+	ID       pgtype.UUID
+	TenantID pgtype.UUID
+}
+
+type DayFinalTotalsRow struct {
+	Sales    int32
+	Orders   int32
+	Cups     int32
+	Expenses int32
+}
+
+// The final totals are counted from the rows, not trusted from the running ones.
+func (q *Queries) DayFinalTotals(ctx context.Context, arg DayFinalTotalsParams) (DayFinalTotalsRow, error) {
+	row := q.db.QueryRow(ctx, dayFinalTotals, arg.ID, arg.TenantID)
+	var i DayFinalTotalsRow
+	err := row.Scan(
+		&i.Sales,
+		&i.Orders,
+		&i.Cups,
+		&i.Expenses,
+	)
+	return i, err
+}
+
+const dayHolder = `-- name: DayHolder :one
+SELECT COALESCE((SELECT user_id::text FROM store_sessions
+    WHERE daily_summary_id = $1 AND tenant_id = $2 AND status = 'active' LIMIT 1), '')::text
+`
+
+type DayHolderParams struct {
+	DayID    pgtype.UUID
+	TenantID pgtype.UUID
+}
+
+// Who sells on this day right now, if anyone.
+func (q *Queries) DayHolder(ctx context.Context, arg DayHolderParams) (string, error) {
+	row := q.db.QueryRow(ctx, dayHolder, arg.DayID, arg.TenantID)
+	var column_1 string
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const dayOrderTotals = `-- name: DayOrderTotals :one
 SELECT COALESCE(sum(o.total_amount), 0)::int AS sales, count(*)::int AS orders,
     COALESCE((SELECT sum(i.quantity) FROM store_order_items i JOIN store_orders x ON x.id = i.order_id
@@ -223,6 +538,85 @@ func (q *Queries) DayOrderTotals(ctx context.Context, arg DayOrderTotalsParams) 
 	var i DayOrderTotalsRow
 	err := row.Scan(&i.Sales, &i.Orders, &i.Cups)
 	return i, err
+}
+
+const deleteDayPhoto = `-- name: DeleteDayPhoto :many
+DELETE FROM store_daily_summary_photos
+WHERE daily_summary_id = $1 AND tenant_id = $2 AND type = $3
+RETURNING id, url
+`
+
+type DeleteDayPhotoParams struct {
+	DailySummaryID pgtype.UUID
+	TenantID       pgtype.UUID
+	Type           string
+}
+
+type DeleteDayPhotoRow struct {
+	ID  pgtype.UUID
+	Url string
+}
+
+// A slot holds one photo: taking it again replaces it.
+func (q *Queries) DeleteDayPhoto(ctx context.Context, arg DeleteDayPhotoParams) ([]DeleteDayPhotoRow, error) {
+	rows, err := q.db.Query(ctx, deleteDayPhoto, arg.DailySummaryID, arg.TenantID, arg.Type)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DeleteDayPhotoRow
+	for rows.Next() {
+		var i DeleteDayPhotoRow
+		if err := rows.Scan(&i.ID, &i.Url); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const endDaySessions = `-- name: EndDaySessions :exec
+UPDATE store_sessions SET ended_at = now(), status = 'ended'
+WHERE daily_summary_id = $1 AND tenant_id = $2 AND status = 'active'
+`
+
+type EndDaySessionsParams struct {
+	DayID    pgtype.UUID
+	TenantID pgtype.UUID
+}
+
+func (q *Queries) EndDaySessions(ctx context.Context, arg EndDaySessionsParams) error {
+	_, err := q.db.Exec(ctx, endDaySessions, arg.DayID, arg.TenantID)
+	return err
+}
+
+const ensureDayPayouts = `-- name: EnsureDayPayouts :exec
+INSERT INTO payroll_payouts (tenant_id, user_id, start_date, end_date)
+SELECT DISTINCT $1::uuid, user_id, $2::date, $3::date
+FROM store_sessions WHERE daily_summary_id = $4 AND tenant_id = $1
+ON CONFLICT (tenant_id, user_id, start_date) DO UPDATE SET end_date = EXCLUDED.end_date
+WHERE payroll_payouts.status = 'pending'
+`
+
+type EnsureDayPayoutsParams struct {
+	TenantID  pgtype.UUID
+	StartDate pgtype.Date
+	EndDate   pgtype.Date
+	DayID     pgtype.UUID
+}
+
+// Everyone who held the day has a payout for the period; a settled one keeps its window.
+func (q *Queries) EnsureDayPayouts(ctx context.Context, arg EnsureDayPayoutsParams) error {
+	_, err := q.db.Exec(ctx, ensureDayPayouts,
+		arg.TenantID,
+		arg.StartDate,
+		arg.EndDate,
+		arg.DayID,
+	)
+	return err
 }
 
 const getActiveStoreSession = `-- name: GetActiveStoreSession :one
@@ -342,6 +736,40 @@ func (q *Queries) ListSellerProducts(ctx context.Context, tenantID pgtype.UUID) 
 	return items, nil
 }
 
+const lockStoreDay = `-- name: LockStoreDay :one
+SELECT id, store_id, date, closed_at, opening_balance FROM store_daily_summaries
+WHERE id = $1 AND store_id = $2 AND tenant_id = $3
+FOR UPDATE
+`
+
+type LockStoreDayParams struct {
+	ID       pgtype.UUID
+	StoreID  pgtype.UUID
+	TenantID pgtype.UUID
+}
+
+type LockStoreDayRow struct {
+	ID             pgtype.UUID
+	StoreID        pgtype.UUID
+	Date           pgtype.Date
+	ClosedAt       pgtype.Timestamp
+	OpeningBalance int32
+}
+
+// Holds the day while it is closed, so a second close or an expense waits for the answer.
+func (q *Queries) LockStoreDay(ctx context.Context, arg LockStoreDayParams) (LockStoreDayRow, error) {
+	row := q.db.QueryRow(ctx, lockStoreDay, arg.ID, arg.StoreID, arg.TenantID)
+	var i LockStoreDayRow
+	err := row.Scan(
+		&i.ID,
+		&i.StoreID,
+		&i.Date,
+		&i.ClosedAt,
+		&i.OpeningBalance,
+	)
+	return i, err
+}
+
 const logStoreActivity = `-- name: LogStoreActivity :exec
 INSERT INTO tenant_activity_logs (tenant_id, user_id, store_id, daily_summary_id, type, ref_id, ref_table, metadata)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -369,6 +797,57 @@ func (q *Queries) LogStoreActivity(ctx context.Context, arg LogStoreActivityPara
 		arg.RefID,
 		arg.RefTable,
 		arg.Metadata,
+	)
+	return err
+}
+
+const stampDayClaims = `-- name: StampDayClaims :exec
+UPDATE payroll_claims cl SET payout_id = p.id
+FROM payroll_payouts p
+WHERE p.tenant_id = $1 AND p.start_date = $2 AND p.user_id = cl.user_id
+  AND cl.tenant_id = $1 AND cl.date >= $2 AND cl.date <= $3 AND cl.payout_id IS NULL
+  AND cl.user_id IN (SELECT ss.user_id FROM store_sessions ss WHERE ss.daily_summary_id = $4 AND ss.tenant_id = $1)
+`
+
+type StampDayClaimsParams struct {
+	TenantID  pgtype.UUID
+	StartDate pgtype.Date
+	EndDate   pgtype.Date
+	DayID     pgtype.UUID
+}
+
+func (q *Queries) StampDayClaims(ctx context.Context, arg StampDayClaimsParams) error {
+	_, err := q.db.Exec(ctx, stampDayClaims,
+		arg.TenantID,
+		arg.StartDate,
+		arg.EndDate,
+		arg.DayID,
+	)
+	return err
+}
+
+const stampDayCommissions = `-- name: StampDayCommissions :exec
+UPDATE payroll_commissions pc SET payout_id = p.id
+FROM payroll_payouts p
+WHERE p.tenant_id = $1 AND p.start_date = $2 AND p.user_id = pc.user_id
+  AND pc.tenant_id = $1 AND pc.date >= $2 AND pc.date <= $3 AND pc.payout_id IS NULL
+  AND pc.user_id IN (SELECT ss.user_id FROM store_sessions ss WHERE ss.daily_summary_id = $4 AND ss.tenant_id = $1)
+`
+
+type StampDayCommissionsParams struct {
+	TenantID  pgtype.UUID
+	StartDate pgtype.Date
+	EndDate   pgtype.Date
+	DayID     pgtype.UUID
+}
+
+// Every unassigned row in the period, so one a failed write left behind is picked up too.
+func (q *Queries) StampDayCommissions(ctx context.Context, arg StampDayCommissionsParams) error {
+	_, err := q.db.Exec(ctx, stampDayCommissions,
+		arg.TenantID,
+		arg.StartDate,
+		arg.EndDate,
+		arg.DayID,
 	)
 	return err
 }

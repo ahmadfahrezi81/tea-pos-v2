@@ -78,3 +78,162 @@ func TestSellerDay(t *testing.T) {
 		t.Errorf("the right code: %d %s", s, b)
 	}
 }
+
+// TestSellerCloseDay: closing counts the day from its rows, ends the session and pays out: the
+// commission, the automatic claims and the payout, all at once, and only once.
+func TestSellerCloseDay(t *testing.T) {
+	pool := testkit.DB(t)
+	a := testkit.NewAPI(t, pool, "")
+	seller := testkit.Session(a.SignIn(t, testkit.SellerA, "seller"))
+	ctx := t.Context()
+	exec := func(sql string, args ...any) {
+		t.Helper()
+		if _, err := pool.Exec(ctx, sql, args...); err != nil {
+			t.Fatal(err)
+		}
+	}
+	exec(`INSERT INTO user_store_assignments (user_id, store_id) SELECT $1, $2
+		WHERE NOT EXISTS (SELECT 1 FROM user_store_assignments WHERE user_id = $1 AND store_id = $2)`, testkit.SellerA, storeACentral)
+	var product, rate string
+	if err := pool.QueryRow(ctx, `INSERT INTO tenant_products (name, price, tenant_id, status) VALUES ('Tea', 5000, $1, 'active') RETURNING id::text`, tenantA).Scan(&product); err != nil {
+		t.Fatal(err)
+	}
+	if err := pool.QueryRow(ctx, `INSERT INTO payroll_commission_configs (tenant_id, name, slug, rate_per_cup) VALUES ($1, 'Rate', 'SELLER_500', 500) RETURNING id::text`, tenantA).Scan(&rate); err != nil {
+		t.Fatal(err)
+	}
+	exec(`DELETE FROM payroll_user_info WHERE user_id = $1 AND tenant_id = $2`, testkit.SellerA, tenantA)
+	exec(`INSERT INTO payroll_user_info (tenant_id, user_id, commission_config_id) VALUES ($1, $2, $3)`, tenantA, testkit.SellerA, rate)
+	claim := func(slug, source string, amount int, hours any) {
+		t.Helper()
+		exec(`WITH c AS (INSERT INTO payroll_claim_configs (tenant_id, name, slug, frequency, amount, claim_source, auto_threshold_hours)
+			VALUES ($1, $2, $2, 'daily', $3, $4, $5) RETURNING id)
+			INSERT INTO payroll_user_claim_assignments (tenant_id, user_id, claim_config_id) SELECT $1, $6, id FROM c`,
+			tenantA, slug, amount, source, hours, testkit.SellerA)
+	}
+	claim("meal", "auto", 10000, 0)
+	claim("long-shift", "auto", 20000, 8)
+	claim("transport", "auto_submit", 5000, nil)
+	claim("bonus", "auto_submit", 5000, 8)
+	claim("nothing", "auto", 0, 0)
+	claim("by-hand", "manual", 7000, nil)
+
+	n := 0
+	send := func(method, path, body string) (int, []byte) {
+		n++
+		resp := a.Send(t, method, "/tenants/tenant-a/stores/"+storeACentral+path, "seller", body,
+			[]string{fmt.Sprintf("Idempotency-Key: close-%04d", n)}, seller)
+		defer resp.Body.Close()
+		data, _ := io.ReadAll(resp.Body)
+		return resp.StatusCode, data
+	}
+	must := func(method, path, body string) {
+		t.Helper()
+		if s, b := send(method, path, body); s >= 300 {
+			t.Fatalf("%s %s: %d %s", method, path, s, b)
+		}
+	}
+	must(http.MethodPost, "/open", `{"openingBalance":10000}`)
+	var g contract.StoreGate
+	decode(t, a.Request(t, http.MethodGet, "/tenants/tenant-a/stores/"+storeACentral+"/gate", "seller", seller), &g)
+	day := "/days/" + g.DayID
+
+	must(http.MethodPost, "/orders", fmt.Sprintf(`{"items":[{"productId":%q,"quantity":3,"unitPrice":5000}]}`, product))
+	must(http.MethodPost, day+"/expenses", `{"type":"Ice","amount":2000}`)
+	if s, _ := send(http.MethodPost, day+"/expenses", `{"type":"Ice","amount":0}`); s != 400 {
+		t.Errorf("an expense of nothing: %d", s)
+	}
+	if s, _ := send(http.MethodPut, day+"/photos/closing:ice", `{"url":"https://elsewhere.example/x.webp"}`); s != 422 {
+		t.Errorf("a photo from elsewhere: %d", s)
+	}
+	photo := fmt.Sprintf(`https://x.supabase.co/storage/v1/object/public/daily-photos/%s/%s/a.webp`, tenantA, storeACentral)
+	must(http.MethodPut, day+"/photos/closing:cups", fmt.Sprintf(`{"url":%q,"quantity":{"value":40,"unit":"pcs"}}`, photo))
+	must(http.MethodPut, day+"/photos/closing:cups", fmt.Sprintf(`{"url":%q,"quantity":{"value":41,"unit":"pcs"}}`, photo))
+	var photos int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM store_daily_summary_photos WHERE daily_summary_id = $1`, g.DayID).Scan(&photos); err != nil || photos != 1 {
+		t.Errorf("a slot holds one photo: %d %v", photos, err)
+	}
+
+	// A running total gone wrong: the close counts again from the rows.
+	exec(`UPDATE store_daily_summaries SET total_sales = 1, expected_cash = 1 WHERE id = $1`, g.DayID)
+
+	key := "Idempotency-Key: close-the-day"
+	close := func() (int, []byte) {
+		resp := a.Send(t, http.MethodPost, "/tenants/tenant-a/stores/"+storeACentral+day+"/close", "seller", `{"actualCash":22000}`, []string{key}, seller)
+		defer resp.Body.Close()
+		data, _ := io.ReadAll(resp.Body)
+		return resp.StatusCode, data
+	}
+	if s, b := close(); s != 200 {
+		t.Fatalf("close: %d %s", s, b)
+	}
+	if s, _ := close(); s != 200 {
+		t.Errorf("the same close again answers the same: %d", s)
+	}
+	if s, _ := send(http.MethodPost, day+"/close", `{"actualCash":1}`); s != 409 {
+		t.Errorf("closing twice: %d", s)
+	}
+	if s, _ := send(http.MethodPost, day+"/expenses", `{"type":"Ice","amount":1}`); s != 409 {
+		t.Errorf("an expense after closing: %d", s)
+	}
+
+	var sales, orders, cups, expected, actual, variance int
+	var closedBy string
+	if err := pool.QueryRow(ctx, `SELECT total_sales, total_orders, total_cups, expected_cash, actual_cash, variance, closed_by::text
+		FROM store_daily_summaries WHERE id = $1 AND closed_at IS NOT NULL`, g.DayID).Scan(&sales, &orders, &cups, &expected, &actual, &variance, &closedBy); err != nil {
+		t.Fatal(err)
+	}
+	if sales != 15000 || orders != 1 || cups != 3 || expected != 23000 || actual != 22000 || variance != -1000 || closedBy != testkit.SellerA {
+		t.Errorf("the day: sales %d orders %d cups %d expected %d actual %d variance %d by %s", sales, orders, cups, expected, actual, variance, closedBy)
+	}
+	var active int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM store_sessions WHERE daily_summary_id = $1 AND status = 'active'`, g.DayID).Scan(&active); err != nil || active != 0 {
+		t.Errorf("sessions left active: %d %v", active, err)
+	}
+
+	var ccups, corders int
+	var total float64
+	var cstatus string
+	var stamped bool
+	if err := pool.QueryRow(ctx, `SELECT total_cups, total_orders, total_commission::float8, status, payout_id IS NOT NULL FROM payroll_commissions WHERE daily_summary_id = $1`, g.DayID).
+		Scan(&ccups, &corders, &total, &cstatus, &stamped); err != nil {
+		t.Fatal(err)
+	}
+	if ccups != 3 || corders != 1 || total != 1500 || cstatus != "pending" || !stamped {
+		t.Errorf("the commission: %d cups %d orders %v %s stamped %v", ccups, corders, total, cstatus, stamped)
+	}
+
+	rows, err := pool.Query(ctx, `SELECT cc.slug, cl.status, cl.payout_id IS NOT NULL FROM payroll_claims cl JOIN payroll_claim_configs cc ON cc.id = cl.claim_config_id WHERE cl.daily_summary_id = $1`, g.DayID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+	got := map[string]string{}
+	for rows.Next() {
+		var slug, status string
+		var ok bool
+		if err := rows.Scan(&slug, &status, &ok); err != nil {
+			t.Fatal(err)
+		}
+		if !ok {
+			t.Errorf("claim %s has no payout", slug)
+		}
+		got[slug] = status
+	}
+	want := map[string]string{"meal": "approved", "long-shift": "rejected", "transport": "pending"}
+	if len(got) != len(want) {
+		t.Errorf("claims: %v", got)
+	}
+	for k, v := range want {
+		if got[k] != v {
+			t.Errorf("claim %s: %q, want %q", k, got[k], v)
+		}
+	}
+
+	if g := func() contract.StoreGate {
+		var g contract.StoreGate
+		decode(t, a.Request(t, http.MethodGet, "/tenants/tenant-a/stores/"+storeACentral+"/gate", "seller", seller), &g)
+		return g
+	}(); g.Gate != "closed" {
+		t.Errorf("after closing: %+v", g)
+	}
+}

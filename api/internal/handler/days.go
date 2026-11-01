@@ -103,65 +103,7 @@ func registerDays(api huma.API, d Deps) {
 		if err != nil {
 			return nil, err
 		}
-		r, err := d.Queries.GetDay(ctx, store.GetDayParams{ID: id, TenantID: caller.TenantID})
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errDayNotFound
-		}
-		if err != nil {
-			return nil, err
-		}
-		ids := []pgtype.UUID{id}
-		var (
-			wg       sync.WaitGroup
-			expenses []store.ListDayExpensesRow
-			sellers  []store.ListDaySellersRow
-			photos   []store.ListDayPhotosRow
-			products []store.ListDayProductsRow
-			errs     [4]error
-		)
-		wg.Go(func() { expenses, errs[0] = d.Queries.ListDayExpenses(ctx, ids) })
-		wg.Go(func() { sellers, errs[1] = d.Queries.ListDaySellers(ctx, ids) })
-		wg.Go(func() { photos, errs[2] = d.Queries.ListDayPhotos(ctx, id) })
-		wg.Go(func() { products, errs[3] = d.Queries.ListDayProducts(ctx, id) })
-		wg.Wait()
-		if err := errors.Join(errs[:]...); err != nil {
-			return nil, err
-		}
-
-		out := &contract.DayOutput{}
-		b := &out.Body
-		b.Day = day(store.ListDaysRow{
-			ID: r.ID, StoreID: r.StoreID, StoreName: r.StoreName, Date: r.Date, OpeningBalance: r.OpeningBalance,
-			TotalSales: r.TotalSales, TotalOrders: r.TotalOrders, TotalCups: r.TotalCups, TotalExpenses: r.TotalExpenses,
-			ExpectedCash: r.ExpectedCash, ActualCash: r.ActualCash, Variance: r.Variance, Notes: r.Notes, ClosedAt: r.ClosedAt,
-		})
-		b.OpenedBy, b.ClosedBy, b.OpenedAt = r.OpenedBy.String, r.ClosedBy.String, utc(r.CreatedAt)
-		b.ExpenseItems = make([]contract.DayExpense, len(expenses))
-		for i, e := range expenses {
-			b.ExpenseItems[i] = dayExpense(e)
-		}
-		b.Sellers = make([]contract.DaySeller, len(sellers))
-		for i, s := range sellers {
-			b.Sellers[i] = contract.DaySeller{UserID: s.UserID.String(), Name: s.FullName, AvatarURL: s.AvatarUrl.String, Cups: s.Cups}
-		}
-		b.Products = make([]contract.DayProduct, len(products))
-		for i, p := range products {
-			b.Products[i] = contract.DayProduct{Name: p.Name, Quantity: p.Quantity, Revenue: p.Revenue}
-		}
-		urls := make([]string, len(photos))
-		for i, p := range photos {
-			urls[i] = p.Url
-		}
-		signed := signPhotos(ctx, d.Files, urls)
-		b.Photos = make([]contract.DayPhoto, len(photos))
-		for i, p := range photos {
-			b.Photos[i] = contract.DayPhoto{Type: p.Type, URL: signed[p.Url]}
-			var q contract.DayQuantity
-			if json.Unmarshal(p.Quantity, &q) == nil && q.Unit != "" {
-				b.Photos[i].Quantity = &q
-			}
-		}
-		return out, nil
+		return dayDetail(ctx, d, caller, id, nil)
 	})
 
 	route(api, huma.Operation{
@@ -235,6 +177,72 @@ func registerDays(api huma.API, d Deps) {
 		}
 		return out, nil
 	})
+}
+
+// dayDetail is one day in full; with onlyStore, only if it is that store's.
+func dayDetail(ctx context.Context, d Deps, caller auth.Caller, id pgtype.UUID, onlyStore *pgtype.UUID) (*contract.DayOutput, error) {
+	r, err := d.Queries.GetDay(ctx, store.GetDayParams{ID: id, TenantID: caller.TenantID})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, errDayNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	if onlyStore != nil && r.StoreID != *onlyStore {
+		return nil, errDayNotFound
+	}
+	ids := []pgtype.UUID{id}
+	var (
+		wg       sync.WaitGroup
+		expenses []store.ListDayExpensesRow
+		sellers  []store.ListDaySellersRow
+		photos   []store.ListDayPhotosRow
+		products []store.ListDayProductsRow
+		errs     [4]error
+	)
+	wg.Go(func() { expenses, errs[0] = d.Queries.ListDayExpenses(ctx, ids) })
+	wg.Go(func() { sellers, errs[1] = d.Queries.ListDaySellers(ctx, ids) })
+	wg.Go(func() { photos, errs[2] = d.Queries.ListDayPhotos(ctx, id) })
+	wg.Go(func() { products, errs[3] = d.Queries.ListDayProducts(ctx, id) })
+	wg.Wait()
+	if err := errors.Join(errs[:]...); err != nil {
+		return nil, err
+	}
+
+	out := &contract.DayOutput{}
+	b := &out.Body
+	b.Day = day(store.ListDaysRow{
+		ID: r.ID, StoreID: r.StoreID, StoreName: r.StoreName, Date: r.Date, OpeningBalance: r.OpeningBalance,
+		TotalSales: r.TotalSales, TotalOrders: r.TotalOrders, TotalCups: r.TotalCups, TotalExpenses: r.TotalExpenses,
+		ExpectedCash: r.ExpectedCash, ActualCash: r.ActualCash, Variance: r.Variance, Notes: r.Notes, ClosedAt: r.ClosedAt,
+	})
+	b.OpenedBy, b.ClosedBy, b.OpenedAt = r.OpenedBy.String, r.ClosedBy.String, utc(r.CreatedAt)
+	b.ExpenseItems = make([]contract.DayExpense, len(expenses))
+	for i, e := range expenses {
+		b.ExpenseItems[i] = dayExpense(e)
+	}
+	b.Sellers = make([]contract.DaySeller, len(sellers))
+	for i, s := range sellers {
+		b.Sellers[i] = contract.DaySeller{UserID: s.UserID.String(), Name: s.FullName, AvatarURL: s.AvatarUrl.String, Cups: s.Cups}
+	}
+	b.Products = make([]contract.DayProduct, len(products))
+	for i, p := range products {
+		b.Products[i] = contract.DayProduct{Name: p.Name, Quantity: p.Quantity, Revenue: p.Revenue}
+	}
+	urls := make([]string, len(photos))
+	for i, p := range photos {
+		urls[i] = p.Url
+	}
+	signed := signPhotos(ctx, d.Files, urls)
+	b.Photos = make([]contract.DayPhoto, len(photos))
+	for i, p := range photos {
+		b.Photos[i] = contract.DayPhoto{Type: p.Type, URL: signed[p.Url]}
+		var q contract.DayQuantity
+		if json.Unmarshal(p.Quantity, &q) == nil && q.Unit != "" {
+			b.Photos[i].Quantity = &q
+		}
+	}
+	return out, nil
 }
 
 func day(r store.ListDaysRow) contract.Day {

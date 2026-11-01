@@ -14,7 +14,7 @@ import { ALL, useDays, useSalesDays, useStoreId } from "./sales";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
-import { Sellers } from "./Sellers";
+import { Sellers } from "@tea-pos/shell/Sellers";
 import { Badge } from "@tea-pos/ui/Badge";
 
 type Day = components["schemas"]["Day"];

@@ -67,9 +67,12 @@ function useStoreWrite<V extends object>(
 }
 
 export const useOpenStore = () =>
-    useStoreWrite<{ openingBalance: number; cashBreakdown?: Record<string, number> }>(
-        (params, body, headers) =>
-            api.POST("/tenants/{tenant}/stores/{storeId}/open", { params, body, headers }),
+    useStoreWrite<{
+        openingBalance: number;
+        cashBreakdown?: Record<string, number>;
+        photoUrl?: string;
+    }>((params, body, headers) =>
+        api.POST("/tenants/{tenant}/stores/{storeId}/open", { params, body, headers }),
     );
 
 export const useResumeStore = () =>
@@ -86,4 +89,56 @@ export const useCreateOrder = () =>
     useStoreWrite<{ items: { productId: string; quantity: number; unitPrice: number }[] }>(
         (params, body, headers) =>
             api.POST("/tenants/{tenant}/stores/{storeId}/orders", { params, body, headers }),
+    );
+
+export type PhotoSlot =
+    "opening" | "closing:ice" | "closing:syrup" | "closing:bags" | "closing:cups" | "closing:tea";
+
+/** A day of this store in full; every phone on it follows the hub. */
+export function useStoreDay(dayId: string | undefined) {
+    const tenant = useSlug();
+    const storeId = useStoreId();
+    return $api.useQuery(
+        "get",
+        "/tenants/{tenant}/stores/{storeId}/days/{dayId}",
+        { params: { path: { tenant, storeId, dayId: dayId ?? "" } } },
+        {
+            enabled: !!tenant && !!storeId && !!dayId,
+            staleTime: STALE.QUICK,
+            meta: { live: ["day", "order"] },
+        },
+    );
+}
+
+export const useAddExpense = () =>
+    useStoreWrite<{ dayId: string; type: string; amount: number }>(
+        ({ path }, { dayId, ...body }, headers) =>
+            api.POST("/tenants/{tenant}/stores/{storeId}/days/{dayId}/expenses", {
+                params: { path: { ...path, dayId } },
+                body,
+                headers,
+            }),
+    );
+
+export const useSaveDayPhoto = () =>
+    useStoreWrite<{
+        dayId: string;
+        type: PhotoSlot;
+        url?: string;
+        quantity?: { value: number; unit: string };
+    }>(({ path }, { dayId, type, ...body }, headers) =>
+        api.PUT("/tenants/{tenant}/stores/{storeId}/days/{dayId}/photos/{type}", {
+            params: { path: { ...path, dayId, type } },
+            body,
+            headers,
+        }),
+    );
+
+export const useCloseDay = () =>
+    useStoreWrite<{ dayId: string; actualCash: number }>(({ path }, { dayId, ...body }, headers) =>
+        api.POST("/tenants/{tenant}/stores/{storeId}/days/{dayId}/close", {
+            params: { path: { ...path, dayId } },
+            body,
+            headers,
+        }),
     );

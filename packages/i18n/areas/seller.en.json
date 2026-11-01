@@ -77,7 +77,14 @@
         "cameraStep1": "Open your phone's Settings",
         "cameraStep2": "Go to Apps → your browser",
         "cameraStep3": "Tap Permissions → Camera → Allow",
-        "cameraStep4": "Come back and try again"
+        "cameraStep4": "Come back and try again",
+        "dayClosed": "Day closed successfully!",
+        "expenseTypes": {
+            "ice": "Ice",
+            "electricity": "Electricity",
+            "custom": "Custom"
+        },
+        "expenseCustomPlaceholder": "e.g. Maintenance, Transport..."
     },
     "cart": {
         "title": "Cart",

@@ -13,7 +13,7 @@ import { ChartNoAxesCombined } from "lucide-react";
 import { RangeBar, useRange } from "./range";
 import { RangePanel } from "./RangePanel";
 import { useDays, useLatestOrders, useScopeStores, useStoreId } from "./sales";
-import { Sellers } from "./Sellers";
+import { Sellers } from "@tea-pos/shell/Sellers";
 import { closedLine, OpenBadge } from "./StoreList";
 
 /**

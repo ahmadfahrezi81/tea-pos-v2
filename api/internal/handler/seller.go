@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"math/rand/v2"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -16,6 +18,7 @@ import (
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/domain"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/files"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/httpx"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/idem"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/realtime"
@@ -34,6 +37,7 @@ var (
 	errBadClaimCode   = httpx.New(http.StatusForbidden, "bad_claim_code", "That code is not right")
 	errNoSession      = httpx.New(http.StatusConflict, "no_session", "Nobody is selling at this store")
 	errProductChanged = httpx.New(http.StatusConflict, "product_changed", "A product or its price changed: check the cart")
+	errBadPhoto       = httpx.New(http.StatusUnprocessableEntity, "bad_photo", "That photo did not upload here: take it again")
 )
 
 // orderChanged and dayChanged: the seller's and backoffice's screens refetch.
@@ -190,6 +194,11 @@ func registerSeller(api huma.API, d Deps) {
 			if err := startSession(ctx, q, caller, s, day); err != nil {
 				return nil, err
 			}
+			if in.Body.PhotoURL != "" {
+				if err := saveDayPhoto(ctx, q, caller, s, day, "opening", in.Body.PhotoURL, nil); err != nil {
+					return nil, err
+				}
+			}
 			if err := logStoreActivity(ctx, q, caller, s, day, "store_opened", day, "store_daily_summaries",
 				map[string]any{"date": today.Format(time.DateOnly), "opening_balance": in.Body.OpeningBalance}); err != nil {
 				return nil, err
@@ -329,6 +338,202 @@ func registerSeller(api huma.API, d Deps) {
 			out.Body.ID, out.Body.Total = order.String(), int64(total)
 			return out, nil
 		})
+
+	route(api, op("getStoreDay", http.MethodGet, "/stores/{storeId}/days/{dayId}", "A day of a store the caller works at, in full"), sellerAccess,
+		func(ctx context.Context, in *contract.SellerDayInput) (*contract.DayOutput, error) {
+			caller, _ := auth.CallerFrom(ctx)
+			s, err := assignedStore(ctx, d.Queries, caller, in.StoreID)
+			if err != nil {
+				return nil, err
+			}
+			id, err := dayID(in.DayID)
+			if err != nil {
+				return nil, err
+			}
+			return dayDetail(ctx, d, caller, id, &s)
+		})
+
+	route(api, op("createExpense", http.MethodPost, "/stores/{storeId}/days/{dayId}/expenses", "Add an expense to the open day"), sellerWrite,
+		func(ctx context.Context, in *contract.CreateExpenseInput) (*contract.StoreGateOutput, error) {
+			caller, _ := auth.CallerFrom(ctx)
+			q := idem.Queries(ctx, d.Queries)
+			s, day, err := workingDay(ctx, q, caller, in.StoreID, in.DayID)
+			if err != nil {
+				return nil, err
+			}
+			expense, err := q.CreateExpense(ctx, store.CreateExpenseParams{
+				DailySummaryID: day.ID, StoreID: s, Type: in.Body.Type, Amount: in.Body.Amount, TenantID: caller.TenantID, UserID: caller.UserID,
+			})
+			if err != nil {
+				return nil, err
+			}
+			if err := q.AddExpenseToDay(ctx, store.AddExpenseToDayParams{Amount: in.Body.Amount, ID: day.ID, TenantID: caller.TenantID}); err != nil {
+				return nil, err
+			}
+			if err := logStoreActivity(ctx, q, caller, s, day.ID, "expense_created", expense, "store_expenses",
+				map[string]any{"amount": in.Body.Amount, "type": in.Body.Type}); err != nil {
+				return nil, err
+			}
+			return gateAfter(ctx, q, caller, s)
+		})
+
+	route(api, op("saveDayPhoto", http.MethodPut, "/stores/{storeId}/days/{dayId}/photos/{type}", "Save a day's photo in its slot, replacing the one there"), sellerWrite,
+		func(ctx context.Context, in *contract.SaveDayPhotoInput) (*struct{}, error) {
+			caller, _ := auth.CallerFrom(ctx)
+			q := idem.Queries(ctx, d.Queries)
+			s, day, err := workingDay(ctx, q, caller, in.StoreID, in.DayID)
+			if err != nil {
+				return nil, err
+			}
+			return nil, saveDayPhoto(ctx, q, caller, s, day.ID, in.Type, in.Body.URL, in.Body.Quantity)
+		})
+
+	route(api, op("closeStoreDay", http.MethodPost, "/stores/{storeId}/days/{dayId}/close", "Close a day: final totals, sessions ended, commissions, claims and payouts, together"), sellerWrite,
+		func(ctx context.Context, in *contract.CloseDayInput) (*contract.StoreGateOutput, error) {
+			caller, _ := auth.CallerFrom(ctx)
+			q := idem.Queries(ctx, d.Queries)
+			s, day, err := workingDay(ctx, q, caller, in.StoreID, in.DayID)
+			if err != nil {
+				return nil, err
+			}
+			totals, err := q.DayFinalTotals(ctx, store.DayFinalTotalsParams{ID: day.ID, TenantID: caller.TenantID})
+			if err != nil {
+				return nil, err
+			}
+			expected := day.OpeningBalance + totals.Sales - totals.Expenses
+			variance := in.Body.ActualCash - expected
+			if err := q.CloseStoreDay(ctx, store.CloseStoreDayParams{
+				ID: day.ID, TenantID: caller.TenantID, ClosedBy: caller.UserID,
+				Sales: totals.Sales, Orders: totals.Orders, Cups: totals.Cups, Expenses: numeric(totals.Expenses),
+				ExpectedCash: expected, ActualCash: pgtype.Int4{Int32: in.Body.ActualCash, Valid: true}, Variance: pgtype.Int4{Int32: variance, Valid: true},
+			}); err != nil {
+				return nil, err
+			}
+			if err := q.EndDaySessions(ctx, store.EndDaySessionsParams{DayID: day.ID, TenantID: caller.TenantID}); err != nil {
+				return nil, err
+			}
+			if err := payDay(ctx, q, caller, s, day); err != nil {
+				return nil, err
+			}
+			if err := logStoreActivity(ctx, q, caller, s, day.ID, "store_closed", day.ID, "store_daily_summaries",
+				map[string]any{"total_sales": totals.Sales, "variance": variance}); err != nil {
+				return nil, err
+			}
+			return gateAfter(ctx, q, caller, s)
+		})
+}
+
+func numeric(n int32) pgtype.Numeric {
+	return pgtype.Numeric{Int: big.NewInt(int64(n)), Valid: true}
+}
+
+// workingDay is the open day a write is about, locked: the caller works at the store, and if
+// someone is selling on that day, it is them. An old day left open has no such holder to wait for.
+func workingDay(ctx context.Context, q *store.Queries, caller auth.Caller, storeID, id string) (pgtype.UUID, store.LockStoreDayRow, error) {
+	var day store.LockStoreDayRow
+	s, err := assignedStore(ctx, q, caller, storeID)
+	if err != nil {
+		return s, day, err
+	}
+	dayUUID, err := dayID(id)
+	if err != nil {
+		return s, day, err
+	}
+	day, err = q.LockStoreDay(ctx, store.LockStoreDayParams{ID: dayUUID, StoreID: s, TenantID: caller.TenantID})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return s, day, errDayNotFound
+	}
+	if err != nil {
+		return s, day, err
+	}
+	if day.ClosedAt.Valid {
+		return s, day, errDayClosed
+	}
+	holder, err := q.DayHolder(ctx, store.DayHolderParams{DayID: day.ID, TenantID: caller.TenantID})
+	if err != nil {
+		return s, day, err
+	}
+	if holder != "" && holder != caller.UserID.String() {
+		return s, day, errSessionTaken
+	}
+	return s, day, nil
+}
+
+func saveDayPhoto(ctx context.Context, q *store.Queries, caller auth.Caller, s, day pgtype.UUID, kind, address string, quantity *contract.DayQuantity) error {
+	bucket := files.Purposes["daily_photo"].Bucket
+	if address != "" && !strings.HasPrefix(files.PathIn(bucket, address), caller.TenantID.String()+"/") {
+		return errBadPhoto
+	}
+	var amount []byte
+	if quantity != nil {
+		var err error
+		if amount, err = json.Marshal(quantity); err != nil {
+			return err
+		}
+	}
+	removed, err := q.DeleteDayPhoto(ctx, store.DeleteDayPhotoParams{DailySummaryID: day, TenantID: caller.TenantID, Type: kind})
+	if err != nil {
+		return err
+	}
+	event := "summary_photo_uploaded"
+	if address == "" {
+		// Only the quantity changed: the photo stays.
+		if len(removed) == 0 {
+			return errBadPhoto
+		}
+		address, event = removed[0].Url, "summary_photo_updated"
+	}
+	id, err := q.AddDayPhoto(ctx, store.AddDayPhotoParams{DailySummaryID: day, StoreID: s, TenantID: caller.TenantID, Type: kind, Url: address, Quantity: amount})
+	if err != nil {
+		return err
+	}
+	return logStoreActivity(ctx, q, caller, s, day, event, id, "store_daily_summary_photos",
+		map[string]any{"photo_url": address, "slot": kind, "quantity": quantity})
+}
+
+// payDay is what closing a day earns: each person's commission and automatic claims, and their
+// payout for the period. Inside the close: a day is never closed with its pay missing.
+func payDay(ctx context.Context, q *store.Queries, caller auth.Caller, s pgtype.UUID, day store.LockStoreDayRow) error {
+	commissions, err := q.CreateDayCommissions(ctx, store.CreateDayCommissionsParams{
+		TenantID: caller.TenantID, StoreID: s, DayID: day.ID, Date: day.Date, NonSellerSlug: domain.NonSellerSlug,
+	})
+	if err != nil {
+		return err
+	}
+	for _, c := range commissions {
+		if err := logStoreActivity(ctx, q, caller, s, day.ID, "payroll_commission_updated", c.ID, "payroll_commissions", map[string]any{
+			"user_id": c.UserID.String(), "total_cups": c.TotalCups, "total_orders": c.TotalOrders,
+			"rate_per_cup": c.RatePerCup, "total_commission": c.TotalCommission,
+		}); err != nil {
+			return err
+		}
+	}
+	claims, err := q.CreateDayAutoClaims(ctx, store.CreateDayAutoClaimsParams{TenantID: caller.TenantID, StoreID: s, DayID: day.ID, Date: day.Date})
+	if err != nil {
+		return err
+	}
+	for _, c := range claims {
+		if err := logStoreActivity(ctx, q, caller, s, day.ID, "claim_submitted", c.ID, "payroll_claims", map[string]any{
+			"claim_config_id": c.ClaimConfigID.String(), "amount": c.Amount, "date": day.Date.Time.Format(time.DateOnly),
+		}); err != nil {
+			return err
+		}
+	}
+	frequency, err := q.GetPayFrequency(ctx, caller.TenantID)
+	if err != nil {
+		return err
+	}
+	start, end, err := domain.PayWindow(day.Date.Time, frequency)
+	if err != nil {
+		return err
+	}
+	if err := q.EnsureDayPayouts(ctx, store.EnsureDayPayoutsParams{TenantID: caller.TenantID, StartDate: date(start), EndDate: date(end), DayID: day.ID}); err != nil {
+		return err
+	}
+	if err := q.StampDayCommissions(ctx, store.StampDayCommissionsParams{TenantID: caller.TenantID, StartDate: date(start), EndDate: date(end), DayID: day.ID}); err != nil {
+		return err
+	}
+	return q.StampDayClaims(ctx, store.StampDayClaimsParams{TenantID: caller.TenantID, StartDate: date(start), EndDate: date(end), DayID: day.ID})
 }
 
 func startSession(ctx context.Context, q *store.Queries, caller auth.Caller, s, day pgtype.UUID) error {

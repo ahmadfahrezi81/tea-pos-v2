@@ -603,6 +603,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{tenant}/stores/{storeId}/days/{dayId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A day of a store the caller works at, in full */
+        get: operations["getStoreDay"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/stores/{storeId}/days/{dayId}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close a day: final totals, sessions ended, commissions, claims and payouts, together */
+        post: operations["closeStoreDay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/stores/{storeId}/days/{dayId}/expenses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add an expense to the open day */
+        post: operations["createExpense"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/stores/{storeId}/days/{dayId}/photos/{type}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save a day's photo in its slot, replacing the one there */
+        put: operations["saveDayPhoto"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{tenant}/stores/{storeId}/gate": {
         parameters: {
             query?: never;
@@ -942,6 +1010,10 @@ export interface components {
         ClaimTypesOutputBody: {
             types: components["schemas"]["ClaimType"][];
         };
+        CloseDayInputBody: {
+            /** Format: int32 */
+            actualCash: number;
+        };
         CommissionType: {
             enabled: boolean;
             /** Format: uuid */
@@ -978,6 +1050,11 @@ export interface components {
             ratePerCup: number;
             /** @description Uppercase letters, digits and underscores */
             slug: string;
+        };
+        CreateExpenseInputBody: {
+            /** Format: int32 */
+            amount: number;
+            type: string;
         };
         CreateOrderInputBody: {
             items: components["schemas"]["Item"][];
@@ -1190,7 +1267,7 @@ export interface components {
              * @example day_already_closed
              * @enum {string}
              */
-            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_claim_code" | "bad_cursor" | "bad_level" | "bad_proof" | "bad_range" | "bad_request" | "blank_name" | "claim_not_found" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_closed" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "no_session" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_your_store" | "not_yourself" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_not_found" | "person_not_found" | "product_changed" | "proof_required" | "request_not_found" | "route_not_found" | "session_taken" | "staff_not_found" | "store_already_opened" | "store_not_found" | "store_not_open" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
+            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_claim_code" | "bad_cursor" | "bad_level" | "bad_photo" | "bad_proof" | "bad_range" | "bad_request" | "blank_name" | "claim_not_found" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_closed" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "no_session" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_your_store" | "not_yourself" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_not_found" | "person_not_found" | "product_changed" | "proof_required" | "request_not_found" | "route_not_found" | "session_taken" | "staff_not_found" | "store_already_opened" | "store_not_found" | "store_not_open" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
             details?: string[] | null;
             /** @example The day is already closed */
             message: string;
@@ -1307,6 +1384,8 @@ export interface components {
             };
             /** Format: int64 */
             openingBalance: number;
+            /** @description The opening photo's address from POST /files (purpose daily_photo) */
+            photoUrl?: string;
         };
         Order: {
             /** Format: date-time */
@@ -1633,6 +1712,11 @@ export interface components {
         SalesProductsOutputBody: {
             /** @description Most first */
             products: components["schemas"]["SalesProduct"][];
+        };
+        SaveDayPhotoInputBody: {
+            quantity?: components["schemas"]["DayQuantity"];
+            /** @description The address from POST /files (purpose daily_photo); empty keeps the photo and changes the quantity */
+            url?: string;
         };
         SetClaimEligibleInputBody: {
             /** @description Everyone who may claim it; the rest may not */
@@ -3195,6 +3279,149 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["StoresLiveOutputBody"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getStoreDay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                storeId: string;
+                dayId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DayDetail"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    closeStoreDay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                storeId: string;
+                dayId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseDayInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreGate"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createExpense: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                storeId: string;
+                dayId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateExpenseInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreGate"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    saveDayPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                storeId: string;
+                dayId: string;
+                type: "opening" | "closing:ice" | "closing:syrup" | "closing:bags" | "closing:cups" | "closing:tea";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDayPhotoInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

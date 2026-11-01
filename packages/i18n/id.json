@@ -271,7 +271,8 @@
         "proof_required": "Membayar butuh tangkapan layar transfer.",
         "bad_proof": "Tangkapan layar itu bukan bukti gaji usaha ini.",
         "request_not_found": "Permintaan itu sudah dijawab.",
-        "blank_name": "Nama tidak boleh kosong"
+        "blank_name": "Nama tidak boleh kosong",
+        "bad_photo": "Foto tidak terunggah dengan benar. Ambil lagi."
     },
     "store": {
         "week": "Week",
