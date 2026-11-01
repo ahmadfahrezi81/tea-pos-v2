@@ -24,6 +24,5 @@ jobs:
             actions: read
             contents: read
             pull-requests: write
-            statuses: write
         uses: ./.github/workflows/deploy-run.yml
         secrets: inherit
