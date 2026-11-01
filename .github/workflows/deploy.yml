@@ -293,6 +293,7 @@ jobs:
         needs: [plan, config, migrate, api]
         if: always() && needs.plan.result == 'success' && needs.plan.outputs.apps == 'true' && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
         permissions:
+            actions: read
             contents: read
             pull-requests: write
         uses: ./.github/workflows/pages.yml
