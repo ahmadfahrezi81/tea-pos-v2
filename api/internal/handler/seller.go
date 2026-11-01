@@ -37,6 +37,7 @@ var (
 	errBadClaimCode   = httpx.New(http.StatusForbidden, "bad_claim_code", "That code is not right")
 	errNoSession      = httpx.New(http.StatusConflict, "no_session", "Nobody is selling at this store")
 	errProductChanged = httpx.New(http.StatusConflict, "product_changed", "A product or its price changed: check the cart")
+	errOldDayOpen     = httpx.New(http.StatusConflict, "old_day_open", "An earlier day is still open: close it in Analytics first")
 	errBadPhoto       = httpx.New(http.StatusUnprocessableEntity, "bad_photo", "That photo did not upload here: take it again")
 )
 
@@ -516,10 +517,15 @@ func startSession(ctx context.Context, q *store.Queries, caller auth.Caller, s, 
 	_, err := q.CreateStoreSession(ctx, store.CreateStoreSessionParams{
 		TenantID: caller.TenantID, StoreID: s, DailySummaryID: day, UserID: caller.UserID, ClaimCode: claimCode(),
 	})
-	if errors.Is(err, pgx.ErrNoRows) {
-		return errSessionTaken
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return err
 	}
-	return err
+	// The store has a session: on this day someone is selling; on an earlier one, it was never closed.
+	current, err := q.GetActiveStoreSession(ctx, store.GetActiveStoreSessionParams{StoreID: s, TenantID: caller.TenantID})
+	if err == nil && current.DailySummaryID != day {
+		return errOldDayOpen
+	}
+	return errSessionTaken
 }
 
 // gateAfter tells the other phones and answers with the store as it now stands.

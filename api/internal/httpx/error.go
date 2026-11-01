@@ -4,6 +4,7 @@ package httpx
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"sort"
@@ -92,7 +93,7 @@ func build(ctx context.Context, status int, msg string, errs []error) *Error {
 		e.Code = "error"
 	}
 	if status >= 500 {
-		slog.ErrorContext(ctx, "unexpected error", "status", status, "errs", errs)
+		slog.ErrorContext(ctx, "unexpected error", "status", status, "message", msg, "err", errors.Join(errs...))
 		e.Message = "Something went wrong"
 		return e
 	}

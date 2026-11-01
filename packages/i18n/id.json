@@ -283,7 +283,8 @@
         "claim_done": "Klaim ini sudah kamu ajukan.",
         "period_closed": "Periode gaji ini sudah ditutup.",
         "no_work_that_day": "Kamu tidak bekerja hari itu.",
-        "bad_receipt": "Struk tidak terunggah dengan benar. Tambahkan lagi."
+        "bad_receipt": "Struk tidak terunggah dengan benar. Tambahkan lagi.",
+        "old_day_open": "Hari sebelumnya masih buka. Tutup dulu di Analitik."
     },
     "store": {
         "week": "Week",

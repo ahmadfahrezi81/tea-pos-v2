@@ -283,7 +283,8 @@
         "claim_done": "You have already submitted this claim.",
         "period_closed": "This pay period is already closed.",
         "no_work_that_day": "You did not work that day.",
-        "bad_receipt": "That receipt did not upload properly. Add it again."
+        "bad_receipt": "That receipt did not upload properly. Add it again.",
+        "old_day_open": "An earlier day is still open. Close it in Analytics first."
     },
     "store": {
         "week": "Week",

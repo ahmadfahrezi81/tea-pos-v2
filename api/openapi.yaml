@@ -805,6 +805,7 @@ components:
             - not_signed_in
             - not_your_store
             - not_yourself
+            - old_day_open
             - owner_kept
             - payout_not_due
             - payout_not_found

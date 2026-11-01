@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -322,5 +323,46 @@ func TestMyClaim(t *testing.T) {
 		if ty.ID == typeID && ty.Claimable {
 			t.Errorf("no room left this month: %+v", ty)
 		}
+	}
+}
+
+// TestOldDayOpen: an earlier day never closed stops today opening, says why, and leaves nothing
+// behind; closing the old day clears the way.
+func TestOldDayOpen(t *testing.T) {
+	pool := testkit.DB(t)
+	a := testkit.NewAPI(t, pool, "")
+	seller := testkit.Session(a.SignIn(t, testkit.SellerA, "seller"))
+	ctx := t.Context()
+	if _, err := pool.Exec(ctx, `INSERT INTO user_store_assignments (user_id, store_id) SELECT $1, $2
+		WHERE NOT EXISTS (SELECT 1 FROM user_store_assignments WHERE user_id = $1 AND store_id = $2)`, testkit.SellerA, storeACentral); err != nil {
+		t.Fatal(err)
+	}
+	var old string
+	if err := pool.QueryRow(ctx, `INSERT INTO store_daily_summaries (store_id, tenant_id, opened_by, date) VALUES ($1, $2, $3, CURRENT_DATE - 3) RETURNING id::text`,
+		storeACentral, tenantA, testkit.SellerA).Scan(&old); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `INSERT INTO store_sessions (tenant_id, store_id, daily_summary_id, user_id, claim_code) VALUES ($1, $2, $3, $4, '11')`,
+		tenantA, storeACentral, old, testkit.SellerA); err != nil {
+		t.Fatal(err)
+	}
+	send := func(key, path, body string) (int, string) {
+		resp := a.Send(t, http.MethodPost, "/tenants/tenant-a/stores/"+storeACentral+path, "seller", body, []string{"Idempotency-Key: " + key}, seller)
+		defer resp.Body.Close()
+		data, _ := io.ReadAll(resp.Body)
+		return resp.StatusCode, string(data)
+	}
+	if s, b := send("old-day-0001", "/open", `{"openingBalance":0}`); s != 409 || !strings.Contains(b, "old_day_open") {
+		t.Fatalf("open with an old day: %d %s", s, b)
+	}
+	var days int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM store_daily_summaries WHERE store_id = $1`, storeACentral).Scan(&days); err != nil || days != 1 {
+		t.Errorf("a refused open left a day: %d %v", days, err)
+	}
+	if s, b := send("old-day-0002", "/days/"+old+"/close", `{"actualCash":0}`); s != 200 {
+		t.Fatalf("close the old day: %d %s", s, b)
+	}
+	if s, b := send("old-day-0003", "/open", `{"openingBalance":0}`); s != 200 {
+		t.Errorf("open after: %d %s", s, b)
 	}
 }
