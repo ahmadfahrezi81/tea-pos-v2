@@ -1,0 +1,14 @@
+# Experiment only, never merged. Guarded, so it never runs the called job.
+name: exp-good
+on:
+    pull_request:
+        branches: [staging]
+permissions:
+    contents: read
+jobs:
+    run:
+        if: github.event_name != 'pull_request'
+        permissions:
+            actions: read
+            contents: read
+        uses: ./.github/workflows/exp-called.yml

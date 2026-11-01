@@ -1,0 +1,14 @@
+# Experiment only, never merged.
+name: exp-called
+on:
+    workflow_call:
+permissions:
+    contents: read
+jobs:
+    nested:
+        runs-on: ubuntu-latest
+        permissions:
+            actions: read
+            contents: read
+        steps:
+            - run: echo "should never run"
