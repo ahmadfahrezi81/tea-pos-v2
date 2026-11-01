@@ -9,7 +9,7 @@
 // On staging, a test user instead of Google (TEST_LOGIN_KEY from Infisical staging /app):
 //   infisical run --env=staging --path=/app -- pnpm bench --test-user admin@test-a.test <url>
 //
-// Options: --runs N (3), --reopen-only, --first-only, --chrome-start S (4.0).
+// Options: --runs N (3), --reopen-only, --first-only.
 // BENCH_REPORT=file also writes the results as Markdown (the release PR's comment);
 // BENCH_DEVICE names the machine in the log row (default "pnpm bench").
 import { spawn } from "node:child_process";
@@ -22,9 +22,6 @@ import puppeteer, { PredefinedNetworkConditions } from "puppeteer-core";
 const PROFILE = process.env.BENCH_PROFILE ?? join(homedir(), ".tea-pos-bench");
 const CHROME =
     process.env.CHROME_PATH ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-// The M11's open (5.5 s) minus our part (~1.5 s): Android starting Chrome. Added to the
-// report, not waited in the run, so runs still show whether a PR helped.
-const CHROME_START_DEFAULT = 4.0;
 
 const args = process.argv.slice(2);
 const flag = (name) => args.includes(name);
@@ -39,7 +36,6 @@ if (!url) {
 }
 const origin = new URL(url).origin;
 const runs = Number(option("--runs", 3));
-const chromeStart = Number(option("--chrome-start", CHROME_START_DEFAULT));
 
 const mac = process.platform === "darwin";
 const launch = (headless) =>
@@ -244,6 +240,12 @@ await page
     })
     .catch(() => {});
 await new Promise((r) => setTimeout(r, 2000));
+// A reopen is the worker's copy: until it is active, a reload measures the network instead.
+await page
+    .waitForFunction(() => navigator.serviceWorker.getRegistration().then((r) => !!r?.active), {
+        timeout: 60_000,
+    })
+    .catch(() => {});
 
 if (!flag("--first-only")) {
     const list = [];
@@ -295,9 +297,6 @@ const rows = {
     "/me": (m) => `${s(m.meStart)} → ${s(m.meEnd)}`,
     "main JS loaded": (m) => s(m.mainJs),
     "long tasks": (m) => msOf(m.longTasks),
-    // A slow phone also waits for Android to start Chrome: imagine it with this row.
-    [`slow phone ≈ app ready + ${chromeStart.toFixed(1)} s (Galaxy M11)`]: (m) =>
-        m.ready == null ? "–" : `${(chromeStart + m.ready / 1000).toFixed(2)} s`,
 };
 const table = {};
 for (const [label, cell] of Object.entries(rows)) {
@@ -319,24 +318,28 @@ const logRows = [
     .filter(([, m]) => m)
     .map(
         ([visit, m]) =>
-            `| ${when} WIB | \`${commit}\` (${app}) | ${device} | ${visit} | ${s(m.splash)} | ${s(m.ready)} | ${msOf(m.longTasks)} long tasks | median of ${runs}; /me ${s(m.meStart)} → ${s(m.meEnd)}; slow phone ≈ ${m.ready == null ? "–" : `${(chromeStart + m.ready / 1000).toFixed(2)} s`} |`,
+            `| ${when} WIB | \`${commit}\` (${app}) | ${device} | ${visit} | ${s(m.splash)} | ${s(m.ready)} | ${msOf(m.longTasks)} long tasks | median of ${runs}; /me ${s(m.meStart)} → ${s(m.meEnd)} |`,
     );
 console.log("\nBenchmark log rows:");
 for (const row of logRows) console.log(row);
 
 if (process.env.BENCH_REPORT) {
-    const columns = Object.keys(Object.values(table)[0]);
+    const name = app.includes("office") ? "Backoffice" : "Seller";
+    const line = (label, cell) =>
+        `| ${label} | ${[results.reopen, results.first].map((m) => (m ? cell(m) : "–")).join(" | ")} |`;
+    const wrong = mismatches.filter((m) => m.kind === "reopen").length;
     const md = [
-        `**${app}** at \`${commit}\`: 20× CPU, Slow 4G, cache disabled, median of ${runs}`,
+        `**${name}** at \`${commit}\``,
         "",
-        `| | ${columns.join(" | ")} |`,
-        `| --- | ${columns.map(() => "---").join(" | ")} |`,
-        ...Object.entries(table).map(
-            ([label, cells]) => `| ${label} | ${Object.values(cells).join(" | ")} |`,
-        ),
+        `Measured on ${device}: Chrome throttled to 20× CPU and Slow 4G, median of ${runs}.`,
         "",
-        fieldCheck,
+        "| | Reopen | First visit |",
+        "| --- | --- | --- |",
+        line("Splash", (m) => s(m.splash)),
+        line("App ready", (m) => s(m.ready)),
+        line("Long tasks", (m) => msOf(m.longTasks)),
         "",
+        ...(wrong ? [`⚠️ ${wrong} of ${runs} reopens did not use the saved copy.`, ""] : []),
         "<details><summary>Benchmark log rows</summary>",
         "",
         "```",

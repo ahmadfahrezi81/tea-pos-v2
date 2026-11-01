@@ -1,6 +1,6 @@
 # Task 055 — A CI/CD pipeline that fails well
 
-**Status: step 1 merged (#83, #85), steps 1, 2 and 4 merged (#83, #85, #86, #88, #89), deploys that catch up in review; no Slack (owner: the GitHub app notifies them), owner took the recommendations 2026-11-01. No PR without showing the owner the analysis first; each step is checked locally as far as it can be, and says what could not be.**
+**Status: step 1 merged (#83, #85), steps 1, 2 and 4 merged (#83, #85, #86, #88, #89), deploys that catch up merged (#91), the lighter PR in review; no Slack (owner: the GitHub app notifies them), owner took the recommendations 2026-11-01. No PR without showing the owner the analysis first; each step is checked locally as far as it can be, and says what could not be.**
 
 RFC: https://app.notion.com/p/40b95a715405812bb245f7604c06d8ae (the problems, the mock-ups, the issues found, the decisions).
 

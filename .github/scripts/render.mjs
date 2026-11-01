@@ -193,6 +193,7 @@ export function prComment({ needs, previews = {}, reasons = {}, log = "", toMain
         "deploy-check": refused ? [`[GitHub's exact error](${refused})`] : [],
     };
     const lines = [];
+    if (toMain) lines.push("Tests and builds passed on each PR into staging.", "");
     // What failed first.
     for (const [id, label] of [...failed, ...ran.filter((c) => !isFailed(c))]) {
         lines.push(`- ${isFailed([id]) ? "❌" : "✅"} ${label}`);
@@ -206,14 +207,7 @@ export function prComment({ needs, previews = {}, reasons = {}, log = "", toMain
     lines.push("");
     if (out("migrations", "list")) lines.push(out("migrations", "list"), "");
     if (out("benchmark", "body")) {
-        lines.push(
-            "<details><summary>Speed</summary>",
-            "",
-            out("benchmark", "body"),
-            "",
-            "</details>",
-            "",
-        );
+        lines.push("#### Speed", "", out("benchmark", "body"), "");
     }
     if (failed.length) {
         lines.push(
