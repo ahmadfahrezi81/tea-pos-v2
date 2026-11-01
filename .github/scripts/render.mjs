@@ -15,14 +15,41 @@ const minutes = (ms) => {
     return m < 1 ? "under a minute" : `${m} min`;
 };
 
+const DEPLOYING = ["config", "migrate", "api", "apps"];
+const VERIFYING = ["e2e", "check"];
+
 function headline(s, state) {
-    if (state === "success") return s.doneText ?? s.title;
+    const failed = s.steps.filter((x) => x.state === "failure");
+    if (state === "success") {
+        const changed = s.steps.some((x) => DEPLOYING.includes(x.id) && x.state === "success");
+        return s.steps.length && !changed && s.idleText ? s.idleText : (s.doneText ?? s.title);
+    }
     if (!s.steps.length) return s.title;
     if (state === "failure") {
-        const failed = s.steps.filter((x) => x.state === "failure").map((x) => x.name);
-        return failed.length ? `${s.title} failed: ${failed.join(", ")}` : `${s.title} failed`;
+        const names = failed.map((x) => x.name).join(", ");
+        // It deployed: what failed is the check on it, and that is a different problem.
+        return failed.every((x) => VERIFYING.includes(x.id))
+            ? `${s.doneText}, but ${names} failed`
+            : `${s.title} failed: ${names}`;
     }
-    return `${s.title}: running`;
+    const waiting = s.steps.some((x) => x.state === "waiting" && x.detail);
+    return `${s.title}: ${waiting && !s.steps.some((x) => x.state === "running") ? "waiting" : "running"}`;
+}
+
+/** What a failed deploy leaves live, and what to do about it. */
+function nextStep(s) {
+    const failed = s.steps.find((x) => x.state === "failure")?.id;
+    const where = s.title.split(" ").pop();
+    const fix = "Fix it in a new PR; the next merge deploys again.";
+    const texts = {
+        config: `Nothing was deployed: ${where} is unchanged. ${fix}`,
+        migrate: `The code on ${where} is unchanged, but check the database: a migration may have partly run. ${fix}`,
+        api: `The API on ${where} is still the previous version, and the apps were not touched. ${fix}`,
+        apps: `The new API is live on ${where}, but the apps are still the previous version. ${fix}`,
+        e2e: `This commit is live on ${where} and failed its tests. Do not release it. ${fix}`,
+        check: `This release is live on ${where} and not answering correctly. Check it now; to roll back, see docs/runbook.md.`,
+    };
+    return texts[failed] ? `**Next:** ${texts[failed]}` : null;
 }
 
 /** Facts as sub-bullets; a table or code stays a block of its own (null). */
@@ -49,11 +76,15 @@ export function render(s, marker, now = Date.now()) {
     // What failed first; steps with nothing to do say nothing.
     const order = { failure: 0, running: 1, success: 2, waiting: 3 };
     const shown = s.steps
-        .filter((x) => x.state !== "skipped" && (x.state !== "waiting" || state === "failure"))
+        .filter(
+            (x) =>
+                x.state !== "skipped" && (x.state !== "waiting" || x.detail || state === "failure"),
+        )
         .sort((a, b) => order[a.state] - order[b.state]);
     const blocks = [];
     for (const x of shown) {
-        const facts = x.state === "waiting" ? ["did not run"] : (subItems(x.detail) ?? []);
+        const facts =
+            x.state === "waiting" && !x.detail ? ["did not run"] : (subItems(x.detail) ?? []);
         const section = subItems(s.sections?.[x.id]);
         const subs = section ?? [];
         if (section === null) blocks.push(s.sections[x.id]);
@@ -67,8 +98,11 @@ export function render(s, marker, now = Date.now()) {
         if (state === "failure") lines.push(block, "");
         else lines.push("<details><summary>Details</summary>", "", block, "", "</details>", "");
     }
-    const last = s.sections?._;
-    if (last) lines.push(state === "failure" && last.startsWith("**Next") ? next(last) : last, "");
+    if (s.sections?._) lines.push(s.sections._, "");
+    if (state === "failure" && s.steps.length) {
+        const step = nextStep(s);
+        if (step) lines.push(next(step), "");
+    }
     return lines.join("\n");
 }
 
@@ -135,10 +169,10 @@ export function e2eSummary(log) {
 }
 
 const CHECKS = [
-    ["checks", "Checks"],
-    ["integration", "Tests"],
-    ["docker", "Docker"],
-    ["dependency-review", "Security"],
+    ["checks", "Format, lint, types, unit tests, build"],
+    ["integration", "Integration tests"],
+    ["docker", "Docker images"],
+    ["dependency-review", "No risky packages"],
     ["e2e", "E2E"],
     ["previews", "Previews"],
     ["migrations", "Migrations"],
@@ -160,7 +194,7 @@ export function prComment({ needs, previews = {}, reasons = {}, log = "", toMain
     }
     const bundle = out("checks", "bundle");
     if (bundle) {
-        lines.push("- 📦 Bundle");
+        lines.push("- 📦 First screen size");
         for (const app of bundle.split(" · ")) lines.push(`  - ${app}`);
     }
     lines.push("");
@@ -189,7 +223,7 @@ export function prComment({ needs, previews = {}, reasons = {}, log = "", toMain
     return {
         state: failed.length ? "failure" : "success",
         title: failed.length
-            ? `Not ready: ${failed.map(([, label]) => label).join(", ")}`
+            ? `Not ready: ${failed.map(([, label]) => label).join(", ")} failed`
             : toMain
               ? "Ready to release"
               : "Ready to merge",

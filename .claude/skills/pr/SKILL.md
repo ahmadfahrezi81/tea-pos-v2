@@ -13,6 +13,11 @@ Every change reaches `staging` by PR. Releases to `main` use the `release` skill
 - `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` pass locally
 - The task file's status line is current
 
+## A PR that changes CI
+
+- Say what it cannot prove until it merges: a PR runs `pr.yml` from its own files, but `deploy.yml` only after the merge
+- A failed deploy: read GitHub's exact error first, never rerun blindly, and show the owner the analysis before opening a fix
+
 ## The PR
 
 - **Base: `staging`.** Never `main`

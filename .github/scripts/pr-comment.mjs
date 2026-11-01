@@ -22,7 +22,9 @@ if (Object.values(needs).some((n) => n.result === "failure")) {
             const id = job.name.split(" ")[0];
             const tests = e2eSummary(job.full);
             const failing = tests.detail.includes("failed");
-            reasons[id] = failing ? tests.body.split("\n") : [`Failed at: ${job.step}`];
+            reasons[id] = failing
+                ? tests.body.split("\n")
+                : [`Failed at: ${job.step.replace(/^Run /, "")}`];
         }
     } catch (e) {
         log = `Could not read the run: ${e.message}`;

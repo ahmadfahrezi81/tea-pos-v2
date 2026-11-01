@@ -60,6 +60,7 @@ if (env.REPORT_TITLE) s.title = env.REPORT_TITLE;
 // A new push updates the comment it already has, so it names the new commit.
 if (env.REPORT_COMMIT) s.commit = env.REPORT_COMMIT;
 if (env.REPORT_DONE_TEXT) s.doneText = env.REPORT_DONE_TEXT;
+if (env.REPORT_IDLE_TEXT) s.idleText = env.REPORT_IDLE_TEXT;
 if (env.REPORT_OVERALL) s.state = env.REPORT_OVERALL;
 const step = s.steps.find((x) => x.id === env.REPORT_STEP);
 if (step) {
