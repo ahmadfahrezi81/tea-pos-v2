@@ -7,6 +7,10 @@ name: deploy-run
 
 on:
     workflow_call:
+        inputs:
+            everything:
+                type: boolean
+                default: false
 
 permissions:
     contents: read
@@ -16,6 +20,7 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 5
         permissions:
+            actions: read
             contents: read
             pull-requests: write
         outputs:
@@ -27,38 +32,15 @@ jobs:
             apps: ${{ steps.plan.outputs.apps }}
             version: ${{ steps.plan.outputs.version }}
         steps:
+            # All of history: the last deploy that passed may be many commits back.
             - uses: actions/checkout@v7
               with:
-                  fetch-depth: 2
+                  fetch-depth: 0
             - id: plan
               env:
                   GH_TOKEN: ${{ github.token }}
-              run: |
-                  if [ "$GITHUB_REF_NAME" = main ]; then env=production; else env=staging; fi
-                  # The PR this commit came from: a squash into staging, or the release into main.
-                  pr=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq ".[] | select(.base.ref == \"$GITHUB_REF_NAME\") | .number" | head -1 || true)
-                  # The release's version is its PR's title (release-source checks it); staging has none.
-                  version=staging
-                  if [ "$env" = production ]; then
-                      title=$(gh pr view "$pr" --repo "$GITHUB_REPOSITORY" --json title --jq .title 2>/dev/null || true)
-                      version=${title#release: }
-                      [[ "$version" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9]+$ ]] || version=unknown
-                  fi
-                  # What this merge changed: against the branch's previous commit (first parent).
-                  changed=$(git diff --name-only HEAD^1 HEAD)
-                  has() { if grep -qE "$1" <<< "$changed"; then echo true; else echo false; fi; }
-                  services=""
-                  [ "$(has '^(api/|Dockerfile$)')" = true ] && services="api realtime worker"
-                  [ "$env" = production ] && [ "$(has '^ops/backup/')" = true ] && services="$services backup"
-                  {
-                      echo "env=$env"
-                      echo "pr=$pr"
-                      echo "version=$version"
-                      echo "config=$(has '^\.railway/')"
-                      echo "migrations=$(has '^supabase/migrations/')"
-                      echo "services=$(echo "$services" | xargs)"
-                      echo "apps=$(has '^(apps/|packages/|api/openapi\.yaml$|pnpm-lock\.yaml$)')"
-                  } | tee -a "$GITHUB_OUTPUT"
+                  PLAN_EVERYTHING: ${{ inputs.everything }}
+              run: bash .github/scripts/deploy-plan.sh | tee -a "$GITHUB_OUTPUT"
             - uses: ./.github/actions/report
               with:
                   section: deploy-${{ steps.plan.outputs.env }}
@@ -347,9 +329,14 @@ jobs:
             - id: run
               run: |
                   set -o pipefail
-                  # The API runs the newest commit that changed it: this one, or an earlier one when
-                  # this merge changed only the apps or docs (the API was not redeployed).
-                  E2E_COMMIT=$(git log -1 --format=%H -- api Dockerfile)
+                  # A deploy with no API change leaves the API on an older commit: fine only if its
+                  # code is this commit's. Anything else must fail, so expect this commit then.
+                  running=$(curl -fsS https://api-staging-c60d.up.railway.app/health | jq -r .commit || true)
+                  if [ -n "$running" ] && git diff --quiet "$running" "$GITHUB_SHA" -- api Dockerfile 2>/dev/null; then
+                      E2E_COMMIT=$running
+                  else
+                      E2E_COMMIT=$GITHUB_SHA
+                  fi
                   export E2E_COMMIT
                   cd api && go test -tags e2e -count=1 -v ./tests/e2e/ 2>&1 | tee ../e2e.log
             - if: always()
@@ -438,7 +425,7 @@ jobs:
             pull-requests: write
         steps:
             - uses: actions/checkout@v7
-            # A new comment, not only the live one: editing a comment notifies nobody.
+            # A new comment that tags the owner, not only the live one: editing a comment notifies nobody.
             - id: why
               env:
                   GH_TOKEN: ${{ github.token }}
@@ -450,7 +437,10 @@ jobs:
                   title: Deploy to ${{ needs.plan.outputs.env }} failed
                   commit: ${{ github.sha }}
                   overall: failure
-                  body: ${{ steps.why.outputs.body }}
+                  body: |
+                      @${{ github.repository_owner }} this deploy failed.
+
+                      ${{ steps.why.outputs.body }}
             - if: needs.apps.result == 'failure'
               uses: ./.github/actions/report
               with:
@@ -494,4 +484,7 @@ jobs:
                   title: Deploy failed before it started
                   commit: ${{ github.sha }}
                   overall: failure
-                  body: ${{ steps.why.outputs.body }}
+                  body: |
+                      @${{ github.repository_owner }} this deploy failed.
+
+                      ${{ steps.why.outputs.body }}
