@@ -172,6 +172,7 @@ const CHECKS = [
     ["checks", "Format, lint, types, unit tests, build"],
     ["integration", "Integration and E2E tests"],
     ["docker", "Docker images"],
+    ["deploy-check", "Deploy check"],
     ["dependency-review", "No risky packages"],
     ["e2e", "E2E"],
     ["previews", "Previews"],
@@ -185,7 +186,12 @@ export function prComment({ needs, previews = {}, reasons = {}, log = "", toMain
     const failed = ran.filter(isFailed);
     const out = (id, key) => needs[id]?.outputs?.[key];
     const links = Object.entries(previews).map(([app, url]) => `[${app}](${url})`);
-    const subs = { e2e: out("e2e", "detail") ? [out("e2e", "detail")] : [], previews: links };
+    const refused = out("deploy-check", "url");
+    const subs = {
+        e2e: out("e2e", "detail") ? [out("e2e", "detail")] : [],
+        previews: links,
+        "deploy-check": refused ? [`[GitHub's exact error](${refused})`] : [],
+    };
     const lines = [];
     // What failed first.
     for (const [id, label] of [...failed, ...ran.filter((c) => !isFailed(c))]) {
