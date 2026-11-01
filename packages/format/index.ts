@@ -169,3 +169,18 @@ export function formatCalendarDay(
     // Noon in the store's zone is that day whatever the phone's own zone.
     return dateFormat(locale, DAY_STYLES[style]).format(new Date(`${date}T12:00:00+07:00`));
 }
+
+/** ISO week number of a `2026-10-12` date. */
+export function isoWeek(date: string): number {
+    const d = new Date(`${date}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const yearStart = Date.UTC(d.getUTCFullYear(), 0, 1);
+    return Math.ceil(((d.getTime() - yearStart) / 86_400_000 + 1) / 7);
+}
+
+/** `Week 41` or `Week 41 · Week 43`. */
+export function weeks(start: string, end: string, word: string): string {
+    const a = isoWeek(start);
+    const b = isoWeek(end);
+    return a === b ? `${word} ${a}` : `${word} ${a} · ${word} ${b}`;
+}

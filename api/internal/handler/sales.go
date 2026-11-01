@@ -18,6 +18,10 @@ import (
 // storeAccess is the Store tab's: anyone with a backoffice level in the tenant, guests included.
 var storeAccess = auth.App("backoffice", auth.Guest)
 
+// dayReads are a store's days and orders, for both apps: a level in the tenant, and storeScope or
+// ownDay keep the seller app to the stores the caller works at.
+var dayReads = auth.SignedIn.InTenant()
+
 // maxDays bounds a range: a year and a bit, for the monthly chart.
 const maxDays = 400
 
@@ -100,7 +104,7 @@ func registerSales(api huma.API, d Deps) {
 		Path:        "/tenants/{tenant}/sales/days",
 		Summary:     "Sales, orders and cups per day, over one store or several",
 		Tags:        []string{"store"},
-	}, storeAccess, func(ctx context.Context, in *contract.SalesDaysInput) (*contract.SalesDaysOutput, error) {
+	}, dayReads, func(ctx context.Context, in *contract.SalesDaysInput) (*contract.SalesDaysOutput, error) {
 		tenant, ids, from, to, err := rangeScope(ctx, d.Queries, in)
 		if err != nil {
 			return nil, err
@@ -126,7 +130,7 @@ func registerSales(api huma.API, d Deps) {
 		Path:        "/tenants/{tenant}/sales/products",
 		Summary:     "Cups per product over one store or several",
 		Tags:        []string{"store"},
-	}, storeAccess, func(ctx context.Context, in *contract.RangeInput) (*contract.SalesProductsOutput, error) {
+	}, dayReads, func(ctx context.Context, in *contract.RangeInput) (*contract.SalesProductsOutput, error) {
 		tenant, ids, _, _, err := rangeScope(ctx, d.Queries, in)
 		if err != nil {
 			return nil, err
@@ -151,7 +155,7 @@ func registerSales(api huma.API, d Deps) {
 		Path:        "/tenants/{tenant}/tea-waste",
 		Summary:     "Litres of tea left at closing per day, over one store or several",
 		Tags:        []string{"store"},
-	}, storeAccess, func(ctx context.Context, in *contract.RangeInput) (*contract.TeaWasteOutput, error) {
+	}, dayReads, func(ctx context.Context, in *contract.RangeInput) (*contract.TeaWasteOutput, error) {
 		tenant, ids, from, to, err := rangeScope(ctx, d.Queries, in)
 		if err != nil {
 			return nil, err
@@ -182,7 +186,12 @@ func rangeScope(ctx context.Context, q *store.Queries, in *contract.RangeInput) 
 
 // storeScope is the stores a Store screen adds up: the ones named, each the tenant's, or all.
 func storeScope(ctx context.Context, q *store.Queries, tenantID pgtype.UUID, named []string) ([]pgtype.UUID, error) {
+	caller, _ := auth.CallerFrom(ctx)
+	seller := caller.App == "seller"
 	if len(named) == 0 {
+		if seller {
+			return nil, errNotYourStore
+		}
 		return q.TenantStoreIDs(ctx, tenantID)
 	}
 	ids := make([]pgtype.UUID, len(named))
@@ -197,6 +206,15 @@ func storeScope(ctx context.Context, q *store.Queries, tenantID pgtype.UUID, nam
 	}
 	if int(n) != len(uniq(named)) {
 		return nil, errStoreNotFound
+	}
+	if seller {
+		mine, err := q.CountAssignedStores(ctx, store.CountAssignedStoresParams{UserID: caller.UserID, TenantID: tenantID, Ids: ids})
+		if err != nil {
+			return nil, err
+		}
+		if int(mine) != len(uniq(named)) {
+			return nil, errNotYourStore
+		}
 	}
 	return ids, nil
 }

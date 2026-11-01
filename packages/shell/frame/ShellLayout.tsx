@@ -33,7 +33,7 @@ export interface AppTab {
 function ShellLayout({ tabs }: { tabs: AppTab[] }) {
     // Ready once /me is known (saved on the phone or answered) and the shell has painted under the splash.
     const me = useMe();
-    useMeSync(me.data);
+    useMeSync(me.data, me.isFetchedAfterMount);
     const painted = useHasPainted();
     const ready = painted && (me.data !== undefined || me.isError);
     useEffect(() => {

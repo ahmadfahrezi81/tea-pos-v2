@@ -18,3 +18,27 @@ jobs:
             - uses: actions/dependency-review-action@v5
               with:
                   fail-on-severity: high
+
+    comment:
+        needs: dependency-review
+        if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        permissions:
+            actions: read
+            contents: read
+            pull-requests: write
+        steps:
+            - uses: actions/checkout@v7
+            - id: why
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: node .github/scripts/failures.mjs
+            - uses: ./.github/actions/report
+              with:
+                  section: security
+                  title: Security
+                  commit: ${{ github.event.pull_request.head.sha }}
+                  overall: ${{ needs.dependency-review.result == 'failure' && 'failure' || 'success' }}
+                  done-text: No high-severity package added
+                  body: ${{ steps.why.outputs.body || 'Dependency review passed.' }}

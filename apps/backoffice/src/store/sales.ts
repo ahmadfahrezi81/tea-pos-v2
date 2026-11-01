@@ -43,6 +43,16 @@ export function useSalesDays(from: string, to: string) {
 }
 
 /** The picked stores' days in a range, newest first, with expenses and who worked. */
+export function useDay(id: string) {
+    const tenant = useSlug();
+    return $api.useQuery(
+        "get",
+        "/tenants/{tenant}/days/{id}",
+        { params: { path: { tenant, id } } },
+        { enabled: !!tenant && !!id, staleTime: STALE.COLD },
+    );
+}
+
 export function useDays(from: string, to: string, enabled = true) {
     const scope = useStoreScope();
     return $api.useQuery(
@@ -55,37 +65,6 @@ export function useDays(from: string, to: string, enabled = true) {
             },
         },
         { enabled: !!scope && enabled, staleTime: STALE.COOL },
-    );
-}
-
-/** One day's detail; its photo addresses last ten minutes, so it is fetched again after five. */
-export function useDay(id: string) {
-    const tenant = useSlug();
-    return $api.useQuery(
-        "get",
-        "/tenants/{tenant}/days/{id}",
-        { params: { path: { tenant, id } } },
-        { enabled: !!tenant && !!id, staleTime: STALE.COLD },
-    );
-}
-
-export function useDayActivity(id: string) {
-    const tenant = useSlug();
-    return $api.useQuery(
-        "get",
-        "/tenants/{tenant}/days/{id}/activity",
-        { params: { path: { tenant, id } } },
-        { enabled: !!tenant, staleTime: STALE.COLD },
-    );
-}
-
-export function useDaySessions(id: string) {
-    const tenant = useSlug();
-    return $api.useQuery(
-        "get",
-        "/tenants/{tenant}/days/{id}/sessions",
-        { params: { path: { tenant, id } } },
-        { enabled: !!tenant, staleTime: STALE.COOL },
     );
 }
 

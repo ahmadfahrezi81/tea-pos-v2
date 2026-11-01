@@ -1,15 +1,17 @@
-import type { components } from "@tea-pos/api-client";
+import { $api, type components } from "@tea-pos/api-client";
+import { STALE } from "@tea-pos/api-client/query";
 import { formatCalendarDay, formatDateTime, formatMoney } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
+import { Badge } from "@tea-pos/ui/Badge";
+import { ImagePreview } from "@tea-pos/ui/ImagePreview";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 import { ImageOff } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
+import { DaySessions } from "./DayActivity";
+import { useSlug } from "../session/tenant";
 import { Sellers } from "./Sellers";
-import { useDay } from "./sales";
-import { ImagePreview } from "@tea-pos/ui/ImagePreview";
-import { Badge } from "@tea-pos/ui/Badge";
-import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 
 type Photo = components["schemas"]["DayPhoto"];
 
@@ -22,11 +24,16 @@ const CLOSING = [
     "closing:tea",
 ] as const;
 
-/** One store's day, as the old seller app's Details: cash, expenses, who worked, notes, photos, products. */
+/** A day from the address: the screen both apps open from their day's menu. */
 export function DayDetail({ id }: { id: string }) {
     const t = useT();
-    const locale = useLocale();
-    const { data: day, error } = useDay(id);
+    const tenant = useSlug();
+    const { data: day, error } = $api.useQuery(
+        "get",
+        "/tenants/{tenant}/days/{id}",
+        { params: { path: { tenant, id } } },
+        { enabled: !!tenant && !!id, staleTime: STALE.COLD },
+    );
     if (error)
         return (
             <p className="bg-white rounded-2xl p-4 text-sm text-gray-600">
@@ -41,7 +48,25 @@ export function DayDetail({ id }: { id: string }) {
                 ))}
             </div>
         );
+    return <DayView day={day} />;
+}
 
+/**
+ * One store's day, as the old seller app's Details: cash, expenses, who worked, notes, photos,
+ * products. Both apps show it. With `counting` (closing the day), the cash count comes first,
+ * the expenses before the sums; `children` go at the foot.
+ */
+export function DayView({
+    day,
+    counting,
+    children,
+}: {
+    day: components["schemas"]["DayDetail"];
+    counting?: ReactNode;
+    children?: ReactNode;
+}) {
+    const t = useT();
+    const locale = useLocale();
     const row = (label: string, value: string) => (
         <div className="flex justify-between gap-3">
             <span className="text-gray-500">{label}</span>
@@ -51,6 +76,23 @@ export function DayDetail({ id }: { id: string }) {
     const opening = day.photos.find((p) => p.type === "opening");
     const closing = CLOSING.map((type) => day.photos.find((p) => p.type === type)).filter(
         (p): p is Photo => !!p,
+    );
+
+    const expenses = day.expenseItems.length > 0 && (
+        <Section title={t("daily.expenses")}>
+            <div className="bg-red-100 p-2 rounded-xl space-y-1">
+                {day.expenseItems.map((e) => (
+                    <div key={e.id} className="flex justify-between text-sm">
+                        <span className="text-red-800">{e.type}</span>
+                        <span className="font-bold text-red-800">-{formatMoney(e.amount)}</span>
+                    </div>
+                ))}
+                <div className="border-t border-red-300 pt-1 flex justify-between text-sm font-semibold text-red-800">
+                    <span>{t("analytics.total")}</span>
+                    <span>-{formatMoney(day.expenses)}</span>
+                </div>
+            </div>
+        </Section>
     );
 
     return (
@@ -72,6 +114,9 @@ export function DayDetail({ id }: { id: string }) {
                     {day.closedAt && row(t("daily.closedAt"), formatDateTime(day.closedAt, locale))}
                 </div>
             </div>
+
+            {counting}
+            {counting && expenses}
 
             <div className="bg-white rounded-2xl p-3 space-y-2">
                 <h4 className="text-sm font-semibold text-gray-800">{t("daily.cashSummary")}</h4>
@@ -135,28 +180,17 @@ export function DayDetail({ id }: { id: string }) {
                 )}
             </div>
 
-            {day.expenseItems.length > 0 && (
-                <Section title={t("daily.expenses")}>
-                    <div className="bg-red-100 p-2 rounded-xl space-y-1">
-                        {day.expenseItems.map((e) => (
-                            <div key={e.id} className="flex justify-between text-sm">
-                                <span className="text-red-800">{e.type}</span>
-                                <span className="font-bold text-red-800">
-                                    -{formatMoney(e.amount)}
-                                </span>
-                            </div>
-                        ))}
-                        <div className="border-t border-red-300 pt-1 flex justify-between text-sm font-semibold text-red-800">
-                            <span>{t("analytics.total")}</span>
-                            <span>-{formatMoney(day.expenses)}</span>
-                        </div>
-                    </div>
-                </Section>
-            )}
+            {!counting && expenses}
 
             {day.sellers.length > 0 && (
                 <Section title={t("daily.whoWorked")}>
                     <Sellers sellers={day.sellers} />
+                </Section>
+            )}
+
+            {!counting && (
+                <Section title={t("analytics.sessions")}>
+                    <DaySessions id={day.id} />
                 </Section>
             )}
 
@@ -210,6 +244,7 @@ export function DayDetail({ id }: { id: string }) {
                     </div>
                 )}
             </Section>
+            {children}
         </div>
     );
 }

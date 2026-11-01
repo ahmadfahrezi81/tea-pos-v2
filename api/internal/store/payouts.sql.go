@@ -257,6 +257,7 @@ LEFT JOIN LATERAL (
     FROM payroll_claims WHERE payout_id = p.id
 ) cl ON true
 WHERE p.tenant_id = $1 AND p.start_date <= $2::date AND p.end_date >= $3::date
+    AND ($4::uuid IS NULL OR p.user_id = $4)
 ORDER BY p.start_date DESC, u.full_name
 `
 
@@ -264,6 +265,7 @@ type ListPayoutsParams struct {
 	TenantID pgtype.UUID
 	ToDate   pgtype.Date
 	FromDate pgtype.Date
+	OnlyUser pgtype.UUID
 }
 
 type ListPayoutsRow struct {
@@ -288,7 +290,12 @@ type ListPayoutsRow struct {
 // Payouts overlapping the range (a period across two months is in both), each with its person
 // and its totals summed from its approved rows, as the old app's list sums them.
 func (q *Queries) ListPayouts(ctx context.Context, arg ListPayoutsParams) ([]ListPayoutsRow, error) {
-	rows, err := q.db.Query(ctx, listPayouts, arg.TenantID, arg.ToDate, arg.FromDate)
+	rows, err := q.db.Query(ctx, listPayouts,
+		arg.TenantID,
+		arg.ToDate,
+		arg.FromDate,
+		arg.OnlyUser,
+	)
 	if err != nil {
 		return nil, err
 	}

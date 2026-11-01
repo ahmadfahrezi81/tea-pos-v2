@@ -53,7 +53,6 @@ import { Route as ShellTenantPaySettingsClaimTypesIdEditRouteImport } from './ro
 import { Route as ShellTenantPaySettingsCommissionTypesIdEditRouteImport } from './routes/_shell/$tenant/pay/settings/commission-types/$id/edit'
 import { Route as ShellTenantStoreStoreIdAnalyticsDaysDayIdIndexRouteImport } from './routes/_shell/$tenant/store/$storeId/analytics/days/$dayId/index'
 import { Route as ShellTenantStoreStoreIdAnalyticsDaysDayIdActivityRouteImport } from './routes/_shell/$tenant/store/$storeId/analytics/days/$dayId/activity'
-import { Route as ShellTenantStoreStoreIdAnalyticsDaysDayIdSessionsRouteImport } from './routes/_shell/$tenant/store/$storeId/analytics/days/$dayId/sessions'
 
 const ShellRoute = ShellRouteImport.update({
   id: '/_shell',
@@ -302,12 +301,6 @@ const ShellTenantStoreStoreIdAnalyticsDaysDayIdActivityRoute =
     path: '/store/$storeId/analytics/days/$dayId/activity',
     getParentRoute: () => ShellTenantRoute,
   } as any)
-const ShellTenantStoreStoreIdAnalyticsDaysDayIdSessionsRoute =
-  ShellTenantStoreStoreIdAnalyticsDaysDayIdSessionsRouteImport.update({
-    id: '/store/$storeId/analytics/days/$dayId/sessions',
-    path: '/store/$storeId/analytics/days/$dayId/sessions',
-    getParentRoute: () => ShellTenantRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof ShellIndexRoute
@@ -352,7 +345,6 @@ export interface FileRoutesByFullPath {
   '/$tenant/pay/settings/claim-types/$id/edit': typeof ShellTenantPaySettingsClaimTypesIdEditRoute
   '/$tenant/pay/settings/commission-types/$id/edit': typeof ShellTenantPaySettingsCommissionTypesIdEditRoute
   '/$tenant/store/$storeId/analytics/days/$dayId/activity': typeof ShellTenantStoreStoreIdAnalyticsDaysDayIdActivityRoute
-  '/$tenant/store/$storeId/analytics/days/$dayId/sessions': typeof ShellTenantStoreStoreIdAnalyticsDaysDayIdSessionsRoute
   '/$tenant/store/$storeId/analytics/days/$dayId/': typeof ShellTenantStoreStoreIdAnalyticsDaysDayIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -397,7 +389,6 @@ export interface FileRoutesByTo {
   '/$tenant/pay/settings/claim-types/$id/edit': typeof ShellTenantPaySettingsClaimTypesIdEditRoute
   '/$tenant/pay/settings/commission-types/$id/edit': typeof ShellTenantPaySettingsCommissionTypesIdEditRoute
   '/$tenant/store/$storeId/analytics/days/$dayId/activity': typeof ShellTenantStoreStoreIdAnalyticsDaysDayIdActivityRoute
-  '/$tenant/store/$storeId/analytics/days/$dayId/sessions': typeof ShellTenantStoreStoreIdAnalyticsDaysDayIdSessionsRoute
   '/$tenant/store/$storeId/analytics/days/$dayId': typeof ShellTenantStoreStoreIdAnalyticsDaysDayIdIndexRoute
 }
 export interface FileRoutesById {
@@ -445,7 +436,6 @@ export interface FileRoutesById {
   '/_shell/$tenant/pay/settings/claim-types/$id/edit': typeof ShellTenantPaySettingsClaimTypesIdEditRoute
   '/_shell/$tenant/pay/settings/commission-types/$id/edit': typeof ShellTenantPaySettingsCommissionTypesIdEditRoute
   '/_shell/$tenant/store/$storeId/analytics/days/$dayId/activity': typeof ShellTenantStoreStoreIdAnalyticsDaysDayIdActivityRoute
-  '/_shell/$tenant/store/$storeId/analytics/days/$dayId/sessions': typeof ShellTenantStoreStoreIdAnalyticsDaysDayIdSessionsRoute
   '/_shell/$tenant/store/$storeId/analytics/days/$dayId/': typeof ShellTenantStoreStoreIdAnalyticsDaysDayIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -493,7 +483,6 @@ export interface FileRouteTypes {
     | '/$tenant/pay/settings/claim-types/$id/edit'
     | '/$tenant/pay/settings/commission-types/$id/edit'
     | '/$tenant/store/$storeId/analytics/days/$dayId/activity'
-    | '/$tenant/store/$storeId/analytics/days/$dayId/sessions'
     | '/$tenant/store/$storeId/analytics/days/$dayId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -538,7 +527,6 @@ export interface FileRouteTypes {
     | '/$tenant/pay/settings/claim-types/$id/edit'
     | '/$tenant/pay/settings/commission-types/$id/edit'
     | '/$tenant/store/$storeId/analytics/days/$dayId/activity'
-    | '/$tenant/store/$storeId/analytics/days/$dayId/sessions'
     | '/$tenant/store/$storeId/analytics/days/$dayId'
   id:
     | '__root__'
@@ -585,7 +573,6 @@ export interface FileRouteTypes {
     | '/_shell/$tenant/pay/settings/claim-types/$id/edit'
     | '/_shell/$tenant/pay/settings/commission-types/$id/edit'
     | '/_shell/$tenant/store/$storeId/analytics/days/$dayId/activity'
-    | '/_shell/$tenant/store/$storeId/analytics/days/$dayId/sessions'
     | '/_shell/$tenant/store/$storeId/analytics/days/$dayId/'
   fileRoutesById: FileRoutesById
 }
@@ -904,13 +891,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellTenantStoreStoreIdAnalyticsDaysDayIdActivityRouteImport
       parentRoute: typeof ShellTenantRoute
     }
-    '/_shell/$tenant/store/$storeId/analytics/days/$dayId/sessions': {
-      id: '/_shell/$tenant/store/$storeId/analytics/days/$dayId/sessions'
-      path: '/store/$storeId/analytics/days/$dayId/sessions'
-      fullPath: '/$tenant/store/$storeId/analytics/days/$dayId/sessions'
-      preLoaderRoute: typeof ShellTenantStoreStoreIdAnalyticsDaysDayIdSessionsRouteImport
-      parentRoute: typeof ShellTenantRoute
-    }
   }
 }
 
@@ -954,7 +934,6 @@ interface ShellTenantRouteChildren {
   ShellTenantPaySettingsClaimTypesIdEditRoute: typeof ShellTenantPaySettingsClaimTypesIdEditRoute
   ShellTenantPaySettingsCommissionTypesIdEditRoute: typeof ShellTenantPaySettingsCommissionTypesIdEditRoute
   ShellTenantStoreStoreIdAnalyticsDaysDayIdActivityRoute: typeof ShellTenantStoreStoreIdAnalyticsDaysDayIdActivityRoute
-  ShellTenantStoreStoreIdAnalyticsDaysDayIdSessionsRoute: typeof ShellTenantStoreStoreIdAnalyticsDaysDayIdSessionsRoute
   ShellTenantStoreStoreIdAnalyticsDaysDayIdIndexRoute: typeof ShellTenantStoreStoreIdAnalyticsDaysDayIdIndexRoute
 }
 
@@ -1009,8 +988,6 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
     ShellTenantPaySettingsCommissionTypesIdEditRoute,
   ShellTenantStoreStoreIdAnalyticsDaysDayIdActivityRoute:
     ShellTenantStoreStoreIdAnalyticsDaysDayIdActivityRoute,
-  ShellTenantStoreStoreIdAnalyticsDaysDayIdSessionsRoute:
-    ShellTenantStoreStoreIdAnalyticsDaysDayIdSessionsRoute,
   ShellTenantStoreStoreIdAnalyticsDaysDayIdIndexRoute:
     ShellTenantStoreStoreIdAnalyticsDaysDayIdIndexRoute,
 }

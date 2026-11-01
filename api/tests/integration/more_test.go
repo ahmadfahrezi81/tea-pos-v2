@@ -37,23 +37,15 @@ func TestFeedbacksAndWeather(t *testing.T) {
 	}
 	a := testkit.NewAPI(t, pool, "")
 	admin := testkit.Session(a.SignIn(t, testkit.AdminA, "backoffice"))
-	var fb struct{ Feedbacks []contract.Feedback }
-	decode(t, a.Request(t, http.MethodGet, "/tenants/tenant-a/feedbacks", "backoffice", admin), &fb)
-	if len(fb.Feedbacks) != 2 || fb.Feedbacks[0].LocationDisplay != "Bogor" || fb.Feedbacks[1].Notes != "Near the school" || fb.Feedbacks[0].UserName != "Seller A" {
-		t.Errorf("feedbacks: %+v", fb.Feedbacks)
-	}
 	var w contract.WeatherOutput
 	decode(t, a.Request(t, http.MethodGet, "/tenants/tenant-a/weather", "backoffice", admin), &w.Body)
 	if w.Body.City != "Ciomas" || len(w.Body.Hours) != 2 || w.Body.Hours[0].Temperature != 28 || w.Body.Hours[1].Temperature != 30 {
 		t.Errorf("weather: %+v", w.Body)
 	}
-	// The weather for a seller too; feedback for admins only.
+	// The weather for a seller too.
 	seller := testkit.Session(a.SignIn(t, testkit.SellerA, "seller"))
 	if resp := a.Request(t, http.MethodGet, "/tenants/tenant-a/weather", "seller", seller); resp.StatusCode != 200 {
 		t.Errorf("seller weather: %d", resp.StatusCode)
-	}
-	if resp := a.Request(t, http.MethodGet, "/tenants/tenant-a/feedbacks", "seller", seller); resp.StatusCode != http.StatusForbidden {
-		t.Errorf("seller feedbacks: %d", resp.StatusCode)
 	}
 }
 

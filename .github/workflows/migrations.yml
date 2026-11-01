@@ -27,7 +27,11 @@ jobs:
               env:
                   DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
               run: |
-                  out=$(supabase db push --dry-run --db-url "$DATABASE_URL" 2>&1)
+                  if ! out=$(supabase db push --dry-run --db-url "$DATABASE_URL" 2>&1); then
+                      echo "$out"
+                      { echo "body<<EOF"; echo "The dry run failed:"; echo; echo '~~~~'; tail -30 <<< "$out"; echo '~~~~'; echo EOF; } >> "$GITHUB_OUTPUT"
+                      exit 1
+                  fi
                   echo "$out"
                   # Only the migration names; the CLI's update notice and progress lines are noise here.
                   # shellcheck disable=SC2016 # the backticks are Markdown, not a command
@@ -37,11 +41,12 @@ jobs:
                       if [ -n "$list" ]; then echo "Merging runs these on the staging database, before its API deploys:"; echo; echo "$list"; else echo "None to run: the staging database is up to date."; fi
                       echo EOF
                   } >> "$GITHUB_OUTPUT"
-            - uses: ./.github/actions/report
+            - if: always()
+              uses: ./.github/actions/report
               with:
                   section: migrations
                   title: Migrations
                   commit: ${{ github.event.pull_request.head.sha }}
-                  overall: success
+                  overall: ${{ steps.plan.outcome == 'success' && 'success' || 'failure' }}
                   done-text: Dry run on staging
                   body: ${{ steps.plan.outputs.body }}

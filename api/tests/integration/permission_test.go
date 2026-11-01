@@ -51,7 +51,7 @@ func TestPermission_EveryRoute(t *testing.T) {
 				t.Errorf("%s without a session: status %d, want 401", name, resp.StatusCode)
 			}
 			// A route for one app refuses the other app's sessions; one for admins refuses a guest.
-			if access.App != "" {
+			if access.App == "backoffice" {
 				if resp := api.Request(t, method, url, "seller", testkit.Session(admin)); resp.StatusCode != http.StatusForbidden {
 					t.Errorf("%s from the seller app: status %d, want 403", name, resp.StatusCode)
 				}
@@ -59,6 +59,11 @@ func TestPermission_EveryRoute(t *testing.T) {
 					if resp := api.Request(t, method, url, "backoffice", testkit.Session(guest)); resp.StatusCode != http.StatusForbidden {
 						t.Errorf("%s as a backoffice guest: status %d, want 403", name, resp.StatusCode)
 					}
+				}
+			}
+			if access.App == "seller" {
+				if resp := api.Request(t, method, url, "backoffice", testkit.Session(admin)); resp.StatusCode != http.StatusForbidden {
+					t.Errorf("%s from the backoffice: status %d, want 403", name, resp.StatusCode)
 				}
 			}
 			// Every write in the backoffice is for its admins.

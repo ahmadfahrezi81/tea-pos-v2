@@ -27,6 +27,7 @@ LEFT JOIN LATERAL (
     FROM payroll_claims WHERE payout_id = p.id
 ) cl ON true
 WHERE p.tenant_id = @tenant_id AND p.start_date <= @to_date::date AND p.end_date >= @from_date::date
+    AND (sqlc.narg(only_user)::uuid IS NULL OR p.user_id = sqlc.narg(only_user))
 ORDER BY p.start_date DESC, u.full_name;
 
 -- name: GetPayout :one

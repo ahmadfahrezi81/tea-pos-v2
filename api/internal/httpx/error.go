@@ -4,6 +4,7 @@ package httpx
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"sort"
@@ -92,7 +93,13 @@ func build(ctx context.Context, status int, msg string, errs []error) *Error {
 		e.Code = "error"
 	}
 	if status >= 500 {
-		slog.ErrorContext(ctx, "unexpected error", "status", status, "errs", errs)
+		joined := errors.Join(errs...)
+		// A request the phone gave up on (a reload) is no failure of ours.
+		if errors.Is(joined, context.Canceled) {
+			slog.InfoContext(ctx, "cancelled", "err", joined)
+		} else {
+			slog.ErrorContext(ctx, "unexpected error", "status", status, "message", msg, "err", joined)
+		}
 		e.Message = "Something went wrong"
 		return e
 	}

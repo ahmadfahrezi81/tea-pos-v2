@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"slices"
 	"sync"
 	"time"
 
@@ -37,7 +38,7 @@ func registerDays(api huma.API, d Deps) {
 		Path:        "/tenants/{tenant}/days",
 		Summary:     "A range of the stores' days, with expenses and who worked",
 		Tags:        []string{"store"},
-	}, storeAccess, func(ctx context.Context, in *contract.DaysInput) (*contract.DaysOutput, error) {
+	}, dayReads, func(ctx context.Context, in *contract.DaysInput) (*contract.DaysOutput, error) {
 		caller, _ := auth.CallerFrom(ctx)
 		from, to, err := dateRange(in.From, in.To)
 		if err != nil {
@@ -97,71 +98,12 @@ func registerDays(api huma.API, d Deps) {
 		Path:        "/tenants/{tenant}/days/{id}",
 		Summary:     "One store's day: cash, expenses, who worked, photos, products",
 		Tags:        []string{"store"},
-	}, storeAccess, func(ctx context.Context, in *contract.DayInput) (*contract.DayOutput, error) {
-		caller, _ := auth.CallerFrom(ctx)
-		id, err := dayID(in.ID)
+	}, dayReads, func(ctx context.Context, in *contract.DayInput) (*contract.DayOutput, error) {
+		caller, id, err := ownDay(ctx, d.Queries, in.ID)
 		if err != nil {
 			return nil, err
 		}
-		r, err := d.Queries.GetDay(ctx, store.GetDayParams{ID: id, TenantID: caller.TenantID})
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errDayNotFound
-		}
-		if err != nil {
-			return nil, err
-		}
-		ids := []pgtype.UUID{id}
-		var (
-			wg       sync.WaitGroup
-			expenses []store.ListDayExpensesRow
-			sellers  []store.ListDaySellersRow
-			photos   []store.ListDayPhotosRow
-			products []store.ListDayProductsRow
-			errs     [4]error
-		)
-		wg.Go(func() { expenses, errs[0] = d.Queries.ListDayExpenses(ctx, ids) })
-		wg.Go(func() { sellers, errs[1] = d.Queries.ListDaySellers(ctx, ids) })
-		wg.Go(func() { photos, errs[2] = d.Queries.ListDayPhotos(ctx, id) })
-		wg.Go(func() { products, errs[3] = d.Queries.ListDayProducts(ctx, id) })
-		wg.Wait()
-		if err := errors.Join(errs[:]...); err != nil {
-			return nil, err
-		}
-
-		out := &contract.DayOutput{}
-		b := &out.Body
-		b.Day = day(store.ListDaysRow{
-			ID: r.ID, StoreID: r.StoreID, StoreName: r.StoreName, Date: r.Date, OpeningBalance: r.OpeningBalance,
-			TotalSales: r.TotalSales, TotalOrders: r.TotalOrders, TotalCups: r.TotalCups, TotalExpenses: r.TotalExpenses,
-			ExpectedCash: r.ExpectedCash, ActualCash: r.ActualCash, Variance: r.Variance, Notes: r.Notes, ClosedAt: r.ClosedAt,
-		})
-		b.OpenedBy, b.ClosedBy, b.OpenedAt = r.OpenedBy.String, r.ClosedBy.String, utc(r.CreatedAt)
-		b.ExpenseItems = make([]contract.DayExpense, len(expenses))
-		for i, e := range expenses {
-			b.ExpenseItems[i] = dayExpense(e)
-		}
-		b.Sellers = make([]contract.DaySeller, len(sellers))
-		for i, s := range sellers {
-			b.Sellers[i] = contract.DaySeller{UserID: s.UserID.String(), Name: s.FullName, AvatarURL: s.AvatarUrl.String, Cups: s.Cups}
-		}
-		b.Products = make([]contract.DayProduct, len(products))
-		for i, p := range products {
-			b.Products[i] = contract.DayProduct{Name: p.Name, Quantity: p.Quantity, Revenue: p.Revenue}
-		}
-		urls := make([]string, len(photos))
-		for i, p := range photos {
-			urls[i] = p.Url
-		}
-		signed := signPhotos(ctx, d.Files, urls)
-		b.Photos = make([]contract.DayPhoto, len(photos))
-		for i, p := range photos {
-			b.Photos[i] = contract.DayPhoto{Type: p.Type, URL: signed[p.Url]}
-			var q contract.DayQuantity
-			if json.Unmarshal(p.Quantity, &q) == nil && q.Unit != "" {
-				b.Photos[i].Quantity = &q
-			}
-		}
-		return out, nil
+		return dayDetail(ctx, d, caller, id)
 	})
 
 	route(api, huma.Operation{
@@ -170,12 +112,18 @@ func registerDays(api huma.API, d Deps) {
 		Path:        "/tenants/{tenant}/days/{id}/activity",
 		Summary:     "What happened during a store's day, oldest first",
 		Tags:        []string{"store"},
-	}, storeAccess, func(ctx context.Context, in *contract.DayInput) (*contract.DayActivityOutput, error) {
+	}, dayReads, func(ctx context.Context, in *contract.DayActivityInput) (*contract.DayActivityOutput, error) {
 		caller, id, err := ownDay(ctx, d.Queries, in.ID)
 		if err != nil {
 			return nil, err
 		}
-		rows, err := d.Queries.ListDayActivity(ctx, store.ListDayActivityParams{SummaryID: id, TenantID: caller.TenantID, Types: dayEvents})
+		events := dayEvents
+		if in.Big {
+			events = slices.DeleteFunc(slices.Clone(dayEvents), func(e string) bool {
+				return e == "order_created" || e == "summary_photo_uploaded"
+			})
+		}
+		rows, err := d.Queries.ListDayActivity(ctx, store.ListDayActivityParams{SummaryID: id, TenantID: caller.TenantID, Types: events})
 		if err != nil {
 			return nil, err
 		}
@@ -209,7 +157,7 @@ func registerDays(api huma.API, d Deps) {
 		Path:        "/tenants/{tenant}/days/{id}/sessions",
 		Summary:     "Who held a store's day, and the handovers",
 		Tags:        []string{"store"},
-	}, storeAccess, func(ctx context.Context, in *contract.DayInput) (*contract.DaySessionsOutput, error) {
+	}, dayReads, func(ctx context.Context, in *contract.DayInput) (*contract.DaySessionsOutput, error) {
 		caller, id, err := ownDay(ctx, d.Queries, in.ID)
 		if err != nil {
 			return nil, err
@@ -235,6 +183,69 @@ func registerDays(api huma.API, d Deps) {
 		}
 		return out, nil
 	})
+}
+
+// dayDetail is one day in full.
+func dayDetail(ctx context.Context, d Deps, caller auth.Caller, id pgtype.UUID) (*contract.DayOutput, error) {
+	r, err := d.Queries.GetDay(ctx, store.GetDayParams{ID: id, TenantID: caller.TenantID})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, errDayNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	ids := []pgtype.UUID{id}
+	var (
+		wg       sync.WaitGroup
+		expenses []store.ListDayExpensesRow
+		sellers  []store.ListDaySellersRow
+		photos   []store.ListDayPhotosRow
+		products []store.ListDayProductsRow
+		errs     [4]error
+	)
+	wg.Go(func() { expenses, errs[0] = d.Queries.ListDayExpenses(ctx, ids) })
+	wg.Go(func() { sellers, errs[1] = d.Queries.ListDaySellers(ctx, ids) })
+	wg.Go(func() { photos, errs[2] = d.Queries.ListDayPhotos(ctx, id) })
+	wg.Go(func() { products, errs[3] = d.Queries.ListDayProducts(ctx, id) })
+	wg.Wait()
+	if err := errors.Join(errs[:]...); err != nil {
+		return nil, err
+	}
+
+	out := &contract.DayOutput{}
+	b := &out.Body
+	b.Day = day(store.ListDaysRow{
+		ID: r.ID, StoreID: r.StoreID, StoreName: r.StoreName, Date: r.Date, OpeningBalance: r.OpeningBalance,
+		TotalSales: r.TotalSales, TotalOrders: r.TotalOrders, TotalCups: r.TotalCups, TotalExpenses: r.TotalExpenses,
+		ExpectedCash: r.ExpectedCash, ActualCash: r.ActualCash, Variance: r.Variance, Notes: r.Notes, ClosedAt: r.ClosedAt,
+	})
+	b.OpenedBy, b.ClosedBy, b.OpenedAt = r.OpenedBy.String, r.ClosedBy.String, utc(r.CreatedAt)
+	b.ExpenseItems = make([]contract.DayExpense, len(expenses))
+	for i, e := range expenses {
+		b.ExpenseItems[i] = dayExpense(e)
+	}
+	b.Sellers = make([]contract.DaySeller, len(sellers))
+	for i, s := range sellers {
+		b.Sellers[i] = contract.DaySeller{UserID: s.UserID.String(), Name: s.FullName, AvatarURL: s.AvatarUrl.String, Cups: s.Cups}
+	}
+	b.Products = make([]contract.DayProduct, len(products))
+	for i, p := range products {
+		b.Products[i] = contract.DayProduct{Name: p.Name, Quantity: p.Quantity, Revenue: p.Revenue}
+	}
+	urls := make([]string, len(photos))
+	for i, p := range photos {
+		urls[i] = p.Url
+	}
+	signed := signPhotos(ctx, d.Files, urls)
+	b.Photos = make([]contract.DayPhoto, len(photos))
+	for i, p := range photos {
+		b.Photos[i] = contract.DayPhoto{Type: p.Type, URL: signed[p.Url]}
+		var q contract.DayQuantity
+		if json.Unmarshal(p.Quantity, &q) == nil && q.Unit != "" {
+			b.Photos[i].Quantity = &q
+		}
+	}
+	return out, nil
 }
 
 func day(r store.ListDaysRow) contract.Day {
@@ -275,14 +286,20 @@ func dayID(s string) (pgtype.UUID, error) {
 	return id, nil
 }
 
-// ownDay is the caller and the day, when the day is the caller's tenant's.
+// ownDay is the caller and the day, when the day is the caller's tenant's and, from the seller
+// app, of a store they work at.
 func ownDay(ctx context.Context, q *store.Queries, s string) (auth.Caller, pgtype.UUID, error) {
 	caller, _ := auth.CallerFrom(ctx)
 	id, err := dayID(s)
 	if err != nil {
 		return caller, id, err
 	}
-	ok, err := q.DayInTenant(ctx, store.DayInTenantParams{ID: id, TenantID: caller.TenantID})
+	var ok bool
+	if caller.App == "seller" {
+		ok, err = q.DayAssigned(ctx, store.DayAssignedParams{ID: id, TenantID: caller.TenantID, UserID: caller.UserID})
+	} else {
+		ok, err = q.DayInTenant(ctx, store.DayInTenantParams{ID: id, TenantID: caller.TenantID})
+	}
 	if err == nil && !ok {
 		err = errDayNotFound
 	}

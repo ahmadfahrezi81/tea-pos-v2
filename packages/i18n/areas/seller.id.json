@@ -77,7 +77,28 @@
         "cameraStep1": "Buka Pengaturan di ponsel Anda",
         "cameraStep2": "Buka Aplikasi → browser Anda",
         "cameraStep3": "Ketuk Izin → Kamera → Izinkan",
-        "cameraStep4": "Kembali dan coba lagi"
+        "cameraStep4": "Kembali dan coba lagi",
+        "dayClosed": "Hari berhasil ditutup!",
+        "expenseTypes": {
+            "ice": "Es",
+            "electricity": "Listrik",
+            "custom": "Lainnya"
+        },
+        "expenseCustomPlaceholder": "mis. Perbaikan, Transportasi...",
+        "glance": {
+            "store_opened": "Toko dibuka",
+            "store_closed": "Toko ditutup",
+            "opening_balance_updated": "Saldo awal diubah",
+            "summary_photo_deleted": "Foto dihapus",
+            "summary_photo_updated": "Foto diubah",
+            "expense_created": "Pengeluaran ditambah",
+            "expense_updated": "Pengeluaran diubah",
+            "expense_deleted": "Pengeluaran dihapus",
+            "session_transferred": "Sesi diserahkan",
+            "session_ended": "Sesi berakhir",
+            "supply_request_created": "Permintaan stok",
+            "incident_report_created": "Laporan insiden"
+        }
     },
     "cart": {
         "title": "Keranjang",
@@ -197,5 +218,15 @@
         "notFound": "Notifikasi tidak ditemukan",
         "noHourlyData": "Tidak ada data per jam",
         "now": "Sekarang"
+    },
+    "gate": {
+        "notOpen": "Toko belum dibuka",
+        "notOpenSub": "Buka toko untuk mulai menerima pesanan hari ini.",
+        "openStore": "Buka Toko",
+        "closed": "Toko sudah tutup",
+        "closedSub": "Sesi hari ini telah berakhir.",
+        "takenBy": "Sesi sudah diambil alih oleh",
+        "askCode": "Minta kode 2 digit dari penjual saat ini untuk mengambil alih.",
+        "takeOver": "Ambil Alih"
     }
 }

@@ -1,7 +1,7 @@
 import { loadArea } from "@tea-pos/i18n";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { DayActivity } from "../../../../../../../../store/DayActivity";
+import { DayActivity } from "@tea-pos/shell/DayActivity";
 import { StoreTitle } from "../../../../../../../../store/StoreTitle";
 
 export const Route = createFileRoute(

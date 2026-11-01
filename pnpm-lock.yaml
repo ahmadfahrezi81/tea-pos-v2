@@ -98,6 +98,9 @@ importers:
       '@tea-pos/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@tea-pos/format':
+        specifier: workspace:*
+        version: link:../../packages/format
       '@tea-pos/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n

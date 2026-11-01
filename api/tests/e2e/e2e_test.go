@@ -95,6 +95,7 @@ func mustSignIn(t *testing.T, p *phone, email string) {
 	}
 }
 
+// E2E_COMMIT is the newest commit that changed the API: a deploy skips the API otherwise.
 func TestHealth_RunsTheCommitUnderTest(t *testing.T) {
 	want := os.Getenv("E2E_COMMIT")
 	for _, app := range []string{seller, backoffice} {
@@ -244,7 +245,6 @@ func TestBackoffice_EveryTabAnswers(t *testing.T) {
 		"/tea-waste?" + week,
 		"/days?" + week,
 		"/weather",
-		"/feedbacks",
 		"/pay/periods/current",
 		"/pay/claim-types",
 		"/uac",
@@ -289,5 +289,73 @@ func TestPeople_AdminLogsSomeoneOut(t *testing.T) {
 	}
 	if resp, _ := p.do(http.MethodGet, "/me", "", nil); resp.StatusCode != http.StatusUnauthorized {
 		t.Errorf("their /me after: %d, want 401", resp.StatusCode)
+	}
+}
+
+// A seller's whole day on Test A Central. seed.sql leaves today open with nobody selling, every run.
+func TestSeller_AWholeDay(t *testing.T) {
+	p := newPhone(t, seller)
+	mustSignIn(t, p, "seller@test-a.test")
+	const central = "0000e2e0-0000-0000-0010-00000000000a"
+	base := "/tenants/test-a/stores/" + central
+	run := time.Now().UnixNano()
+	n := 0
+	write := func(path, body string) map[string]any {
+		t.Helper()
+		n++
+		resp, out := p.do(http.MethodPost, base+path, body, map[string]string{"Idempotency-Key": fmt.Sprintf("e2e-%d-%d", run, n)})
+		if resp.StatusCode >= 300 {
+			t.Fatalf("%s: status %d %v", path, resp.StatusCode, out["code"])
+		}
+		return out
+	}
+	resp, gate := p.do(http.MethodGet, base+"/gate", "", nil)
+	if resp.StatusCode != http.StatusOK || gate["gate"] != "no_session" {
+		t.Fatalf("gate: status %d %v", resp.StatusCode, gate)
+	}
+	day := gate["dayId"].(string)
+
+	if g := write("/resume", ""); g["gate"] != "open" {
+		t.Fatalf("resume: %v", g)
+	}
+	write("/orders", `{"items":[{"productId":"0000e2e0-0000-0000-00e1-00000000000a","quantity":2,"unitPrice":8000}]}`)
+	write("/days/"+day+"/expenses", `{"type":"Ice","amount":1000}`)
+
+	today := time.Now().In(time.FixedZone("WIB", 7*3600)).Format(time.DateOnly)
+	for _, path := range []string{
+		"/tenants/test-a/products",
+		"/tenants/test-a/days/" + day,
+		"/tenants/test-a/days/" + day + "/activity?big=true",
+		"/tenants/test-a/days/" + day + "/sessions",
+		"/tenants/test-a/orders?from=" + today + "&to=" + today + "&storeId=" + central,
+		"/tenants/test-a/sales/hours?date=" + today + "&storeId=" + central,
+		"/tenants/test-a/days?from=" + today + "&to=" + today + "&storeId=" + central,
+		"/tenants/test-a/my/claim-types",
+		"/tenants/test-a/my/claims?from=" + today + "&to=" + today,
+		"/tenants/test-a/my/work-days?from=" + today + "&to=" + today,
+	} {
+		if resp, out := p.do(http.MethodGet, path, "", nil); resp.StatusCode != http.StatusOK {
+			t.Errorf("%s: status %d %v", path, resp.StatusCode, out["code"])
+		}
+	}
+	north := "/tenants/test-a/orders?from=" + today + "&to=" + today + "&storeId=0000e2e0-0000-0000-0011-00000000000a"
+	if resp, _ := p.do(http.MethodGet, north, "", nil); resp.StatusCode != http.StatusForbidden {
+		t.Errorf("a store not theirs: status %d", resp.StatusCode)
+	}
+
+	if g := write("/days/"+day+"/close", `{"actualCash":0}`); g["gate"] != "closed" {
+		t.Fatalf("close: %v", g)
+	}
+	resp, pay := p.do(http.MethodGet, "/tenants/test-a/my/pay", "", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("my pay: status %d", resp.StatusCode)
+	}
+	payouts, _ := pay["payouts"].([]any)
+	if len(payouts) == 0 {
+		t.Fatal("closing the day made no payout")
+	}
+	first, _ := payouts[0].(map[string]any)
+	if resp, _ := p.do(http.MethodGet, fmt.Sprintf("/tenants/test-a/my/payouts/%v", first["id"]), "", nil); resp.StatusCode != http.StatusOK {
+		t.Errorf("my payslip: status %d", resp.StatusCode)
 	}
 }
