@@ -36,7 +36,10 @@ inputs:
         description: Forces the comment's status, for comments without steps
         required: false
     done-text:
-        description: The status words when done, instead of "Done"
+        description: The headline when it passed, instead of the title
+        required: false
+    update-only:
+        description: Set to true to write only if the comment already exists
         required: false
 
 runs:
@@ -57,5 +60,6 @@ runs:
               REPORT_BODY: ${{ inputs.body }}
               REPORT_OVERALL: ${{ inputs.overall }}
               REPORT_DONE_TEXT: ${{ inputs.done-text }}
+              REPORT_UPDATE_ONLY: ${{ inputs.update-only }}
               REPORT_RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           run: node "${{ github.action_path }}/../../scripts/report.mjs"

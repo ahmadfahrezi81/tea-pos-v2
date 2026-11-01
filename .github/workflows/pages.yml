@@ -1,6 +1,6 @@
 # Each app is a Cloudflare Pages project; its /api Function forwards to Railway.
-# A PR gets previews on the staging API. Staging's alias and production are deployed by
-# deploy.yml, which calls this after the API they call is up.
+# A PR's previews come from pr.yml, on the staging API. Staging's alias and production come from
+# deploy.yml, after the API they call is up.
 name: pages
 
 on:
@@ -15,16 +15,6 @@ on:
             version:
                 type: string
                 default: ""
-    pull_request:
-        branches: [staging]
-        paths:
-            [
-                "apps/**",
-                "packages/**",
-                "api/openapi.yaml",
-                "pnpm-lock.yaml",
-                ".github/workflows/pages.yml",
-            ]
 
 concurrency:
     group: pages-${{ inputs.production && 'production' || github.ref }}
@@ -38,7 +28,6 @@ jobs:
         timeout-minutes: 15
         permissions:
             contents: read
-            pull-requests: write
         strategy:
             matrix:
                 include:
@@ -92,44 +81,12 @@ jobs:
               run: |
                   $WRANGLER pages deploy --project-name ${{ matrix.project }} --branch "$BRANCH" | tee out.txt
                   echo "url=$(grep -o 'https://[^ ]*pages.dev' out.txt | tail -1)" >> "$GITHUB_OUTPUT"
+            # pr.yml's comment reads each address from these.
             - if: github.event_name == 'pull_request'
-              uses: ./.github/actions/report
+              run: echo "${{ steps.deploy.outputs.url }}" > "preview-${{ matrix.app }}.txt"
+            - if: github.event_name == 'pull_request'
+              uses: actions/upload-artifact@v4
               with:
-                  section: preview-${{ matrix.app }}
-                  title: "Preview: ${{ matrix.app }}"
-                  commit: ${{ github.event.pull_request.head.sha }}
-                  overall: success
-                  done-text: Ready
-                  body: "${{ steps.deploy.outputs.url }} (on the staging API)"
-
-    # A preview that did not deploy says why, in its own comment.
-    failed:
-        needs: deploy
-        if: always() && github.event_name == 'pull_request' && needs.deploy.result == 'failure'
-        runs-on: ubuntu-latest
-        timeout-minutes: 5
-        permissions:
-            actions: read
-            contents: read
-            pull-requests: write
-        strategy:
-            fail-fast: false
-            matrix:
-                app: [seller, backoffice]
-        steps:
-            - uses: actions/checkout@v7
-              with:
-                  ref: ${{ github.event.pull_request.head.sha }}
-            - id: why
-              env:
-                  GH_TOKEN: ${{ github.token }}
-                  FAILURES_JOB: ${{ matrix.app }}
-              run: node .github/scripts/failures.mjs
-            - if: steps.why.outputs.body
-              uses: ./.github/actions/report
-              with:
-                  section: preview-${{ matrix.app }}
-                  title: "Preview: ${{ matrix.app }}"
-                  commit: ${{ github.event.pull_request.head.sha }}
-                  overall: failure
-                  body: ${{ steps.why.outputs.body }}
+                  name: preview-${{ matrix.app }}
+                  path: apps/${{ matrix.app }}/preview-${{ matrix.app }}.txt
+                  retention-days: 1
