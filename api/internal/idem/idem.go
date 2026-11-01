@@ -105,12 +105,25 @@ func run(ctx huma.Context, next func(huma.Context), pool *pgxpool.Pool, user pgt
 		return
 	}
 
+	if _, err := tx.Exec(c, "SAVEPOINT idem_work"); err != nil {
+		slog.ErrorContext(c, "idempotency: savepoint", "err", err)
+		write(ctx, errInternal)
+		return
+	}
 	held := &capture{inner: huma.WithValue(ctx, txKey{}, tx), body: bytes.NewReader(body), status: http.StatusOK}
 	next(held)
 	// A failure that may be passing (5xx) is not kept: the next try runs again.
 	if held.status >= 500 {
 		flush(ctx, held.status, held.out.Bytes())
 		return
+	}
+	// A refusal (4xx) is kept as the answer, but whatever the write did before it is undone.
+	if held.status >= 400 {
+		if _, err := tx.Exec(c, "ROLLBACK TO SAVEPOINT idem_work"); err != nil {
+			slog.ErrorContext(c, "idempotency: undo", "err", err)
+			write(ctx, errInternal)
+			return
+		}
 	}
 	err = q.SaveIdempotentAnswer(c, store.SaveIdempotentAnswerParams{
 		UserID: user, Key: key,
