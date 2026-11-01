@@ -29,9 +29,11 @@ Railway → `production` → `backup` → **Run now**. A redeploy does not run i
 
 ## How a deploy runs
 
-`.github/workflows/deploy.yml`, on every merge into `staging` and every release into `main`, in order: Railway config (if changed) → migrations (production: your Approve on the run) → the API services at that exact commit → the apps → staging: e2e / production: a read-only check. Each step shows live in a comment on the PR the commit came from, with links. Railway never deploys by itself (`railway.ts`).
+`.github/workflows/deploy.yml` (its jobs: `deploy-run.yml`), on every merge into `staging` and every release into `main`, in order: Railway config (if changed) → migrations (production: your Approve on the run) → the API services at that exact commit → the apps → staging: e2e / production: a read-only check. Each step shows live in a comment on the PR the commit came from, with links. Railway never deploys by itself (`railway.ts`).
 
 ## Deploy or roll back by hand
+
+**Deploy button:** GitHub → Actions → deploy → Run workflow, on `staging` or `main`. It deploys whatever has changed since the last deploy that passed, or everything with the box ticked. On `main`, migrations still wait for the Approve. It deploys the branch's latest commit; to go back to an older one, use the commands below.
 
 **Backend**, at any commit (the previous release's commit and version to roll back: `gh release list`, then `gh release view <version>`):
 

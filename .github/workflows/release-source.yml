@@ -31,8 +31,9 @@ jobs:
               uses: ./.github/actions/report
               with:
                   section: release-source
-                  title: Release source
+                  title: Release PR refused
                   commit: ${{ github.event.pull_request.head.sha }}
                   overall: ${{ steps.check.outcome == 'success' && 'success' || 'failure' }}
-                  done-text: From staging, title names the version
+                  update-only: ${{ steps.check.outcome == 'success' }}
+                  done-text: Release PR accepted
                   body: ${{ steps.check.outputs.why }}
