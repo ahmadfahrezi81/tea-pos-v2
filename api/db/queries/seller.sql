@@ -175,28 +175,30 @@ FROM due
 ON CONFLICT DO NOTHING
 RETURNING id, user_id, claim_config_id, amount;
 
--- name: EnsureDayPayouts :exec
--- Everyone who held the day has a payout for the period; a settled one keeps its window.
+-- name: DayPeople :many
+SELECT DISTINCT user_id FROM store_sessions WHERE daily_summary_id = @day_id AND tenant_id = @tenant_id;
+
+-- name: EnsurePayouts :exec
+-- Each person has a payout for the period; a settled one keeps its window.
 INSERT INTO payroll_payouts (tenant_id, user_id, start_date, end_date)
-SELECT DISTINCT @tenant_id::uuid, user_id, @start_date::date, @end_date::date
-FROM store_sessions WHERE daily_summary_id = @day_id AND tenant_id = @tenant_id
+SELECT @tenant_id::uuid, u, @start_date::date, @end_date::date FROM unnest(@user_ids::uuid[]) AS u
 ON CONFLICT (tenant_id, user_id, start_date) DO UPDATE SET end_date = EXCLUDED.end_date
 WHERE payroll_payouts.status = 'pending';
 
--- name: StampDayCommissions :exec
+-- name: StampCommissions :exec
 -- Every unassigned row in the period, so one a failed write left behind is picked up too.
 UPDATE payroll_commissions pc SET payout_id = p.id
 FROM payroll_payouts p
 WHERE p.tenant_id = @tenant_id AND p.start_date = @start_date AND p.user_id = pc.user_id
   AND pc.tenant_id = @tenant_id AND pc.date >= @start_date AND pc.date <= @end_date AND pc.payout_id IS NULL
-  AND pc.user_id IN (SELECT ss.user_id FROM store_sessions ss WHERE ss.daily_summary_id = @day_id AND ss.tenant_id = @tenant_id);
+  AND pc.user_id = ANY(@user_ids::uuid[]);
 
--- name: StampDayClaims :exec
+-- name: StampClaims :exec
 UPDATE payroll_claims cl SET payout_id = p.id
 FROM payroll_payouts p
 WHERE p.tenant_id = @tenant_id AND p.start_date = @start_date AND p.user_id = cl.user_id
   AND cl.tenant_id = @tenant_id AND cl.date >= @start_date AND cl.date <= @end_date AND cl.payout_id IS NULL
-  AND cl.user_id IN (SELECT ss.user_id FROM store_sessions ss WHERE ss.daily_summary_id = @day_id AND ss.tenant_id = @tenant_id);
+  AND cl.user_id = ANY(@user_ids::uuid[]);
 
 -- name: CountAssignedStores :one
 SELECT count(*) FROM user_store_assignments sa JOIN stores st ON st.id = sa.store_id

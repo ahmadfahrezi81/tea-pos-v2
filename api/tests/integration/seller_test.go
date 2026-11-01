@@ -7,8 +7,10 @@ import (
 	"io"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/domain"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/tests/testkit"
 )
 
@@ -232,7 +234,7 @@ func TestSellerCloseDay(t *testing.T) {
 	// Both apps' reads, kept to the seller's own stores.
 	exec(`DELETE FROM user_store_assignments WHERE user_id = $1 AND store_id = $2`, testkit.SellerA, storeANorth)
 	for path, want := range map[string]int{
-		"/tenants/tenant-a/days/" + g.DayID:                                           200,
+		"/tenants/tenant-a/days/" + g.DayID:                                               200,
 		"/tenants/tenant-a/orders?from=2020-01-01&to=2020-01-02&storeId=" + storeACentral: 200,
 		"/tenants/tenant-a/orders?from=2020-01-01&to=2020-01-02&storeId=" + storeANorth:   403,
 		"/tenants/tenant-a/orders?from=2020-01-01&to=2020-01-02":                          403,
@@ -253,5 +255,72 @@ func TestSellerCloseDay(t *testing.T) {
 		return g
 	}(); g.Gate != "closed" {
 		t.Errorf("after closing: %+v", g)
+	}
+}
+
+// TestMyClaim: a seller claims by hand once a period; the amount is the type's, and it lands in a
+// payout. Only their own pay shows.
+func TestMyClaim(t *testing.T) {
+	pool := testkit.DB(t)
+	a := testkit.NewAPI(t, pool, "")
+	seller := testkit.Session(a.SignIn(t, testkit.SellerA, "seller"))
+	ctx := t.Context()
+	var typeID, autoID string
+	if err := pool.QueryRow(ctx, `WITH c AS (INSERT INTO payroll_claim_configs (tenant_id, name, slug, frequency, amount)
+		VALUES ($1, 'Parking', 'parking', 'monthly', 3000) RETURNING id)
+		INSERT INTO payroll_user_claim_assignments (tenant_id, user_id, claim_config_id) SELECT $1, $2, id FROM c RETURNING claim_config_id::text`, tenantA, testkit.SellerA).Scan(&typeID); err != nil {
+		t.Fatal(err)
+	}
+	if err := pool.QueryRow(ctx, `WITH c AS (INSERT INTO payroll_claim_configs (tenant_id, name, slug, frequency, amount, claim_source, auto_threshold_hours)
+		VALUES ($1, 'Meal', 'meal', 'daily', 3000, 'auto', 1) RETURNING id)
+		INSERT INTO payroll_user_claim_assignments (tenant_id, user_id, claim_config_id) SELECT $1, $2, id FROM c RETURNING claim_config_id::text`, tenantA, testkit.SellerA).Scan(&autoID); err != nil {
+		t.Fatal(err)
+	}
+	n := 0
+	claim := func(body string) int {
+		n++
+		resp := a.Send(t, http.MethodPost, "/tenants/tenant-a/my/claims", "seller", body, []string{fmt.Sprintf("Idempotency-Key: claim-%04d", n)}, seller)
+		defer resp.Body.Close()
+		return resp.StatusCode
+	}
+	today := time.Now().In(domain.WIB).Format(time.DateOnly)
+	if s := claim(fmt.Sprintf(`{"typeId":%q,"date":%q}`, autoID, today)); s != 403 {
+		t.Errorf("an automatic type by hand: %d", s)
+	}
+	if s := claim(fmt.Sprintf(`{"typeId":%q,"date":"2020-01-01"}`, typeID)); s != 422 {
+		t.Errorf("too far back: %d", s)
+	}
+	if s := claim(fmt.Sprintf(`{"typeId":%q,"date":%q}`, typeID, today)); s != 204 {
+		t.Errorf("a claim: %d", s)
+	}
+	if s := claim(fmt.Sprintf(`{"typeId":%q,"date":%q}`, typeID, today)); s != 409 {
+		t.Errorf("twice in a month: %d", s)
+	}
+	var amount float64
+	var stamped bool
+	if err := pool.QueryRow(ctx, `SELECT amount::float8, payout_id IS NOT NULL FROM payroll_claims WHERE user_id = $1 AND claim_config_id = $2`, testkit.SellerA, typeID).Scan(&amount, &stamped); err != nil {
+		t.Fatal(err)
+	}
+	if amount != 3000 || !stamped {
+		t.Errorf("the claim: %v stamped %v", amount, stamped)
+	}
+	var pay contract.MyPayOutput
+	decode(t, a.Request(t, http.MethodGet, "/tenants/tenant-a/my/pay", "seller", seller), &pay.Body)
+	if len(pay.Body.Payouts) != 1 || pay.Body.NextPayout == "" {
+		t.Fatalf("my pay: %+v", pay.Body)
+	}
+	if resp := a.Request(t, http.MethodGet, "/tenants/tenant-a/my/payouts/"+pay.Body.Payouts[0].ID, "seller", seller); resp.StatusCode != 200 {
+		t.Errorf("my payslip: %d", resp.StatusCode)
+	}
+	other := testkit.Session(a.SignIn(t, testkit.AdminA, "seller"))
+	if resp := a.Request(t, http.MethodGet, "/tenants/tenant-a/my/payouts/"+pay.Body.Payouts[0].ID, "seller", other); resp.StatusCode != 404 {
+		t.Errorf("someone else's payslip: %d", resp.StatusCode)
+	}
+	var types contract.MyClaimTypesOutput
+	decode(t, a.Request(t, http.MethodGet, "/tenants/tenant-a/my/claim-types", "seller", seller), &types.Body)
+	for _, ty := range types.Body.Types {
+		if ty.ID == typeID && ty.Claimable {
+			t.Errorf("no room left this month: %+v", ty)
+		}
 	}
 }

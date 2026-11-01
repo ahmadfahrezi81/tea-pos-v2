@@ -272,7 +272,13 @@
         "bad_proof": "Tangkapan layar itu bukan bukti gaji usaha ini.",
         "request_not_found": "Permintaan itu sudah dijawab.",
         "blank_name": "Nama tidak boleh kosong",
-        "bad_photo": "Foto tidak terunggah dengan benar. Ambil lagi."
+        "bad_photo": "Foto tidak terunggah dengan benar. Ambil lagi.",
+        "claim_not_eligible": "Kamu tidak bisa mengajukan klaim ini.",
+        "claim_too_old": "Tanggalnya terlalu lama.",
+        "claim_done": "Klaim ini sudah kamu ajukan.",
+        "period_closed": "Periode gaji ini sudah ditutup.",
+        "no_work_that_day": "Kamu tidak bekerja hari itu.",
+        "bad_receipt": "Struk tidak terunggah dengan benar. Tambahkan lagi."
     },
     "store": {
         "week": "Week",

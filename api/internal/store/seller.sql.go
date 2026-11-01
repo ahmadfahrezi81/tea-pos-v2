@@ -576,6 +576,35 @@ func (q *Queries) DayOrderTotals(ctx context.Context, arg DayOrderTotalsParams) 
 	return i, err
 }
 
+const dayPeople = `-- name: DayPeople :many
+SELECT DISTINCT user_id FROM store_sessions WHERE daily_summary_id = $1 AND tenant_id = $2
+`
+
+type DayPeopleParams struct {
+	DayID    pgtype.UUID
+	TenantID pgtype.UUID
+}
+
+func (q *Queries) DayPeople(ctx context.Context, arg DayPeopleParams) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, dayPeople, arg.DayID, arg.TenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []pgtype.UUID
+	for rows.Next() {
+		var user_id pgtype.UUID
+		if err := rows.Scan(&user_id); err != nil {
+			return nil, err
+		}
+		items = append(items, user_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const deleteDayPhoto = `-- name: DeleteDayPhoto :many
 DELETE FROM store_daily_summary_photos
 WHERE daily_summary_id = $1 AND tenant_id = $2 AND type = $3
@@ -629,28 +658,27 @@ func (q *Queries) EndDaySessions(ctx context.Context, arg EndDaySessionsParams) 
 	return err
 }
 
-const ensureDayPayouts = `-- name: EnsureDayPayouts :exec
+const ensurePayouts = `-- name: EnsurePayouts :exec
 INSERT INTO payroll_payouts (tenant_id, user_id, start_date, end_date)
-SELECT DISTINCT $1::uuid, user_id, $2::date, $3::date
-FROM store_sessions WHERE daily_summary_id = $4 AND tenant_id = $1
+SELECT $1::uuid, u, $2::date, $3::date FROM unnest($4::uuid[]) AS u
 ON CONFLICT (tenant_id, user_id, start_date) DO UPDATE SET end_date = EXCLUDED.end_date
 WHERE payroll_payouts.status = 'pending'
 `
 
-type EnsureDayPayoutsParams struct {
+type EnsurePayoutsParams struct {
 	TenantID  pgtype.UUID
 	StartDate pgtype.Date
 	EndDate   pgtype.Date
-	DayID     pgtype.UUID
+	UserIds   []pgtype.UUID
 }
 
-// Everyone who held the day has a payout for the period; a settled one keeps its window.
-func (q *Queries) EnsureDayPayouts(ctx context.Context, arg EnsureDayPayoutsParams) error {
-	_, err := q.db.Exec(ctx, ensureDayPayouts,
+// Each person has a payout for the period; a settled one keeps its window.
+func (q *Queries) EnsurePayouts(ctx context.Context, arg EnsurePayoutsParams) error {
+	_, err := q.db.Exec(ctx, ensurePayouts,
 		arg.TenantID,
 		arg.StartDate,
 		arg.EndDate,
-		arg.DayID,
+		arg.UserIds,
 	)
 	return err
 }
@@ -837,53 +865,53 @@ func (q *Queries) LogStoreActivity(ctx context.Context, arg LogStoreActivityPara
 	return err
 }
 
-const stampDayClaims = `-- name: StampDayClaims :exec
+const stampClaims = `-- name: StampClaims :exec
 UPDATE payroll_claims cl SET payout_id = p.id
 FROM payroll_payouts p
 WHERE p.tenant_id = $1 AND p.start_date = $2 AND p.user_id = cl.user_id
   AND cl.tenant_id = $1 AND cl.date >= $2 AND cl.date <= $3 AND cl.payout_id IS NULL
-  AND cl.user_id IN (SELECT ss.user_id FROM store_sessions ss WHERE ss.daily_summary_id = $4 AND ss.tenant_id = $1)
+  AND cl.user_id = ANY($4::uuid[])
 `
 
-type StampDayClaimsParams struct {
+type StampClaimsParams struct {
 	TenantID  pgtype.UUID
 	StartDate pgtype.Date
 	EndDate   pgtype.Date
-	DayID     pgtype.UUID
+	UserIds   []pgtype.UUID
 }
 
-func (q *Queries) StampDayClaims(ctx context.Context, arg StampDayClaimsParams) error {
-	_, err := q.db.Exec(ctx, stampDayClaims,
+func (q *Queries) StampClaims(ctx context.Context, arg StampClaimsParams) error {
+	_, err := q.db.Exec(ctx, stampClaims,
 		arg.TenantID,
 		arg.StartDate,
 		arg.EndDate,
-		arg.DayID,
+		arg.UserIds,
 	)
 	return err
 }
 
-const stampDayCommissions = `-- name: StampDayCommissions :exec
+const stampCommissions = `-- name: StampCommissions :exec
 UPDATE payroll_commissions pc SET payout_id = p.id
 FROM payroll_payouts p
 WHERE p.tenant_id = $1 AND p.start_date = $2 AND p.user_id = pc.user_id
   AND pc.tenant_id = $1 AND pc.date >= $2 AND pc.date <= $3 AND pc.payout_id IS NULL
-  AND pc.user_id IN (SELECT ss.user_id FROM store_sessions ss WHERE ss.daily_summary_id = $4 AND ss.tenant_id = $1)
+  AND pc.user_id = ANY($4::uuid[])
 `
 
-type StampDayCommissionsParams struct {
+type StampCommissionsParams struct {
 	TenantID  pgtype.UUID
 	StartDate pgtype.Date
 	EndDate   pgtype.Date
-	DayID     pgtype.UUID
+	UserIds   []pgtype.UUID
 }
 
 // Every unassigned row in the period, so one a failed write left behind is picked up too.
-func (q *Queries) StampDayCommissions(ctx context.Context, arg StampDayCommissionsParams) error {
-	_, err := q.db.Exec(ctx, stampDayCommissions,
+func (q *Queries) StampCommissions(ctx context.Context, arg StampCommissionsParams) error {
+	_, err := q.db.Exec(ctx, stampCommissions,
 		arg.TenantID,
 		arg.StartDate,
 		arg.EndDate,
-		arg.DayID,
+		arg.UserIds,
 	)
 	return err
 }

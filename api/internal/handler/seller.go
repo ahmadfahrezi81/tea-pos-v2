@@ -505,21 +505,11 @@ func payDay(ctx context.Context, q *store.Queries, caller auth.Caller, s pgtype.
 			return err
 		}
 	}
-	frequency, err := q.GetPayFrequency(ctx, caller.TenantID)
+	people, err := q.DayPeople(ctx, store.DayPeopleParams{DayID: day.ID, TenantID: caller.TenantID})
 	if err != nil {
 		return err
 	}
-	start, end, err := domain.PayWindow(day.Date.Time, frequency)
-	if err != nil {
-		return err
-	}
-	if err := q.EnsureDayPayouts(ctx, store.EnsureDayPayoutsParams{TenantID: caller.TenantID, StartDate: date(start), EndDate: date(end), DayID: day.ID}); err != nil {
-		return err
-	}
-	if err := q.StampDayCommissions(ctx, store.StampDayCommissionsParams{TenantID: caller.TenantID, StartDate: date(start), EndDate: date(end), DayID: day.ID}); err != nil {
-		return err
-	}
-	return q.StampDayClaims(ctx, store.StampDayClaimsParams{TenantID: caller.TenantID, StartDate: date(start), EndDate: date(end), DayID: day.ID})
+	return ensurePayouts(ctx, q, caller.TenantID, people, day.Date.Time)
 }
 
 func startSession(ctx context.Context, q *store.Queries, caller auth.Caller, s, day pgtype.UUID) error {
@@ -542,4 +532,23 @@ func gateAfter(ctx context.Context, q *store.Queries, caller auth.Caller, s pgty
 		return nil, err
 	}
 	return &contract.StoreGateOutput{Body: g}, nil
+}
+
+// ensurePayouts gives each person a payout for the period day falls in, and stamps their rows there.
+func ensurePayouts(ctx context.Context, q *store.Queries, tenant pgtype.UUID, people []pgtype.UUID, day time.Time) error {
+	frequency, err := q.GetPayFrequency(ctx, tenant)
+	if err != nil {
+		return err
+	}
+	start, end, err := domain.PayWindow(day, frequency)
+	if err != nil {
+		return err
+	}
+	if err := q.EnsurePayouts(ctx, store.EnsurePayoutsParams{TenantID: tenant, StartDate: date(start), EndDate: date(end), UserIds: people}); err != nil {
+		return err
+	}
+	if err := q.StampCommissions(ctx, store.StampCommissionsParams{TenantID: tenant, StartDate: date(start), EndDate: date(end), UserIds: people}); err != nil {
+		return err
+	}
+	return q.StampClaims(ctx, store.StampClaimsParams{TenantID: tenant, StartDate: date(start), EndDate: date(end), UserIds: people})
 }

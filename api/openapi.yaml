@@ -325,6 +325,29 @@ components:
         - type
         - amount
       type: object
+    CreateMyClaimInputBody:
+      additionalProperties: false
+      properties:
+        date:
+          format: date
+          type: string
+        notes:
+          maxLength: 500
+          type: string
+        photoUrl:
+          description: The address from POST /files (purpose reimbursement)
+          maxLength: 1000
+          type: string
+        storeId:
+          format: uuid
+          type: string
+        typeId:
+          format: uuid
+          type: string
+      required:
+        - typeId
+        - date
+      type: object
     CreateOrderInputBody:
       additionalProperties: false
       properties:
@@ -753,9 +776,13 @@ components:
             - bad_photo
             - bad_proof
             - bad_range
+            - bad_receipt
             - bad_request
             - blank_name
+            - claim_done
+            - claim_not_eligible
             - claim_not_found
+            - claim_too_old
             - claim_type_not_found
             - commission_not_found
             - commission_type_not_found
@@ -771,6 +798,7 @@ components:
             - internal
             - maintenance
             - no_session
+            - no_work_that_day
             - not_allowed
             - not_found
             - not_in_tenant
@@ -782,6 +810,7 @@ components:
             - payout_not_found
             - payout_pending_review
             - payout_settled
+            - period_closed
             - period_not_found
             - person_not_found
             - product_changed
@@ -1040,6 +1069,135 @@ components:
         - fullName
         - role
         - language
+      type: object
+    MyClaim:
+      additionalProperties: false
+      properties:
+        amount:
+          format: int64
+          type: integer
+        date:
+          format: date
+          type: string
+        id:
+          format: uuid
+          type: string
+        status:
+          enum:
+            - pending
+            - approved
+            - rejected
+          type: string
+        type:
+          type: string
+      required:
+        - id
+        - date
+        - amount
+        - status
+      type: object
+    MyClaimType:
+      additionalProperties: false
+      properties:
+        amount:
+          format: int64
+          type: integer
+        claimable:
+          description: Room left this period, month or day
+          type: boolean
+        frequency:
+          enum:
+            - daily
+            - weekly
+            - monthly
+            - one_time
+          type: string
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        source:
+          enum:
+            - manual
+            - auto
+            - auto_submit
+          type: string
+      required:
+        - id
+        - name
+        - frequency
+        - amount
+        - source
+        - claimable
+      type: object
+    MyClaimTypesOutputBody:
+      additionalProperties: false
+      properties:
+        types:
+          items:
+            $ref: "#/components/schemas/MyClaimType"
+          type: array
+        workDates:
+          description: The days worked this period, for a weekly claim
+          items:
+            type: string
+          type: array
+      required:
+        - types
+        - workDates
+      type: object
+    MyClaimsOutputBody:
+      additionalProperties: false
+      properties:
+        claims:
+          description: Newest first
+          items:
+            $ref: "#/components/schemas/MyClaim"
+          type: array
+      required:
+        - claims
+      type: object
+    MyPayOutputBody:
+      additionalProperties: false
+      properties:
+        nextPayout:
+          format: date
+          type: string
+        payFrequency:
+          examples:
+            - bi_weekly
+          type: string
+        payouts:
+          description: Newest first
+          items:
+            $ref: "#/components/schemas/Payout"
+          type: array
+        ratePerCup:
+          description: Null without a commission type
+          format: int64
+          type:
+            - integer
+            - "null"
+        slug:
+          description: The commission type
+          type: string
+      required:
+        - payFrequency
+        - nextPayout
+        - ratePerCup
+        - payouts
+      type: object
+    MyWorkDaysOutputBody:
+      additionalProperties: false
+      properties:
+        days:
+          description: The days the caller held a store
+          items:
+            type: string
+          type: array
+      required:
+        - days
       type: object
     OpenStoreInputBody:
       additionalProperties: false
@@ -2632,6 +2790,222 @@ paths:
       x-access:
         tenant: true
         repeatable: true
+        signedIn: true
+  /tenants/{tenant}/my/claim-types:
+    get:
+      operationId: listMyClaimTypes
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyClaimTypesOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: What the caller may claim this period, and the days they worked
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/my/claims:
+    get:
+      operationId: listMyClaims
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: from
+          required: true
+          schema:
+            format: date
+            type: string
+        - explode: false
+          in: query
+          name: to
+          required: true
+          schema:
+            format: date
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyClaimsOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: The caller's claims in a range of days
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        signedIn: true
+    post:
+      operationId: createMyClaim
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMyClaimInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Submit a claim; its amount is the type's
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/my/pay:
+    get:
+      operationId: getMyPay
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyPayOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: How the caller is paid, and every period so far
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/my/payouts/{id}:
+    get:
+      operationId: getMyPayslip
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payslip"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: One of the caller's payouts, in full
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/my/work-days:
+    get:
+      operationId: getMyWorkDays
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: from
+          required: true
+          schema:
+            format: date
+            type: string
+        - explode: false
+          in: query
+          name: to
+          required: true
+          schema:
+            format: date
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyWorkDaysOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: The days the caller held a store
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
         signedIn: true
   /tenants/{tenant}/orders:
     get:

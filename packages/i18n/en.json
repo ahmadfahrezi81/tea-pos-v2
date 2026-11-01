@@ -272,7 +272,13 @@
         "bad_proof": "That screenshot was not uploaded as this business's payroll proof.",
         "request_not_found": "That request was already answered.",
         "blank_name": "A name cannot be blank",
-        "bad_photo": "That photo did not upload properly. Take it again."
+        "bad_photo": "That photo did not upload properly. Take it again.",
+        "claim_not_eligible": "You cannot submit this claim.",
+        "claim_too_old": "That date is too far back.",
+        "claim_done": "You have already submitted this claim.",
+        "period_closed": "This pay period is already closed.",
+        "no_work_that_day": "You did not work that day.",
+        "bad_receipt": "That receipt did not upload properly. Add it again."
     },
     "store": {
         "week": "Week",
