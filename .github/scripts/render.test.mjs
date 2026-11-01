@@ -199,6 +199,17 @@ test("before the merge, failing: what failed first, its reason under it, then th
     assert.match(out.body, /<summary>Full log<\/summary>\n\nthe log/);
 });
 
+test("a deploy that would not start links to GitHub's error", () => {
+    const n = needs();
+    n["deploy-check"] = { result: "failure", outputs: { url: "https://r" } };
+    const out = prComment({ needs: n, reasons: { "deploy-check": ["a reason"] } });
+    assert.equal(out.title, "Not ready: Deploy check failed");
+    assert.match(
+        out.body,
+        /- ❌ Deploy check\n  - a reason\n  - \[GitHub's exact error\]\(https:\/\/r\)/,
+    );
+});
+
 test("a release PR says so, and a failed benchmark never blocks it", () => {
     const n = needs();
     n.e2e = passing({ detail: "14 passed" });

@@ -24,7 +24,7 @@ if (Object.values(needs).some((n) => n.result === "failure")) {
             const failing = tests.detail.includes("failed");
             reasons[id] = failing
                 ? tests.body.split("\n")
-                : [`Failed at: ${job.step.replace(/^Run /, "")}`];
+                : [job.step.replace(/^Run /, "Failed at: ")];
         }
     } catch (e) {
         log = `Could not read the run: ${e.message}`;

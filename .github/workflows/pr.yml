@@ -121,6 +121,38 @@ jobs:
             - run: docker build -t tea-pos-backup ops/backup
             - run: cd ops/backup && shellcheck --external-sources ./*.sh
 
+    # deploy.yml runs on every PR, skipped by its guard. GitHub refuses it at the start if it could not
+    # deploy, and that refusal never shows in a PR's checks, so this reads it.
+    deploy-check:
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        permissions:
+            actions: read
+        outputs:
+            url: ${{ steps.find.outputs.url }}
+        env:
+            GH_TOKEN: ${{ github.token }}
+            SHA: ${{ github.event.pull_request.head.sha }}
+        steps:
+            - id: find
+              name: deploy.yml would not start on merge
+              run: |
+                  for _ in $(seq 40); do
+                      read -r conclusion url < <(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SHA&event=pull_request&per_page=100" \
+                          --jq '[.workflow_runs[] | select(.path == ".github/workflows/deploy.yml")][0] // {} | "\(.conclusion // "none") \(.html_url // "")"')
+                      case "$conclusion" in
+                          startup_failure)
+                              echo "url=$url" >> "$GITHUB_OUTPUT"
+                              echo "deploy.yml would not start: $url"
+                              exit 1 ;;
+                          none) ;;
+                          *) echo "deploy.yml starts: $conclusion"; exit 0 ;;
+                      esac
+                      sleep 5
+                  done
+                  echo "deploy.yml never reported on this commit"
+                  exit 1
+
     # Fails a PR that adds a package with a known high or critical vulnerability. CodeQL runs from
     # GitHub's default setup (repo settings), not from here.
     dependency-review:

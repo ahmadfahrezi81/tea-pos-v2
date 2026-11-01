@@ -29,7 +29,7 @@ Railway → `production` → `backup` → **Run now**. A redeploy does not run i
 
 ## How a deploy runs
 
-`.github/workflows/deploy.yml`, on every merge into `staging` and every release into `main`, in order: Railway config (if changed) → migrations (production: your Approve on the run) → the API services at that exact commit → the apps → staging: e2e / production: a read-only check. Each step shows live in a comment on the PR the commit came from, with links. Railway never deploys by itself (`railway.ts`).
+`.github/workflows/deploy.yml` (its jobs: `deploy-run.yml`), on every merge into `staging` and every release into `main`, in order: Railway config (if changed) → migrations (production: your Approve on the run) → the API services at that exact commit → the apps → staging: e2e / production: a read-only check. Each step shows live in a comment on the PR the commit came from, with links. Railway never deploys by itself (`railway.ts`).
 
 ## Deploy or roll back by hand
 

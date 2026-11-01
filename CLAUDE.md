@@ -81,7 +81,7 @@ packages/i18n/       translations, t() and useT(); only the active language load
                      (areas/<area>.<lang>.json) its route loads (`loader: () => loadArea("store")`); a wrong key fails the typecheck
 supabase/            migrations (owned here, copied from the old repo) and config.toml
 .railway/railway.ts  Railway services for production (main) and staging (staging branch)
-.github/             CI, deploy.yml (every deploy, in order), Railway plan, migrations dry run, releases, rulesets, the report action
+.github/             CI, deploy.yml and deploy-run.yml (every deploy, in order), Railway plan, migrations dry run, releases, rulesets, the report action
                      (what comments say: scripts/render.mjs), Dependabot
 .claude/tasks/       one plan per build step
 ```
