@@ -41,7 +41,8 @@ func Logger(next http.Handler) http.Handler {
 		case rec.status == http.StatusServiceUnavailable:
 			// Maintenance, on purpose.
 			level = slog.LevelWarn
-		case rec.status >= 500:
+		case rec.status >= 500 && r.Context().Err() == nil:
+			// With the context gone, the phone gave up on it (a reload): no failure of ours.
 			level = slog.LevelError
 		case r.URL.Path == "/health":
 			level = slog.LevelDebug

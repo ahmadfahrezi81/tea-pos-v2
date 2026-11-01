@@ -94,7 +94,7 @@ func Middleware(sessions *Sessions, q *store.Queries, limiter *Limiter, flags Fl
 			return
 		}
 		if err != nil {
-			slog.ErrorContext(ctx.Context(), "session lookup", "err", err)
+			logLookup(ctx.Context(), "session lookup", err)
 			write(ctx, errNoAccess)
 			return
 		}
@@ -119,7 +119,7 @@ func Middleware(sessions *Sessions, q *store.Queries, limiter *Limiter, flags Fl
 				return
 			}
 			if err != nil {
-				slog.ErrorContext(ctx.Context(), "tenant lookup", "err", err)
+				logLookup(ctx.Context(), "tenant lookup", err)
 				write(ctx, errNoAccess)
 				return
 			}
@@ -166,4 +166,13 @@ func write(ctx huma.Context, e *httpx.Error) {
 	ctx.SetHeader("Content-Type", "application/json")
 	ctx.SetStatus(e.Status)
 	_ = json.NewEncoder(ctx.BodyWriter()).Encode(e)
+}
+
+// logLookup logs a failed lookup; a request the phone gave up on (a reload) is no failure of ours.
+func logLookup(ctx context.Context, what string, err error) {
+	if errors.Is(err, context.Canceled) {
+		slog.InfoContext(ctx, what, "err", err)
+		return
+	}
+	slog.ErrorContext(ctx, what, "err", err)
 }

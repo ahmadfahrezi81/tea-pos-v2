@@ -1,6 +1,6 @@
 # Task 053 — Seller v2: the owner's feedback
 
-**Status: open, collecting. The owner tests locally on `feat/seller-v2`; every point is written here as they say it, then fixed in rounds.**
+**Status: open. The owner tests on production against a demo store, rounds of feedback as for the backoffice; every point is written here as they say it. Sellers stay on v1 until chat is done.**
 
 ## Round 1
 
@@ -16,4 +16,4 @@
 
 ## Seen in the logs
 
-7. **A request the phone cancelled (a reload) logs as an ERROR 500** (`tenant lookup: context canceled`), and every error Go logs reaches PostHog. Not a real failure: it should not count as one. To fix
+7. **A request the phone cancelled (a reload) logs as an ERROR 500** (`tenant lookup: context canceled`), and every error Go logs reaches PostHog. Not a real failure. Fixed: logged at info
