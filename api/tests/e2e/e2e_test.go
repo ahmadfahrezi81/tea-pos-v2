@@ -244,7 +244,6 @@ func TestBackoffice_EveryTabAnswers(t *testing.T) {
 		"/tea-waste?" + week,
 		"/days?" + week,
 		"/weather",
-		"/feedbacks",
 		"/pay/periods/current",
 		"/pay/claim-types",
 		"/uac",

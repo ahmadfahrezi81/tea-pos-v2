@@ -100,9 +100,14 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 5
         permissions:
+            actions: read
             pull-requests: write
         steps:
             - uses: actions/checkout@v7
+            - id: why
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: node .github/scripts/failures.mjs
             - uses: ./.github/actions/report
               with:
                   section: checks
@@ -116,3 +121,5 @@ jobs:
                       | ${{ needs.checks.result == 'success' && '✅' || '❌' }} | `checks` | format, lint, typecheck, tests, build, bundle size, generated code, workflows, govulncheck |
                       | ${{ needs.integration.result == 'success' && '✅' || '❌' }} | `integration` | Go against a throwaway Postgres, with and without the test sign-in |
                       | ${{ needs.docker.result == 'success' && '✅' || '❌' }} | `docker` | the images, no test sign-in in production's, the backup scripts |
+
+                      ${{ steps.why.outputs.body }}

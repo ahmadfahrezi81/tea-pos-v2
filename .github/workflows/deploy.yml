@@ -367,7 +367,7 @@ jobs:
                       echo "| | Test | Time |"
                       echo "| --- | --- | --- |"
                       awk '/^--- (PASS|FAIL|SKIP)/ { icon = $2 == "PASS:" ? "✅" : $2 == "FAIL:" ? "❌" : "➖"; print "| " icon " | `" $3 "` | " $4 " |" }' e2e.log 2>/dev/null | tr -d '()'
-                      if [ "${{ steps.run.outcome }}" != success ]; then echo; echo '<details><summary>e2e: last log lines</summary>'; echo; echo '```'; tail -20 e2e.log 2>/dev/null; echo '```'; echo '</details>'; fi
+                      if [ "${{ steps.run.outcome }}" != success ]; then echo; echo '~~~~'; grep -E '^\s+\S+_test\.go:[0-9]+:' e2e.log 2>/dev/null | head -30; echo '~~~~'; echo; echo '<details><summary>e2e: last log lines</summary>'; echo; echo '```'; tail -20 e2e.log 2>/dev/null; echo '```'; echo '</details>'; fi
                       echo EOF
                   } >> "$GITHUB_OUTPUT"
             - if: always()
@@ -448,10 +448,24 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 5
         permissions:
+            actions: read
             contents: read
             pull-requests: write
         steps:
             - uses: actions/checkout@v7
+            # A new comment, not only the live one: editing a comment notifies nobody.
+            - id: why
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: node .github/scripts/failures.mjs
+            - uses: ./.github/actions/report
+              with:
+                  section: deploy-failed-${{ github.sha }}
+                  pr: ${{ needs.plan.outputs.pr }}
+                  title: Deploy to ${{ needs.plan.outputs.env }} failed
+                  commit: ${{ github.sha }}
+                  overall: failure
+                  body: ${{ steps.why.outputs.body }}
             - if: needs.apps.result == 'failure'
               uses: ./.github/actions/report
               with:
@@ -467,3 +481,32 @@ jobs:
                   section: deploy-${{ needs.plan.outputs.env }}
                   pr: ${{ needs.plan.outputs.pr }}
                   body: "The steps still marked ⏸ did not run, because an earlier one failed. Fix it in a new PR; the next merge deploys again.${{ needs.plan.outputs.env == 'production' && ' To roll back, deploy the previous release: docs/runbook.md.' || '' }}"
+
+    # The plan finds the PR, so its own failure has to find it here, or nothing is said at all.
+    plan-failed:
+        needs: plan
+        if: always() && needs.plan.result == 'failure'
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        permissions:
+            actions: read
+            contents: read
+            pull-requests: write
+        steps:
+            - uses: actions/checkout@v7
+            - id: pr
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: echo "pr=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '.[0].number' || true)" >> "$GITHUB_OUTPUT"
+            - id: why
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: node .github/scripts/failures.mjs
+            - uses: ./.github/actions/report
+              with:
+                  section: deploy-failed-${{ github.sha }}
+                  pr: ${{ steps.pr.outputs.pr }}
+                  title: Deploy failed before it started
+                  commit: ${{ github.sha }}
+                  overall: failure
+                  body: ${{ steps.why.outputs.body }}

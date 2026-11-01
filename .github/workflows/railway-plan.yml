@@ -21,3 +21,11 @@ jobs:
               with:
                   command: plan
                   railway-token: ${{ secrets.RAILWAY_TOKEN }}
+            - if: failure()
+              uses: ./.github/actions/report
+              with:
+                  section: railway-plan
+                  title: Railway plan
+                  commit: ${{ github.event.pull_request.head.sha }}
+                  overall: failure
+                  body: The plan for production did not run; the run link above has its log.
