@@ -84,7 +84,21 @@
             "electricity": "Electricity",
             "custom": "Custom"
         },
-        "expenseCustomPlaceholder": "e.g. Maintenance, Transport..."
+        "expenseCustomPlaceholder": "e.g. Maintenance, Transport...",
+        "glance": {
+            "store_opened": "Store opened",
+            "store_closed": "Store closed",
+            "opening_balance_updated": "Opening balance updated",
+            "summary_photo_deleted": "Photo deleted",
+            "summary_photo_updated": "Photo updated",
+            "expense_created": "Expense added",
+            "expense_updated": "Expense updated",
+            "expense_deleted": "Expense deleted",
+            "session_transferred": "Session handed over",
+            "session_ended": "Session ended",
+            "supply_request_created": "Supply requested",
+            "incident_report_created": "Incident reported"
+        }
     },
     "cart": {
         "title": "Cart",

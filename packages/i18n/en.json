@@ -53,6 +53,11 @@
         "storeStatus": {
             "inactive": "Inactive",
             "fake": "Demo"
+        },
+        "greeting": {
+            "morning": "Good Morning",
+            "afternoon": "Good Afternoon",
+            "evening": "Good Evening"
         }
     },
     "language": {

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"slices"
 	"sync"
 	"time"
 
@@ -111,12 +112,18 @@ func registerDays(api huma.API, d Deps) {
 		Path:        "/tenants/{tenant}/days/{id}/activity",
 		Summary:     "What happened during a store's day, oldest first",
 		Tags:        []string{"store"},
-	}, dayReads, func(ctx context.Context, in *contract.DayInput) (*contract.DayActivityOutput, error) {
+	}, dayReads, func(ctx context.Context, in *contract.DayActivityInput) (*contract.DayActivityOutput, error) {
 		caller, id, err := ownDay(ctx, d.Queries, in.ID)
 		if err != nil {
 			return nil, err
 		}
-		rows, err := d.Queries.ListDayActivity(ctx, store.ListDayActivityParams{SummaryID: id, TenantID: caller.TenantID, Types: dayEvents})
+		events := dayEvents
+		if in.Big {
+			events = slices.DeleteFunc(slices.Clone(dayEvents), func(e string) bool {
+				return e == "order_created" || e == "summary_photo_uploaded"
+			})
+		}
+		rows, err := d.Queries.ListDayActivity(ctx, store.ListDayActivityParams{SummaryID: id, TenantID: caller.TenantID, Types: events})
 		if err != nil {
 			return nil, err
 		}

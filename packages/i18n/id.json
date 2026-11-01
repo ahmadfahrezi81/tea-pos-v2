@@ -53,6 +53,11 @@
         "storeStatus": {
             "inactive": "Tidak aktif",
             "fake": "Demo"
+        },
+        "greeting": {
+            "morning": "Selamat Pagi",
+            "afternoon": "Selamat Siang",
+            "evening": "Selamat Malam"
         }
     },
     "language": {

@@ -1,3 +1,4 @@
+import { ArrowRightLeft } from "lucide-react";
 import { $api } from "@tea-pos/api-client";
 import { STALE } from "@tea-pos/api-client/query";
 import { useSlug } from "../session/tenant";
@@ -6,23 +7,9 @@ import { formatMoney, formatTime } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
-import {
-    AlertTriangle,
-    ArrowRightLeft,
-    DollarSign,
-    Hash,
-    Image,
-    Lock,
-    LockOpen,
-    LogOut,
-    Package,
-    ShoppingCart,
-    Trash2,
-    Wallet,
-    type LucideIcon,
-} from "lucide-react";
 import type { ReactNode } from "react";
 
+import { EVENT } from "./dayEvents";
 import { PhotoTile } from "./DayView";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
@@ -50,23 +37,6 @@ function useDaySessions(id: string) {
 
 type Event = components["schemas"]["DayEvent"];
 type Session = components["schemas"]["DaySession"];
-
-const EVENT: Record<string, { icon: LucideIcon; color: string }> = {
-    order_created: { icon: ShoppingCart, color: "bg-blue-500" },
-    store_opened: { icon: LockOpen, color: "bg-green-500" },
-    store_closed: { icon: Lock, color: "bg-gray-500" },
-    session_transferred: { icon: ArrowRightLeft, color: "bg-blue-500" },
-    session_ended: { icon: LogOut, color: "bg-slate-400" },
-    expense_created: { icon: DollarSign, color: "bg-orange-400" },
-    expense_updated: { icon: DollarSign, color: "bg-orange-400" },
-    expense_deleted: { icon: Trash2, color: "bg-red-400" },
-    opening_balance_updated: { icon: Wallet, color: "bg-blue-400" },
-    summary_photo_uploaded: { icon: Image, color: "bg-teal-400" },
-    summary_photo_deleted: { icon: Trash2, color: "bg-red-400" },
-    summary_photo_updated: { icon: Hash, color: "bg-teal-400" },
-    supply_request_created: { icon: Package, color: "bg-purple-500" },
-    incident_report_created: { icon: AlertTriangle, color: "bg-red-500" },
-};
 
 const num = (m: Record<string, unknown>, key: string) =>
     typeof m[key] === "number" ? (m[key] as number) : null;

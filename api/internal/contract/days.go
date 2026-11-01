@@ -84,6 +84,12 @@ type DayProduct struct {
 	Revenue  int64  `json:"revenue"`
 }
 
+type DayActivityInput struct {
+	Tenant string `path:"tenant"`
+	ID     string `path:"id" format:"uuid"`
+	Big    bool   `query:"big" doc:"Only the day's milestones: no orders, no photos taken"`
+}
+
 type DayActivityOutput struct {
 	Body struct {
 		Events []DayEvent `json:"events" nullable:"false" doc:"Oldest first"`

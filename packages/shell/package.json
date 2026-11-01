@@ -11,6 +11,7 @@
         "./ComingSoonScreen": "./screens/ComingSoonScreen.tsx",
         "./DayActivity": "./screens/DayActivity.tsx",
         "./DayCard": "./screens/DayCard.tsx",
+        "./dayEvents": "./screens/dayEvents.ts",
         "./DayView": "./screens/DayView.tsx",
         "./errors": "./session/errors.ts",
         "./events": "./lib/events.ts",

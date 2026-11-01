@@ -175,6 +175,17 @@ export function useDayOrders(date: string) {
     );
 }
 
+/** A day's milestones, for At a Glance: no orders, so it stays small. */
+export function useDayMilestones(dayId: string | undefined) {
+    const tenant = useSlug();
+    return $api.useQuery(
+        "get",
+        "/tenants/{tenant}/days/{id}/activity",
+        { params: { path: { tenant, id: dayId ?? "" }, query: { big: true } } },
+        { enabled: !!tenant && !!dayId, staleTime: STALE.QUICK, meta: { live: ["day"] } },
+    );
+}
+
 export const useAddExpense = () =>
     useStoreWrite<{ dayId: string; type: string; amount: number }>(
         ({ path }, { dayId, ...body }, headers) =>

@@ -84,7 +84,21 @@
             "electricity": "Listrik",
             "custom": "Lainnya"
         },
-        "expenseCustomPlaceholder": "mis. Perbaikan, Transportasi..."
+        "expenseCustomPlaceholder": "mis. Perbaikan, Transportasi...",
+        "glance": {
+            "store_opened": "Toko dibuka",
+            "store_closed": "Toko ditutup",
+            "opening_balance_updated": "Saldo awal diubah",
+            "summary_photo_deleted": "Foto dihapus",
+            "summary_photo_updated": "Foto diubah",
+            "expense_created": "Pengeluaran ditambah",
+            "expense_updated": "Pengeluaran diubah",
+            "expense_deleted": "Pengeluaran dihapus",
+            "session_transferred": "Sesi diserahkan",
+            "session_ended": "Sesi berakhir",
+            "supply_request_created": "Permintaan stok",
+            "incident_report_created": "Laporan insiden"
+        }
     },
     "cart": {
         "title": "Keranjang",

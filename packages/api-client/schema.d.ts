@@ -2469,7 +2469,10 @@ export interface operations {
     };
     getDayActivity: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Only the day's milestones: no orders, no photos taken */
+                big?: boolean;
+            };
             header?: never;
             path: {
                 tenant: string;
