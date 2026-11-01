@@ -1,7 +1,7 @@
 import { loadArea } from "@tea-pos/i18n";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { DayDetail } from "../../../../../../../../store/DayDetail";
+import { DayDetail } from "@tea-pos/shell/DayView";
 import { StoreTitle } from "../../../../../../../../store/StoreTitle";
 
 export const Route = createFileRoute("/_shell/$tenant/store/$storeId/analytics/days/$dayId/")({

@@ -14,7 +14,7 @@ import { ChartNoAxesCombined, CircleHelp, ReceiptText } from "lucide-react";
 import { RangeBar, useRange } from "./range";
 import { RangePanel } from "./RangePanel";
 import { ALL, dayCash, plain, useScopeStores } from "./sales";
-import { Sellers } from "./Sellers";
+import { Sellers } from "@tea-pos/shell/Sellers";
 
 type Store = components["schemas"]["StoreLive"];
 

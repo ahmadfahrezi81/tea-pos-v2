@@ -29,83 +29,7 @@ func registerPayouts(api huma.API, d Deps) {
 	route(api, op("getPayslip", http.MethodGet, "/payouts/{id}", "A payout with every commission and claim in it"), payAccess,
 		func(ctx context.Context, in *contract.PayoutInput) (*contract.PayslipOutput, error) {
 			caller, _ := auth.CallerFrom(ctx)
-			id, err := uuid(in.ID, errPayoutNotFound)
-			if err != nil {
-				return nil, err
-			}
-			p, err := d.Queries.GetPayout(ctx, store.GetPayoutParams{ID: id, TenantID: caller.TenantID})
-			if errors.Is(err, pgx.ErrNoRows) {
-				return nil, errPayoutNotFound
-			}
-			if err != nil {
-				return nil, err
-			}
-			var (
-				wg   sync.WaitGroup
-				cms  []store.ListPayoutCommissionsRow
-				cls  []store.ListPayoutClaimsRow
-				errs [2]error
-			)
-			wg.Go(func() {
-				cms, errs[0] = d.Queries.ListPayoutCommissions(ctx, store.ListPayoutCommissionsParams{PayoutID: id, TenantID: caller.TenantID, UserID: p.UserID})
-			})
-			wg.Go(func() {
-				cls, errs[1] = d.Queries.ListPayoutClaims(ctx, store.ListPayoutClaimsParams{PayoutID: id, TenantID: caller.TenantID, UserID: p.UserID})
-			})
-			wg.Wait()
-			if err := errors.Join(errs[:]...); err != nil {
-				return nil, err
-			}
-			s := contract.Payslip{
-				Payout: contract.Payout{
-					ID: p.ID.String(), UserID: p.UserID.String(), Name: p.FullName, AvatarURL: p.AvatarUrl.String,
-					Status: p.Status, Start: day0(p.StartDate), End: day0(p.EndDate), PaidAt: tsz(p.PaidAt),
-				},
-				Notes: p.Notes.String, PaidBy: p.PaidBy.String,
-				Commissions: make([]contract.PayslipCommission, len(cms)), Claims: make([]contract.PayslipClaim, len(cls)),
-			}
-			// The payslip's totals are its approved rows, as the old app's.
-			for i, c := range cms {
-				s.Commissions[i] = contract.PayslipCommission{
-					ID: c.ID.String(), Date: day0(c.Date), Status: c.Status, StoreName: c.StoreName.String,
-					Cups: int64(c.TotalCups), Orders: int64(c.TotalOrders), RatePerCup: c.RatePerCup, Amount: c.TotalCommission,
-				}
-				if c.Status == "approved" {
-					s.Payout.Commissions += c.TotalCommission
-					s.Cups += int64(c.TotalCups)
-					s.Orders += int64(c.TotalOrders)
-					s.Approved++
-				}
-				if c.Status == "pending" {
-					s.Pending++
-				}
-			}
-			if len(cms) > 0 {
-				s.RatePerCup = cms[0].RatePerCup
-			}
-			for i, c := range cls {
-				s.Claims[i] = contract.PayslipClaim{
-					ID: c.ID.String(), Date: day0(c.Date), Status: c.Status, Type: c.ClaimType.String, Amount: c.Amount,
-					Notes: c.Notes.String, HoursWorked: num(c.HoursWorked), ThresholdHours: num(c.ThresholdHours),
-				}
-				if c.Status == "approved" {
-					s.Payout.Claims += c.Amount
-					s.Approved++
-				}
-				if c.Status == "pending" {
-					s.Pending++
-				}
-			}
-			s.Total = s.Payout.Commissions + s.Payout.Claims
-			if p.PaymentProofUrl.Valid {
-				bucket := files.Purposes["payroll_proof"].Bucket
-				if path := files.PathIn(bucket, p.PaymentProofUrl.String); path != "" {
-					if signed, err := d.Files.SignReads(ctx, bucket, []string{path}, photoTTL); err == nil {
-						s.PaymentProofURL = signed[path]
-					}
-				}
-			}
-			return &contract.PayslipOutput{Body: s}, nil
+			return payslip(ctx, d, caller, in.ID, pgtype.UUID{})
 		})
 
 	route(api, op("decideCommission", http.MethodPut, "/commissions/{id}", "Approve or reject one commission"), payWrite,
@@ -208,6 +132,90 @@ func registerPayouts(api huma.API, d Deps) {
 			out.Body.Commissions, out.Body.Claims = cms, cls
 			return out, nil
 		})
+}
+
+// payslip is a payout with every commission and claim in it; with onlyUser, only if it is theirs.
+func payslip(ctx context.Context, d Deps, caller auth.Caller, payoutID string, onlyUser pgtype.UUID) (*contract.PayslipOutput, error) {
+	id, err := uuid(payoutID, errPayoutNotFound)
+	if err != nil {
+		return nil, err
+	}
+	p, err := d.Queries.GetPayout(ctx, store.GetPayoutParams{ID: id, TenantID: caller.TenantID})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, errPayoutNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	if onlyUser.Valid && p.UserID != onlyUser {
+		return nil, errPayoutNotFound
+	}
+	var (
+		wg   sync.WaitGroup
+		cms  []store.ListPayoutCommissionsRow
+		cls  []store.ListPayoutClaimsRow
+		errs [2]error
+	)
+	wg.Go(func() {
+		cms, errs[0] = d.Queries.ListPayoutCommissions(ctx, store.ListPayoutCommissionsParams{PayoutID: id, TenantID: caller.TenantID, UserID: p.UserID})
+	})
+	wg.Go(func() {
+		cls, errs[1] = d.Queries.ListPayoutClaims(ctx, store.ListPayoutClaimsParams{PayoutID: id, TenantID: caller.TenantID, UserID: p.UserID})
+	})
+	wg.Wait()
+	if err := errors.Join(errs[:]...); err != nil {
+		return nil, err
+	}
+	s := contract.Payslip{
+		Payout: contract.Payout{
+			ID: p.ID.String(), UserID: p.UserID.String(), Name: p.FullName, AvatarURL: p.AvatarUrl.String,
+			Status: p.Status, Start: day0(p.StartDate), End: day0(p.EndDate), PaidAt: tsz(p.PaidAt),
+		},
+		Notes: p.Notes.String, PaidBy: p.PaidBy.String,
+		Commissions: make([]contract.PayslipCommission, len(cms)), Claims: make([]contract.PayslipClaim, len(cls)),
+	}
+	// The payslip's totals are its approved rows, as the old app's.
+	for i, c := range cms {
+		s.Commissions[i] = contract.PayslipCommission{
+			ID: c.ID.String(), Date: day0(c.Date), Status: c.Status, StoreName: c.StoreName.String,
+			Cups: int64(c.TotalCups), Orders: int64(c.TotalOrders), RatePerCup: c.RatePerCup, Amount: c.TotalCommission,
+		}
+		if c.Status == "approved" {
+			s.Payout.Commissions += c.TotalCommission
+			s.Cups += int64(c.TotalCups)
+			s.Orders += int64(c.TotalOrders)
+			s.Approved++
+		}
+		if c.Status == "pending" {
+			s.Pending++
+		}
+	}
+	if len(cms) > 0 {
+		s.RatePerCup = cms[0].RatePerCup
+	}
+	for i, c := range cls {
+		s.Claims[i] = contract.PayslipClaim{
+			ID: c.ID.String(), Date: day0(c.Date), Status: c.Status, Type: c.ClaimType.String, Amount: c.Amount,
+			Notes: c.Notes.String, HoursWorked: num(c.HoursWorked), ThresholdHours: num(c.ThresholdHours),
+		}
+		if c.Status == "approved" {
+			s.Payout.Claims += c.Amount
+			s.Approved++
+		}
+		if c.Status == "pending" {
+			s.Pending++
+		}
+	}
+	s.Total = s.Payout.Commissions + s.Payout.Claims
+	if p.PaymentProofUrl.Valid {
+		bucket := files.Purposes["payroll_proof"].Bucket
+		if path := files.PathIn(bucket, p.PaymentProofUrl.String); path != "" {
+			if signed, err := d.Files.SignReads(ctx, bucket, []string{path}, photoTTL); err == nil {
+				s.PaymentProofURL = signed[path]
+			}
+		}
+	}
+	return &contract.PayslipOutput{Body: s}, nil
 }
 
 func registerSettle(api huma.API, d Deps) {

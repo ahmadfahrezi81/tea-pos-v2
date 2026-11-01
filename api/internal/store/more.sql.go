@@ -11,62 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const listFeedbacks = `-- name: ListFeedbacks :many
-SELECT f.id, f.location_name, f.location_display, f.latitude::float8 AS latitude, f.longitude::float8 AS longitude,
-    f.notes, f.created_at, u.full_name AS user_name
-FROM tenant_customer_feedbacks f
-LEFT JOIN users u ON u.id = f.user_id
-WHERE f.tenant_id = $1
-ORDER BY f.created_at DESC
-LIMIT $2
-`
-
-type ListFeedbacksParams struct {
-	TenantID pgtype.UUID
-	RowLimit int32
-}
-
-type ListFeedbacksRow struct {
-	ID              pgtype.UUID
-	LocationName    string
-	LocationDisplay string
-	Latitude        float64
-	Longitude       float64
-	Notes           pgtype.Text
-	CreatedAt       pgtype.Timestamptz
-	UserName        pgtype.Text
-}
-
-// Where customers asked for a store, newest first, with who wrote it down.
-func (q *Queries) ListFeedbacks(ctx context.Context, arg ListFeedbacksParams) ([]ListFeedbacksRow, error) {
-	rows, err := q.db.Query(ctx, listFeedbacks, arg.TenantID, arg.RowLimit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListFeedbacksRow
-	for rows.Next() {
-		var i ListFeedbacksRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.LocationName,
-			&i.LocationDisplay,
-			&i.Latitude,
-			&i.Longitude,
-			&i.Notes,
-			&i.CreatedAt,
-			&i.UserName,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listWeatherHourly = `-- name: ListWeatherHourly :many
 SELECT date, hour, temperature::float8 AS temperature, precipitation_probability::float8 AS precipitation_probability,
     weather_code, city, region, fetched_at

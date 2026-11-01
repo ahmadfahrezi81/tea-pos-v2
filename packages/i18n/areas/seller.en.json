@@ -77,7 +77,28 @@
         "cameraStep1": "Open your phone's Settings",
         "cameraStep2": "Go to Apps → your browser",
         "cameraStep3": "Tap Permissions → Camera → Allow",
-        "cameraStep4": "Come back and try again"
+        "cameraStep4": "Come back and try again",
+        "dayClosed": "Day closed successfully!",
+        "expenseTypes": {
+            "ice": "Ice",
+            "electricity": "Electricity",
+            "custom": "Custom"
+        },
+        "expenseCustomPlaceholder": "e.g. Maintenance, Transport...",
+        "glance": {
+            "store_opened": "Store opened",
+            "store_closed": "Store closed",
+            "opening_balance_updated": "Opening balance updated",
+            "summary_photo_deleted": "Photo deleted",
+            "summary_photo_updated": "Photo updated",
+            "expense_created": "Expense added",
+            "expense_updated": "Expense updated",
+            "expense_deleted": "Expense deleted",
+            "session_transferred": "Session handed over",
+            "session_ended": "Session ended",
+            "supply_request_created": "Supply requested",
+            "incident_report_created": "Incident reported"
+        }
     },
     "cart": {
         "title": "Cart",
@@ -197,5 +218,15 @@
         "notFound": "Notification not found",
         "noHourlyData": "No hourly data available",
         "now": "Now"
+    },
+    "gate": {
+        "notOpen": "Store not open yet",
+        "notOpenSub": "Open the store to start taking orders today.",
+        "openStore": "Open Store",
+        "closed": "Store is closed",
+        "closedSub": "Today's session has ended.",
+        "takenBy": "Session already taken by",
+        "askCode": "Ask the current seller for their 2-digit code to take over.",
+        "takeOver": "Take Over"
     }
 }

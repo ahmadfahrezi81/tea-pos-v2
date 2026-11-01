@@ -16,26 +16,6 @@ import (
 
 func registerMore(api huma.API, d Deps) {
 	route(api, huma.Operation{
-		OperationID: "listFeedbacks", Method: http.MethodGet, Path: "/tenants/{tenant}/feedbacks",
-		Summary: "Where customers asked for a store, newest first", Tags: []string{"more"},
-	}, storeAccess, func(ctx context.Context, in *contract.FeedbacksInput) (*contract.FeedbacksOutput, error) {
-		caller, _ := auth.CallerFrom(ctx)
-		rows, err := d.Queries.ListFeedbacks(ctx, store.ListFeedbacksParams{TenantID: caller.TenantID, RowLimit: int32(in.Limit)})
-		if err != nil {
-			return nil, err
-		}
-		out := &contract.FeedbacksOutput{}
-		out.Body.Feedbacks = make([]contract.Feedback, len(rows))
-		for i, r := range rows {
-			out.Body.Feedbacks[i] = contract.Feedback{
-				ID: r.ID.String(), LocationName: r.LocationName, LocationDisplay: r.LocationDisplay,
-				Latitude: r.Latitude, Longitude: r.Longitude, Notes: r.Notes.String, At: tsz(r.CreatedAt), UserName: r.UserName.String,
-			}
-		}
-		return out, nil
-	})
-
-	route(api, huma.Operation{
 		OperationID: "getWeather", Method: http.MethodGet, Path: "/tenants/{tenant}/weather",
 		Summary: "The forecast by hour, yesterday to tomorrow", Tags: []string{"more"},
 	}, auth.SignedIn.InTenant(), func(ctx context.Context, _ *contract.TenantInput) (*contract.WeatherOutput, error) {

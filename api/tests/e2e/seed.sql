@@ -81,3 +81,7 @@ SELECT md5('e2e-item-' || o.id)::uuid, o.id,
 FROM public.store_orders o
 WHERE o.tenant_id = '0000e2e0-0000-0000-0000-00000000000a'
 ON CONFLICT (id) DO NOTHING;
+
+-- A run that stopped halfway leaves a session on: the seller test starts with nobody selling.
+UPDATE public.store_sessions SET status = 'ended', ended_at = now()
+WHERE tenant_id = '0000e2e0-0000-0000-0000-00000000000a' AND status = 'active';

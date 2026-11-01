@@ -53,6 +53,11 @@
         "storeStatus": {
             "inactive": "Tidak aktif",
             "fake": "Demo"
+        },
+        "greeting": {
+            "morning": "Selamat Pagi",
+            "afternoon": "Selamat Siang",
+            "evening": "Selamat Malam"
         }
     },
     "language": {
@@ -223,6 +228,14 @@
         "conflict": "Ini sudah berubah. Muat ulang dan coba lagi.",
         "error": "Terjadi kesalahan.",
         "read_only": "Hanya baca: terhubung ke production.",
+        "not_your_store": "Anda tidak ditugaskan di toko ini.",
+        "store_already_opened": "Toko ini sudah buka hari ini.",
+        "day_closed": "Toko ini sudah tutup hari ini.",
+        "store_not_open": "Toko ini belum buka.",
+        "session_taken": "Sudah ada yang berjualan di toko ini.",
+        "bad_claim_code": "Kodenya salah.",
+        "no_session": "Tidak ada yang berjualan di toko ini.",
+        "product_changed": "Produk atau harganya berubah. Periksa keranjang.",
         "files_unavailable": "Foto belum bisa diunggah. Coba lagi nanti.",
         "forbidden": "Anda tidak diizinkan melakukan ini.",
         "idempotency_key_required": "Terjadi kesalahan. Coba lagi.",
@@ -263,7 +276,15 @@
         "proof_required": "Membayar butuh tangkapan layar transfer.",
         "bad_proof": "Tangkapan layar itu bukan bukti gaji usaha ini.",
         "request_not_found": "Permintaan itu sudah dijawab.",
-        "blank_name": "Nama tidak boleh kosong"
+        "blank_name": "Nama tidak boleh kosong",
+        "bad_photo": "Foto tidak terunggah dengan benar. Ambil lagi.",
+        "claim_not_eligible": "Kamu tidak bisa mengajukan klaim ini.",
+        "claim_too_old": "Tanggalnya terlalu lama.",
+        "claim_done": "Klaim ini sudah kamu ajukan.",
+        "period_closed": "Periode gaji ini sudah ditutup.",
+        "no_work_that_day": "Kamu tidak bekerja hari itu.",
+        "bad_receipt": "Struk tidak terunggah dengan benar. Tambahkan lagi.",
+        "old_day_open": "Hari sebelumnya masih buka. Tutup dulu di Analitik."
     },
     "store": {
         "week": "Week",

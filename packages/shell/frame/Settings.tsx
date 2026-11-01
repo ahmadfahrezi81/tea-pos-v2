@@ -17,6 +17,7 @@ export function SettingsRow({
     onClick,
     right,
     dot,
+    danger,
 }: {
     icon: ReactNode;
     label: string;
@@ -29,13 +30,19 @@ export function SettingsRow({
     right?: ReactNode;
     /** A brand dot before the chevron: something new inside. */
     dot?: boolean;
+    /** The label in red: an ending, as Close Day. */
+    danger?: boolean;
 }) {
     const inner = (
         <>
             <span className="text-xl w-6 text-center shrink-0 flex items-center py-5">{icon}</span>
             <div className="flex-1 min-w-0 flex items-center gap-2 py-5 -mr-4 pr-4 border-b-2 border-slate-100 group-last:border-b-0">
                 <div className="flex-1 min-w-0">
-                    <p className="text-[17px] font-medium text-gray-800">{label}</p>
+                    <p
+                        className={`text-[17px] font-medium ${danger ? "text-red-600" : "text-gray-800"}`}
+                    >
+                        {label}
+                    </p>
                     {sublabel && <p className="text-xs text-gray-500 truncate">{sublabel}</p>}
                 </div>
                 {dot && <span className="size-2 rounded-full bg-brand shrink-0" />}

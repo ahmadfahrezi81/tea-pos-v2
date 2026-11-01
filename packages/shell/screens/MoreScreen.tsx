@@ -9,10 +9,11 @@ import { useSlug } from "../session/tenant";
 import { LATEST, seen } from "../lib/whatsNew";
 
 /**
- * The More tab, as the old apps: General, the app's own rows first, then Patch Notes (What's new).
+ * The More tab, as the old apps: what the app puts `before`, then General, the app's own rows
+ * first, then Patch Notes (What's new).
  * Account is the avatar's, not a row here.
  */
-export function MoreScreen({ rows }: { rows?: ReactNode }) {
+export function MoreScreen({ rows, before }: { rows?: ReactNode; before?: ReactNode }) {
     const t = useT();
     const slug = useSlug();
     const update = useAppUpdate();
@@ -20,6 +21,7 @@ export function MoreScreen({ rows }: { rows?: ReactNode }) {
     const unseen = LATEST !== "" && seen() !== LATEST;
     return (
         <div className="space-y-4">
+            {before}
             <SettingsGroup title={t("more.general")}>
                 {rows}
                 <SettingsRow

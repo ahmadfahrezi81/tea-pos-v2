@@ -17,6 +17,7 @@ export function PhotoInput({
     children,
     failedLabel,
     screenshot = false,
+    preview,
 }: {
     upload: (photo: Blob, onProgress: (fraction: number) => void) => Promise<unknown>;
     /** What the empty tile says (already translated). */
@@ -25,9 +26,11 @@ export function PhotoInput({
     failedLabel: ReactNode;
     /** A screenshot (a transfer receipt): from the gallery, never cropped. */
     screenshot?: boolean;
+    /** A photo already saved: shown until another is taken. */
+    preview?: string;
 }) {
     const input = useRef<HTMLInputElement>(null);
-    const [state, setState] = useState<State>({ at: "idle" });
+    const [state, setState] = useState<State>(preview ? { at: "done", preview } : { at: "idle" });
 
     const send = async (photo: Blob) => {
         setState({ at: "uploading", progress: 0 });

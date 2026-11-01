@@ -203,6 +203,16 @@ components:
       required:
         - types
       type: object
+    CloseDayInputBody:
+      additionalProperties: false
+      properties:
+        actualCash:
+          format: int32
+          minimum: 0
+          type: integer
+      required:
+        - actualCash
+      type: object
     CommissionType:
       additionalProperties: false
       properties:
@@ -299,6 +309,69 @@ components:
         - name
         - slug
         - ratePerCup
+      type: object
+    CreateExpenseInputBody:
+      additionalProperties: false
+      properties:
+        amount:
+          format: int32
+          minimum: 1
+          type: integer
+        type:
+          maxLength: 100
+          minLength: 1
+          type: string
+      required:
+        - type
+        - amount
+      type: object
+    CreateMyClaimInputBody:
+      additionalProperties: false
+      properties:
+        date:
+          format: date
+          type: string
+        notes:
+          maxLength: 500
+          type: string
+        photoUrl:
+          description: The address from POST /files (purpose reimbursement)
+          maxLength: 1000
+          type: string
+        storeId:
+          format: uuid
+          type: string
+        typeId:
+          format: uuid
+          type: string
+      required:
+        - typeId
+        - date
+      type: object
+    CreateOrderInputBody:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/Item"
+          maxItems: 100
+          minItems: 1
+          type: array
+      required:
+        - items
+      type: object
+    CreateOrderOutputBody:
+      additionalProperties: false
+      properties:
+        id:
+          format: uuid
+          type: string
+        total:
+          format: int64
+          type: integer
+      required:
+        - id
+        - total
       type: object
     Day:
       additionalProperties: false
@@ -697,17 +770,24 @@ components:
             - account_inactive
             - app_too_old
             - auto_needs_hours
+            - bad_claim_code
             - bad_cursor
             - bad_level
+            - bad_photo
             - bad_proof
             - bad_range
+            - bad_receipt
             - bad_request
             - blank_name
+            - claim_done
+            - claim_not_eligible
             - claim_not_found
+            - claim_too_old
             - claim_type_not_found
             - commission_not_found
             - commission_type_not_found
             - conflict
+            - day_closed
             - day_not_found
             - day_not_in_payout
             - error
@@ -717,23 +797,32 @@ components:
             - idempotency_key_reused
             - internal
             - maintenance
+            - no_session
+            - no_work_that_day
             - not_allowed
             - not_found
             - not_in_tenant
             - not_signed_in
+            - not_your_store
             - not_yourself
+            - old_day_open
             - owner_kept
             - payout_not_due
             - payout_not_found
             - payout_pending_review
             - payout_settled
+            - period_closed
             - period_not_found
             - person_not_found
+            - product_changed
             - proof_required
             - request_not_found
             - route_not_found
+            - session_taken
             - staff_not_found
+            - store_already_opened
             - store_not_found
+            - store_not_open
             - store_required
             - too_large
             - too_many_requests
@@ -781,48 +870,6 @@ components:
         - session
         - device
       type: object
-    Feedback:
-      additionalProperties: false
-      properties:
-        at:
-          format: date-time
-          type: string
-        id:
-          format: uuid
-          type: string
-        latitude:
-          format: double
-          type: number
-        locationDisplay:
-          type: string
-        locationName:
-          type: string
-        longitude:
-          format: double
-          type: number
-        notes:
-          type: string
-        userName:
-          type: string
-      required:
-        - id
-        - locationName
-        - locationDisplay
-        - latitude
-        - longitude
-        - at
-      type: object
-    FeedbacksOutputBody:
-      additionalProperties: false
-      properties:
-        feedbacks:
-          description: Newest first
-          items:
-            $ref: "#/components/schemas/Feedback"
-          type: array
-      required:
-        - feedbacks
-      type: object
     HealthOutputBody:
       additionalProperties: false
       properties:
@@ -842,6 +889,27 @@ components:
         - status
         - version
         - commit
+      type: object
+    Item:
+      additionalProperties: false
+      properties:
+        productId:
+          format: uuid
+          type: string
+        quantity:
+          format: int32
+          maximum: 999
+          minimum: 1
+          type: integer
+        unitPrice:
+          description: "As the phone showed it: a changed price is refused, never charged silently"
+          format: int32
+          minimum: 0
+          type: integer
+      required:
+        - productId
+        - quantity
+        - unitPrice
       type: object
     Me:
       additionalProperties: false
@@ -1002,6 +1070,155 @@ components:
         - fullName
         - role
         - language
+      type: object
+    MyClaim:
+      additionalProperties: false
+      properties:
+        amount:
+          format: int64
+          type: integer
+        date:
+          format: date
+          type: string
+        id:
+          format: uuid
+          type: string
+        status:
+          enum:
+            - pending
+            - approved
+            - rejected
+          type: string
+        type:
+          type: string
+      required:
+        - id
+        - date
+        - amount
+        - status
+      type: object
+    MyClaimType:
+      additionalProperties: false
+      properties:
+        amount:
+          format: int64
+          type: integer
+        claimable:
+          description: Room left this period, month or day
+          type: boolean
+        frequency:
+          enum:
+            - daily
+            - weekly
+            - monthly
+            - one_time
+          type: string
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        source:
+          enum:
+            - manual
+            - auto
+            - auto_submit
+          type: string
+      required:
+        - id
+        - name
+        - frequency
+        - amount
+        - source
+        - claimable
+      type: object
+    MyClaimTypesOutputBody:
+      additionalProperties: false
+      properties:
+        types:
+          items:
+            $ref: "#/components/schemas/MyClaimType"
+          type: array
+        workDates:
+          description: The days worked this period, for a weekly claim
+          items:
+            type: string
+          type: array
+      required:
+        - types
+        - workDates
+      type: object
+    MyClaimsOutputBody:
+      additionalProperties: false
+      properties:
+        claims:
+          description: Newest first
+          items:
+            $ref: "#/components/schemas/MyClaim"
+          type: array
+      required:
+        - claims
+      type: object
+    MyPayOutputBody:
+      additionalProperties: false
+      properties:
+        nextPayout:
+          format: date
+          type: string
+        payFrequency:
+          examples:
+            - bi_weekly
+          type: string
+        payouts:
+          description: Newest first
+          items:
+            $ref: "#/components/schemas/Payout"
+          type: array
+        ratePerCup:
+          description: Null without a commission type
+          format: int64
+          type:
+            - integer
+            - "null"
+        slug:
+          description: The commission type
+          type: string
+      required:
+        - payFrequency
+        - nextPayout
+        - ratePerCup
+        - payouts
+      type: object
+    MyWorkDaysOutputBody:
+      additionalProperties: false
+      properties:
+        days:
+          description: The days the caller held a store
+          items:
+            type: string
+          type: array
+      required:
+        - days
+      type: object
+    OpenStoreInputBody:
+      additionalProperties: false
+      properties:
+        cashBreakdown:
+          additionalProperties:
+            format: int64
+            type: integer
+          description: How many of each note
+          type: object
+        openingBalance:
+          format: int64
+          minimum: 0
+          type: integer
+        photoUrl:
+          description: The opening photo's address from POST /files (purpose daily_photo)
+          maxLength: 1000
+          type: string
+      required:
+        - openingBalance
       type: object
     Order:
       additionalProperties: false
@@ -1450,6 +1667,38 @@ components:
         - ratePerCup
         - amount
       type: object
+    Product:
+      additionalProperties: false
+      properties:
+        categoryId:
+          format: uuid
+          type: string
+        id:
+          format: uuid
+          type: string
+        imageUrl:
+          type: string
+        name:
+          type: string
+        price:
+          format: int64
+          type: integer
+      required:
+        - id
+        - name
+        - price
+      type: object
+    ProductsOutputBody:
+      additionalProperties: false
+      properties:
+        products:
+          description: Most popular first
+          items:
+            $ref: "#/components/schemas/Product"
+          type: array
+      required:
+        - products
+      type: object
     RejectRequestInputBody:
       additionalProperties: false
       properties:
@@ -1596,6 +1845,16 @@ components:
       required:
         - products
       type: object
+    SaveDayPhotoInputBody:
+      additionalProperties: false
+      properties:
+        quantity:
+          $ref: "#/components/schemas/DayQuantity"
+        url:
+          description: The address from POST /files (purpose daily_photo); empty keeps the photo and changes the quantity
+          maxLength: 1000
+          type: string
+      type: object
     SetClaimEligibleInputBody:
       additionalProperties: false
       properties:
@@ -1677,6 +1936,69 @@ components:
           type: string
       required:
         - status
+      type: object
+    StoreGate:
+      additionalProperties: false
+      properties:
+        claimCode:
+          type: string
+        closedAt:
+          format: date-time
+          type: string
+        cups:
+          format: int64
+          type: integer
+        date:
+          format: date
+          type: string
+        dayId:
+          format: uuid
+          type: string
+        expectedCash:
+          format: int64
+          type: integer
+        expenses:
+          format: int64
+          type: integer
+        gate:
+          description: "no_day: open it; closed: done for today; no_session: resume; open: someone is selling"
+          enum:
+            - no_day
+            - closed
+            - no_session
+            - open
+          type: string
+        openingBalance:
+          format: int64
+          type: integer
+        orders:
+          format: int64
+          type: integer
+        sales:
+          format: int64
+          type: integer
+        sellerAvatar:
+          type: string
+        sellerId:
+          format: uuid
+          type: string
+        sellerName:
+          type: string
+        sessionId:
+          format: uuid
+          type: string
+        startedAt:
+          format: date-time
+          type: string
+      required:
+        - gate
+        - date
+        - openingBalance
+        - sales
+        - orders
+        - cups
+        - expenses
+        - expectedCash
       type: object
     StoreLive:
       additionalProperties: false
@@ -1807,6 +2129,16 @@ components:
           type: array
       required:
         - days
+      type: object
+    TransferSessionInputBody:
+      additionalProperties: false
+      properties:
+        claimCode:
+          maxLength: 6
+          minLength: 1
+          type: string
+      required:
+        - claimCode
       type: object
     UacOutputBody:
       additionalProperties: false
@@ -2321,8 +2653,6 @@ paths:
       tags:
         - store
       x-access:
-        app: backoffice
-        level: guest
         tenant: true
         signedIn: true
   /tenants/{tenant}/days/{id}:
@@ -2357,8 +2687,6 @@ paths:
       tags:
         - store
       x-access:
-        app: backoffice
-        level: guest
         tenant: true
         signedIn: true
   /tenants/{tenant}/days/{id}/activity:
@@ -2376,6 +2704,13 @@ paths:
           schema:
             format: uuid
             type: string
+        - description: "Only the day's milestones: no orders, no photos taken"
+          explode: false
+          in: query
+          name: big
+          schema:
+            description: "Only the day's milestones: no orders, no photos taken"
+            type: boolean
       responses:
         "200":
           content:
@@ -2393,8 +2728,6 @@ paths:
       tags:
         - store
       x-access:
-        app: backoffice
-        level: guest
         tenant: true
         signedIn: true
   /tenants/{tenant}/days/{id}/sessions:
@@ -2429,47 +2762,6 @@ paths:
       tags:
         - store
       x-access:
-        app: backoffice
-        level: guest
-        tenant: true
-        signedIn: true
-  /tenants/{tenant}/feedbacks:
-    get:
-      operationId: listFeedbacks
-      parameters:
-        - in: path
-          name: tenant
-          required: true
-          schema:
-            type: string
-        - explode: false
-          in: query
-          name: limit
-          schema:
-            default: 100
-            format: int64
-            maximum: 500
-            minimum: 1
-            type: integer
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FeedbacksOutputBody"
-          description: OK
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-          description: Error
-      summary: Where customers asked for a store, newest first
-      tags:
-        - more
-      x-access:
-        app: backoffice
-        level: guest
         tenant: true
         signedIn: true
   /tenants/{tenant}/files:
@@ -2506,6 +2798,222 @@ paths:
       x-access:
         tenant: true
         repeatable: true
+        signedIn: true
+  /tenants/{tenant}/my/claim-types:
+    get:
+      operationId: listMyClaimTypes
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyClaimTypesOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: What the caller may claim this period, and the days they worked
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/my/claims:
+    get:
+      operationId: listMyClaims
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: from
+          required: true
+          schema:
+            format: date
+            type: string
+        - explode: false
+          in: query
+          name: to
+          required: true
+          schema:
+            format: date
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyClaimsOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: The caller's claims in a range of days
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        signedIn: true
+    post:
+      operationId: createMyClaim
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMyClaimInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Submit a claim; its amount is the type's
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/my/pay:
+    get:
+      operationId: getMyPay
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyPayOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: How the caller is paid, and every period so far
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/my/payouts/{id}:
+    get:
+      operationId: getMyPayslip
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payslip"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: One of the caller's payouts, in full
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/my/work-days:
+    get:
+      operationId: getMyWorkDays
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: from
+          required: true
+          schema:
+            format: date
+            type: string
+        - explode: false
+          in: query
+          name: to
+          required: true
+          schema:
+            format: date
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyWorkDaysOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: The days the caller held a store
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
         signedIn: true
   /tenants/{tenant}/orders:
     get:
@@ -2588,8 +3096,6 @@ paths:
       tags:
         - store
       x-access:
-        app: backoffice
-        level: guest
         tenant: true
         signedIn: true
   /tenants/{tenant}/pay/claim-types:
@@ -3296,6 +3802,36 @@ paths:
         tenant: true
         idempotent: true
         signedIn: true
+  /tenants/{tenant}/products:
+    get:
+      operationId: listProducts
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductsOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: What the stores sell
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        signedIn: true
   /tenants/{tenant}/sales/days:
     get:
       operationId: salesDays
@@ -3351,8 +3887,6 @@ paths:
       tags:
         - store
       x-access:
-        app: backoffice
-        level: guest
         tenant: true
         signedIn: true
   /tenants/{tenant}/sales/hours:
@@ -3401,8 +3935,6 @@ paths:
       tags:
         - store
       x-access:
-        app: backoffice
-        level: guest
         tenant: true
         signedIn: true
   /tenants/{tenant}/sales/products:
@@ -3460,8 +3992,6 @@ paths:
       tags:
         - store
       x-access:
-        app: backoffice
-        level: guest
         tenant: true
         signedIn: true
   /tenants/{tenant}/stores/live:
@@ -3509,6 +4039,363 @@ paths:
         app: backoffice
         level: guest
         tenant: true
+        signedIn: true
+  /tenants/{tenant}/stores/{storeId}/days/{dayId}/close:
+    post:
+      operationId: closeStoreDay
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: storeId
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: dayId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CloseDayInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreGate"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "Close a day: final totals, sessions ended, commissions, claims and payouts, together"
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/stores/{storeId}/days/{dayId}/expenses:
+    post:
+      operationId: createExpense
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: storeId
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: dayId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateExpenseInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreGate"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Add an expense to the open day
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/stores/{storeId}/days/{dayId}/photos/{type}:
+    put:
+      operationId: saveDayPhoto
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: storeId
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: dayId
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: type
+          required: true
+          schema:
+            enum:
+              - opening
+              - closing:ice
+              - closing:syrup
+              - closing:bags
+              - closing:cups
+              - closing:tea
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveDayPhotoInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Save a day's photo in its slot, replacing the one there
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/stores/{storeId}/gate:
+    get:
+      operationId: getStoreGate
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: storeId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreGate"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "Today at a store: open it, resume, take over or sell"
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/stores/{storeId}/open:
+    post:
+      operationId: openStore
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: storeId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenStoreInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreGate"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "Open a store for today: its day and the caller's session, together"
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/stores/{storeId}/orders:
+    post:
+      operationId: createOrder
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: storeId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateOrderOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Save an order, its items and the day's totals, together
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/stores/{storeId}/resume:
+    post:
+      operationId: resumeStore
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: storeId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreGate"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Start selling at a store that is open with nobody on it
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/stores/{storeId}/take-over:
+    post:
+      operationId: takeOverStore
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: storeId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferSessionInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreGate"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Take over from whoever is selling, with their code
+      tags:
+        - seller
+      x-access:
+        app: seller
+        level: member
+        tenant: true
+        idempotent: true
         signedIn: true
   /tenants/{tenant}/tea-waste:
     get:
@@ -3565,8 +4452,6 @@ paths:
       tags:
         - store
       x-access:
-        app: backoffice
-        level: guest
         tenant: true
         signedIn: true
   /tenants/{tenant}/uac:
