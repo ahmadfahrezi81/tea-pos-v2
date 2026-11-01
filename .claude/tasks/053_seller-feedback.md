@@ -13,3 +13,7 @@
 4. **An order from a phone left on the menu after a take-over was accepted** and earned nobody a commission. Refused now
 5. **A store with no opening hours drew At a Glance from midnight** instead of the defaults
 6. **My Pay, My Claims and the Orders totals stayed stale after closing a day.** They refetch with it now
+
+## Seen in the logs
+
+7. **A request the phone cancelled (a reload) logs as an ERROR 500** (`tenant lookup: context canceled`), and every error Go logs reaches PostHog. Not a real failure: it should not count as one. To fix
