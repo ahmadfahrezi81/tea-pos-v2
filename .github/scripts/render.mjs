@@ -170,7 +170,7 @@ export function e2eSummary(log) {
 
 const CHECKS = [
     ["checks", "Format, lint, types, unit tests, build"],
-    ["integration", "Integration tests"],
+    ["integration", "Integration and E2E tests"],
     ["docker", "Docker images"],
     ["dependency-review", "No risky packages"],
     ["e2e", "E2E"],

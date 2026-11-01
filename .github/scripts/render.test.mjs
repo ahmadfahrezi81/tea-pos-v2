@@ -178,7 +178,7 @@ test("before the merge, passing: a bullet per check, skipped ones left out", () 
     assert.equal(out.title, "Ready to merge");
     assert.match(
         out.body,
-        /^- ✅ Format, lint, types, unit tests, build\n- ✅ Integration tests\n- ✅ Docker images\n- ✅ No risky packages\n/,
+        /^- ✅ Format, lint, types, unit tests, build\n- ✅ Integration and E2E tests\n- ✅ Docker images\n- ✅ No risky packages\n/,
     );
     assert.match(out.body, /- 📦 First screen size\n  - seller 139 KB\n  - backoffice 147 KB/);
     assert.doesNotMatch(out.body, /Next/);
@@ -193,8 +193,8 @@ test("before the merge, failing: what failed first, its reason under it, then th
     n.integration = { result: "failure", outputs: {} };
     const out = prComment({ needs: n, reasons: { integration: ["a reason"] }, log: "the log" });
     assert.equal(out.state, "failure");
-    assert.equal(out.title, "Not ready: Integration tests failed");
-    assert.match(out.body, /^- ❌ Integration tests\n  - a reason\n- ✅ Format/);
+    assert.equal(out.title, "Not ready: Integration and E2E tests failed");
+    assert.match(out.body, /^- ❌ Integration and E2E tests\n  - a reason\n- ✅ Format/);
     assert.match(out.body, /> \[!CAUTION\]\n> \*\*Next:\*\* fix it on this PR/);
     assert.match(out.body, /<summary>Full log<\/summary>\n\nthe log/);
 });
