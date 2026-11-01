@@ -95,6 +95,7 @@ func mustSignIn(t *testing.T, p *phone, email string) {
 	}
 }
 
+// E2E_COMMIT is the newest commit that changed the API: a deploy skips the API otherwise.
 func TestHealth_RunsTheCommitUnderTest(t *testing.T) {
 	want := os.Getenv("E2E_COMMIT")
 	for _, app := range []string{seller, backoffice} {
