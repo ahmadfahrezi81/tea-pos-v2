@@ -24,6 +24,7 @@ jobs:
             contents: read
             pull-requests: write
         outputs:
+            code: ${{ steps.changes.outputs.code }}
             apps: ${{ steps.changes.outputs.apps }}
             migrations: ${{ steps.changes.outputs.migrations }}
         steps:
@@ -35,7 +36,10 @@ jobs:
               run: |
                   files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --jq '.[].filename')
                   has() { if grep -qE "$1" <<< "$files"; then echo true; else echo false; fi; }
+                  # Anything but docs and notes needs testing.
+                  if grep -qvE '^(docs/|\.claude/)|\.md$' <<< "$files"; then code=true; else code=false; fi
                   {
+                      echo "code=$code"
                       echo "apps=$(has '^(apps/|packages/|api/openapi\.yaml$|pnpm-lock\.yaml$|\.github/workflows/pages\.yml$)')"
                       echo "migrations=$(has '^supabase/migrations/')"
                   } | tee -a "$GITHUB_OUTPUT"
@@ -49,6 +53,10 @@ jobs:
                   overall: running
 
     checks:
+        needs: start
+        # A release already passed these on each PR into staging. A skipped job counts as passed, so
+        # a start that failed must not skip them: only a clear "false" does.
+        if: always() && github.base_ref == 'staging' && needs.start.outputs.code != 'false'
         runs-on: ubuntu-latest
         timeout-minutes: 15
         outputs:
@@ -84,6 +92,10 @@ jobs:
             - run: cd api && go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 
     integration:
+        needs: start
+        # A release already passed these on each PR into staging. A skipped job counts as passed, so
+        # a start that failed must not skip them: only a clear "false" does.
+        if: always() && github.base_ref == 'staging' && needs.start.outputs.code != 'false'
         runs-on: ubuntu-latest
         timeout-minutes: 10
         services:
@@ -109,6 +121,10 @@ jobs:
             - run: cd api && bash scripts/e2e-here.sh
 
     docker:
+        needs: start
+        # A release already passed these on each PR into staging. A skipped job counts as passed, so
+        # a start that failed must not skip them: only a clear "false" does.
+        if: always() && github.base_ref == 'staging' && needs.start.outputs.code != 'false'
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
@@ -284,7 +300,6 @@ jobs:
         env:
             TEST_LOGIN_KEY: ${{ secrets.TEST_LOGIN_KEY }}
             CHROME_PATH: /usr/bin/google-chrome
-            BENCH_REPORT: bench.md
             BENCH_DEVICE: CI runner
         steps:
             - uses: actions/checkout@v7
@@ -296,13 +311,12 @@ jobs:
                   node-version-file: .nvmrc
                   cache: pnpm
             - run: pnpm install --frozen-lockfile
-            # runner.temp is only allowed inside steps, not in the job's env.
-            - env:
-                  BENCH_PROFILE: ${{ runner.temp }}/bench-profile
-              id: bench
+            - run: mkdir -p "$RUNNER_TEMP/bench-seller" "$RUNNER_TEMP/bench-backoffice"
+            - id: bench
               run: |
-                  pnpm bench --test-user admin@test-a.test https://tea-office-staging.lykostech.app
-                  { echo "body<<EOF"; echo "CI runner numbers are a series of their own in the RFC's Benchmark log."; echo; cat bench.md; echo EOF; } >> "$GITHUB_OUTPUT"
+                  BENCH_PROFILE="$RUNNER_TEMP/bench-seller" BENCH_REPORT=seller.md pnpm bench --test-user seller@test-a.test https://tea-pos-staging.lykostech.app
+                  BENCH_PROFILE="$RUNNER_TEMP/bench-backoffice" BENCH_REPORT=backoffice.md pnpm bench --test-user admin@test-a.test https://tea-office-staging.lykostech.app
+                  { echo "body<<EOF"; cat seller.md; echo; cat backoffice.md; echo EOF; } >> "$GITHUB_OUTPUT"
 
     # The one comment: every job's result, and why any failed.
     comment:

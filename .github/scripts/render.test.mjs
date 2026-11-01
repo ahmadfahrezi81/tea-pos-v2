@@ -218,7 +218,8 @@ test("a release PR says so, and a failed benchmark never blocks it", () => {
     const out = prComment({ needs: n, toMain: true });
     assert.equal(out.title, "Ready to release");
     assert.match(out.body, /- ✅ E2E\n  - 14 passed/);
-    assert.match(out.body, /<summary>Speed<\/summary>/);
+    assert.match(out.body, /#### Speed\n\nnumbers/);
+    assert.match(out.body, /passed on each PR into staging/);
 });
 
 // A job the comment job does not wait for is missing from the comment, even when it fails.
@@ -227,4 +228,14 @@ test("the comment waits for every check it shows", () => {
     const needs = pr.slice(pr.indexOf("    comment:")).match(/needs:\s*\[([^\]]*)\]/)[1];
     const waits = needs.split(",").map((x) => x.trim());
     for (const [id] of CHECKS) assert.ok(waits.includes(id), `comment does not wait for ${id}`);
+});
+
+test("a PR of only docs still has an answer", () => {
+    const n = needs();
+    for (const id of ["checks", "integration", "docker"])
+        n[id] = { result: "skipped", outputs: {} };
+    n["deploy-check"] = passing();
+    const out = prComment({ needs: n });
+    assert.equal(out.title, "Ready to merge");
+    assert.match(out.body, /^- ✅ Deploy check\n- ✅ No risky packages\n/);
 });
