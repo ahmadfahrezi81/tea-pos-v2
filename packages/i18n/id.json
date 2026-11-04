@@ -203,8 +203,11 @@
         "signingIn": "Sedang masuk...",
         "sellerTitle": "Selamat datang kembali",
         "sellerSub": "Siap berjualan? Ayo masuk.",
-        "backofficeTitle": "Tea POS Office",
+        "backofficeTitle": "Tea-Office",
         "backofficeSub": "Toko, gaji, dan orang Anda, semua di satu tempat.",
+        "by": "oleh",
+        "privacy": "Privasi",
+        "terms": "Ketentuan",
         "errors": {
             "signInFailed": "Gagal masuk. Silakan coba lagi.",
             "notAllowed": "Akun ini tidak bisa memakai aplikasi ini. Tanyakan ke manajer jika ini keliru.",
