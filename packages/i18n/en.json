@@ -203,8 +203,11 @@
         "signingIn": "Signing you in...",
         "sellerTitle": "Welcome back",
         "sellerSub": "Ready to sell? Let's get you in.",
-        "backofficeTitle": "Tea POS Office",
+        "backofficeTitle": "Tea-Office",
         "backofficeSub": "Your stores, pay and people, all in one place.",
+        "by": "by",
+        "privacy": "Privacy",
+        "terms": "Terms",
         "errors": {
             "signInFailed": "Sign-in did not finish. Please try again.",
             "notAllowed": "This account cannot use this app. Ask your manager if this is wrong.",
