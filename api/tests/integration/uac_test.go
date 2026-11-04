@@ -71,6 +71,10 @@ func TestUac(t *testing.T) {
 	}
 	// Turned off: no stores (v1 shows nothing), out of the tenant at once.
 	seller := testkit.Session(a.SignIn(t, testkit.SellerA, "seller"))
+	// Used once first, so Go holds the session in memory: turning off must still end it at once.
+	if r := a.Request(t, http.MethodGet, "/me", "seller", seller); r.StatusCode != 200 {
+		t.Fatalf("before: %d", r.StatusCode)
+	}
 	if s, _ := put(admin, testkit.SellerA, fmt.Sprintf(`{"access":{"seller":"member","backoffice":""},"storeIds":[%q],"active":false}`, storeANorth)); s != 200 {
 		t.Fatal(s)
 	}
@@ -78,8 +82,14 @@ func TestUac(t *testing.T) {
 	if role != "USER" || stores != 0 {
 		t.Errorf("off: role %s, %d stores; want USER, 0", role, stores)
 	}
-	if r := a.Request(t, http.MethodGet, "/tenants/tenant-a/weather", "seller", seller); r.StatusCode != 403 {
-		t.Errorf("turned off, next request: %d", r.StatusCode)
+	// In no tenant any more: signed out everywhere at once, so the next request is a 401.
+	if r := a.Request(t, http.MethodGet, "/tenants/tenant-a/weather", "seller", seller); r.StatusCode != 401 {
+		t.Errorf("turned off, next request: %d, want 401", r.StatusCode)
+	}
+	var left int
+	_ = pool.QueryRow(ctx, `SELECT count(*) FROM sessions WHERE user_id = $1`, testkit.SellerA).Scan(&left)
+	if left != 0 {
+		t.Errorf("turned off: %d sessions left, want 0", left)
 	}
 	// v1's seller app reads users.status, and turning back on restores it.
 	var status string

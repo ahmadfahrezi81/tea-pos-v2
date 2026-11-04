@@ -125,6 +125,13 @@ func (s *Sessions) Forget(token string) {
 // DeleteAll ends every session of the user; other processes' caches drop theirs within cacheTTL,
 // the realtime hub at once (it is told).
 func (s *Sessions) DeleteAll(ctx context.Context, userID pgtype.UUID) error {
+	s.ForgetUser(userID)
+	return s.q.DeleteUserSessions(ctx, userID)
+}
+
+// ForgetUser drops the user's sessions from the cache, so a change to their status or access
+// applies from their next request, not within cacheTTL.
+func (s *Sessions) ForgetUser(userID pgtype.UUID) {
 	s.mu.Lock()
 	for hash, c := range s.cache {
 		if c.session.UserID == userID {
@@ -132,7 +139,6 @@ func (s *Sessions) DeleteAll(ctx context.Context, userID pgtype.UUID) error {
 		}
 	}
 	s.mu.Unlock()
-	return s.q.DeleteUserSessions(ctx, userID)
 }
 
 func (s *Sessions) Delete(ctx context.Context, token string) error {

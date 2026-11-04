@@ -394,18 +394,34 @@ func (q *Queries) SyncUserRole(ctx context.Context, userID pgtype.UUID) error {
 	return err
 }
 
-const syncUserStatus = `-- name: SyncUserStatus :exec
+const syncUserStatus = `-- name: SyncUserStatus :many
 UPDATE users u
 SET status = CASE WHEN EXISTS (
         SELECT 1 FROM user_tenant_assignments a WHERE a.user_id = u.id AND a.status = 'active'
     ) THEN 'active' ELSE 'inactive' END,
     updated_at = now()
 WHERE u.id = $1 AND u.status IN ('active', 'inactive')
+RETURNING u.status
 `
 
 // v1's seller app locks out anyone whose users.status is not active: inactive once no tenant has them
-// active. Other statuses (pending, suspended) are left as they are. Goes when v1 retires.
-func (q *Queries) SyncUserStatus(ctx context.Context, userID pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, syncUserStatus, userID)
-	return err
+// active. Other statuses (pending, suspended) are left as they are, and return no row.
+func (q *Queries) SyncUserStatus(ctx context.Context, userID pgtype.UUID) ([]string, error) {
+	rows, err := q.db.Query(ctx, syncUserStatus, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var status string
+		if err := rows.Scan(&status); err != nil {
+			return nil, err
+		}
+		items = append(items, status)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
