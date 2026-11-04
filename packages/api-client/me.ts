@@ -23,6 +23,8 @@ async function fetchMe(): Promise<Me> {
         throw new Error("not signed in");
     }
     const { data, error } = await api.GET("/me");
+    // Signed in, but Go refuses this user in this app (inactive, no access): asking again changes nothing.
+    if (error?.code === "not_allowed") window.location.assign("/login?error=not_allowed");
     if (error) throw new Error(error.code ?? "me failed");
     return data;
 }
@@ -35,5 +37,7 @@ export function useMe() {
         staleTime: STALE.COOL,
         // The early request is already paid for: always take it, even over a fresh saved copy.
         refetchOnMount: () => (globalThis.__me ? "always" : true),
+        // A failed /me is not asked again just because another screen reading it mounts.
+        retryOnMount: false,
     });
 }
