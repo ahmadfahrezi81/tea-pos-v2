@@ -28,6 +28,8 @@ type Deps struct {
 	Supabase auth.Supabase
 	// Limiter for sign-in routes; NewAPI makes one when nil.
 	Limiter *auth.Limiter
+	// SessionLimiter caps each signed-in session; NewAPI makes one when nil.
+	SessionLimiter *auth.Limiter
 	// TestLoginKey turns on /auth/test, in a binary built with -tags testlogin (staging only).
 	TestLoginKey string
 	// Telemetry sends the apps' events and errors to PostHog; nil sends nothing.
@@ -44,10 +46,14 @@ func NewAPI(mux *http.ServeMux, d Deps) huma.API {
 	if d.Limiter == nil {
 		d.Limiter = auth.NewLimiter(10, time.Minute)
 	}
+	if d.SessionLimiter == nil {
+		// 10 a second for a whole minute: live updates in a rush stay far below; a loop does not.
+		d.SessionLimiter = auth.NewLimiter(600, time.Minute)
+	}
 	if d.Flags == nil {
 		d.Flags = d.Telemetry
 	}
-	api.UseMiddleware(auth.Middleware(d.Sessions, d.Queries, d.Limiter, d.Flags))
+	api.UseMiddleware(auth.Middleware(d.Sessions, d.Queries, d.Limiter, d.SessionLimiter, d.Flags))
 	api.UseMiddleware(idem.Middleware(d.DB))
 	registerHealth(api)
 	registerAuth(api, d)
