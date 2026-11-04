@@ -17,6 +17,18 @@ export function appTooOld() {
     for (const fn of tooOld) fn();
 }
 
+const braked = new Set<(path: string) => void>();
+
+/** The brake (brake.ts) stopped this tab calling an address: the shell says so and reports it. */
+export function onBraked(fn: (path: string) => void): () => void {
+    braked.add(fn);
+    return () => braked.delete(fn);
+}
+
+export function brakeTripped(path: string) {
+    for (const fn of braked) fn(path);
+}
+
 let maintenance = false;
 const listeners = new Set<() => void>();
 

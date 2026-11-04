@@ -61,6 +61,8 @@ type Options struct {
 	Flags auth.Flags
 	// StorageURL is a fake Supabase for photo uploads.
 	StorageURL string
+	// SessionLimiter replaces the per-session cap (600 a minute).
+	SessionLimiter *auth.Limiter
 }
 
 func NewAPIWith(t *testing.T, pool *pgxpool.Pool, o Options) *API {
@@ -69,14 +71,15 @@ func NewAPIWith(t *testing.T, pool *pgxpool.Pool, o Options) *API {
 	sessions := auth.NewSessions(q)
 	mux := http.NewServeMux()
 	api := handler.NewAPI(mux, handler.Deps{
-		DB:           pool,
-		Queries:      q,
-		Sessions:     sessions,
-		Supabase:     auth.NewSupabase(o.SupabaseURL, "test-publishable-key"),
-		Limiter:      auth.NewLimiter(10, time.Minute),
-		TestLoginKey: TestLoginKey,
-		Flags:        o.Flags,
-		Files:        files.NewStorage(o.StorageURL, "test-secret-key"),
+		DB:             pool,
+		Queries:        q,
+		Sessions:       sessions,
+		Supabase:       auth.NewSupabase(o.SupabaseURL, "test-publishable-key"),
+		Limiter:        auth.NewLimiter(10, time.Minute),
+		SessionLimiter: o.SessionLimiter,
+		TestLoginKey:   TestLoginKey,
+		Flags:          o.Flags,
+		Files:          files.NewStorage(o.StorageURL, "test-secret-key"),
 	})
 	srv := httptest.NewServer(middleware.Standard(mux, middleware.Options{RequestTimeout: 5 * time.Second, EdgeSecret: EdgeSecret, MinAppVersions: o.MinAppVersions}))
 	t.Cleanup(srv.Close)

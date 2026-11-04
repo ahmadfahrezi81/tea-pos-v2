@@ -74,15 +74,16 @@ SET role = CASE WHEN EXISTS (SELECT 1 FROM tenants t WHERE t.owner_id = u.id) OR
     updated_at = now()
 WHERE u.id = @user_id AND u.role IN ('USER', 'ADMIN');
 
--- name: SyncUserStatus :exec
+-- name: SyncUserStatus :many
 -- v1's seller app locks out anyone whose users.status is not active: inactive once no tenant has them
--- active. Other statuses (pending, suspended) are left as they are. Goes when v1 retires.
+-- active. Other statuses (pending, suspended) are left as they are, and return no row.
 UPDATE users u
 SET status = CASE WHEN EXISTS (
         SELECT 1 FROM user_tenant_assignments a WHERE a.user_id = u.id AND a.status = 'active'
     ) THEN 'active' ELSE 'inactive' END,
     updated_at = now()
-WHERE u.id = @user_id AND u.status IN ('active', 'inactive');
+WHERE u.id = @user_id AND u.status IN ('active', 'inactive')
+RETURNING u.status;
 
 
 -- name: AskAccess :many
