@@ -40,6 +40,7 @@ export function AnalyticsMonth() {
 
     return (
         <div className="space-y-4">
+            <RangeBar />
             {unclosed.length > 0 && !warningDismissed && (
                 <div className="bg-red-100 p-3.5 rounded-xl">
                     <div className="flex items-start justify-between mb-2">
@@ -95,8 +96,6 @@ export function AnalyticsMonth() {
                     </div>
                 </div>
             </div>
-
-            <RangeBar />
 
             {perDay.data && perDay.data.days.length > 0 && (
                 <Link

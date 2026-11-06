@@ -9,9 +9,8 @@ import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 import { ImageOff } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-import { DaySessions } from "./DayActivity";
+import { DayPeople } from "./DayActivity";
 import { useSlug } from "../session/tenant";
-import { Sellers } from "./Sellers";
 
 type Photo = components["schemas"]["DayPhoto"];
 
@@ -52,9 +51,9 @@ export function DayDetail({ id }: { id: string }) {
 }
 
 /**
- * One store's day, as the old seller app's Details: cash, expenses, who worked, notes, photos,
- * products. Both apps show it. With `counting` (closing the day), the cash count comes first,
- * the expenses before the sums; `children` go at the foot.
+ * One store's day, as the old seller app's Details: cash (its expenses inside), who worked, notes,
+ * photos, products. Both apps show it, and closing a day too: `counting` (the cash count) goes
+ * first, `children` at the foot, the rest the same everywhere.
  */
 export function DayView({
     day,
@@ -78,23 +77,6 @@ export function DayView({
         (p): p is Photo => !!p,
     );
 
-    const expenses = day.expenseItems.length > 0 && (
-        <Section title={t("daily.expenses")}>
-            <div className="bg-red-100 p-2 rounded-xl space-y-1">
-                {day.expenseItems.map((e) => (
-                    <div key={e.id} className="flex justify-between text-sm">
-                        <span className="text-red-800">{e.type}</span>
-                        <span className="font-bold text-red-800">-{formatMoney(e.amount)}</span>
-                    </div>
-                ))}
-                <div className="border-t border-red-300 pt-1 flex justify-between text-sm font-semibold text-red-800">
-                    <span>{t("analytics.total")}</span>
-                    <span>-{formatMoney(day.expenses)}</span>
-                </div>
-            </div>
-        </Section>
-    );
-
     return (
         <div className="space-y-4">
             <div className="bg-white rounded-2xl p-4 space-y-3">
@@ -116,7 +98,6 @@ export function DayView({
             </div>
 
             {counting}
-            {counting && expenses}
 
             <div className="bg-white rounded-2xl p-3 space-y-2">
                 <h4 className="text-sm font-semibold text-gray-800">{t("daily.cashSummary")}</h4>
@@ -153,7 +134,20 @@ export function DayView({
                     label={`− ${t("daily.expenses")}`}
                     value={formatMoney(day.expenses)}
                     tone="bg-red-100 text-red-900"
-                />
+                >
+                    {day.expenseItems.length > 0 && (
+                        <div className="mt-1.5 rounded-lg bg-white/50 px-2 py-1.5 space-y-0.5">
+                            {day.expenseItems.map((e) => (
+                                <div key={e.id} className="flex justify-between gap-3 text-sm">
+                                    <span className="text-red-800 truncate">{e.type}</span>
+                                    <span className="font-semibold text-red-800 shrink-0">
+                                        {formatMoney(e.amount)}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </Tile>
                 <hr className="border-gray-200 my-2" />
                 <div className="grid grid-cols-2 gap-2">
                     <Tile
@@ -180,19 +174,9 @@ export function DayView({
                 )}
             </div>
 
-            {!counting && expenses}
-
-            {day.sellers.length > 0 && (
-                <Section title={t("daily.whoWorked")}>
-                    <Sellers sellers={day.sellers} />
-                </Section>
-            )}
-
-            {!counting && (
-                <Section title={t("analytics.sessions")}>
-                    <DaySessions id={day.id} />
-                </Section>
-            )}
+            <Section title={t("daily.whoWorked")}>
+                <DayPeople id={day.id} sellers={day.sellers} />
+            </Section>
 
             {day.notes && (
                 <Section title={t("analytics.notes")}>
@@ -229,16 +213,18 @@ export function DayView({
                         {t("daily.noBreakdown")}
                     </p>
                 ) : (
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-3 gap-1.5">
                         {day.products.map((p) => (
-                            <div key={p.name} className="bg-slate-100 p-2.5 rounded-xl">
-                                <p className="font-semibold text-gray-800 text-sm truncate">
+                            <div key={p.name} className="bg-slate-100 px-2 py-1.5 rounded-xl">
+                                <p className="font-semibold text-gray-800 text-xs truncate">
                                     {p.name || t("common.unknown")}
                                 </p>
-                                <p className="font-bold text-gray-800">
+                                <p className="font-bold text-gray-800 text-sm">
                                     {p.quantity} {t("analytics.cups")}
                                 </p>
-                                <p className="text-sm text-gray-500">{formatMoney(p.revenue)}</p>
+                                <p className="text-xs text-gray-500 truncate">
+                                    {formatMoney(p.revenue)}
+                                </p>
                             </div>
                         ))}
                     </div>
@@ -254,17 +240,20 @@ function Tile({
     value,
     tone,
     className = "",
+    children,
 }: {
     label: string;
     value: string;
     tone: string;
     className?: string;
+    children?: ReactNode;
 }) {
     const [bg, text] = tone.split(" ");
     return (
         <div className={`${bg} p-2 rounded-lg ${className}`}>
             <p className="text-xs font-semibold text-gray-700">{label}</p>
             <p className={`text-xl font-bold ${text}`}>{value}</p>
+            {children}
         </div>
     );
 }

@@ -135,8 +135,11 @@ async function savedFiles(): Promise<Set<string>> {
 /** What the new worker will save: its own list, read from its script. */
 async function newWorkerFiles(): Promise<string[]> {
     const text = await (await fetch("/sw.js", { cache: "no-store" })).text();
-    return [...text.matchAll(/url:"([^"]+)",revision:(?:null|"([^"]+)")/g)].map(([, url, rev]) => {
-        const path = `/${(url ?? "").replace(/^\//, "")}`;
+    // Each entry is {url, revision} in either order, keys quoted (sw.ts's injected list) or not.
+    return [...text.matchAll(/\{([^{}]*?\burl"?:"[^"]+"[^{}]*?)\}/g)].map(([, entry]) => {
+        const url = /\burl"?:"([^"]+)"/.exec(entry ?? "")?.[1] ?? "";
+        const rev = /\brevision"?:"([^"]+)"/.exec(entry ?? "")?.[1];
+        const path = `/${url.replace(/^\//, "")}`;
         return rev ? `${path}?__WB_REVISION__=${rev}` : path;
     });
 }
@@ -162,10 +165,9 @@ const AppUpdateContext = createContext<AppUpdate | null>(null);
 /**
  * An update is a download: the app lives on the phone, and a reload alone is answered by the old
  * worker with the old files. A tiny version file is the question, asked on opening, on coming back
- * and on a tap, at most once a minute. On a fresh open a new build takes a full page until it is
- * in (nobody has started anything); in use it downloads behind the header of a tab's root, which
- * then counts down and reloads. After a 426 this build is too old to
- * be safe, so the full page has no way out.
+ * (a page woken from memory too, as iPhones do) and on a tap, at most once a minute. A new build
+ * always downloads behind the header of a tab's root, which then counts down and reloads, on every
+ * phone. Only after a 426, when this build is too old to be safe, a full page with no way out.
  */
 export function AppUpdateProvider({ children }: { children: ReactNode }) {
     const [phase, setPhase] = useState<Phase>("idle");
@@ -175,8 +177,6 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
     const [version, setVersion] = useState("");
     const updateSW = useRef<(reload?: boolean) => Promise<void>>(async () => {});
     const registration = useRef<ServiceWorkerRegistration>(undefined);
-    // Nothing tapped yet since opening: a full page interrupts nothing.
-    const fresh = useRef(true);
     const blockingRef = useRef(false);
     const stopWatching = useRef<() => void>(() => {});
     // Said no, or got out, this session: asked again on the next open.
@@ -286,13 +286,11 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
             if (phaseRef.current !== "idle" || !registration.current) return;
             if (Date.now() - lastCheckedAt < CHECK_THROTTLE_MS) return;
             lastCheckedAt = Date.now();
-            const openedFresh = fresh.current;
             const build = await servedBuild();
             if (!build || build === APP_TAG) return;
             if (attempts(build) >= MAX_ATTEMPTS) return;
             target.current = build;
             setVersion(versionOf(build));
-            if (openedFresh) block(true);
             download();
         };
         const stop = whenIdle(() => {
@@ -311,7 +309,6 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
                         if (quiet.current || attempts(build) >= MAX_ATTEMPTS) return;
                         target.current = build;
                         if (build) setVersion(versionOf(build));
-                        if (fresh.current) block(true);
                         download();
                     });
                 },
@@ -333,16 +330,17 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
         };
         window.addEventListener("vite:preloadError", onChunkGone);
         const onVisible = () => void check();
-        const onTap = () => {
-            fresh.current = false;
-            void check();
-        };
+        // An iPhone often wakes the old page from memory instead of opening it: pageshow says so.
+        const onShow = (e: PageTransitionEvent) => e.persisted && void check();
+        const onTap = () => void check();
         document.addEventListener("visibilitychange", onVisible);
+        window.addEventListener("pageshow", onShow);
         document.addEventListener("pointerdown", onTap, { passive: true });
         return () => {
             stop();
             stopWatching.current();
             document.removeEventListener("visibilitychange", onVisible);
+            window.removeEventListener("pageshow", onShow);
             document.removeEventListener("pointerdown", onTap);
             window.removeEventListener("vite:preloadError", onChunkGone);
         };
@@ -411,7 +409,7 @@ export function UpdateBar({ percent, dark = false }: { percent: number | null; d
     );
 }
 
-/** The full page: what a fresh open sees while the new build comes in, like installing an app. */
+/** The full page, only after a 426: this build is too old to keep using, so the new one comes in first. */
 function UpdateScreen({
     version,
     phase,

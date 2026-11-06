@@ -91,7 +91,7 @@ export function HomeHeader() {
                 onScroll={() => active && setActive(null)}
                 className="overflow-x-auto [&::-webkit-scrollbar]:hidden"
             >
-                <div style={{ width: BAR }} className="relative px-4 pt-9 pb-8">
+                <div style={{ width: BAR }} className="relative px-4 pt-9 pb-4">
                     <div className="relative flex items-center gap-1">
                         {Array.from({ length: hours }, (_, i) => {
                             const fill = Math.min(1, Math.max(0, progress * hours - i));
@@ -139,8 +139,28 @@ export function HomeHeader() {
                             );
                         })}
                     </div>
+                    {/* Each hour where it starts, as v1; the first is the buffer before opening. */}
+                    <div className="relative mt-3 h-4">
+                        {Array.from({ length: hours }, (_, i) =>
+                            i === 0 ? null : (
+                                <span
+                                    key={i}
+                                    className="absolute -translate-x-1/2 text-[10px] text-gray-400 whitespace-nowrap"
+                                    style={{ left: `${(i / hours) * 100}%` }}
+                                >
+                                    {hourLabel(open + i * 60)}
+                                </span>
+                            ),
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
     );
+}
+
+/** 600 as "10 AM", as v1. */
+function hourLabel(minutes: number): string {
+    const h = Math.floor(minutes / 60) % 24;
+    return `${h % 12 === 0 ? 12 : h % 12} ${h >= 12 ? "PM" : "AM"}`;
 }

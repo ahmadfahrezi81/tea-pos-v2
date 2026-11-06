@@ -13,7 +13,7 @@ const StoreSheet = lazy(() => import("./StoreSheet"));
  * its name large in the brand colour; a tap opens the sheet (seller: its stores; backoffice: All
  * Stores first, then each store).
  */
-export function StorePicker() {
+export function StorePicker({ inline = false }: { inline?: boolean }) {
     const t = useT();
     const { stores: mode } = useApp();
     const state = useTenant();
@@ -28,7 +28,7 @@ export function StorePicker() {
         <>
             <button
                 onClick={show}
-                className="mb-3 flex min-w-0 max-w-full items-center gap-0.5 active:scale-95"
+                className={`flex min-w-0 max-w-full items-center gap-0.5 active:scale-95 ${inline ? "" : "mb-3"}`}
             >
                 <span className="truncate text-[22px] font-semibold tracking-tight text-brand">
                     {state.store?.name ?? t("shell.allStores")}

@@ -19,6 +19,8 @@ import { RefreshSheet } from "./RefreshSheet";
 import { refreshGate } from "./refreshGate";
 import { isSubPage, type Tab } from "./routes";
 import { ScrollContext } from "./ScrollContext";
+import { StorePicker } from "./StorePicker";
+import { useApp } from "../session/AppContext";
 import { useStandaloneViewportHeight } from "./useStandaloneViewportHeight";
 
 /** Pull distance, after resistance, at which letting go refreshes. */
@@ -149,6 +151,9 @@ export function MobileShell({
     const currentIsSubPage = isSubPage(route);
     const footerCtaLabel = route?.footerCtaKey ? t(route.footerCtaKey) : undefined;
     const showAccountIcon = !!onAccount && rootTabPaths.includes(pathname);
+    // Seller works in one store: its picker sits beside each core tab's title (not More), as v1.
+    // Backoffice picks a store in its Store list.
+    const storeBeside = useApp().stores === "one" && showAccountIcon && !pathname.endsWith("/more");
 
     // Back unwinds our history, else replaces with the parent: history only shrinks.
     const parent = route?.parent;
@@ -388,6 +393,7 @@ export function MobileShell({
                                 onAccount={onAccount}
                                 actionsRef={setHeaderSlotEl}
                                 titleRef={setTitleSlotEl}
+                                beside={storeBeside ? <StorePicker inline /> : undefined}
                             />
 
                             {/* Always mounted; navProgress drives it, never React. Inside the header's bottom edge, so outside main's clip. */}

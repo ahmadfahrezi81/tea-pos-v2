@@ -16,6 +16,9 @@ import type { AppConfig } from "./app";
 // The shell's header colour (slate-100): the status bar and the install splash match it.
 const SHELL_COLOR = "#f1f5f9";
 
+// Where the shared service worker (sw.ts) lives, for every app's build.
+const SHARED = new URL(".", import.meta.url).pathname;
+
 const contract = createHash("sha256")
     .update(readFileSync(new URL("../../api/openapi.yaml", import.meta.url)))
     .digest("hex")
@@ -242,6 +245,25 @@ function versionFile(app: AppConfig): Plugin {
     };
 }
 
+/**
+ * Both apps on localhost share cookies across ports, so signing in to one signed the other out.
+ * Locally only, the browser keeps `session_<app>`; Go still reads and writes `session`.
+ */
+function ownCookie(app: AppConfig) {
+    const name = `session_${app.id}`;
+    return {
+        toGo: (cookie: string | undefined) => {
+            const parts = (cookie ?? "").split(/;\s*/).filter(Boolean);
+            const mine = parts.find((c) => c.startsWith(`${name}=`));
+            const rest = parts.filter((c) => !/^session(_[a-z]+)?=/.test(c));
+            if (mine) rest.push(`session=${mine.slice(name.length + 1)}`);
+            return rest.join("; ");
+        },
+        toBrowser: (set: string[] | undefined) =>
+            set?.map((c) => c.replace(/^session=/, `${name}=`)),
+    };
+}
+
 // The hub's socket in local dev, sent as the forwarder sends it (set REALTIME_ORIGIN, e.g. a local realtime).
 function realtimeProxy(app: AppConfig): Record<string, ProxyOptions> {
     if (!process.env.REALTIME_ORIGIN) return {};
@@ -253,9 +275,10 @@ function realtimeProxy(app: AppConfig): Record<string, ProxyOptions> {
             rewrite: (path) => path.replace(/^\/api/, ""),
             headers: { "X-Edge-Secret": process.env.EDGE_SECRET ?? "", "X-App": app.id },
             configure: (proxy) =>
-                proxy.on("proxyReqWs", (req, incoming) =>
-                    req.setHeader("X-App-Origin", `http://${incoming.headers.host}`),
-                ),
+                proxy.on("proxyReqWs", (req, incoming) => {
+                    req.setHeader("X-App-Origin", `http://${incoming.headers.host}`);
+                    req.setHeader("Cookie", ownCookie(app).toGo(incoming.headers.cookie));
+                }),
         },
     };
 }
@@ -315,11 +338,13 @@ export function appConfig(app: AppConfig) {
                         },
                     ],
                 },
-                workbox: {
+                // Our own worker (sw.ts): Workbox's install saves an update one file at a time.
+                strategies: "injectManifest",
+                srcDir: SHARED,
+                filename: "sw.ts",
+                injectManifest: {
                     // The whole app is stored on the phone; heavy screens (charts, maps) are left out here when they arrive.
                     globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
-                    navigateFallback: "/index.html",
-                    navigateFallbackDenylist: [/^\/api\//],
                 },
             }),
         ],
@@ -335,10 +360,17 @@ export function appConfig(app: AppConfig) {
                     changeOrigin: true,
                     rewrite: (path) => path.replace(/^\/api/, ""),
                     headers: { "X-Edge-Secret": process.env.EDGE_SECRET ?? "", "X-App": app.id },
-                    configure: (proxy) =>
-                        proxy.on("proxyReq", (req, incoming) =>
-                            req.setHeader("X-App-Origin", `http://${incoming.headers.host}`),
-                        ),
+                    configure: (proxy) => {
+                        const cookie = ownCookie(app);
+                        proxy.on("proxyReq", (req, incoming) => {
+                            req.setHeader("X-App-Origin", `http://${incoming.headers.host}`);
+                            req.setHeader("Cookie", cookie.toGo(incoming.headers.cookie));
+                        });
+                        proxy.on("proxyRes", (res) => {
+                            const set = cookie.toBrowser(res.headers["set-cookie"]);
+                            if (set) res.headers["set-cookie"] = set;
+                        });
+                    },
                 },
             },
         },

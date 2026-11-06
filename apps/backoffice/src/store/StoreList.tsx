@@ -121,25 +121,26 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
             search={{ from, to }}
             className="block rounded-xl bg-white p-3 space-y-2.5 active:scale-[0.99]"
         >
-            <div className="flex items-center gap-3">
-                <div className="flex-1 min-w-0 space-y-1">
-                    <p className="text-lg font-bold text-gray-900 truncate">{s.name}</p>
+            {/* A grid, so the status pill and the amount share one row and one bottom line. */}
+            <div className="grid grid-cols-[1fr_auto] items-end gap-x-3 gap-y-1">
+                <p className="text-lg font-bold text-gray-900 truncate">{s.name}</p>
+                <p className="text-xs font-semibold text-gray-900 text-right">
+                    {t(!single ? "store.salesShort" : open ? "store.expected" : "store.total")}
+                </p>
+                <div>
                     <StatusPill {...pill} />
                 </div>
-                <div className="shrink-0 space-y-1 text-right">
-                    <p className="text-xs font-semibold text-gray-900">
-                        {t(!single ? "store.salesShort" : open ? "store.expected" : "store.total")}
-                    </p>
-                    <p className="font-bold text-green-600">
-                        {!single
-                            ? formatMoney(s.sales)
-                            : open
-                              ? formatMoney(dayCash(s, true))
-                              : s.closedDays > 0
-                                ? formatMoney(dayCash(s, false))
-                                : "—"}
-                    </p>
-                </div>
+                <p
+                    className={`font-bold leading-5 text-right whitespace-nowrap ${single ? "text-orange-600" : "text-green-600"}`}
+                >
+                    {!single
+                        ? formatMoney(s.sales)
+                        : open
+                          ? formatMoney(dayCash(s, true))
+                          : s.closedDays > 0
+                            ? formatMoney(dayCash(s, false))
+                            : "—"}
+                </p>
             </div>
             {single ? (
                 <div className="grid grid-cols-3 gap-1.5">

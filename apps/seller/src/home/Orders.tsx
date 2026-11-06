@@ -1,33 +1,27 @@
 import { LoadFailed } from "@tea-pos/shell/LoadFailed";
-import { addDays, formatCalendarDay, formatMoney, formatTime, localDate } from "@tea-pos/format";
+import { formatMoney, formatTime, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { OrderCard } from "@tea-pos/shell/OrderCard";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { ICON } from "@tea-pos/ui/icon";
 import { LoadMore } from "@tea-pos/ui/LoadMore";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
-import { Calendar, CalendarDays, Receipt } from "lucide-react";
-import { useState } from "react";
+import { Calendar, Receipt } from "lucide-react";
 
 import { useDayOrders, useHours } from "./home";
 
 const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
 
-/** A day's orders at the store: its totals, its cups by hour (only to look at), every order. */
+/** Today's orders at the store: its totals, its cups by hour (only to look at), every order. Earlier days are the backoffice's. */
 export function Orders() {
     const t = useT();
     const locale = useLocale();
     const today = localDate();
-    const [date, setDate] = useState(today);
+    const date = today;
     const { data: day } = useHours(date);
     const orders = useDayOrders(date);
     const list = orders.data ?? [];
-    const title =
-        date === today
-            ? t("orders.today")
-            : date === addDays(today, -1)
-              ? t("orders.yesterday")
-              : formatCalendarDay(date, locale, "short");
+    const title = t("orders.today");
     const figure = (value: number | undefined, label: string, color: string) => (
         <div className="text-center">
             {value === undefined ? (
@@ -43,7 +37,7 @@ export function Orders() {
             <div className="bg-white p-4 rounded-2xl">
                 <div className="flex items-center gap-2 mb-3">
                     <Receipt size={ICON} className="text-gray-600" />
-                    <h3 className="font-semibold text-gray-800">{t("orders.dailySummary")}</h3>
+                    <h3 className="font-semibold text-gray-800">{t("orders.totalToday")}</h3>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                     {figure(day?.orders, t("analytics.orders"), "text-blue-600")}
@@ -59,19 +53,6 @@ export function Orders() {
                         )}
                     </div>
                 </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-2xl">
-                <label className="block text-sm font-medium text-gray-700">
-                    <CalendarDays size={16} className="inline mr-1" />
-                    {t("orders.selectDate")}
-                    <input
-                        type="date"
-                        value={date}
-                        onChange={(e) => setDate(e.target.value || today)}
-                        className="mt-2 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand/90 focus:outline-none"
-                    />
-                </label>
             </div>
 
             {day && day.hours.length > 0 && (
