@@ -3,10 +3,15 @@
 package integration
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"regexp"
 	"strconv"
 	"testing"
+
+	"github.com/danielgtaylor/huma/v2"
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/version"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/tests/testkit"
@@ -169,5 +174,16 @@ func TestEvents(t *testing.T) {
 		if resp := a.Send(t, http.MethodPost, "/events", "seller", bad, nil, seller); resp.StatusCode != http.StatusBadRequest {
 			t.Fatalf("%s: status %d", bad, resp.StatusCode)
 		}
+	}
+}
+
+// A request the phone gave up on logs as 499, so a 500 in the log is always a real failure.
+func TestCancelledIs499(t *testing.T) {
+	testkit.NewAPI(t, testkit.DB(t), "")
+	if s := huma.NewError(500, "x", fmt.Errorf("list: %w", context.Canceled)).GetStatus(); s != 499 {
+		t.Errorf("cancelled: %d, want 499", s)
+	}
+	if s := huma.NewError(500, "x", errors.New("boom")).GetStatus(); s != 500 {
+		t.Errorf("a real failure: %d, want 500", s)
 	}
 }
