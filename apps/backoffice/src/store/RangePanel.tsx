@@ -49,11 +49,11 @@ export function RangePanel({ stores }: { stores: Store[] | undefined }) {
             <div className="px-1">
                 <p className="text-sm font-medium text-gray-900">{t("store.salesShort")}</p>
                 {stores ? (
-                    <p className="text-lg font-bold text-green-600">
+                    <p className="text-[22px] leading-tight font-bold tracking-tight text-green-600">
                         {formatMoney(sum((s) => s.sales))}
                     </p>
                 ) : (
-                    <Skeleton className="h-7 w-36 rounded" />
+                    <Skeleton className="h-7 w-40 rounded" />
                 )}
             </div>
             <div className="grid grid-cols-3 gap-1.5">

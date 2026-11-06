@@ -73,6 +73,7 @@
         "showAll": "Tampilkan semua pesanan",
         "title": "Pesanan",
         "noOrders": "Tidak ada pesanan",
+        "totalToday": "Total hari ini",
         "dailySummary": "Ringkasan Harian",
         "selectDate": "Pilih Tanggal",
         "today": "Hari ini",
@@ -99,6 +100,7 @@
         "analyticsRowSub": "Setiap hari, kasnya dan siapa yang bekerja; grafiknya",
         "ordersRowSub": "Semua pesanan dalam sehari, dan penjualan per jam",
         "photo": {
+            "opening": "Pembukaan",
             "ice": "Wadah Es",
             "syrup": "Sirup",
             "bags": "Kantong",

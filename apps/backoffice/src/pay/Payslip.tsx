@@ -171,7 +171,7 @@ export function Payslip({ id }: { id: string }) {
                     </div>
                     <div className="text-center col-span-2 border-l-2 border-gray-300">
                         <p className="text-sm text-gray-600">{t("pay.totalPay")}</p>
-                        <p className="text-xl font-bold text-green-600">
+                        <p className="text-xl font-bold text-orange-600">
                             {formatMoney(slip.total)}
                         </p>
                     </div>

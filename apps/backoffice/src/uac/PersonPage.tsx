@@ -5,7 +5,6 @@ import { Avatar } from "@tea-pos/ui/Avatar";
 import { Callout } from "@tea-pos/ui/Callout";
 import { ChoiceList } from "@tea-pos/ui/ChoiceList";
 import { Field } from "@tea-pos/ui/form/Field";
-import { Segmented } from "@tea-pos/ui/form/Segmented";
 import { Switch } from "@tea-pos/ui/form/Switch";
 import { TextInput } from "@tea-pos/ui/form/TextInput";
 import { Panel, PanelLabel } from "@tea-pos/ui/Panel";
@@ -478,7 +477,7 @@ function CheckRow({
     );
 }
 
-/** Each app's level, one line each; the chosen level says what it means. */
+/** Each app's level, picked from a radio list; each level says what it means. */
 function AppLevels({ change, set, disabled }: Parameters<Fields>[0]) {
     const t = useT();
     return (
@@ -486,16 +485,16 @@ function AppLevels({ change, set, disabled }: Parameters<Fields>[0]) {
             {(["seller", "backoffice"] as const).map((app) => (
                 <section key={app} className="space-y-1.5">
                     <PanelLabel>{t(app === "seller" ? "uac.seller" : "uac.office")}</PanelLabel>
-                    <Segmented
-                        value={change.access[app]}
-                        disabled={disabled}
+                    <ChoiceList
+                        value={change.access[app] as string}
                         onChange={(level) => set({ access: { ...change.access, [app]: level } })}
                         choices={LEVELS[app].map((level) => ({
                             value: level as string,
                             label: t(`uac.${level || "none"}` as MessageKey),
+                            sublabel: t(HINTS[level as string]!),
+                            disabled,
                         }))}
                     />
-                    <p className="px-1 text-xs text-gray-900">{t(HINTS[change.access[app]]!)}</p>
                 </section>
             ))}
         </div>

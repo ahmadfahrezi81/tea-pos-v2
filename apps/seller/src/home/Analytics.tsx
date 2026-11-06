@@ -9,31 +9,22 @@ import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { ICON } from "@tea-pos/ui/icon";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, CalendarDays, Receipt, X } from "lucide-react";
+import { AlertTriangle, Receipt, X } from "lucide-react";
 import { useState } from "react";
 
 import { useMonthDays, useMonthSales } from "./home";
 
 type Day = components["schemas"]["Day"];
 
-const lastOfMonth = (month: string) => {
-    const y = Number(month.slice(0, 4));
-    const m = Number(month.slice(5, 7));
-    return addDays(
-        `${m === 12 ? y + 1 : y}-${String(m === 12 ? 1 : m + 1).padStart(2, "0")}-01`,
-        -1,
-    );
-};
-
-/** The store's month, day by day. A day left open from before can be closed from here. */
+/** The store's last 30 days, day by day. A day left open from before can be closed from here. */
 export function Analytics() {
     const t = useT();
     const locale = useLocale();
     const slug = useSlug();
     const today = localDate();
-    const [month, setMonth] = useState(today.slice(0, 7));
-    const from = `${month}-01`;
-    const to = lastOfMonth(month);
+    // The last 30 days, today included; earlier ones are the backoffice's.
+    const from = addDays(today, -29);
+    const to = today;
     const { data, error } = useMonthDays(from, to);
     const { data: sales } = useMonthSales(from, to);
     const [dismissed, setDismissed] = useState(false);
@@ -83,7 +74,7 @@ export function Analytics() {
             <div className="bg-white p-4 rounded-2xl">
                 <div className="flex items-center gap-2 mb-3">
                     <Receipt size={ICON} className="text-gray-600" />
-                    <h3 className="font-semibold text-gray-800">{t("store.totals")}</h3>
+                    <h3 className="font-semibold text-gray-800">{t("store.last30")}</h3>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                     {figure(list && total((d) => d.orders), t("analytics.orders"), "text-blue-600")}
@@ -99,19 +90,6 @@ export function Analytics() {
                         )}
                     </div>
                 </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-2xl">
-                <label className="block text-sm font-medium text-gray-700">
-                    <CalendarDays size={16} className="inline mr-1" />
-                    {t("analytics.selectMonth")}
-                    <input
-                        type="month"
-                        value={month}
-                        onChange={(e) => setMonth(e.target.value || today.slice(0, 7))}
-                        className="mt-2 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand/90 focus:outline-none"
-                    />
-                </label>
             </div>
 
             {sales && sales.days.length > 0 && (
