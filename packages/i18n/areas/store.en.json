@@ -73,6 +73,7 @@
         "showAll": "Show all orders",
         "title": "Orders",
         "noOrders": "No orders found",
+        "totalToday": "Total today",
         "dailySummary": "Daily Summary",
         "selectDate": "Select Date",
         "today": "Today",
@@ -99,6 +100,7 @@
         "analyticsRowSub": "Each day, its cash and who worked; the charts",
         "ordersRowSub": "Every order of a day, and sales by hour",
         "photo": {
+            "opening": "Opening",
             "ice": "Ice Bin",
             "syrup": "Syrup",
             "bags": "Bags",

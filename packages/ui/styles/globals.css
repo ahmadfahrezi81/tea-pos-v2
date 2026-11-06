@@ -2,9 +2,10 @@
 @import "tailwindcss";
 @import "./motion.css";
 
-/* Tailwind scans the app by default; the shared packages hold classes too. */
-@source "../**/*.tsx";
-@source "../../shell/**/*.tsx";
+/* Tailwind scans the app by default; the shared packages hold classes too, in .ts files as well
+   (dayEvents.ts's colours: scanning .tsx only left some markers clear). */
+@source "../**/*.{ts,tsx}";
+@source "../../shell/**/*.{ts,tsx}";
 
 /* Inter, Latin only: one variable file for every weight. */
 @font-face {

@@ -22,7 +22,7 @@ export function ListRow({
     /** Replaces the chevron: a status, a value, its own button. */
     trailing?: ReactNode;
     onClick?: () => void;
-    /** `leading` at the top of the row, not its middle. */
+    /** `leading` and the chevron at the top of the row, level with the title, not its middle. */
     top?: boolean;
 }) {
     const body = (
@@ -32,7 +32,9 @@ export function ListRow({
                     {leading}
                 </span>
             )}
-            <div className="flex-1 min-w-0 flex items-center gap-3 py-4 -mr-4 pr-4 border-b-2 border-slate-100 in-[.panel]:border-white group-last:border-b-0">
+            <div
+                className={`flex-1 min-w-0 flex ${top ? "items-start" : "items-center"} gap-3 py-4 -mr-4 pr-4 border-b-2 border-slate-100 in-[.panel]:border-white group-last:border-b-0`}
+            >
                 <div className="flex-1 min-w-0">
                     <div className="text-[17px] font-medium text-gray-900 truncate">{title}</div>
                     {subtitle && (
@@ -46,7 +48,7 @@ export function ListRow({
                         <ChevronRight
                             size={ICON}
                             strokeWidth={2.5}
-                            className="text-brand/90 shrink-0"
+                            className={`text-brand/90 shrink-0 ${top ? "mt-0.5" : ""}`}
                         />
                     ))}
             </div>

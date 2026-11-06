@@ -150,23 +150,25 @@ export function PeriodHome({ start }: { start: string }) {
                     )}
                 </div>
                 {people.length > 0 && (
-                    <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 rounded-xl bg-slate-100 p-2.5">
-                        <p className="truncate text-sm font-medium text-gray-900">
-                            {t("pay.totalPayout")}
-                        </p>
-                        <p className="text-right text-sm font-medium text-gray-900">
+                    <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1 rounded-xl bg-slate-100 p-2.5">
+                        <p className="text-sm font-medium text-gray-900">
                             {payDate(p.payoutDate, locale)}
                         </p>
-                        <p className="truncate text-lg font-bold leading-tight text-green-600">
-                            {formatMoney(allPaid ? paid : toSend)}
+                        <p className="truncate text-right text-sm font-medium text-gray-900">
+                            {t("pay.totalPayout")}
                         </p>
-                        {status && (
+                        {status ? (
                             <span
-                                className={`justify-self-end rounded-lg px-2 py-0.5 text-sm font-bold ${allPaid ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}
+                                className={`justify-self-start rounded-lg px-2 py-0.5 text-sm font-bold ${allPaid ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}
                             >
                                 {status}
                             </span>
+                        ) : (
+                            <span />
                         )}
+                        <p className="truncate text-right text-lg font-bold leading-tight text-orange-600">
+                            {formatMoney(allPaid ? paid : toSend)}
+                        </p>
                     </div>
                 )}
             </div>
@@ -240,29 +242,30 @@ function PersonCard({ person: x, start }: { person: Person; start: string }) {
             params={{ tenant: slug, start, userId: x.userId }}
             className="block bg-white rounded-xl p-3 space-y-2.5 active:bg-gray-50"
         >
-            <div className="flex items-center gap-3">
-                <Avatar url={x.avatarUrl} />
-                <div className="flex-1 min-w-0 space-y-1">
-                    <p className="font-bold text-gray-900 truncate">{x.name}</p>
-                    <div className="flex flex-wrap gap-1">
+            {/* A grid, so the badges and the amount share one row and one bottom line. */}
+            <div className="grid grid-cols-[auto_1fr_auto] items-end gap-x-3 gap-y-1">
+                <div className="row-span-2 self-center">
+                    <Avatar url={x.avatarUrl} />
+                </div>
+                <p className="font-bold text-gray-900 truncate">{x.name}</p>
+                <p className="text-xs font-semibold text-gray-900 text-right">{t("pay.total")}</p>
+                <div className="flex flex-wrap gap-1">
+                    <Badge>
+                        {x.status !== "pending"
+                            ? t(x.status === "skipped" ? "pay.skipped" : "pay.paid")
+                            : x.pending > 0
+                              ? t("pay.waiting").replace("{n}", String(x.pending))
+                              : t("pay.readyBadge")}
+                    </Badge>
+                    {reviewed > 0 && (
                         <Badge>
-                            {x.status !== "pending"
-                                ? t(x.status === "skipped" ? "pay.skipped" : "pay.paid")
-                                : x.pending > 0
-                                  ? t("pay.waiting").replace("{n}", String(x.pending))
-                                  : t("pay.readyBadge")}
+                            {x.approved}/{reviewed} ✓
                         </Badge>
-                        {reviewed > 0 && (
-                            <Badge>
-                                {x.approved}/{reviewed} ✓
-                            </Badge>
-                        )}
-                    </div>
+                    )}
                 </div>
-                <div className="shrink-0 space-y-1 text-right">
-                    <p className="text-xs font-semibold text-gray-900">{t("pay.total")}</p>
-                    <p className="font-bold text-green-600">{formatMoney(x.total)}</p>
-                </div>
+                <p className="font-bold leading-5 text-orange-600 text-right whitespace-nowrap">
+                    {formatMoney(x.total)}
+                </p>
             </div>
             <div className="grid grid-cols-3 gap-1.5">
                 <Tile label={t("pay.cups")} value={String(x.cups)} className="bg-blue-100" />

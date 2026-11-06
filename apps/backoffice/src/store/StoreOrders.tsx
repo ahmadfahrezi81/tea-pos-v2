@@ -52,10 +52,11 @@ export function StoreOrders() {
 
     return (
         <div className="flex flex-col gap-4">
+            <RangeBar />
             <div className="bg-white p-4 rounded-2xl">
                 <div className="flex items-center gap-2 mb-3">
                     <Receipt size={ICON} className="text-gray-600" />
-                    <h3 className="font-semibold text-gray-800">{t("orders.dailySummary")}</h3>
+                    <h3 className="font-semibold text-gray-800">{t("store.totals")}</h3>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                     <Figure
@@ -80,8 +81,6 @@ export function StoreOrders() {
                     </div>
                 </div>
             </div>
-
-            <RangeBar />
 
             {single && hours.data && hours.data.hours.length > 0 && (
                 <Link

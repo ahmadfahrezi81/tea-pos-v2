@@ -207,91 +207,87 @@ function EventCard({ event, last }: { event: Event; last: boolean }) {
     );
 }
 
-function duration(start: string, end: string | undefined): string {
-    const ms = (end ? Date.parse(end) : Date.now()) - Date.parse(start);
+const spent = (start: string, end: string | undefined) =>
+    (end ? Date.parse(end) : Date.now()) - Date.parse(start);
+
+function hours(ms: number): string {
     const h = Math.floor(ms / 3_600_000);
     const m = Math.floor((ms % 3_600_000) / 60_000);
     if (h === 0) return `${m}m`;
     return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
-/** Who held the store that day, in order, and who took over from whom. */
-export function DaySessions({ id }: { id: string }) {
+/**
+ * Who worked the day, in one card: each person with their cups, and under them their sessions
+ * (from, to, who they took over from, how long).
+ */
+export function DayPeople({
+    id,
+    sellers,
+}: {
+    id: string;
+    sellers: components["schemas"]["DaySeller"][];
+}) {
     const t = useT();
     const locale = useLocale();
     const { data } = useDaySessions(id);
-    if (!data) return <Skeleton className="h-40 rounded-2xl" />;
+    if (!data) return <Skeleton className="h-24 rounded-xl" />;
     const sessions = data.sessions;
-    if (sessions.length === 0) return <EmptyState title={t("daily.noSessions")} />;
-    const people = new Set(sessions.map((s) => s.userId)).size;
     const nameOf = new Map(sessions.map((s) => [s.id, s.userName]));
+    // Everyone who sold or held the store, in the order they first started.
+    const people = new Map<string, { name: string; avatarUrl?: string; cups: number }>();
+    for (const s of sessions)
+        if (!people.has(s.userId))
+            people.set(s.userId, { name: s.userName ?? "", avatarUrl: s.avatarUrl, cups: 0 });
+    for (const s of sellers)
+        people.set(s.userId, { name: s.name, avatarUrl: s.avatarUrl, cups: s.cups });
+    if (people.size === 0) return <EmptyState title={t("daily.noSessions")} />;
     return (
-        <div className="flex flex-col gap-3">
-            <div className="bg-white rounded-2xl px-4 py-3 flex items-center gap-4 text-sm">
-                <div>
-                    <span className="font-bold text-gray-900">{sessions.length}</span>
-                    <span className="text-gray-500 ml-1">
-                        {t(sessions.length === 1 ? "daily.session" : "daily.sessions")}
-                    </span>
-                </div>
-                <div className="w-px h-4 bg-gray-200" />
-                <div>
-                    <span className="font-bold text-gray-900">{people}</span>
-                    <span className="text-gray-500 ml-1">
-                        {t(people === 1 ? "daily.person" : "daily.people")}
-                    </span>
-                </div>
-            </div>
-            {sessions.map((s: Session) => (
-                <div key={s.id} className="bg-white rounded-2xl p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                            <Avatar url={s.avatarUrl} size={36} />
-                            <p className="font-bold text-gray-900">
-                                {s.userName || t("common.unknown")}
+        <div className="flex flex-col gap-1.5">
+            {[...people].map(([userId, p]) => {
+                const own = sessions.filter((s) => s.userId === userId);
+                return (
+                    <div key={userId} className="bg-slate-100 rounded-xl p-2 space-y-1.5">
+                        <div className="flex items-center gap-2">
+                            <Avatar url={p.avatarUrl} size={28} />
+                            <p className="text-base font-bold text-gray-900 truncate flex-1">
+                                {p.name || t("common.unknown")}
                             </p>
-                        </div>
-                        <span
-                            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                                s.status === "active"
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-gray-100 text-gray-600"
-                            }`}
-                        >
-                            {t(
-                                s.status === "active"
-                                    ? "daily.sessionActive"
-                                    : "daily.sessionEnded",
-                            )}
-                        </span>
-                    </div>
-                    <div className="bg-slate-100 rounded-xl px-3 py-2.5 flex items-center justify-between">
-                        <div className="text-sm">
-                            <span className="font-semibold text-gray-800">
-                                {formatTime(s.startedAt, locale)}
-                            </span>
-                            <span className="text-gray-400 mx-1.5">→</span>
-                            <span className="font-semibold text-gray-800">
-                                {s.endedAt ? formatTime(s.endedAt, locale) : t("daily.sessionNow")}
+                            <span className="text-sm font-bold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-lg shrink-0">
+                                {p.cups} {t("store.cupsUnit")}
                             </span>
                         </div>
-                        <span className="text-sm font-bold text-brand">
-                            {duration(s.startedAt, s.endedAt)}
-                        </span>
-                    </div>
-                    {s.previousSessionId && (
-                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                            <ArrowRightLeft size={12} className="shrink-0" />
-                            <span>
-                                {t("daily.takenOver")}{" "}
-                                <span className="font-semibold text-gray-700">
-                                    {nameOf.get(s.previousSessionId) ?? ""}
+                        {own.map((s: Session) => (
+                            <div
+                                key={s.id}
+                                className="flex items-center gap-2 pl-9 text-sm text-gray-800"
+                            >
+                                <span className="font-semibold">
+                                    {formatTime(s.startedAt, locale)}
+                                    <span className="text-gray-400 mx-1.5">→</span>
+                                    {s.endedAt
+                                        ? formatTime(s.endedAt, locale)
+                                        : t("daily.sessionNow")}
                                 </span>
-                            </span>
-                        </div>
-                    )}
-                </div>
-            ))}
+                                {s.status === "active" && (
+                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-800">
+                                        {t("daily.sessionActive")}
+                                    </span>
+                                )}
+                                {s.previousSessionId && (
+                                    <span className="flex items-center gap-1 text-xs text-gray-500 truncate">
+                                        <ArrowRightLeft size={12} className="shrink-0" />
+                                        {nameOf.get(s.previousSessionId) ?? ""}
+                                    </span>
+                                )}
+                                <span className="ml-auto text-sm font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-lg shrink-0">
+                                    {hours(spent(s.startedAt, s.endedAt))}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                );
+            })}
         </div>
     );
 }

@@ -99,7 +99,10 @@ function Frame({
     const home = tabs[0]?.path ?? "/";
     return (
         <MobileShell
-            rootTabPaths={tabs.map((t) => t.path)}
+            // A tab's other face (seller's POS as Manage) is a home too: the avatar, no back.
+            rootTabPaths={tabs.flatMap((t) =>
+                t.variant ? [t.path, t.variant.pathContains] : [t.path],
+            )}
             tabs={tabs}
             homePath={home}
             avatarUrl={avatarUrl ? avatar(avatarUrl) : null}

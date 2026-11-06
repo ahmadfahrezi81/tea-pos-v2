@@ -1,5 +1,6 @@
 import { useT } from "@tea-pos/i18n/react";
 import { ArrowLeft, UserCircle, X } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { useAppUpdate } from "./AppUpdate";
 import { UpdateHeader } from "./UpdateHeader";
@@ -17,6 +18,8 @@ interface MobileHeaderProps {
     actionsRef: (el: HTMLDivElement | null) => void;
     /** Where a screen's HeaderTitle goes; while filled, the route's title hides. */
     titleRef: (el: HTMLSpanElement | null) => void;
+    /** Beside a tab home's title: the seller's store picker. */
+    beside?: ReactNode;
 }
 
 /**
@@ -33,6 +36,7 @@ export function MobileHeader({
     onAccount,
     actionsRef,
     titleRef,
+    beside,
 }: MobileHeaderProps) {
     const t = useT();
     const updating = useAppUpdate().phase !== "idle";
@@ -66,42 +70,49 @@ export function MobileHeader({
                     />
                 </div>
             ) : (
-                <div className="flex items-center gap-2">
-                    {updating ? (
-                        <UpdateHeader />
-                    ) : (
-                        <h1 className="group min-w-0 flex-1 truncate text-3xl font-extrabold tracking-tight text-gray-900">
-                            {titleText}
-                        </h1>
-                    )}
-                    <div
-                        ref={actionsRef}
-                        className="flex shrink-0 items-center justify-end gap-1"
-                    />
-                    {showAccountIcon && (
-                        <button
-                            onClick={onAccount}
-                            className="shrink-0 active:scale-95"
-                            aria-label={t("shell.account")}
-                        >
-                            {avatarUrl ? (
-                                <div className="w-[42px] h-[42px] rounded-xl overflow-hidden ring-1 ring-black/10">
-                                    <img
-                                        src={avatarUrl}
-                                        alt=""
-                                        width={42}
-                                        height={42}
-                                        className="object-cover"
-                                    />
-                                </div>
-                            ) : (
-                                <div className="w-[42px] h-[42px] rounded-xl bg-gray-100 ring-1 ring-black/10 flex items-center justify-center">
-                                    <UserCircle size={25} className="text-gray-600" />
-                                </div>
-                            )}
-                        </button>
-                    )}
-                </div>
+                <>
+                    <div className="flex items-center gap-2">
+                        {updating ? (
+                            <UpdateHeader />
+                        ) : (
+                            <div className="flex min-w-0 flex-1 items-baseline gap-2">
+                                <h1
+                                    className={`group min-w-0 truncate text-3xl font-extrabold tracking-tight text-gray-900 ${beside ? "shrink-0" : "flex-1"}`}
+                                >
+                                    {titleText}
+                                </h1>
+                                {beside}
+                            </div>
+                        )}
+                        <div
+                            ref={actionsRef}
+                            className="flex shrink-0 items-center justify-end gap-1"
+                        />
+                        {showAccountIcon && (
+                            <button
+                                onClick={onAccount}
+                                className="shrink-0 active:scale-95"
+                                aria-label={t("shell.account")}
+                            >
+                                {avatarUrl ? (
+                                    <div className="w-[42px] h-[42px] rounded-xl overflow-hidden ring-1 ring-black/10">
+                                        <img
+                                            src={avatarUrl}
+                                            alt=""
+                                            width={42}
+                                            height={42}
+                                            className="object-cover"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="w-[42px] h-[42px] rounded-xl bg-gray-100 ring-1 ring-black/10 flex items-center justify-center">
+                                        <UserCircle size={25} className="text-gray-600" />
+                                    </div>
+                                )}
+                            </button>
+                        )}
+                    </div>
+                </>
             )}
         </header>
     );
