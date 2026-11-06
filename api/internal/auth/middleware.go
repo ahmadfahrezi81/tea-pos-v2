@@ -65,8 +65,9 @@ func FlagProps(c Caller) map[string]any {
 }
 
 // Middleware enforces each route's Access: rate limit, session, app, role, tenant, maintenance.
-// A route without an Access is refused, so forgetting one fails closed.
-func Middleware(sessions *Sessions, q *store.Queries, limiter *Limiter, flags Flags) func(huma.Context, func(huma.Context)) {
+// A route without an Access is refused, so forgetting one fails closed. perSession caps every
+// signed-in session; past it, only a looping app could be calling, so the session ends.
+func Middleware(sessions *Sessions, q *store.Queries, limiter, perSession *Limiter, flags Flags) func(huma.Context, func(huma.Context)) {
 	return func(ctx huma.Context, next func(huma.Context)) {
 		access, ok := ctx.Operation().Metadata[metadataKey].(Access)
 		if !ok {
@@ -99,9 +100,33 @@ func Middleware(sessions *Sessions, q *store.Queries, limiter *Limiter, flags Fl
 			return
 		}
 
+		// Ended with the cookie on the same answer: any build of the app, old ones too, then gets a
+		// 401 and goes to sign in, instead of asking again for ever.
+		end := func(e *httpx.Error) {
+			if err := sessions.Delete(ctx.Context(), cookie.Value); err != nil {
+				logLookup(ctx.Context(), "end session", err)
+			}
+			c := Cookie("", 0, secure(ctx))
+			ctx.AppendHeader("Set-Cookie", c.String())
+			write(ctx, e)
+		}
+		if !perSession.Allow(session.ID.String()) {
+			slog.ErrorContext(ctx.Context(), "session too fast, signed out",
+				"user", session.UserID.String(), "app", session.App, "path", ctx.URL().Path)
+			end(errTooMany)
+			return
+		}
+
 		app := middleware.App(ctx.Context())
-		if session.App != app || !Allowed(app, session.Role, session.Status, session.Apps) {
+		if session.App != app {
 			write(ctx, errNotAllowed)
+			return
+		}
+		// Made inactive or out of this app since signing in: nothing this session asks can work.
+		if !Allowed(app, session.Role, session.Status, session.Apps) {
+			slog.InfoContext(ctx.Context(), "session no longer allowed, signed out",
+				"user", session.UserID.String(), "app", app)
+			end(errNotAllowed)
 			return
 		}
 

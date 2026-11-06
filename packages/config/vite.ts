@@ -162,6 +162,7 @@ function appHtml(app: AppConfig): Plugin {
             html: html
                 .replaceAll("%APP_NAME%", app.name)
                 .replaceAll("%APP_SHORT_NAME%", app.shortName)
+                .replaceAll("%APP_DESCRIPTION%", app.description)
                 .replace('<div id="root"></div>', `<div id="root"></div>${splash(logo)}`),
             tags: [
                 {
@@ -231,10 +232,11 @@ function versionFile(app: AppConfig): Plugin {
                 fileName: "version.json",
                 source: JSON.stringify({ version: appTag(app) }),
             });
+            // noindex keeps the sign-in pages out of search results; lykostech.app is the page Google lists.
             this.emitFile({
                 type: "asset",
                 fileName: "_headers",
-                source: "/version.json\n  Cache-Control: no-store\n/sw.js\n  Cache-Control: no-cache\n",
+                source: "/*\n  X-Robots-Tag: noindex\n/version.json\n  Cache-Control: no-store\n/sw.js\n  Cache-Control: no-cache\n",
             });
         },
     };

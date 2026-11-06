@@ -1,14 +1,19 @@
 import { useT } from "@tea-pos/i18n/react";
 
+import { errorMessage } from "../session/errors";
+
 /**
  * Covers the shell when it cannot draw: maintenance, or a profile that failed to
- * load. Loading itself is index.html's splash; this has the same look.
+ * load, saying why in the same words as every other error. Loading itself is
+ * index.html's splash; this has the same look.
  */
 export function BootScreen({
     state,
+    error,
     onRetry,
 }: {
-    state: "maintenance" | "authError";
+    state: "maintenance" | "failed";
+    error?: unknown;
     onRetry?: () => void;
 }) {
     const t = useT();
@@ -31,9 +36,9 @@ export function BootScreen({
             ) : (
                 <>
                     <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                        {t("common.authRequired")}
+                        {t("common.profileFailed")}
                     </h2>
-                    <p className="text-gray-600 mb-6 text-sm">{t("common.authRequiredSub")}</p>
+                    <p className="text-gray-600 mb-6 text-sm">{errorMessage(t, error)}</p>
                     <div className="flex gap-3 justify-center">
                         <button
                             onClick={() => window.location.reload()}

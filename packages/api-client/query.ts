@@ -25,13 +25,14 @@ export const STALE = {
 
 const DAY = 24 * 60 * 60 * 1000;
 
-/** Answers that asking again cannot change: maintenance, a too-old app, not signed in, not allowed. */
+/** Answers that asking again cannot change: maintenance, a too-old app, not signed in, not allowed, braked. */
 const FINAL = new Set([
     "maintenance",
     "app_too_old",
     "not_signed_in",
     "not_allowed",
     "not_in_tenant",
+    "too_many_requests",
 ]);
 
 /** A network blip is tried 3 times; an answer that will not change is not, so its screen shows at once. */
