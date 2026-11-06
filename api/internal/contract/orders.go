@@ -21,6 +21,7 @@ type Order struct {
 	PaymentMethod string      `json:"paymentMethod" example:"cash"`
 	StoreName     string      `json:"storeName"`
 	Seller        string      `json:"seller,omitempty"`
+	SellerAvatar  string      `json:"sellerAvatar,omitempty"`
 	Cups          int64       `json:"cups"`
 	Items         []OrderItem `json:"items" nullable:"false"`
 }

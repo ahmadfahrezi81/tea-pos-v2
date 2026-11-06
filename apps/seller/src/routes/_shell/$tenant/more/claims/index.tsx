@@ -5,6 +5,6 @@ import { MyClaims } from "../../../../../more/MyClaims";
 
 export const Route = createFileRoute("/_shell/$tenant/more/claims/")({
     loader: () => Promise.all([loadArea("seller"), loadArea("store")]),
-    staticData: { shell: { titleKey: "more.myClaims", parent: ".." } },
+    staticData: { shell: { titleKey: "more.myClaims", parent: "..", refreshable: true } },
     component: MyClaims,
 });

@@ -5,6 +5,6 @@ import { Analytics } from "../../../../home/Analytics";
 
 export const Route = createFileRoute("/_shell/$tenant/analytics/")({
     loader: () => Promise.all([loadArea("seller"), loadArea("store")]),
-    staticData: { shell: { titleKey: "nav.analytics", parent: null } },
+    staticData: { shell: { titleKey: "nav.analytics", parent: null, refreshable: true } },
     component: Analytics,
 });

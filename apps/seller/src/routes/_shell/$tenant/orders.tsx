@@ -5,6 +5,6 @@ import { Orders } from "../../../home/Orders";
 
 export const Route = createFileRoute("/_shell/$tenant/orders")({
     loader: () => loadArea("store"),
-    staticData: { shell: { titleKey: "nav.orders", parent: null } },
+    staticData: { shell: { titleKey: "nav.orders", parent: null, refreshable: true } },
     component: Orders,
 });

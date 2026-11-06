@@ -5,6 +5,6 @@ import { Manage } from "../../../../home/Manage";
 
 export const Route = createFileRoute("/_shell/$tenant/manage/")({
     loader: () => loadArea("seller"),
-    staticData: { shell: { titleKey: "nav.manage", parent: null } },
+    staticData: { shell: { titleKey: "nav.manage", parent: null, refreshable: true } },
     component: Manage,
 });

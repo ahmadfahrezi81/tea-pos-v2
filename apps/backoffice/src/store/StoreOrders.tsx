@@ -4,7 +4,7 @@ import { useSlug } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { LoadMore } from "@tea-pos/ui/LoadMore";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { CalendarDays, Receipt } from "lucide-react";
+import { CalendarDays, Receipt, ReceiptText } from "lucide-react";
 
 import { RangeBar, useRange } from "./range";
 import { ALL, useRangeOrders, useSalesHours, useScopeStores, useStoreId } from "./sales";
@@ -106,7 +106,11 @@ export function StoreOrders() {
                     <Skeleton key={i} delay={i * 80} className="h-24 rounded-2xl" />
                 ))
             ) : list.length === 0 ? (
-                <EmptyState title={t("orders.noOrders")} body={t("orders.noOrdersForDate")} />
+                <EmptyState
+                    title={t("orders.noOrders")}
+                    body={t("orders.noOrdersForDate")}
+                    icon={ReceiptText}
+                />
             ) : (
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
