@@ -1530,6 +1530,7 @@ export interface components {
             /** @example cash */
             paymentMethod: string;
             seller?: string;
+            sellerAvatar?: string;
             storeName: string;
             /** Format: int64 */
             total: number;

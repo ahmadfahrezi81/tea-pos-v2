@@ -1,23 +1,29 @@
-import { DOT_GRID } from "../styles/dot-grid";
-import { Emoji, type EmojiName } from "./Emoji";
+import { Inbox, type LucideIcon } from "lucide-react";
 
-// One picture for every empty screen, so an empty state costs one small file at most.
-const EMPTY: EmojiName = "ghost";
-
-/** Nothing to show: a white card, the dot grid and one emoji, a bold title and a line under it. */
-export function EmptyState({ title, body }: { title: string; body?: string }) {
+/** Nothing to show: a white card, an icon on a grey circle, the title and a line under it. */
+export function EmptyState({
+    title,
+    body,
+    icon: Icon = Inbox,
+    className = "py-8",
+}: {
+    title: string;
+    body?: string;
+    icon?: LucideIcon;
+    /** The card's height: compact by default, `min-h-full py-24` for a whole screen. */
+    className?: string;
+}) {
     return (
-        <div className="rounded-2xl bg-white p-5 text-center space-y-2">
-            <div className="relative -mx-5 flex justify-center py-2">
-                <div
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0"
-                    style={DOT_GRID}
-                />
-                <Emoji name={EMPTY} size={72} className="relative" />
+        <div
+            className={`rounded-2xl bg-white flex flex-col items-center justify-center gap-4 px-5 ${className}`}
+        >
+            <div className="size-24 rounded-full bg-gray-100 flex items-center justify-center">
+                <Icon className="size-12 text-gray-400" />
             </div>
-            <p className="text-lg font-bold text-gray-900">{title}</p>
-            {body && <p className="text-sm text-gray-900">{body}</p>}
+            <div className="text-center">
+                <p className="text-sm font-medium text-gray-500">{title}</p>
+                {body && <p className="text-xs text-gray-400 mt-0.5">{body}</p>}
+            </div>
         </div>
     );
 }

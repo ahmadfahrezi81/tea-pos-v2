@@ -12,7 +12,7 @@ import (
 )
 
 const listDayOrders = `-- name: ListDayOrders :many
-SELECT o.id, o.created_at, o.total_amount, o.payment_method, st.name AS store_name, u.full_name AS seller,
+SELECT o.id, o.created_at, o.total_amount, o.payment_method, st.name AS store_name, u.full_name AS seller, u.avatar_url AS seller_avatar,
     (SELECT COALESCE(sum(i.quantity), 0) FROM store_order_items i WHERE i.order_id = o.id)::bigint AS cups
 FROM store_orders o
 JOIN stores st ON st.id = o.store_id
@@ -42,6 +42,7 @@ type ListDayOrdersRow struct {
 	PaymentMethod string
 	StoreName     string
 	Seller        pgtype.Text
+	SellerAvatar  pgtype.Text
 	Cups          int64
 }
 
@@ -71,6 +72,7 @@ func (q *Queries) ListDayOrders(ctx context.Context, arg ListDayOrdersParams) ([
 			&i.PaymentMethod,
 			&i.StoreName,
 			&i.Seller,
+			&i.SellerAvatar,
 			&i.Cups,
 		); err != nil {
 			return nil, err
