@@ -52,6 +52,9 @@ func Codes() []string {
 	return out
 }
 
+// StatusClientClosed is the status of a request the phone gave up on before the answer.
+const StatusClientClosed = 499
+
 // Write sends e as JSON, for the few responses that do not go through Huma.
 func Write(w http.ResponseWriter, e *Error) {
 	w.Header().Set("Content-Type", "application/json")
@@ -94,9 +97,11 @@ func build(ctx context.Context, status int, msg string, errs []error) *Error {
 	}
 	if status >= 500 {
 		joined := errors.Join(errs...)
-		// A request the phone gave up on (a reload) is no failure of ours.
+		// A request the phone gave up on (a reload) is no failure of ours: 499, as nginx logs it,
+		// so a 500 in the log is always a real one. Nobody reads the answer.
 		if errors.Is(joined, context.Canceled) {
 			slog.InfoContext(ctx, "cancelled", "err", joined)
+			e.Status = StatusClientClosed
 		} else {
 			slog.ErrorContext(ctx, "unexpected error", "status", status, "message", msg, "err", joined)
 		}
