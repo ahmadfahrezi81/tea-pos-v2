@@ -16,6 +16,9 @@ import type { AppConfig } from "./app";
 // The shell's header colour (slate-100): the status bar and the install splash match it.
 const SHELL_COLOR = "#f1f5f9";
 
+// Where the shared service worker (sw.ts) lives, for every app's build.
+const SHARED = new URL(".", import.meta.url).pathname;
+
 const contract = createHash("sha256")
     .update(readFileSync(new URL("../../api/openapi.yaml", import.meta.url)))
     .digest("hex")
@@ -335,11 +338,13 @@ export function appConfig(app: AppConfig) {
                         },
                     ],
                 },
-                workbox: {
+                // Our own worker (sw.ts): Workbox's install saves an update one file at a time.
+                strategies: "injectManifest",
+                srcDir: SHARED,
+                filename: "sw.ts",
+                injectManifest: {
                     // The whole app is stored on the phone; heavy screens (charts, maps) are left out here when they arrive.
                     globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
-                    navigateFallback: "/index.html",
-                    navigateFallbackDenylist: [/^\/api\//],
                 },
             }),
         ],
