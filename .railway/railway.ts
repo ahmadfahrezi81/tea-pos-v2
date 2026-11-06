@@ -21,8 +21,8 @@ export default defineRailway((ctx) => {
         ENV: prod ? "prod" : "staging",
         LOG_LEVEL: "info",
         GOMEMLIMIT: gomemlimit,
-        // Fixed pools: Supabase's pooler takes 24 (Nano, set 2026-11-06); api 6 + worker 3 + realtime 2
-        // and its LISTEN is 12, room for a deploy's second api and a laptop.
+        // Fixed pools, as small as works: api 4 (a /me runs 4 queries at once), worker 2 (River's LISTEN
+        // and its jobs), realtime 1 and its LISTEN: 8 of the pooler's 24, room for a deploy and a laptop.
         DB_MAX_CONNS: dbMaxConns,
         // The release's version (or "staging"), set by scripts/railway-deploy.mjs before each deploy.
         APP_VERSION: preserve(),
@@ -37,7 +37,7 @@ export default defineRailway((ctx) => {
         replicas,
         // Infisical syncs these into api only; the others reference what they need.
         env: {
-            ...env("200MiB", "6"),
+            ...env("200MiB", "4"),
             DATABASE_URL: preserve(),
             EDGE_SECRET: preserve(),
             SUPABASE_URL: preserve(),
@@ -66,7 +66,7 @@ export default defineRailway((ctx) => {
         healthcheck: "/health",
         replicas,
         env: {
-            ...env("100MiB", "2"),
+            ...env("100MiB", "1"),
             DATABASE_URL: api.env.DATABASE_URL,
             EDGE_SECRET: api.env.EDGE_SECRET,
             POSTHOG_KEY: api.env.POSTHOG_KEY,
@@ -79,7 +79,7 @@ export default defineRailway((ctx) => {
         start: "/app/worker",
         replicas,
         env: {
-            ...env("100MiB", "3"),
+            ...env("100MiB", "2"),
             DATABASE_URL: api.env.DATABASE_URL,
             TOMORROW_IO_API_KEY: api.env.TOMORROW_IO_API_KEY,
             POSTHOG_KEY: api.env.POSTHOG_KEY,
