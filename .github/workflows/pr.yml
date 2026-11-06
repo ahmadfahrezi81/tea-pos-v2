@@ -190,7 +190,7 @@ jobs:
             list: ${{ steps.plan.outputs.list }}
         steps:
             - uses: actions/checkout@v7
-            - uses: supabase/setup-cli@v1
+            - uses: supabase/setup-cli@v3
               with:
                   version: 2.121.0
             - id: plan
@@ -343,7 +343,7 @@ jobs:
         steps:
             - uses: actions/checkout@v7
             - if: needs.previews.result == 'success'
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@v8
               with:
                   pattern: preview-*
                   merge-multiple: true

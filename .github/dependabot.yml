@@ -12,6 +12,12 @@ updates:
       groups:
           npm:
               patterns: ["*"]
+      # TypeScript stays on 5 (openapi-typescript needs its JavaScript API); Node's types follow .nvmrc.
+      ignore:
+          - dependency-name: typescript
+            update-types: ["version-update:semver-major"]
+          - dependency-name: "@types/node"
+            update-types: ["version-update:semver-major"]
       commit-message:
           prefix: chore(deps)
 

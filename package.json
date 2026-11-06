@@ -29,5 +29,10 @@
         "turbo": "2.11.9",
         "typescript": "5.9.3",
         "typescript-eslint": "8.72.0"
+    },
+    "pnpm": {
+        "overrides": {
+            "serialize-javascript": "^7.1.4"
+        }
     }
 }
