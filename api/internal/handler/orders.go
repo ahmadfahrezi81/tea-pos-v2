@@ -126,7 +126,7 @@ func registerOrders(api huma.API, d Deps) {
 func order(r store.ListDayOrdersRow) contract.Order {
 	return contract.Order{
 		ID: r.ID.String(), At: utc(r.CreatedAt), Total: int64(r.TotalAmount), PaymentMethod: r.PaymentMethod,
-		StoreName: r.StoreName, Seller: r.Seller.String, Cups: r.Cups,
+		StoreName: r.StoreName, Seller: r.Seller.String, SellerAvatar: r.SellerAvatar.String, Cups: r.Cups,
 	}
 }
 

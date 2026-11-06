@@ -3,7 +3,7 @@ import { formatCalendarDay, formatMoney, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, CircleHelp, Settings } from "lucide-react";
+import { BadgeCheck, ChevronLeft, ChevronRight, CircleHelp, Settings } from "lucide-react";
 
 import { daysLeft, daysLeftText, weeks } from "./dates";
 import { payDate, usePayPeriodAt } from "./pay";
@@ -259,7 +259,10 @@ function PersonCard({ person: x, start }: { person: Person; start: string }) {
                     </Badge>
                     {reviewed > 0 && (
                         <Badge>
-                            {x.approved}/{reviewed} ✓
+                            <span className="inline-flex items-center gap-1">
+                                {x.approved}/{reviewed}
+                                <BadgeCheck size={13} strokeWidth={2.5} />
+                            </span>
                         </Badge>
                     )}
                 </div>
