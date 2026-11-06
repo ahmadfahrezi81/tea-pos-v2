@@ -2,9 +2,9 @@ import { defineApp } from "@tea-pos/config/app";
 
 export default defineApp({
     id: "backoffice",
-    name: "Tea POS Backoffice",
-    shortName: "Backoffice",
-    description: "Admin backoffice for Tea POS",
+    name: "Tea-Office",
+    shortName: "Tea-Office",
+    description: "Tea-Office by Lykos Tech: stores, staff and reports.",
     // orange-600, so it is obvious at a glance which app is on screen
     brand: "oklch(0.646 0.222 41.116)",
     signIn: {

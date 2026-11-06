@@ -2,7 +2,7 @@ import { useMe } from "@tea-pos/api-client/me";
 import { useMaintenance } from "@tea-pos/api-client/status";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { MessageKey } from "@tea-pos/i18n";
 import { ToastHost } from "@tea-pos/ui/toast";
@@ -15,6 +15,7 @@ import type { Tab } from "./routes";
 import { TenantProvider, useSlug } from "../session/tenant";
 import { LATEST, seen } from "../lib/whatsNew";
 import { hideSplash } from "../lib/splash";
+import { useErrorToasts } from "./useErrorToasts";
 import { useHasPainted } from "./useHasPainted";
 import { useMeSync } from "../session/useMeSync";
 
@@ -35,7 +36,11 @@ function ShellLayout({ tabs }: { tabs: AppTab[] }) {
     const me = useMe();
     useMeSync(me.data, me.isFetchedAfterMount);
     const painted = useHasPainted();
-    const ready = painted && (me.data !== undefined || me.isError);
+    // Once shown, kept: /me asked again with nothing saved is loading, not unready, and hiding the
+    // screens would remount them, and each mount asks /me again (a loop seen on 2026-11-04).
+    const [shown, setShown] = useState(false);
+    const ready = shown || (painted && (me.data !== undefined || me.isError));
+    if (ready && !shown) setShown(true);
     useEffect(() => {
         if (!ready) return;
         // For app_ready (events.ts): drawn from the phone's copy when that copy is older than this load.
@@ -44,10 +49,16 @@ function ShellLayout({ tabs }: { tabs: AppTab[] }) {
         hideSplash();
     }, [ready, me.dataUpdatedAt]);
     const maintenance = useMaintenanceWatch(me.refetch);
+    useErrorToasts();
+    // No profile, saved or answered: the screens would be blank, so say so and offer a retry.
+    const noProfile = me.isError && me.data === undefined && !maintenance;
     return (
         <TenantProvider me={me.data}>
             <Frame tabs={tabs} ready={ready} avatarUrl={me.data?.user.avatarUrl} />
             {maintenance && <BootScreen state="maintenance" />}
+            {noProfile && (
+                <BootScreen state="failed" error={me.error} onRetry={() => void me.refetch()} />
+            )}
             <ToastHost />
         </TenantProvider>
     );

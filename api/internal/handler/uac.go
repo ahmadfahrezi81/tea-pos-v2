@@ -83,10 +83,24 @@ func registerUac(api huma.API, d Deps) {
 			if err != nil {
 				return nil, err
 			}
-			if err := setPerson(ctx, idem.Queries(ctx, d.Queries), caller, p, in.Body); err != nil {
+			q := idem.Queries(ctx, d.Queries)
+			off, err := setPerson(ctx, q, caller, p, in.Body)
+			if err != nil {
 				return nil, err
 			}
-			p, err = person(ctx, idem.Queries(ctx, d.Queries), caller.TenantID, in.UserID)
+			if off {
+				// In no tenant any more: signed out everywhere at once, as Log out does.
+				if err := d.Sessions.DeleteAll(ctx, p.ID); err != nil {
+					return nil, err
+				}
+				if err := realtime.Announce(ctx, q, realtime.Event{Topic: realtime.UserTopic(p.ID.String()), Kind: realtime.SignedOut}); err != nil {
+					return nil, err
+				}
+			} else {
+				// A level removed: Go checks it on their next request, not a minute later.
+				d.Sessions.ForgetUser(p.ID)
+			}
+			p, err = person(ctx, q, caller.TenantID, in.UserID)
 			if err != nil {
 				return nil, err
 			}
@@ -193,7 +207,7 @@ func registerUac(api huma.API, d Deps) {
 				return nil, err
 			}
 			in.Body.Active = true
-			if err := setPerson(ctx, q, caller, p, in.Body); err != nil {
+			if _, err := setPerson(ctx, q, caller, p, in.Body); err != nil {
 				return nil, err
 			}
 			if _, err := q.DecideRequest(ctx, store.DecideRequestParams{ID: r.ID, TenantID: caller.TenantID, Status: "approved", DecidedBy: caller.UserID}); err != nil {
@@ -264,7 +278,8 @@ func person(ctx context.Context, q *store.Queries, tenant pgtype.UUID, userID st
 
 // setPerson writes everything about one person on q (the write's transaction), checked first:
 // levels the apps offer, the tenant's own stores, the owner untouched, nobody turning themselves off.
-func setPerson(ctx context.Context, q *store.Queries, caller auth.Caller, p store.ListTenantPeopleRow, c contract.UacPersonChange) error {
+// off: no tenant has them active any more, so nothing they are signed in to can work.
+func setPerson(ctx context.Context, q *store.Queries, caller auth.Caller, p store.ListTenantPeopleRow, c contract.UacPersonChange) (off bool, err error) {
 	if !c.Active {
 		// Off is off: None in every app and no stores, also after turning them back on.
 		c.Access, c.StoreIDs = contract.MeAccess{}, nil
@@ -275,31 +290,31 @@ func setPerson(ctx context.Context, q *store.Queries, caller auth.Caller, p stor
 			c.Access.Seller = string(auth.Member)
 		}
 		if !c.Active || c.Access.Seller != string(auth.Member) || c.Access.Backoffice != string(auth.Admin) {
-			return errOwnerKept
+			return false, errOwnerKept
 		}
 		if p.ID != caller.UserID && !sameStores(p.StoreIds, c.StoreIDs) {
-			return errOwnerKept
+			return false, errOwnerKept
 		}
 	}
 	levels := map[string]string{"seller": c.Access.Seller, "backoffice": c.Access.Backoffice}
 	for app, level := range levels {
 		if level != "" && !slices.Contains(auth.Levels[app], auth.Level(level)) {
-			return errBadLevel
+			return false, errBadLevel
 		}
 	}
 	if p.ID == caller.UserID && !c.Active {
-		return errNotYourself
+		return false, errNotYourself
 	}
 	ids := make([]pgtype.UUID, len(c.StoreIDs))
 	for i, s := range c.StoreIDs {
 		if err := ids[i].Scan(s); err != nil {
-			return errNotAStore
+			return false, errNotAStore
 		}
 	}
 	if n, err := q.CountTenantStores(ctx, store.CountTenantStoresParams{TenantID: caller.TenantID, Ids: ids}); err != nil {
-		return err
+		return false, err
 	} else if int(n) != len(uniq(c.StoreIDs)) {
-		return errStoreNotFound
+		return false, errStoreNotFound
 	}
 
 	for app, level := range levels {
@@ -307,12 +322,12 @@ func setPerson(ctx context.Context, q *store.Queries, caller auth.Caller, p stor
 		if level == "" {
 			err := q.RemoveAppAccess(ctx, store.RemoveAppAccessParams{TenantID: key.TenantID, UserID: key.UserID, App: app})
 			if err != nil {
-				return err
+				return false, err
 			}
 			continue
 		}
 		if err := q.SetAppAccess(ctx, key); err != nil {
-			return err
+			return false, err
 		}
 	}
 	status := "active"
@@ -321,18 +336,19 @@ func setPerson(ctx context.Context, q *store.Queries, caller auth.Caller, p stor
 		status = "inactive"
 	}
 	if _, err := q.SetMembershipStatus(ctx, store.SetMembershipStatusParams{TenantID: caller.TenantID, UserID: p.ID, Status: status}); err != nil {
-		return err
+		return false, err
 	}
 	if err := q.SetUserStores(ctx, store.SetUserStoresParams{TenantID: caller.TenantID, UserID: p.ID, StoreIds: ids}); err != nil {
-		return err
+		return false, err
 	}
 	if err := q.SyncUserRole(ctx, p.ID); err != nil {
-		return err
+		return false, err
 	}
-	if err := q.SyncUserStatus(ctx, p.ID); err != nil {
-		return err
+	synced, err := q.SyncUserStatus(ctx, p.ID)
+	if err != nil {
+		return false, err
 	}
-	return announcePerson(ctx, q, caller, p.ID)
+	return slices.Contains(synced, "inactive"), announcePerson(ctx, q, caller, p.ID)
 }
 
 func sameStores(have []pgtype.UUID, want []string) bool {

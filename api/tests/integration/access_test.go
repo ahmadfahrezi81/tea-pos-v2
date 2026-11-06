@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 
@@ -154,4 +155,54 @@ func TestAccess_SessionInUseIsRenewed(t *testing.T) {
 	if days < 29 {
 		t.Errorf("session expires in %.1f days, want about 30", days)
 	}
+}
+
+// A session Go no longer serves ends on that answer, cookie and all: the next ask is a 401 every
+// build of the app sends to sign in, instead of a 403 it asks again for ever.
+func TestAccess_RefusedSessionEnds(t *testing.T) {
+	pool := testkit.DB(t)
+	api := testkit.NewAPI(t, pool, "")
+	token := api.SignIn(t, testkit.InactiveA, "seller")
+	resp := api.Request(t, http.MethodGet, "/me", "seller", testkit.Session(token))
+	if resp.StatusCode != 403 || code(t, resp) != "not_allowed" {
+		t.Fatalf("inactive: status %d, want 403 not_allowed", resp.StatusCode)
+	}
+	if !cleared(resp) {
+		t.Error("the refusal did not clear the cookie")
+	}
+	if resp := api.Request(t, http.MethodGet, "/me", "seller", testkit.Session(token)); resp.StatusCode != 401 {
+		t.Errorf("asked again: status %d, want 401", resp.StatusCode)
+	}
+}
+
+// Past the per-session cap only a looping app is calling: that session ends, others carry on.
+func TestAccess_TooFastSessionEnds(t *testing.T) {
+	pool := testkit.DB(t)
+	api := testkit.NewAPIWith(t, pool, testkit.Options{SessionLimiter: auth.NewLimiter(3, time.Minute)})
+	looping := api.SignIn(t, testkit.SellerA, "seller")
+	other := api.SignIn(t, testkit.AdminA, "seller")
+	for i := range 3 {
+		if resp := api.Request(t, http.MethodGet, "/me", "seller", testkit.Session(looping)); resp.StatusCode != 200 {
+			t.Fatalf("call %d: status %d, want 200", i+1, resp.StatusCode)
+		}
+	}
+	resp := api.Request(t, http.MethodGet, "/me", "seller", testkit.Session(looping))
+	if resp.StatusCode != 429 || !cleared(resp) {
+		t.Fatalf("past the cap: status %d, want 429 with the cookie cleared", resp.StatusCode)
+	}
+	if resp := api.Request(t, http.MethodGet, "/me", "seller", testkit.Session(looping)); resp.StatusCode != 401 {
+		t.Errorf("after: status %d, want 401", resp.StatusCode)
+	}
+	if resp := api.Request(t, http.MethodGet, "/me", "seller", testkit.Session(other)); resp.StatusCode != 200 {
+		t.Errorf("another session: status %d, want 200", resp.StatusCode)
+	}
+}
+
+func cleared(resp *http.Response) bool {
+	for _, c := range resp.Cookies() {
+		if c.Name == auth.CookieName && c.MaxAge < 0 {
+			return true
+		}
+	}
+	return false
 }

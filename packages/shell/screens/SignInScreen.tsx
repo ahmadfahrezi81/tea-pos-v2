@@ -63,6 +63,27 @@ export function SignInScreen() {
                         {t("signIn.google")}
                     </ActionButton>
                     {error && <p className="text-sm text-red-500 text-center">{t(error)}</p>}
+                    {/* Who is asking: ties the sign-in to lykostech.app, for people and for Google. */}
+                    <p className="text-xs text-gray-500 text-center">
+                        {t("signIn.by")}{" "}
+                        <a href="https://lykostech.app" className="underline underline-offset-2">
+                            Lykos Tech
+                        </a>
+                        {" · "}
+                        <a
+                            href="https://lykostech.app/privacy"
+                            className="underline underline-offset-2"
+                        >
+                            {t("signIn.privacy")}
+                        </a>
+                        {" · "}
+                        <a
+                            href="https://lykostech.app/terms"
+                            className="underline underline-offset-2"
+                        >
+                            {t("signIn.terms")}
+                        </a>
+                    </p>
                 </div>
             </div>
         </div>

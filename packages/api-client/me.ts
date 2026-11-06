@@ -22,7 +22,14 @@ async function fetchMe(): Promise<Me> {
         window.location.assign("/login");
         throw new Error("not signed in");
     }
+    // Signed in, but Go refuses this user in this app (inactive, no access) and has ended the session.
+    const refused = () => {
+        window.location.assign("/login?error=not_allowed");
+        return new Error("not_allowed");
+    };
+    if (response?.status === 403) throw refused();
     const { data, error } = await api.GET("/me");
+    if (error?.code === "not_allowed") throw refused();
     if (error) throw new Error(error.code ?? "me failed");
     return data;
 }
