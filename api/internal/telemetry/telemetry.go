@@ -132,11 +132,11 @@ type quietLogger struct{}
 
 func (quietLogger) Debugf(string, ...any) {}
 func (quietLogger) Logf(f string, a ...any) {
-	slog.Debug("posthog", "msg", fmt.Sprintf(f, a...))
+	slog.Debug("posthog", "detail", fmt.Sprintf(f, a...))
 }
 func (quietLogger) Warnf(f string, a ...any) {
-	slog.Warn("posthog", "msg", fmt.Sprintf(f, a...))
+	slog.Warn("posthog", "detail", fmt.Sprintf(f, a...))
 }
 func (quietLogger) Errorf(f string, a ...any) {
-	slog.Warn("posthog", "msg", fmt.Sprintf(f, a...))
+	slog.Warn("posthog", "detail", fmt.Sprintf(f, a...))
 }
