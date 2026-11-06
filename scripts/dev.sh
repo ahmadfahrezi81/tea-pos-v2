@@ -5,6 +5,8 @@ if lsof -ti:8080 -sTCP:LISTEN >/dev/null; then
     exit 1
 fi
 trap 'kill 0' EXIT
+# Production's pooler is shared with the deployed services: a laptop takes two.
+export DB_MAX_CONNS="${DB_MAX_CONNS:-2}"
 if [ -n "$READ_ONLY" ]; then
     echo "!!! PRODUCTION DATABASE: writes are refused at the local proxy, sign-in excepted !!!"
     export POSTHOG_KEY= POSTHOG_FLAGS_KEY=
