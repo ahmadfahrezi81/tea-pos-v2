@@ -70,7 +70,7 @@ export function OrderCard({ order, number }: { order: Order; number: number }) {
                     </div>
                 ))}
             </div>
-            <div className="flex items-baseline justify-between border-t border-gray-100 px-3 pt-2.5 text-base font-bold">
+            <div className="flex items-baseline justify-between border-t border-gray-100 pt-2.5 text-base font-bold">
                 <span className="text-gray-900">
                     {t("store.total")} · {order.cups}{" "}
                     {t(order.cups === 1 ? "orders.cup" : "orders.cups")}
