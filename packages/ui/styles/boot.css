@@ -77,3 +77,15 @@
         600 1rem/1.5rem system-ui,
         sans-serif;
 }
+
+/* A fast open never shows the logo: it fades in only if loading takes longer than 0.4 s. */
+@keyframes boot-in {
+    from {
+        opacity: 0;
+    }
+}
+
+#splash .boot-logo,
+#splash .boot-track {
+    animation: boot-in 150ms ease-out 400ms both;
+}
