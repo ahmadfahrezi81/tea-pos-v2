@@ -21,7 +21,7 @@ export function SettingsRow({
 }: {
     icon: ReactNode;
     label: string;
-    sublabel?: string;
+    sublabel?: ReactNode;
     to?: string;
     /** The address's search, for `to`. */
     search?: Record<string, string>;

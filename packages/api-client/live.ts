@@ -37,7 +37,7 @@ function topicsOf(me: Me | undefined): string[] {
  * closed a minute after it goes to the background (nothing drains a parked phone); after any
  * gap every screen refetches once, so nothing is missed. Loaded after the first screen.
  */
-export function startLive(queryClient: QueryClient) {
+export function startLive(queryClient: QueryClient, onGap: () => void) {
     let socket: WebSocket | null = null;
     let watching = new Set<string>();
     let retryMs = 1000;
@@ -86,7 +86,7 @@ export function startLive(queryClient: QueryClient) {
             retryMs = 1000;
             watching = new Set();
             sync();
-            if (hadGap) refetchAll();
+            if (hadGap) onGap();
             hadGap = false;
         };
         s.onmessage = (m) => {

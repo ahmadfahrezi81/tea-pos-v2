@@ -1,7 +1,7 @@
 import { addDays, formatCalendarDay, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { useSetSearch } from "@tea-pos/shell/searchParam";
-import { DateRangeSheet, type DateRange } from "@tea-pos/ui/DateRangeSheet";
+import { DateRangeSheet, monthRange, type DateRange } from "@tea-pos/ui/DateRangeSheet";
 import { ICON } from "@tea-pos/ui/icon";
 import { useSearch, type SearchSchemaInput } from "@tanstack/react-router";
 import { CalendarDays, ChevronDown } from "lucide-react";
@@ -23,14 +23,12 @@ export function rangeSearch(search: { from?: unknown; to?: unknown } & SearchSch
 
 function presets(today: string) {
     const month = today.slice(0, 7);
-    const lastDay = addDays(`${month}-01`, -1);
     return [
         { key: "today", from: today, to: today },
         { key: "yesterday", from: addDays(today, -1), to: addDays(today, -1) },
         { key: "last7", from: addDays(today, -6), to: today },
         { key: "last30", from: addDays(today, -29), to: today },
         { key: "thisMonth", from: `${month}-01`, to: today },
-        { key: "lastMonth", from: `${lastDay.slice(0, 7)}-01`, to: lastDay },
     ] as const;
 }
 
@@ -43,6 +41,16 @@ export function useRange() {
     const from = search.from ?? today;
     const to = search.to ?? today;
     const preset = presets(today).find((p) => p.from === from && p.to === to);
+    // A whole month picked: its name ("October 2026"), as people say it.
+    const range = monthRange(from.slice(0, 7), today);
+    const month =
+        !preset && range.from === from && range.to === to
+            ? new Intl.DateTimeFormat(locale, {
+                  month: "long",
+                  year: "numeric",
+                  timeZone: "UTC",
+              }).format(new Date(`${from}T00:00:00Z`))
+            : "";
     const dates = (r: DateRange) =>
         r.from === r.to
             ? formatCalendarDay(r.from, locale, "short")
@@ -65,9 +73,9 @@ export function useRange() {
         /** One day, so charts go by hour and times need no date. */
         single: from === to,
         isToday: from === today && to === today,
-        label: preset ? t(`store.${preset.key}`) : short,
+        label: preset ? t(`store.${preset.key}`) : month || short,
         /** Beside the label: the days, unless the label is them, and the week. */
-        detail: [preset ? short : "", week].filter(Boolean).join(" · "),
+        detail: [preset || month ? short : "", week].filter(Boolean).join(" · "),
         dates,
     };
 }
@@ -119,6 +127,7 @@ export function RangeBar() {
                 labels={{
                     title: t("store.dateRange"),
                     custom: t("store.custom"),
+                    month: t("store.pickMonth"),
                     apply: t("store.apply"),
                     days: (n) =>
                         n === 1

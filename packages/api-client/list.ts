@@ -14,9 +14,15 @@ export function useInfiniteList<T>(
     queryKey: QueryKey,
     fetchPage: (cursor: string) => Promise<Page<T>>,
     live: readonly string[] = [],
+    /** While a new key loads, the last one's rows stay on screen if this says they may. */
+    keepWhile?: (previousKey: QueryKey) => boolean,
 ) {
-    return useInfiniteQuery({
+    return useInfiniteQuery<Page<T>, Error, T[], QueryKey, string>({
         queryKey,
+        placeholderData: keepWhile
+            ? (previous, previousQuery) =>
+                  previousQuery && keepWhile(previousQuery.queryKey) ? previous : undefined
+            : undefined,
         queryFn: ({ pageParam }) => fetchPage(pageParam),
         initialPageParam: "",
         getNextPageParam: (last) => last.next || undefined,

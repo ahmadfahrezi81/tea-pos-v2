@@ -30,7 +30,6 @@
         "./OrderCard": "./screens/OrderCard.tsx",
         "./PersonalDetailsScreen": "./screens/PersonalDetailsScreen.tsx",
         "./refreshGate": "./frame/refreshGate.ts",
-        "./RefreshSheet": "./frame/RefreshSheet.tsx",
         "./routes": "./frame/routes.ts",
         "./ScrollContext": "./frame/ScrollContext.tsx",
         "./searchParam": "./session/searchParam.ts",

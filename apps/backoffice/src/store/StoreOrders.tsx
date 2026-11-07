@@ -1,5 +1,5 @@
-import { formatDateTime, formatMoney, formatTime, localDate } from "@tea-pos/format";
-import { useLocale, useT } from "@tea-pos/i18n/react";
+import { formatMoney, localDate } from "@tea-pos/format";
+import { useT } from "@tea-pos/i18n/react";
 import { useSlug } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { LoadMore } from "@tea-pos/ui/LoadMore";
@@ -7,7 +7,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { CalendarDays, Receipt, ReceiptText } from "lucide-react";
 
 import { RangeBar, useRange } from "./range";
-import { ALL, useRangeOrders, useSalesHours, useScopeStores, useStoreId } from "./sales";
+import { useRangeOrders, useSalesHours, useScopeStores, useStoreId } from "./sales";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
@@ -40,10 +40,8 @@ function DatePicker({ date, onChange }: { date: string; onChange: (date: string)
  */
 export function StoreOrders() {
     const t = useT();
-    const locale = useLocale();
     const slug = useSlug();
     const storeId = useStoreId();
-    const severalStores = storeId === ALL;
     const { from, to, label, single } = useRange();
     const { totals } = useScopeStores(from, to);
     const hours = useSalesHours(single ? from : "");
@@ -124,12 +122,6 @@ export function StoreOrders() {
                             key={order.id}
                             order={order}
                             number={(totals?.orders ?? list.length) - i}
-                            time={
-                                single
-                                    ? formatTime(order.at, locale)
-                                    : formatDateTime(order.at, locale)
-                            }
-                            place={severalStores ? order.storeName : undefined}
                         />
                     ))}
                     <LoadMore

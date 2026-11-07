@@ -12,6 +12,18 @@
             "runtimeExecutable": "pnpm",
             "runtimeArgs": ["backoffice:prod"],
             "port": 5173
+        },
+        {
+            "name": "seller",
+            "runtimeExecutable": "pnpm",
+            "runtimeArgs": ["seller"],
+            "port": 5174
+        },
+        {
+            "name": "seller-prod",
+            "runtimeExecutable": "pnpm",
+            "runtimeArgs": ["seller:prod"],
+            "port": 5174
         }
     ]
 }

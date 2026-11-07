@@ -56,3 +56,36 @@
     background-color: var(--accent-primary);
     animation: boot-bar 1.5s ease-in-out infinite;
 }
+
+/* The watchdog's way out (packages/config/vite.ts): the splash still up after 20 s. */
+.boot-stuck {
+    margin-top: 1.5rem;
+    font:
+        500 0.875rem/1.25rem system-ui,
+        sans-serif;
+    color: #374151;
+}
+
+.boot-reload {
+    margin-top: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    border: 0;
+    border-radius: 0.75rem;
+    background-color: var(--accent-primary);
+    color: #fff;
+    font:
+        600 1rem/1.5rem system-ui,
+        sans-serif;
+}
+
+/* A fast open never shows the logo: it fades in only if loading takes longer than 0.4 s. */
+@keyframes boot-in {
+    from {
+        opacity: 0;
+    }
+}
+
+#splash .boot-logo,
+#splash .boot-track {
+    animation: boot-in 150ms ease-out 400ms both;
+}

@@ -26,6 +26,23 @@ export function useStoreScope(): { tenant: string; storeId?: string[] } | null {
     };
 }
 
+type Scope = ReturnType<typeof useStoreScope>;
+
+/**
+ * For a range's queries: while the next range loads, the last one's data stays on screen (no
+ * skeleton flash on ‹ ›), but only for the same stores: another store never shows this one's.
+ */
+function sameStores(scope: Scope) {
+    return <T>(previous: T | undefined, query?: { queryKey: readonly unknown[] }) => {
+        const init = query?.queryKey[2] as
+            { params?: { path?: { tenant?: string }; query?: { storeId?: string[] } } } | undefined;
+        const same =
+            init?.params?.path?.tenant === scope?.tenant &&
+            String(init?.params?.query?.storeId ?? "") === String(scope?.storeId ?? "");
+        return same ? previous : undefined;
+    };
+}
+
 /** Sales, orders and cups per day over the picked stores, `from` to `to` (both `2026-10-01`). */
 export function useSalesDays(from: string, to: string) {
     const scope = useStoreScope();
@@ -38,7 +55,7 @@ export function useSalesDays(from: string, to: string) {
                 query: { from, to, storeId: scope?.storeId },
             },
         },
-        { enabled: !!scope && !!from, staleTime: STALE.COOL },
+        { enabled: !!scope && !!from, staleTime: STALE.COOL, placeholderData: sameStores(scope) },
     );
 }
 
@@ -64,7 +81,7 @@ export function useDays(from: string, to: string, enabled = true) {
                 query: { from, to, storeId: scope?.storeId },
             },
         },
-        { enabled: !!scope && enabled, staleTime: STALE.COOL },
+        { enabled: !!scope && enabled, staleTime: STALE.COOL, placeholderData: sameStores(scope) },
     );
 }
 
@@ -79,7 +96,7 @@ export function useSalesProducts(from: string, to: string) {
                 query: { from, to, storeId: scope?.storeId },
             },
         },
-        { enabled: !!scope, staleTime: STALE.COOL },
+        { enabled: !!scope, staleTime: STALE.COOL, placeholderData: sameStores(scope) },
     );
 }
 
@@ -94,7 +111,7 @@ export function useTeaWaste(from: string, to: string) {
                 query: { from, to, storeId: scope?.storeId },
             },
         },
-        { enabled: !!scope, staleTime: STALE.COOL },
+        { enabled: !!scope, staleTime: STALE.COOL, placeholderData: sameStores(scope) },
     );
 }
 
@@ -122,6 +139,7 @@ export function useSalesHours(date: string) {
         {
             enabled: !!scope && !!date,
             staleTime: STALE.WARM,
+            placeholderData: sameStores(scope),
             refetchInterval: date === localDate() ? 60_000 : false,
             meta: { live: ["order"] },
         },
@@ -150,6 +168,7 @@ export function useRangeOrders(from: string, to: string) {
             return data;
         },
         ["order"],
+        (key) => key[1] === scope?.tenant && key[2] === (scope?.storeId ?? "all"),
     );
 }
 
@@ -168,6 +187,7 @@ export function useLatestOrders(from: string, to: string) {
         {
             enabled: !!scope,
             staleTime: STALE.WARM,
+            placeholderData: sameStores(scope),
             refetchInterval: to === localDate() ? 60_000 : false,
             meta: { live: ["order"] },
         },
@@ -184,6 +204,11 @@ export function useStoresLive(from: string, to: string) {
         {
             enabled: !!tenant,
             staleTime: STALE.WARM,
+            placeholderData: (previous, query) =>
+                (query?.queryKey[2] as { params?: { path?: { tenant?: string } } } | undefined)
+                    ?.params?.path?.tenant === tenant
+                    ? previous
+                    : undefined,
             // A past range does not change.
             refetchInterval: to === localDate() ? 60_000 : false,
             meta: { live: ["order"] },

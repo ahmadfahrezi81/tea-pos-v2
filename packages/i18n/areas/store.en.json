@@ -63,11 +63,7 @@
         "sessionActive": "Active",
         "sessionEnded": "Ended",
         "sessionNow": "now",
-        "takenOver": "Taken over from",
-        "session": "session",
-        "sessions": "sessions",
-        "person": "person",
-        "people": "people"
+        "takenOver": "Taken over from"
     },
     "orders": {
         "showAll": "Show all orders",
@@ -80,11 +76,6 @@
         "yesterday": "Yesterday",
         "menu": "Order menu",
         "noOrdersForDate": "No orders for the selected date and store",
-        "orderDetails": "Order Details",
-        "store": "Store",
-        "seller": "Seller",
-        "fullTimestamp": "Full Timestamp",
-        "items": "Items",
         "each": "per product",
         "cup": "cup",
         "cups": "cups",

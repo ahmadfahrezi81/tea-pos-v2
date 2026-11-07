@@ -7,38 +7,31 @@ import { CopyButton } from "@tea-pos/ui/CopyButton";
 import { ICON } from "@tea-pos/ui/icon";
 import { Sheet } from "@tea-pos/ui/Sheet";
 import { MoreVertical } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 
 type Order = components["schemas"]["Order"];
 
 /**
  * One order with its items, in both apps, read like a receipt: which order, what was in it, what it
- * came to. ⋮ opens its details. `number` counts against the whole list, newest highest.
+ * came to: when and where, then who. ⋮ opens its ID. `number` counts against the whole list, newest highest.
  */
-export function OrderCard({
-    order,
-    number,
-    time,
-    place,
-}: {
-    order: Order;
-    number: number;
-    time: string;
-    place?: string;
-}) {
+export function OrderCard({ order, number }: { order: Order; number: number }) {
     const t = useT();
+    const locale = useLocale();
     const [menu, setMenu] = useState(false);
     const title = t("store.orderNumber").replace("{n}", String(number));
     return (
-        <div className="bg-white rounded-2xl p-3.5 space-y-2.5">
+        <div className="bg-white rounded-2xl p-3 space-y-2.5">
             <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                     <div className="flex items-center gap-2">
                         <p className="text-lg font-bold text-gray-900">{title}</p>
                         {order.paymentMethod === "qris" && <Badge>QRIS</Badge>}
                     </div>
-                    <p className="text-sm text-gray-500 truncate">
-                        {[time, place].filter(Boolean).join(" · ")}
+                    <p className="text-sm text-gray-700 truncate">
+                        {[formatDateTime(order.at, locale), order.storeName]
+                            .filter(Boolean)
+                            .join(" · ")}
                     </p>
                 </div>
                 <button
@@ -67,7 +60,7 @@ export function OrderCard({
                             <p className="font-medium text-gray-900 truncate">
                                 {item.name || t("common.unknown")}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-700">
                                 {formatMoney(item.unitPrice)} {t("orders.each")}
                             </p>
                         </div>
@@ -76,15 +69,13 @@ export function OrderCard({
                         </span>
                     </div>
                 ))}
-                <div className="mt-1 flex items-baseline justify-between border-t border-slate-200 pt-2 pb-1">
-                    <span className="text-sm font-semibold text-gray-900">
-                        {t("store.total")} · {order.cups}{" "}
-                        {t(order.cups === 1 ? "orders.cup" : "orders.cups")}
-                    </span>
-                    <span className="text-lg font-bold text-green-600">
-                        {formatMoney(order.total)}
-                    </span>
-                </div>
+            </div>
+            <div className="flex items-baseline justify-between border-t border-gray-100 pt-2.5 text-base font-bold">
+                <span className="text-gray-900">
+                    {t("store.total")} · {order.cups}{" "}
+                    {t(order.cups === 1 ? "orders.cup" : "orders.cups")}
+                </span>
+                <span className="text-green-600">{formatMoney(order.total)}</span>
             </div>
 
             <OrderMenu order={order} title={title} open={menu} onClose={() => setMenu(false)} />
@@ -92,7 +83,7 @@ export function OrderCard({
     );
 }
 
-/** An order's details: when, who, where, its ID to copy. Edit and delete come with corrections. */
+/** An order's ID to copy; edit and delete come with corrections. */
 function OrderMenu({
     order,
     title,
@@ -104,28 +95,17 @@ function OrderMenu({
     open: boolean;
     onClose: () => void;
 }) {
-    const t = useT();
-    const locale = useLocale();
-    const row = (label: string, value: ReactNode) => (
-        <div className="flex items-center justify-between gap-3 py-3.5 border-b last:border-b-0">
-            <span className="text-gray-500">{label}</span>
-            <span className="text-gray-900 text-right min-w-0">{value}</span>
-        </div>
-    );
     return (
         <Sheet open={open} onClose={onClose} title={title}>
-            {row(t("orders.fullTimestamp"), formatDateTime(order.at, locale))}
-            {order.seller && row(t("orders.seller"), order.seller)}
-            {order.storeName && row(t("orders.store"), order.storeName)}
-            {row(
-                "ID",
+            <div className="flex items-center justify-between gap-3 py-3.5">
+                <span className="text-gray-700">ID</span>
                 <CopyButton
                     value={order.id}
-                    className="flex items-center gap-1.5 active:opacity-70 min-w-0"
+                    className="flex items-center gap-1.5 active:opacity-70 min-w-0 text-gray-900"
                 >
                     <span className="truncate font-mono text-xs">{order.id}</span>
-                </CopyButton>,
-            )}
+                </CopyButton>
+            </div>
         </Sheet>
     );
 }

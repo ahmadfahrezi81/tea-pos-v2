@@ -29,6 +29,10 @@ The local server speaks HTTP/1.1, where a browser opens at most 6 connections; C
 3. **Kept as is:** the full page after a `426` (this build is too old to be safe), the attempt limit, Update app on More
 4. Remove what only the fresh-open page used (its words in `packages/i18n` if no longer read; the page itself stays for the 426)
 
+## Intended on iPhone: no download bar on a fresh open (owner, 2026-11-07)
+
+Opened afresh (killed, then opened) with a new build out, an iPhone shows nothing for 5-10 s, then **Update ready**, then restarts. That is expected, not a bug: iOS starts every home-screen app from scratch and fetches the new worker itself at launch; worker jobs run one at a time, so our `registerSW` (and with it our check and the download bar) waits until that download is done. Android checks later, so ours goes first and the bar shows. Settled: the countdown says **Update ready · 5s [Restart]**, so the restart is never a surprise; the logic stays as is. Moving our check before `registerSW` would show the bar on iPhone too; not done, so Android's working flow is untouched.
+
 ## Owner's part
 
 - On staging, with the app installed on an iPhone and an Android phone: deploy twice, open each from the home screen, and check the header shows the download, then counts down and reloads

@@ -20,7 +20,8 @@ function Countdown({ onDone }: { onDone: () => void }) {
     return (
         <>
             <p className="min-w-0 flex-1 truncate text-sm font-semibold">
-                {t("shell.updateRestartIn").replace("{n}", String(left))}
+                {t("shell.updateReady")}
+                <span className="ml-1.5 font-medium tabular-nums text-white/60">{left}s</span>
             </p>
             <button
                 onClick={onDone}

@@ -1,6 +1,6 @@
 import { LoadFailed } from "@tea-pos/shell/LoadFailed";
-import { formatMoney, formatTime, localDate } from "@tea-pos/format";
-import { useLocale, useT } from "@tea-pos/i18n/react";
+import { formatMoney, localDate } from "@tea-pos/format";
+import { useT } from "@tea-pos/i18n/react";
 import { OrderCard } from "@tea-pos/shell/OrderCard";
 import { useTenant } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
@@ -27,7 +27,6 @@ function emptyHours(open = "", close = "") {
 /** Today's orders at the store: its totals, its cups by hour (only to look at), every order. Earlier days are the backoffice's. */
 export function Orders() {
     const t = useT();
-    const locale = useLocale();
     const today = localDate();
     const date = today;
     const { data: day } = useHours(date);
@@ -110,7 +109,6 @@ export function Orders() {
                             key={order.id}
                             order={order}
                             number={(day?.orders ?? list.length) - i}
-                            time={formatTime(order.at, locale)}
                         />
                     ))}
                     <LoadMore

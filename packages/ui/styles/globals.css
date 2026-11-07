@@ -168,10 +168,33 @@ a,
     touch-action: manipulation;
 }
 
-/* Skeletons: a sweeping highlight, not an opacity pulse. A dozen bars fading in
-   unison read as a fault, and a fade is nearly invisible on a phone outdoors.
-   --skeleton-delay staggers rows. */
-@keyframes skeleton-sweep {
+/* Skeletons: a soft pulse of opacity, which the phone animates without repainting (a moving
+   gradient repaints every frame, for every skeleton). Shown only after 200 ms, so a fast fetch
+   draws none and nothing blinks. --skeleton-delay staggers rows, so a list never pulses in unison. */
+@keyframes skeleton-appear {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes skeleton-pulse {
+    50% {
+        opacity: 0.45;
+    }
+}
+
+.skeleton {
+    background-color: var(--skeleton-base, #e8eaed);
+    animation:
+        skeleton-appear 150ms ease-out 200ms both,
+        skeleton-pulse 1.4s ease-in-out calc(350ms + var(--skeleton-delay, 0ms)) infinite;
+}
+
+/* The update's bar while its size is unknown: a highlight moving along, as progress. */
+@keyframes sweep {
     from {
         background-position: 200% 0;
     }
@@ -180,22 +203,19 @@ a,
     }
 }
 
-.skeleton {
+.sweep {
     background-color: var(--skeleton-base, #e8eaed);
-    background-image: linear-gradient(
-        90deg,
-        transparent 0%,
-        var(--skeleton-sheen, rgba(255, 255, 255, 0.85)) 50%,
-        transparent 100%
-    );
+    background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
     background-size: 200% 100%;
     background-repeat: no-repeat;
-    animation: skeleton-sweep 1.6s ease-in-out infinite;
-    animation-delay: var(--skeleton-delay, 0ms);
+    animation: sweep 1.6s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
     .skeleton {
+        animation: skeleton-appear 150ms ease-out 200ms both;
+    }
+    .sweep {
         animation: none;
     }
 }

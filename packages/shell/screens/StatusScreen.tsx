@@ -1,12 +1,19 @@
 import { $api } from "@tea-pos/api-client";
 import { useT } from "@tea-pos/i18n/react";
 
+import { APP_TAG } from "@tea-pos/api-client/status";
+import { useEffect } from "react";
+
+import { buildLabel, useAppUpdate } from "../frame/AppUpdate";
 import { APP_COMMIT, APP_VERSION } from "../lib/version";
 
 /** Is the API reachable, and which build is running: Account's App info page. */
 export function StatusScreen() {
     const t = useT();
     const health = $api.useQuery("get", "/health");
+    const { served, peek } = useAppUpdate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => peek(), []);
     const rows: [string, string][] = [
         [
             t("status.api"),
@@ -14,7 +21,16 @@ export function StatusScreen() {
         ],
         [t("status.version"), health.data?.version ?? "…"],
         [t("status.commit"), health.data?.commit.slice(0, 7) ?? "…"],
-        [t("status.app"), `${APP_VERSION} (${APP_COMMIT})`],
+        [t("status.app"), APP_VERSION],
+        [t("status.appCommit"), APP_COMMIT.slice(0, 7)],
+        [
+            t("status.latest"),
+            served === undefined
+                ? "…"
+                : served === null
+                  ? t("more.updateIsOffline")
+                  : `${buildLabel(served)}${served === APP_TAG ? " ✓" : ""}`,
+        ],
     ];
 
     return (
