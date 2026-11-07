@@ -24,15 +24,22 @@ const PAUSED_MS = 5_000;
 /** After the new worker is told to take over, how long to wait for it before reloading anyway. */
 const TAKE_OVER_MS = 3_000;
 
-/** The build this origin serves now; null when that cannot be told, which is no reason to ask. */
-async function servedBuild(): Promise<string | null> {
+/**
+ * The build this origin serves now. Null when the server could not be reached, undefined when it
+ * answered without one (locally, in dev); either way no reason to ask.
+ */
+async function servedBuild(): Promise<string | null | undefined> {
+    let res: Response;
     try {
-        const res = await fetch("/version.json", { cache: "no-store" });
-        if (!res.ok) return null;
-        const { version } = (await res.json()) as { version?: unknown };
-        return typeof version === "string" ? version : null;
+        res = await fetch("/version.json", { cache: "no-store" });
     } catch {
         return null;
+    }
+    try {
+        const { version } = (await res.json()) as { version?: unknown };
+        return res.ok && typeof version === "string" ? version : undefined;
+    } catch {
+        return undefined;
     }
 }
 
@@ -118,8 +125,15 @@ async function forceUpdate(): Promise<boolean> {
     return true;
 }
 
-/** This build's version, for showing. */
-export const currentVersion = () => versionOf(APP_TAG);
+/** A build for showing: its release, or its commit where the version is a word (staging, preview). */
+export const buildLabel = (build: string) => {
+    const version = versionOf(build);
+    const commit = build.split("+")[1]?.slice(0, 7) ?? "";
+    return /^\d/.test(version) || !commit ? version : commit;
+};
+
+/** This build, for showing. */
+export const currentVersion = () => buildLabel(APP_TAG);
 
 /** Every address the precache holds, whichever cache the worker is writing to. */
 async function savedFiles(): Promise<Set<string>> {
@@ -158,6 +172,12 @@ interface AppUpdate {
     apply: () => Promise<void>;
     /** The Update app row: asks now, whatever was decided before. */
     checkNow: () => Promise<"latest" | "offline" | "started">;
+    /** The build being downloaded, for showing. */
+    next: string;
+    /** The build the server has: undefined until asked, null when it could not be reached. */
+    served: string | null | undefined;
+    /** Asks which build the server has, without starting anything. */
+    peek: () => void;
 }
 
 const AppUpdateContext = createContext<AppUpdate | null>(null);
@@ -168,6 +188,8 @@ const AppUpdateContext = createContext<AppUpdate | null>(null);
  * (a page woken from memory too, as iPhones do) and on a tap, at most once a minute. A new build
  * always downloads behind the header of a tab's root, which then counts down and reloads, on every
  * phone. Only after a 426, when this build is too old to be safe, a full page with no way out.
+ * Intended: an iPhone opened afresh shows no download, only Update ready. iOS fetches the new build
+ * itself on launch, and registerSW waits behind it (task 058).
  */
 export function AppUpdateProvider({ children }: { children: ReactNode }) {
     const [phase, setPhase] = useState<Phase>("idle");
@@ -175,6 +197,13 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
     const [blocking, setBlocking] = useState(false);
     const forced = useRef(false);
     const [version, setVersion] = useState("");
+    const [served, setServed] = useState<string | null | undefined>(undefined);
+    // Every question about the served build also tells More where this phone stands.
+    const ask = async () => {
+        const build = await servedBuild();
+        setServed(build);
+        return build;
+    };
     const updateSW = useRef<(reload?: boolean) => Promise<void>>(async () => {});
     const registration = useRef<ServiceWorkerRegistration>(undefined);
     const blockingRef = useRef(false);
@@ -286,11 +315,11 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
             if (phaseRef.current !== "idle" || !registration.current) return;
             if (Date.now() - lastCheckedAt < CHECK_THROTTLE_MS) return;
             lastCheckedAt = Date.now();
-            const build = await servedBuild();
+            const build = await ask();
             if (!build || build === APP_TAG) return;
             if (attempts(build) >= MAX_ATTEMPTS) return;
             target.current = build;
-            setVersion(versionOf(build));
+            setVersion(buildLabel(build));
             download();
         };
         const stop = whenIdle(() => {
@@ -300,15 +329,15 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
                 onNeedReload: () => {},
                 // A worker already waiting, or found by the browser itself.
                 onNeedRefresh: () => {
-                    void servedBuild().then((build) => {
+                    void ask().then((build) => {
                         // This page already runs that build: nothing to offer, just let the worker in.
                         if (build === APP_TAG) {
                             void updateSW.current(false);
                             return;
                         }
-                        if (quiet.current || attempts(build) >= MAX_ATTEMPTS) return;
-                        target.current = build;
-                        if (build) setVersion(versionOf(build));
+                        if (quiet.current || attempts(build ?? null) >= MAX_ATTEMPTS) return;
+                        target.current = build ?? null;
+                        if (build) setVersion(buildLabel(build));
                         download();
                     });
                 },
@@ -353,9 +382,9 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
                 forced.current = true;
                 block(true);
                 // Asked first: this build must not keep reloading if the server stays ahead of it.
-                void servedBuild().then((build) => {
-                    target.current = build;
-                    if (build) setVersion(versionOf(build));
+                void ask().then((build) => {
+                    target.current = build ?? null;
+                    if (build) setVersion(buildLabel(build));
                     download();
                 });
             }),
@@ -367,12 +396,15 @@ export function AppUpdateProvider({ children }: { children: ReactNode }) {
         phase,
         percent,
         apply,
+        next: version,
+        served,
+        peek: () => void ask(),
         checkNow: async () => {
-            const build = await servedBuild();
+            const build = await ask();
             if (!build) return "offline";
             if (build === APP_TAG) return "latest";
             target.current = build;
-            setVersion(versionOf(build));
+            setVersion(buildLabel(build));
             if (phaseRef.current === "idle") download();
             return "started";
         },

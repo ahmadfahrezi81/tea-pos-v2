@@ -63,6 +63,13 @@ export async function loadMessages(locale: Locale): Promise<Messages> {
     return messages;
 }
 
+function merge(messages: Messages, part: object) {
+    const target = messages as unknown as Record<string, Record<string, unknown>>;
+    for (const [section, values] of Object.entries(part as Record<string, object>)) {
+        target[section] = { ...target[section], ...values };
+    }
+}
+
 /**
  * Loads an area's messages into the active language, once; a route awaits it in its `loader`,
  * so its screen never draws a key before its words.
@@ -73,20 +80,29 @@ export function loadArea(area: Area): Promise<void> {
         done = (async () => {
             if (!active) throw new Error("loadMessages first");
             const { messages, locale } = active;
-            const part = (await areas[area][locale]()).default as Record<
-                string,
-                Record<string, unknown>
-            >;
-            const target = messages as unknown as Record<string, Record<string, unknown>>;
-            for (const [section, values] of Object.entries(part)) {
-                target[section] = { ...target[section], ...values };
-            }
+            merge(messages, (await areas[area][locale]()).default);
         })();
         loaded.set(area, done);
         // A failed download (no signal) is tried again next time.
         done.catch(() => loaded.delete(area));
     }
     return done;
+}
+
+/** Another language's words, with every area already loaded: nothing changes until `activate`. */
+export async function messagesFor(locale: Locale): Promise<Messages> {
+    const mod: { default: typeof en } =
+        locale === "id" ? await import("./id.json") : await import("./en.json");
+    const messages = structuredClone(mod.default) as Messages;
+    const parts = await Promise.all([...loaded.keys()].map((area) => areas[area][locale]()));
+    for (const part of parts) merge(messages, part.default);
+    return messages;
+}
+
+/** Makes `messages` (from `messagesFor`) the active language; areas load into it from now on. */
+export function activate(locale: Locale, messages: Messages) {
+    active = { locale, messages };
+    for (const area of loaded.keys()) loaded.set(area, Promise.resolve());
 }
 
 export function t(messages: Messages, key: MessageKey): string {

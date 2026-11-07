@@ -98,7 +98,8 @@
             "session_ended": "Session ended",
             "supply_request_created": "Supply requested",
             "incident_report_created": "Incident reported"
-        }
+        },
+        "review": "Review"
     },
     "cart": {
         "title": "Cart",

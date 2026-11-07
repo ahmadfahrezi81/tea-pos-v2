@@ -16,6 +16,7 @@ import { createRoot } from "react-dom/client";
 
 import { AppContext } from "./AppContext";
 import { AppUpdateProvider } from "../frame/AppUpdate";
+import { refreshAll } from "../frame/refreshAll";
 import { whenIdle } from "../lib/idle";
 import { savedUser } from "./session";
 import { hideSplash } from "../lib/splash";
@@ -46,7 +47,12 @@ export async function startApp(router: ReturnType<typeof createAppRouter>, app: 
         if (!router.state.matches.some((m) => m.staticData.holdsSplash)) hideSplash();
     });
     whenIdle(() => void import("../lib/events").then((m) => m.startEvents(router, APP_TAG)));
-    whenIdle(() => void import("@tea-pos/api-client/live").then((m) => m.startLive(queryClient)));
+    whenIdle(
+        () =>
+            void import("@tea-pos/api-client/live").then((m) =>
+                m.startLive(queryClient, () => refreshAll(queryClient)),
+            ),
+    );
     // index.html already picked it, to preload that file; the same rule as pickLocale.
     const locale =
         (document.documentElement.dataset.locale as Locale | undefined) ?? pickLocale(app.locales);

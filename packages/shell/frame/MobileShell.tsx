@@ -15,7 +15,7 @@ import { MobileFooterNav } from "./MobileFooterNav";
 import { MobileHeader } from "./MobileHeader";
 import { navProgress } from "./navProgress";
 import "./nav-progress.css";
-import { RefreshSheet } from "./RefreshSheet";
+import { ComeBackRefresh } from "./ComeBackRefresh";
 import { refreshGate } from "./refreshGate";
 import { isSubPage, type Tab } from "./routes";
 import { ScrollContext } from "./ScrollContext";
@@ -476,7 +476,7 @@ export function MobileShell({
                             {extras}
                         </div>
 
-                        <RefreshSheet />
+                        <ComeBackRefresh />
                         {overlay}
                     </HeaderTitleSlotContext>
                 </HeaderSlotContext>

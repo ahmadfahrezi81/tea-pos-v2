@@ -1,6 +1,7 @@
 import type { Me } from "@tea-pos/api-client/me";
 import { clearCache } from "@tea-pos/api-client/query";
-import { useLocale } from "@tea-pos/i18n/react";
+import { messagesFor } from "@tea-pos/i18n";
+import { useLocale, useSwitchLanguage } from "@tea-pos/i18n/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
@@ -10,12 +11,13 @@ import { rememberUser, savedUser } from "./session";
 /**
  * Keeps the phone in step with `/me`: another person's saved data is dropped, and
  * the profile's language becomes the phone's copy (read by pickLocale before any
- * JavaScript, so later opens need no switch). Both are rare, so a reload is fine.
+ * JavaScript, so later opens need no switch), switched in place. Another person is rare, so a reload is fine.
  */
 export function useMeSync(me: Me | undefined, fresh: boolean) {
     const queryClient = useQueryClient();
     const { locales } = useApp();
     const locale = useLocale();
+    const switchLanguage = useSwitchLanguage();
 
     useEffect(() => {
         if (!me) return;
@@ -32,11 +34,14 @@ export function useMeSync(me: Me | undefined, fresh: boolean) {
         const language = locales.find((l) => l === me.user.language);
         if (!language || language === locale) return;
         try {
-            // The key pickLocale reads; reload only once it is saved, or it would loop.
+            // The key pickLocale reads, so the next open starts in it.
             localStorage.setItem("tea-pos:locale", language);
         } catch {
-            return;
+            // The profile still has it: switched again on the next open.
         }
-        window.location.reload();
-    }, [me, fresh, queryClient, locales, locale]);
+        // No signal for its words: stays as is until the next fresh /me.
+        void messagesFor(language)
+            .then((messages) => switchLanguage(language, messages))
+            .catch(() => {});
+    }, [me, fresh, queryClient, locales, locale, switchLanguage]);
 }
