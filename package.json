@@ -8,7 +8,8 @@
     },
     "scripts": {
         "build": "turbo run build",
-        "seller": "pnpm --filter @tea-pos/seller dev",
+        "seller": "infisical run --env=staging --path=/app -- bash scripts/dev.sh seller",
+        "seller:prod": "READ_ONLY=1 infisical run --env=prod --path=/app -- bash scripts/dev.sh seller",
         "backoffice": "infisical run --env=staging --path=/app -- bash scripts/dev.sh backoffice",
         "backoffice:prod": "READ_ONLY=1 infisical run --env=prod --path=/app -- bash scripts/dev.sh backoffice",
         "lint": "turbo run lint",
