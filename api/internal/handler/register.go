@@ -91,7 +91,9 @@ func registerDocs(mux *http.ServeMux, api huma.API) {
 	})
 	mux.HandleFunc("GET /docs", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		_, _ = w.Write([]byte(`<!doctype html><title>tea-pos API</title>
+		// The scripts go in <body>: in <head> the reference finds no body to draw into.
+		_, _ = w.Write([]byte(`<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><title>tea-pos API</title>
+<body>
 <script id="api-reference" data-url="/api/openapi.yaml"></script>
 <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.25.0"></script>`))
 	})
