@@ -40,7 +40,7 @@ export function SettingsRow({
         <>
             <span className="text-xl w-6 text-center shrink-0 flex items-center py-5">{icon}</span>
             <div
-                className={`flex-1 min-w-0 flex items-center gap-2 py-5 -mr-4 pr-4 ${below ? "pb-2" : "border-b-2 border-slate-100 group-last:border-b-0"}`}
+                className={`flex-1 min-w-0 flex items-center gap-2 py-5 -mr-4 pr-4 ${below ? "pb-4" : "border-b-2 border-slate-100 group-last:border-b-0"}`}
             >
                 <div className="flex-1 min-w-0">
                     <p
@@ -75,7 +75,7 @@ export function SettingsRow({
     return (
         <div className="group">
             {row}
-            <div className="-mr-4 pr-4 pb-4 border-b-2 border-slate-100 group-last:border-b-0">
+            <div className="-mr-4 pr-4 pt-4 pb-4 border-t-2 border-b-2 border-slate-100 group-last:border-b-0">
                 {below}
             </div>
         </div>
