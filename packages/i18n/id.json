@@ -212,13 +212,8 @@
     },
     "status": {
         "title": "Info aplikasi",
-        "api": "API",
-        "commit": "Commit API",
-        "app": "Versi aplikasi",
-        "ok": "Terhubung",
-        "down": "Tidak terjangkau",
-        "version": "Versi API",
-        "update": "Pembaruan"
+        "app": "Aplikasi",
+        "server": "Server"
     },
     "errors": {
         "account_inactive": "Akun ini tidak aktif. Hubungi pemilik.",

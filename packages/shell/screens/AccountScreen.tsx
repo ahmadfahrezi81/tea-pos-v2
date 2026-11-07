@@ -9,7 +9,7 @@ import { ConfirmSheet } from "../frame/FormFooter";
 import { signOut } from "../session/session";
 import { LogOutButton, rowIcon, SettingsRow } from "../frame/Settings";
 import { useSlug } from "../session/tenant";
-import { APP_VERSION } from "../lib/version";
+import { currentVersion } from "../frame/AppUpdate";
 
 /**
  * The old apps' Account: who is signed in, the settings rows (Personal details, Language), then Log Out
@@ -54,7 +54,7 @@ export function AccountScreen() {
             <div className="mt-auto pt-4 flex flex-col items-center gap-3">
                 <LogOutButton label={t("common.logout")} onClick={() => setConfirm(true)} />
                 <span className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 font-mono text-xs text-gray-700">
-                    {t("status.version")}: v{APP_VERSION}
+                    {currentVersion()}
                 </span>
             </div>
 

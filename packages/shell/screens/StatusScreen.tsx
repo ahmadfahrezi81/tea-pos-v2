@@ -8,7 +8,7 @@ import { currentVersion, useAppUpdate, useUpdateState } from "../frame/AppUpdate
 import { UpdateNow } from "../frame/UpdateNow";
 import { useUpdateText } from "../frame/useUpdateText";
 
-/** Is the API reachable, which build is running, and is it the latest: More's App info page. */
+/** Which build this phone runs and whether it is the latest, and which the server runs: More's App info page. */
 export function StatusScreen() {
     const t = useT();
     const router = useRouter();
@@ -18,19 +18,17 @@ export function StatusScreen() {
     const stateText = useUpdateText(state);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => peek(), []);
-    const loading = <Skeleton className="h-4 w-16 rounded" />;
+    const loading = <Skeleton className="h-4 w-28 rounded" />;
+    const server = health.data && `${health.data.version} (${health.data.commit.slice(0, 7)})`;
+    // Behind: no state word, Update now below says it.
+    const app =
+        state === "available"
+            ? currentVersion()
+            : stateText && `${currentVersion()} · ${stateText}`;
+    // One line each: the phone's build and whether it is the newest, then the server's, which can be older.
     const rows: [string, ReactNode][] = [
-        [
-            t("status.api"),
-            health.isSuccess ? t("status.ok") : health.isError ? t("status.down") : loading,
-        ],
-        [t("status.version"), health.data?.version ?? loading],
-        [t("status.commit"), health.data?.commit.slice(0, 7) ?? loading],
-        [t("status.app"), currentVersion()],
-        // Behind: no words, the button below says it.
-        ...(state === "available"
-            ? []
-            : [[t("status.update"), stateText || loading] as [string, ReactNode]]),
+        [t("status.app"), app || loading],
+        [t("status.server"), server || loading],
     ];
 
     return (

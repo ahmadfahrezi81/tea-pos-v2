@@ -212,13 +212,8 @@
     },
     "status": {
         "title": "App info",
-        "api": "API",
-        "commit": "API commit",
-        "app": "App version",
-        "ok": "Connected",
-        "down": "Unreachable",
-        "version": "API version",
-        "update": "Update"
+        "app": "App",
+        "server": "Server"
     },
     "errors": {
         "account_inactive": "This account isn't active. Ask the owner.",
