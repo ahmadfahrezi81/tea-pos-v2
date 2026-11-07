@@ -71,6 +71,8 @@ export function startLive(queryClient: QueryClient, onGap: () => void) {
         // Someone's access changed: if it was this user's, /me brings their new levels.
         if (e.kind === "access" && e.topic === `user:${me()?.user.id}`)
             void queryClient.invalidateQueries({ queryKey: ME_KEY });
+        // A store was added, changed or removed: /me lists the stores every picker shows.
+        if (e.kind === "stores") void queryClient.invalidateQueries({ queryKey: ME_KEY });
         void queryClient.invalidateQueries({
             predicate: (q) => !!e.kind && (q.meta?.live?.includes(e.kind) ?? false),
             refetchType: "active",

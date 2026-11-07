@@ -21,7 +21,7 @@ func registerMe(api huma.API, d Deps) {
 		OperationID: "getMe",
 		Method:      http.MethodGet,
 		Path:        "/me",
-		Summary:     "The signed-in user, their tenants and stores",
+		Summary:     "The signed-in user, their tenants and stores, their flags and the tenants they asked to join",
 		Tags:        []string{"me"},
 	}, auth.SignedIn, func(ctx context.Context, _ *struct{}) (*contract.MeOutput, error) {
 		caller, _ := auth.CallerFrom(ctx)
@@ -89,6 +89,7 @@ func registerMe(api huma.API, d Deps) {
 				Slug:         t.Slug,
 				Name:         t.Name,
 				PayFrequency: t.PayFrequency,
+				Since:        sinceDay(t.CreatedAt),
 				Access: contract.MeAccess{
 					Seller:     level("seller", t.SellerAccess),
 					Backoffice: level("backoffice", t.BackofficeAccess),
@@ -147,4 +148,12 @@ func since(t pgtype.Timestamp) string {
 		return ""
 	}
 	return t.Time.UTC().Format(time.RFC3339)
+}
+
+// sinceDay is a tenant's first day, in UTC: only its month is used.
+func sinceDay(t pgtype.Timestamptz) string {
+	if !t.Valid {
+		return ""
+	}
+	return t.Time.UTC().Format(time.DateOnly)
 }

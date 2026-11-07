@@ -1,7 +1,8 @@
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
-import { STEP_ARROW, stepIcon } from "./MonthStepper";
+import { MonthGrid } from "./MonthGrid";
+import { FIRST_MONTH, STEP_ARROW, stepIcon } from "./MonthStepper";
 import { ICON } from "../lib/icon";
 import { Sheet } from "../layout/Sheet";
 
@@ -36,6 +37,7 @@ export function DateRangeSheet({
     locale,
     labels,
     formatRange,
+    firstMonth = FIRST_MONTH,
 }: {
     open: boolean;
     onClose: () => void;
@@ -52,10 +54,13 @@ export function DateRangeSheet({
         days: (n: number) => string;
     };
     formatRange: (range: DateRange) => string;
+    /** The earliest month it reaches: the tenant's start. */
+    firstMonth?: string;
 }) {
-    const [view, setView] = useState<"list" | "month" | "custom">("list");
+    // null: opens where the range came from, so changing a picked month stays in the months.
+    const [chosen, setView] = useState<"list" | "month" | "custom" | null>(null);
     const close = () => {
-        setView("list");
+        setView(null);
         onClose();
     };
     const picked = presets.find((p) => p.from === value.from && p.to === value.to)?.key;
@@ -65,6 +70,7 @@ export function DateRangeSheet({
         value.to.slice(0, 7) === month &&
         monthRange(month, today).from === value.from &&
         monthRange(month, today).to === value.to;
+    const view = chosen ?? (picked ? "list" : isMonth ? "month" : "custom");
     const row =
         "w-full flex items-center justify-between py-4 text-left text-[17px] font-medium text-gray-900 active:opacity-70";
     const more = (on: boolean) =>
@@ -83,8 +89,9 @@ export function DateRangeSheet({
             onBack={view === "list" ? undefined : () => setView("list")}
         >
             {view === "month" ? (
-                <Months
+                <MonthGrid
                     value={isMonth ? month : null}
+                    first={firstMonth}
                     today={today}
                     locale={locale}
                     onPick={(m) => {
@@ -95,6 +102,7 @@ export function DateRangeSheet({
             ) : view === "custom" ? (
                 <Calendar
                     value={value}
+                    firstMonth={firstMonth}
                     today={today}
                     locale={locale}
                     labels={labels}
@@ -133,62 +141,9 @@ export function DateRangeSheet({
     );
 }
 
-/** A year's months in a grid, ‹ › for other years; none after `today`'s month. */
-function Months({
-    value,
-    today,
-    locale,
-    onPick,
-}: {
-    value: string | null;
-    today: string;
-    locale: string;
-    onPick: (month: string) => void;
-}) {
-    const [year, setYear] = useState(Number((value ?? today).slice(0, 4)));
-    const thisMonth = today.slice(0, 7);
-    const name = new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" });
-    return (
-        <div className="space-y-3">
-            <div className="flex items-center justify-between">
-                <button onClick={() => setYear(year - 1)} className={STEP_ARROW} aria-label="‹">
-                    <ChevronLeft {...stepIcon} />
-                </button>
-                <p className="font-bold text-gray-900">{year}</p>
-                <button
-                    onClick={() => setYear(year + 1)}
-                    disabled={year >= Number(today.slice(0, 4))}
-                    className={`${STEP_ARROW} disabled:opacity-30`}
-                    aria-label="›"
-                >
-                    <ChevronRight {...stepIcon} />
-                </button>
-            </div>
-            <div className="grid grid-cols-3 gap-2 pb-2">
-                {Array.from({ length: 12 }, (_, i) => {
-                    const month = `${year}-${String(i + 1).padStart(2, "0")}`;
-                    return (
-                        <button
-                            key={month}
-                            disabled={month > thisMonth}
-                            onClick={() => onPick(month)}
-                            className={`h-12 rounded-xl text-base font-semibold disabled:opacity-30 active:opacity-70 ${
-                                month === value
-                                    ? "bg-brand text-white"
-                                    : "bg-gray-100 text-gray-900"
-                            }`}
-                        >
-                            {name.format(new Date(Date.UTC(year, i, 1)))}
-                        </button>
-                    );
-                })}
-            </div>
-        </div>
-    );
-}
-
 function Calendar({
     value,
+    firstMonth,
     today,
     locale,
     labels,
@@ -196,6 +151,7 @@ function Calendar({
     onApply,
 }: {
     value: DateRange;
+    firstMonth: string;
     today: string;
     locale: string;
     labels: { apply: string; days: (n: number) => string };
@@ -234,7 +190,12 @@ function Calendar({
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between">
-                <button onClick={() => step(-1)} className={STEP_ARROW} aria-label="‹">
+                <button
+                    onClick={() => step(-1)}
+                    disabled={month <= firstMonth}
+                    className={`${STEP_ARROW} disabled:opacity-30`}
+                    aria-label="‹"
+                >
                     <ChevronLeft {...stepIcon} />
                 </button>
                 <p className="font-bold text-gray-900">
@@ -265,7 +226,7 @@ function Calendar({
                     return (
                         <button
                             key={day}
-                            disabled={day > today}
+                            disabled={day > today || day < `${firstMonth}-01`}
                             onClick={() => tap(day)}
                             className={`h-11 text-base font-medium disabled:opacity-30 ${
                                 edge

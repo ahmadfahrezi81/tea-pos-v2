@@ -132,13 +132,14 @@ export function CloseDay({ oldDay }: { oldDay?: string }) {
     const ready =
         !slot ||
         skipPhotos ||
-        (!!(taken[slot.type] || saved) && (!slot.unit || (count ?? null) !== null));
+        ((slot.type in taken ? !!taken[slot.type] : !!saved) &&
+            (!slot.unit || (count ?? null) !== null));
     const expected = day.expectedCash;
     const actual = cash ?? expected;
 
     const next = async () => {
         if (slot) {
-            const url = taken[slot.type];
+            const url = taken[slot.type] || undefined;
             const changed = slot.type in counts;
             if (url || (saved && changed)) {
                 await savePhoto.mutateAsync({
@@ -148,7 +149,11 @@ export function CloseDay({ oldDay }: { oldDay?: string }) {
                     quantity:
                         slot.unit && count != null ? { value: count, unit: slot.unit } : undefined,
                 });
-                setTaken((p) => ({ ...p, [slot.type]: undefined }));
+                setTaken((p) => {
+                    const rest = { ...p };
+                    delete rest[slot.type];
+                    return rest;
+                });
                 setCounts((c) => {
                     const rest = { ...c };
                     delete rest[slot.type];
@@ -208,7 +213,7 @@ export function CloseDay({ oldDay }: { oldDay?: string }) {
                             action={async () => {
                                 await close.mutateAsync({ dayId: day.id, actualCash: actual });
                                 writeStep(key, null);
-                                toast(t("manage.dayClosed"));
+                                toast(t("manage.dayClosed"), { kind: "success" });
                                 await navigate({
                                     to: oldDay ? "/$tenant/analytics" : "/$tenant/manage",
                                     params: { tenant: slug },
@@ -258,7 +263,11 @@ export function CloseDay({ oldDay }: { oldDay?: string }) {
                                         );
                                         setTaken((p) => ({ ...p, [slot.type]: url }));
                                     }}
+                                    onRemove={() => setTaken((p) => ({ ...p, [slot.type]: "" }))}
                                     failedLabel={t("manage.photoProcessFailed")}
+                                    retakeLabel={t("common.retake")}
+                                    removeLabel={t("common.remove")}
+                                    title={t(slot.label)}
                                 >
                                     {t("manage.photoTapToAdd")}
                                 </PhotoInput>

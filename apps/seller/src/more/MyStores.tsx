@@ -19,11 +19,13 @@ export function MyStores() {
                 sublabel: [
                     `${s.openTime} – ${s.closeTime}`,
                     s.isDefault && t("more.default"),
-                    s.status !== "active" && t("home.storeStatus.inactive"),
+                    s.status === "fake" && t("home.storeStatus.fake"),
+                    s.status === "inactive" && t("home.storeStatus.inactive"),
                 ]
                     .filter(Boolean)
                     .join(" · "),
-                disabled: s.status !== "active",
+                // A demo store sells like any other; only a closed one cannot be picked.
+                disabled: s.status === "inactive",
             }))}
         />
     );

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
@@ -139,6 +140,19 @@ func (s *Sessions) ForgetUser(userID pgtype.UUID) {
 		}
 	}
 	s.mu.Unlock()
+}
+
+// DeleteOne ends one of the user's sessions; false when it is not theirs or already gone.
+func (s *Sessions) DeleteOne(ctx context.Context, userID, id pgtype.UUID) (bool, error) {
+	s.ForgetUser(userID)
+	n, err := s.q.DeleteUserSession(ctx, store.DeleteUserSessionParams{ID: id, UserID: userID})
+	return n > 0, err
+}
+
+// Is reports whether token is the session stored under hash.
+func Is(token string, hash []byte) bool {
+	h := sha256.Sum256([]byte(token))
+	return bytes.Equal(h[:], hash)
 }
 
 func (s *Sessions) Delete(ctx context.Context, token string) error {

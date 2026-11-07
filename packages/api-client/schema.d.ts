@@ -130,7 +130,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The signed-in user, their tenants and stores */
+        /** The signed-in user, their tenants and stores, their flags and the tenants they asked to join */
         get: operations["getMe"];
         put?: never;
         post?: never;
@@ -672,6 +672,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{tenant}/store-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every store with its details, for Store settings */
+        get: operations["listStoreSettings"];
+        put?: never;
+        /** Add a store; who works there is set in UAC */
+        post: operations["createStore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/store-settings/{storeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One store's details */
+        get: operations["getStoreSettings"];
+        /** Change a store's name, address, hours, status and location, at once */
+        put: operations["updateStore"];
+        post?: never;
+        /** Remove a store that has nothing recorded yet (a mistake); one with history is made Inactive instead */
+        delete: operations["deleteStore"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{tenant}/stores/live": {
         parameters: {
             query?: never;
@@ -906,6 +943,40 @@ export interface paths {
         /** Sign a person out of every app on every phone */
         post: operations["logoutUacPerson"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/uac/people/{userId}/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Where a person is signed in: each phone or computer, in each app */
+        get: operations["getUacSessions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/uac/people/{userId}/sessions/{sessionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Sign a person out of one phone or computer */
+        delete: operations["endUacSession"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1347,7 +1418,7 @@ export interface components {
              * @example day_already_closed
              * @enum {string}
              */
-            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_claim_code" | "bad_cursor" | "bad_level" | "bad_photo" | "bad_proof" | "bad_range" | "bad_receipt" | "bad_request" | "blank_name" | "claim_done" | "claim_not_eligible" | "claim_not_found" | "claim_too_old" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_closed" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "no_session" | "no_work_that_day" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_your_store" | "not_yourself" | "old_day_open" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_closed" | "period_not_found" | "person_not_found" | "product_changed" | "proof_required" | "request_not_found" | "route_not_found" | "session_taken" | "staff_not_found" | "store_already_opened" | "store_not_found" | "store_not_open" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
+            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_claim_code" | "bad_cursor" | "bad_hours" | "bad_level" | "bad_photo" | "bad_proof" | "bad_range" | "bad_receipt" | "bad_request" | "blank_name" | "claim_done" | "claim_not_eligible" | "claim_not_found" | "claim_too_old" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_closed" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "no_session" | "no_work_that_day" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_your_store" | "not_yourself" | "old_day_open" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_closed" | "period_not_found" | "person_not_found" | "product_changed" | "proof_required" | "request_not_found" | "route_not_found" | "session_not_found" | "session_taken" | "staff_not_found" | "store_already_opened" | "store_has_history" | "store_not_found" | "store_not_open" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
             details?: string[] | null;
             /** @example The day is already closed */
             message: string;
@@ -1433,6 +1504,11 @@ export interface components {
             owner: boolean;
             /** @example bi_weekly */
             payFrequency: string;
+            /**
+             * Format: date
+             * @description When the tenant began: no picker goes before it
+             */
+            since?: string;
             slug: string;
             /** @description Seller: the stores the user is assigned to. Backoffice: every store of the tenant */
             stores: components["schemas"]["MeStore"][];
@@ -1886,6 +1962,27 @@ export interface components {
              */
             status: "paid" | "skipped";
         };
+        StoreChange: {
+            /** @description Empty clears it */
+            address: string;
+            /** @example 22:00 */
+            closeTime: string;
+            /**
+             * Format: double
+             * @description Leave out for none
+             */
+            latitude?: number;
+            /**
+             * Format: double
+             * @description Leave out for none
+             */
+            longitude?: number;
+            name: string;
+            /** @example 08:00 */
+            openTime: string;
+            /** @enum {string} */
+            status: "active" | "fake" | "inactive";
+        };
         StoreGate: {
             claimCode?: string;
             /** Format: date-time */
@@ -1987,6 +2084,29 @@ export interface components {
              */
             status: string;
         };
+        StoreSettings: {
+            address?: string;
+            /** @example 22:00 */
+            closeTime: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: double */
+            latitude?: number;
+            /** Format: double */
+            longitude?: number;
+            name: string;
+            /** @example 08:00 */
+            openTime: string;
+            /**
+             * @description fake: a demo store
+             * @enum {string}
+             */
+            status: "active" | "fake" | "inactive";
+        };
+        StoreSettingsListOutputBody: {
+            /** @description Active, then demo, then inactive, by name */
+            stores: components["schemas"]["StoreSettings"][];
+        };
         StoresLiveOutputBody: {
             /**
              * Format: date
@@ -2050,6 +2170,29 @@ export interface components {
             active: boolean;
             /** @description Exactly these of the tenant's stores */
             storeIds: string[];
+        };
+        UacSession: {
+            /** @enum {string} */
+            app: "seller" | "backoffice";
+            /** @description The caller's own session */
+            current: boolean;
+            /** @description Read from the user agent, for example iPhone · Safari; empty when unknown */
+            device?: string;
+            /** Format: uuid */
+            id: string;
+            ip?: string;
+            /**
+             * Format: date-time
+             * @description Moved at most once a day, as the session renews
+             */
+            lastSeenAt: string;
+            /** Format: date-time */
+            signedInAt: string;
+            userAgent?: string;
+        };
+        UacSessionsOutputBody: {
+            /** @description Still running, the latest used first */
+            sessions: components["schemas"]["UacSession"][];
         };
         UpdateClaimTypeInputBody: {
             enabled?: boolean;
@@ -3586,6 +3729,170 @@ export interface operations {
             };
         };
     };
+    listStoreSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreSettingsListOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreSettings"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getStoreSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                storeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreSettings"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    updateStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                storeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreSettings"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    deleteStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                storeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     storesLive: {
         parameters: {
             query?: {
@@ -4083,6 +4390,69 @@ export interface operations {
             path: {
                 tenant: string;
                 userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getUacSessions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UacSessionsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    endUacSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                userId: string;
+                sessionId: string;
             };
             cookie?: never;
         };

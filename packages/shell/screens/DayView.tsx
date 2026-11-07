@@ -5,6 +5,7 @@ import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Badge } from "@tea-pos/ui/Badge";
 import { ImagePreview } from "@tea-pos/ui/ImagePreview";
+import { Picture } from "@tea-pos/ui/Picture";
 import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 import { ImageOff } from "lucide-react";
 import { useState, type ReactNode } from "react";
@@ -279,23 +280,16 @@ function PhotoGroup({ title, children }: { title: string; children: ReactNode })
 /** A day photo; a tap opens it full screen. Its address is signed for a few minutes. */
 export function PhotoTile({ photo, label }: { photo: Photo; label: string }) {
     const [open, setOpen] = useState(false);
-    const [broken, setBroken] = useState(!photo.url);
     return (
         <div className="bg-slate-50 rounded-xl overflow-hidden">
             <button
-                onClick={() => !broken && setOpen(true)}
+                onClick={() => photo.url && setOpen(true)}
                 className="block w-full aspect-square bg-gray-100"
             >
-                {broken ? (
-                    <ImageOff className="m-auto text-gray-400" />
+                {photo.url ? (
+                    <Picture src={photo.url} alt={label} className="size-full" />
                 ) : (
-                    <img
-                        src={photo.url}
-                        alt={label}
-                        loading="lazy"
-                        onError={() => setBroken(true)}
-                        className="size-full object-cover"
-                    />
+                    <ImageOff className="m-auto text-gray-400" />
                 )}
             </button>
             <div className="p-2">

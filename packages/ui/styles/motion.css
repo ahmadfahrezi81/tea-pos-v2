@@ -19,6 +19,9 @@
     --animate-rise-out: rise-out 150ms ease-in both;
     /* A menu dropping from its button. */
     --animate-drop-in: drop-in 160ms var(--ease-drawer) both;
+    /* A toast: slides down from the top, as the old apps. */
+    --animate-slide-down: slide-down 300ms ease both;
+    --animate-slide-up: slide-up 300ms ease both;
 
     @keyframes fade-in {
         from {
@@ -50,6 +53,18 @@
         to {
             opacity: 0;
             transform: scale(0.95);
+        }
+    }
+    @keyframes slide-up {
+        to {
+            opacity: 0;
+            transform: translateY(-100%);
+        }
+    }
+    @keyframes slide-down {
+        from {
+            opacity: 0;
+            transform: translateY(-100%);
         }
     }
     @keyframes rise-in {

@@ -9,7 +9,7 @@ import { ListSection } from "@tea-pos/ui/ListSection";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { Tile } from "@tea-pos/ui/Tile";
 import { Link } from "@tanstack/react-router";
-import { ChartNoAxesCombined, CircleHelp, ReceiptText } from "lucide-react";
+import { ChartNoAxesCombined, CircleHelp, ReceiptText, Settings } from "lucide-react";
 
 import { RangeBar, useRange } from "./range";
 import { RangePanel } from "./RangePanel";
@@ -62,6 +62,11 @@ export function StoreList() {
                     search={search}
                     icon={<ChartNoAxesCombined {...rowIcon} />}
                     label={t("store.dayByDay")}
+                />
+                <SettingsRow
+                    to={`/${slug}/store/settings`}
+                    icon={<Settings {...rowIcon} />}
+                    label={t("storeSettings.title")}
                 />
                 <SettingsRow
                     to={`/${slug}/store/help`}

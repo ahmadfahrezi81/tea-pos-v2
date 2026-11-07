@@ -34,7 +34,9 @@
             "saturday": "Sabtu",
             "sunday": "Minggu"
         },
-        "loadMore": "Muat lebih banyak"
+        "loadMore": "Muat lebih banyak",
+        "retake": "Foto ulang",
+        "remove": "Hapus"
     },
     "home": {
         "title": "Beranda",
@@ -111,13 +113,9 @@
         "noStores": "Belum ada toko yang ditugaskan.",
         "default": "Utama",
         "app": "Aplikasi",
-        "updateApp": "Perbarui aplikasi",
-        "updateLatest": "Sudah versi terbaru.",
         "updateOffline": "Tidak ada koneksi. Coba lagi saat online.",
         "updateIsLatest": "Terbaru",
-        "updateIsOffline": "Offline",
-        "updateReady": "Siap, restart",
-        "updateAvailable": "{version} tersedia"
+        "updateNow": "Perbarui sekarang"
     },
     "whatsNew": {
         "title": "Yang Baru",
@@ -213,14 +211,10 @@
     },
     "status": {
         "title": "Info aplikasi",
-        "api": "API",
-        "commit": "Commit API",
-        "app": "Versi aplikasi",
-        "ok": "Terhubung",
-        "down": "Tidak terjangkau",
-        "version": "Versi API",
-        "appCommit": "Commit aplikasi",
-        "latest": "Build terbaru"
+        "app": "Aplikasi",
+        "server": "Server",
+        "build": "Build",
+        "outdated": "Perlu update"
     },
     "errors": {
         "account_inactive": "Akun ini tidak aktif. Hubungi pemilik.",
@@ -285,7 +279,11 @@
         "period_closed": "Periode gaji ini sudah ditutup.",
         "no_work_that_day": "Kamu tidak bekerja hari itu.",
         "bad_receipt": "Struk tidak terunggah dengan benar. Tambahkan lagi.",
-        "old_day_open": "Hari sebelumnya masih buka. Tutup dulu di Analitik."
+        "old_day_open": "Hari sebelumnya masih buka. Tutup dulu di Analitik.",
+        "notSavedOffline": "Tidak tersimpan: tidak ada koneksi. Coba lagi.",
+        "session_not_found": "Sesi itu sudah berakhir.",
+        "bad_hours": "Jam buka harus sebelum jam tutup.",
+        "store_has_history": "Toko ini sudah punya penjualan atau hari, jadi tidak bisa dihapus. Jadikan Tidak aktif saja."
     },
     "store": {
         "week": "Week",
@@ -342,5 +340,21 @@
         "didntOpen": "Tidak buka",
         "nNotClosed": "{n} belum ditutup",
         "daysClosed": "{n} dari {m} hari ditutup"
+    },
+    "errorSheet": {
+        "title": "Gagal menyimpan",
+        "time": "Waktu",
+        "request": "Permintaan",
+        "status": "Status",
+        "noAnswer": "Tidak ada jawaban",
+        "requestId": "ID permintaan",
+        "app": "Aplikasi",
+        "copy": "Salin detail"
+    },
+    "connection": {
+        "offline": "Tidak ada koneksi",
+        "failing": "Tidak bisa terhubung ke server",
+        "slow": "Koneksi lambat",
+        "backOnline": "Kembali online"
     }
 }

@@ -6,16 +6,19 @@ import {
     formatDateTime,
     formatMoney,
     formatMonth,
+    localDate,
     weeks,
 } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { useSlug } from "@tea-pos/shell/tenant";
+import { useFirstMonth, useSlug } from "@tea-pos/shell/tenant";
 import { CopyButton } from "@tea-pos/ui/CopyButton";
 import { ImagePreview } from "@tea-pos/ui/ImagePreview";
+import { Picture } from "@tea-pos/ui/Picture";
+import { MonthStepper } from "@tea-pos/ui/MonthStepper";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { Link } from "@tanstack/react-router";
-import { CalendarClock, CalendarDays } from "lucide-react";
+import { CalendarClock } from "lucide-react";
 import { useState } from "react";
 
 import { useMyPay, useMyPayslip } from "./mine";
@@ -40,12 +43,13 @@ const FREQUENCY: Record<string, MessageKey> = {
 
 const WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
-/** My Pay: how the seller is paid, then their periods by year and month. */
+/** My Pay: how the seller is paid, then a month's periods (the newest month with one first). */
 export function MyPay() {
+    const firstMonth = useFirstMonth(true);
     const t = useT();
     const locale = useLocale();
     const { data, error } = useMyPay();
-    const [picked, setPicked] = useState<number>();
+    const [picked, setPicked] = useState<string>();
     if (error && !data) return <LoadFailed error={error} />;
     if (!data)
         return (
@@ -55,13 +59,13 @@ export function MyPay() {
                 ))}
             </div>
         );
-    const years = [...new Set(data.payouts.map((p) => +p.start.slice(0, 4)))].sort((a, b) => b - a);
-    const year = picked ?? years[0] ?? new Date().getFullYear();
-    const months = new Map<string, typeof data.payouts>();
-    for (const p of data.payouts.filter((p) => +p.start.slice(0, 4) === year)) {
-        const key = p.start.slice(0, 7);
-        months.set(key, [...(months.get(key) ?? []), p]);
-    }
+    const today = localDate();
+    const newest = data.payouts
+        .map((p) => p.start.slice(0, 7))
+        .sort()
+        .at(-1);
+    const month = picked ?? newest ?? today.slice(0, 7);
+    const payouts = data.payouts.filter((p) => p.start.slice(0, 7) === month);
     const frequency = FREQUENCY[data.payFrequency];
     const row = (label: string, value: string) => (
         <div className="flex justify-between items-center" key={label}>
@@ -101,38 +105,23 @@ export function MyPay() {
                     </div>
                 </div>
             </div>
-            <div className="bg-white p-4 rounded-2xl">
-                <label className="block text-sm font-medium text-gray-700">
-                    <CalendarDays size={16} className="inline mr-1" />
-                    {t("earnings.selectYear")}
-                    <select
-                        value={year}
-                        onChange={(e) => setPicked(Number(e.target.value))}
-                        className="mt-2 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand/90 focus:outline-none bg-white text-gray-800"
-                    >
-                        {(years.length ? years : [year]).map((y) => (
-                            <option key={y} value={y}>
-                                {y}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-            </div>
-            {months.size === 0 ? (
+            <MonthStepper
+                month={month}
+                label={formatMonth(`${month}-01`, locale)}
+                onChange={setPicked}
+                first={firstMonth}
+                pick={{ title: t("store.pickMonth"), today, locale }}
+            />
+            {payouts.length === 0 ? (
                 <p className="text-center text-gray-400 py-10 text-base">
                     {t("earnings.noPeriods")}
                 </p>
             ) : (
-                [...months].map(([month, payouts]) => (
-                    <div key={month} className="space-y-2">
-                        <p className="px-1 text-lg font-semibold text-gray-800">
-                            {formatMonth(`${month}-01`, locale)}
-                        </p>
-                        {payouts.map((p) => (
-                            <PayoutRow key={p.id} payout={p} />
-                        ))}
-                    </div>
-                ))
+                <div className="space-y-2">
+                    {payouts.map((p) => (
+                        <PayoutRow key={p.id} payout={p} />
+                    ))}
+                </div>
             )}
         </div>
     );
@@ -312,10 +301,10 @@ export function MyPayslip({ id }: { id: string }) {
                                     onClick={() => setProof(true)}
                                     className="w-20 h-20 shrink-0 rounded-xl overflow-hidden bg-gray-100"
                                 >
-                                    <img
+                                    <Picture
                                         src={slip.paymentProofUrl}
                                         alt={t("earnings.transferProof")}
-                                        className="size-full object-cover"
+                                        className="size-full"
                                     />
                                 </button>
                             )}

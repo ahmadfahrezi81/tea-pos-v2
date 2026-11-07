@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -24,7 +25,15 @@ const contract = createHash("sha256")
     .digest("hex")
     .slice(0, 12);
 
-const APP_COMMIT = (process.env.APP_COMMIT ?? "dev").slice(0, 7);
+// Locally the checkout's own commit, so App info reads as on a phone.
+const localCommit = () => {
+    try {
+        return execSync("git rev-parse --short=7 HEAD", { encoding: "utf8" }).trim();
+    } catch {
+        return "dev";
+    }
+};
+const APP_COMMIT = (process.env.APP_COMMIT ?? localCommit()).slice(0, 7);
 // The release's version, "staging" or "preview" (deploy.yml, pages.yml); "dev" locally.
 const APP_VERSION = process.env.APP_VERSION ?? "dev";
 // X-App-Version, on every request: "seller@2026.10.3+a1b2c3d".
@@ -238,6 +247,27 @@ function readOnly(): Plugin {
     };
 }
 
+// Locally, version.json answers this build, so More reads Latest; UPDATE_PREVIEW=1 answers a newer
+// one, to see Update now (its download never finishes: there is no worker in dev).
+function devVersionFile(app: AppConfig): Plugin {
+    return {
+        name: "dev-version-file",
+        apply: "serve",
+        configureServer(server) {
+            server.middlewares.use("/version.json", (_req, res) => {
+                const tag = appTag(app);
+                res.setHeader("Content-Type", "application/json");
+                res.setHeader("Cache-Control", "no-store");
+                res.end(
+                    JSON.stringify({
+                        version: process.env.UPDATE_PREVIEW ? tag.replace(/\+.*/, "+preview") : tag,
+                    }),
+                );
+            });
+        },
+    };
+}
+
 // What this build is, asked before anything downloads (shell AppUpdate): left out of the worker's
 // files and never cached, or a phone could not notice a new one.
 function versionFile(app: AppConfig): Plugin {
@@ -328,6 +358,7 @@ export function appConfig(app: AppConfig) {
             inlineCss(),
             appHtml(app),
             versionFile(app),
+            devVersionFile(app),
             VitePWA({
                 // The update sheet asks first: reloading mid-order would drop the cart.
                 registerType: "prompt",

@@ -14,6 +14,7 @@ import { HeaderSlotContext, HeaderTitleSlotContext } from "./HeaderActions";
 import { MobileFooterNav } from "./MobileFooterNav";
 import { MobileHeader } from "./MobileHeader";
 import { navProgress } from "./navProgress";
+import { OfflineBanner } from "./OfflineBanner";
 import "./nav-progress.css";
 import { ComeBackRefresh } from "./ComeBackRefresh";
 import { refreshGate } from "./refreshGate";
@@ -451,7 +452,7 @@ export function MobileShell({
 
                             {/* Page slot, route CTA, then tabs; white only when something is in it. */}
                             <footer
-                                className={`shrink-0 ${currentIsSubPage ? "pb-[calc(env(safe-area-inset-bottom)*0.75)]" : "pb-[env(safe-area-inset-bottom)]"} [&:has(>:not(:empty))]:bg-white [&:has(>.is-occupied)]:bg-white`}
+                                className={`shrink-0 ${currentIsSubPage ? "pb-[calc(env(safe-area-inset-bottom)*0.75)]" : "pb-[env(safe-area-inset-bottom)]"} [&:has(>:not(:empty))]:bg-white [&:has(>.is-occupied)]:bg-white [&:has(>[role=status])]:bg-white`}
                             >
                                 <div ref={setFooterSlotEl} />
                                 {footerCtaLabel && (
@@ -471,6 +472,7 @@ export function MobileShell({
                                         onTabClick={navigate}
                                     />
                                 )}
+                                <OfflineBanner />
                             </footer>
 
                             {extras}

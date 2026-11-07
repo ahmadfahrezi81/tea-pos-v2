@@ -17,7 +17,7 @@ export default function StoreSheet({ open, onClose }: { open: boolean; onClose: 
     const hideable = mode === "all" && tenant.stores.some((s) => s.status !== "active");
     const options = [
         ...(mode === "all" ? [{ id: null, name: t("shell.allStores"), status: "active" }] : []),
-        ...stores.filter((s) => mode === "all" || s.status === "active"),
+        ...stores.filter((s) => mode === "all" || s.status !== "inactive"),
     ];
     return (
         <Sheet

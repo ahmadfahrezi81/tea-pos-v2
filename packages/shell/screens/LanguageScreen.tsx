@@ -3,10 +3,11 @@ import { messagesFor, type Locale } from "@tea-pos/i18n";
 import { useLocale, useSwitchLanguage, useT } from "@tea-pos/i18n/react";
 import { ChoiceList } from "@tea-pos/ui/ChoiceList";
 import { toast } from "@tea-pos/ui/toast";
+import type { Me } from "@tea-pos/api-client/me";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useApp } from "../session/AppContext";
-import { errorMessage } from "../session/errors";
+import { showFailure } from "../session/failed";
 
 // Every language the suite has, in the old seller app's order; an app offers only its own.
 const LANGUAGES: { locale: Locale; sublabel: string }[] = [
@@ -26,19 +27,23 @@ export function LanguageScreen() {
         if (language === current) return;
         // Its words first: without them (no signal) nothing is saved or changed.
         const messages = await messagesFor(language).catch(() => null);
-        if (!messages) return toast(t("more.updateOffline"));
+        if (!messages) return toast(t("more.updateOffline"), { kind: "warning" });
         // Not saved (no signal): stay in this language, or the next /me would switch it back.
         const saved = await api
             .PATCH("/me", { body: { language } })
             .catch((e: unknown) => ({ error: e }));
-        if (saved.error) return toast(errorMessage(t, saved.error));
+        if (saved.error) return showFailure(t, saved.error);
         try {
             // The key pickLocale reads before any JavaScript, so the next open starts in it.
             localStorage.setItem("tea-pos:locale", language);
         } catch {
             // Without storage the profile still has it; useMeSync applies it on the next open.
         }
-        // Switched before /me is asked again, so the fresh /me already agrees.
+        // The cached /me says the new language first: useMeSync, seeing the old one beside the
+        // new screen, would switch back until the fresh /me came, a flicker of three switches.
+        queryClient.setQueryData<Me>(["me"], (me) =>
+            me ? { ...me, user: { ...me.user, language } } : me,
+        );
         switchLanguage(language, messages);
         void queryClient.invalidateQueries({ queryKey: ["me"] });
     };

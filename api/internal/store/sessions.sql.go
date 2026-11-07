@@ -46,6 +46,24 @@ func (q *Queries) DeleteSession(ctx context.Context, tokenHash []byte) error {
 	return err
 }
 
+const deleteUserSession = `-- name: DeleteUserSession :execrows
+DELETE FROM sessions WHERE id = $1 AND user_id = $2
+`
+
+type DeleteUserSessionParams struct {
+	ID     pgtype.UUID
+	UserID pgtype.UUID
+}
+
+// Ends one of a person's sessions; 0 when it is not theirs or already gone.
+func (q *Queries) DeleteUserSession(ctx context.Context, arg DeleteUserSessionParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteUserSession, arg.ID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const deleteUserSessions = `-- name: DeleteUserSessions :exec
 DELETE FROM sessions WHERE user_id = $1
 `
@@ -91,6 +109,52 @@ func (q *Queries) GetSession(ctx context.Context, tokenHash []byte) (GetSessionR
 		&i.Apps,
 	)
 	return i, err
+}
+
+const listUserSessions = `-- name: ListUserSessions :many
+SELECT id, token_hash, app, created_at, last_seen_at, ip, user_agent
+FROM sessions
+WHERE user_id = $1 AND expires_at > now()
+ORDER BY last_seen_at DESC, created_at DESC
+`
+
+type ListUserSessionsRow struct {
+	ID         pgtype.UUID
+	TokenHash  []byte
+	App        string
+	CreatedAt  pgtype.Timestamptz
+	LastSeenAt pgtype.Timestamptz
+	Ip         pgtype.Text
+	UserAgent  pgtype.Text
+}
+
+// A person's sessions still running, the latest used first, for UAC.
+func (q *Queries) ListUserSessions(ctx context.Context, userID pgtype.UUID) ([]ListUserSessionsRow, error) {
+	rows, err := q.db.Query(ctx, listUserSessions, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUserSessionsRow
+	for rows.Next() {
+		var i ListUserSessionsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TokenHash,
+			&i.App,
+			&i.CreatedAt,
+			&i.LastSeenAt,
+			&i.Ip,
+			&i.UserAgent,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const renewSession = `-- name: RenewSession :exec

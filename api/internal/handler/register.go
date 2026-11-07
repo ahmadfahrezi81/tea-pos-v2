@@ -19,7 +19,7 @@ import (
 
 // Deps is what the handlers use. Printing the spec passes none: no handler runs then.
 type Deps struct {
-	// Docs serves /docs and /openapi.yaml: on a laptop only.
+	// Docs opens /docs and /openapi.yaml to anyone (a laptop); otherwise only to a tenant's owner.
 	Docs bool
 	// DB runs Idempotent writes in their own transaction (internal/idem).
 	DB       *pgxpool.Pool
@@ -40,7 +40,7 @@ type Deps struct {
 	Files *files.Storage
 }
 
-// NewAPI mounts the contract on mux. The spec and docs pages stay off until admins can sign in.
+// NewAPI mounts the contract on mux, and the reference (/docs) for owners.
 func NewAPI(mux *http.ServeMux, d Deps) huma.API {
 	api := newHuma(mux)
 	if d.Limiter == nil {
@@ -68,19 +68,44 @@ func NewAPI(mux *http.ServeMux, d Deps) huma.API {
 	registerPayouts(api, d)
 	registerSettle(api, d)
 	registerMore(api, d)
+	registerStores(api, d)
 	registerSeller(api, d)
 	registerMine(api, d)
 	registerUac(api, d)
 	registerTestLogin(api, d)
-	if d.Docs {
-		registerDocs(mux, api)
-	}
+	registerDocs(mux, api, d)
 	return api
 }
 
-// registerDocs is the API's reference for a laptop, through the local /api: /api/docs.
-func registerDocs(mux *http.ServeMux, api huma.API) {
-	mux.HandleFunc("GET /openapi.yaml", func(w http.ResponseWriter, _ *http.Request) {
+// registerDocs is the API's reference at each app's /api/docs: open on a laptop, elsewhere only to
+// someone signed in to the backoffice who owns a tenant; anyone else gets the unknown-address answer.
+func registerDocs(mux *http.ServeMux, api huma.API, d Deps) {
+	owner := func(r *http.Request) bool {
+		if d.Docs {
+			return true
+		}
+		cookie, err := r.Cookie(auth.CookieName)
+		if err != nil {
+			return false
+		}
+		s, _, err := d.Sessions.Lookup(r.Context(), cookie.Value)
+		if err != nil || s.App != "backoffice" {
+			return false
+		}
+		ok, err := d.Queries.OwnsATenant(r.Context(), s.UserID)
+		return err == nil && ok
+	}
+	only := func(h http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			if !owner(r) {
+				httpx.Write(w, errRouteNotFound)
+				return
+			}
+			w.Header().Set("Cache-Control", "no-store")
+			h(w, r)
+		}
+	}
+	mux.HandleFunc("GET /openapi.yaml", only(func(w http.ResponseWriter, _ *http.Request) {
 		b, err := api.OpenAPI().YAML()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -88,13 +113,15 @@ func registerDocs(mux *http.ServeMux, api huma.API) {
 		}
 		w.Header().Set("Content-Type", "application/yaml")
 		_, _ = w.Write(b)
-	})
-	mux.HandleFunc("GET /docs", func(w http.ResponseWriter, _ *http.Request) {
+	}))
+	mux.HandleFunc("GET /docs", only(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		_, _ = w.Write([]byte(`<!doctype html><title>tea-pos API</title>
+		// The scripts go in <body>: in <head> the reference finds no body to draw into.
+		_, _ = w.Write([]byte(`<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><title>tea-pos API</title>
+<body>
 <script id="api-reference" data-url="/api/openapi.yaml"></script>
 <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.25.0"></script>`))
-	})
+	}))
 }
 
 // NewHealth is /health alone, for the programs that serve nothing else over HTTP.
@@ -108,6 +135,8 @@ func newHuma(mux *http.ServeMux) huma.API {
 	cfg.OpenAPIPath = ""
 	cfg.DocsPath = ""
 	cfg.SchemasPath = ""
+	// The apps reach Go at their own /api, so the reference's Test Request does too.
+	cfg.Servers = []*huma.Server{{URL: "/api"}}
 	// No $schema field or Link header on every response.
 	cfg.CreateHooks = nil
 	api := humago.New(mux, cfg)

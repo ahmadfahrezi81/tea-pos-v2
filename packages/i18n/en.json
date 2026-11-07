@@ -34,7 +34,9 @@
             "saturday": "Saturday",
             "sunday": "Sunday"
         },
-        "loadMore": "Load more"
+        "loadMore": "Load more",
+        "retake": "Retake",
+        "remove": "Remove"
     },
     "home": {
         "title": "Home",
@@ -111,13 +113,9 @@
         "noStores": "No stores assigned yet.",
         "default": "Default",
         "app": "App",
-        "updateApp": "Update app",
-        "updateLatest": "You are on the latest version.",
         "updateOffline": "No connection. Try again when you are online.",
         "updateIsLatest": "Latest",
-        "updateIsOffline": "Offline",
-        "updateReady": "Ready, restarting",
-        "updateAvailable": "{version} available"
+        "updateNow": "Update now"
     },
     "whatsNew": {
         "title": "What's New",
@@ -213,14 +211,10 @@
     },
     "status": {
         "title": "App info",
-        "api": "API",
-        "commit": "API commit",
-        "app": "App version",
-        "ok": "Connected",
-        "down": "Unreachable",
-        "version": "API version",
-        "appCommit": "App commit",
-        "latest": "Latest build"
+        "app": "App",
+        "server": "Server",
+        "build": "Build",
+        "outdated": "Outdated"
     },
     "errors": {
         "account_inactive": "This account isn't active. Ask the owner.",
@@ -285,7 +279,11 @@
         "period_closed": "This pay period is already closed.",
         "no_work_that_day": "You did not work that day.",
         "bad_receipt": "That receipt did not upload properly. Add it again.",
-        "old_day_open": "An earlier day is still open. Close it in Analytics first."
+        "old_day_open": "An earlier day is still open. Close it in Analytics first.",
+        "notSavedOffline": "Not saved: no connection. Try again.",
+        "session_not_found": "That session has already ended.",
+        "bad_hours": "A store has to open before it closes.",
+        "store_has_history": "This store has sales or days, so it can't be deleted. Make it Inactive instead."
     },
     "store": {
         "week": "Week",
@@ -342,5 +340,21 @@
         "didntOpen": "Didn't open",
         "nNotClosed": "{n} not closed",
         "daysClosed": "{n} of {m} days closed"
+    },
+    "errorSheet": {
+        "title": "Couldn't save",
+        "time": "Time",
+        "request": "Request",
+        "status": "Status",
+        "noAnswer": "No answer",
+        "requestId": "Request ID",
+        "app": "App",
+        "copy": "Copy details"
+    },
+    "connection": {
+        "offline": "No connection",
+        "failing": "Can't reach the server",
+        "slow": "Slow connection",
+        "backOnline": "Back online"
     }
 }

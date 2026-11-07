@@ -8,6 +8,9 @@ import { SectionLabel } from "@tea-pos/ui/SectionLabel";
  * The old apps' menu rows (More, Pay, the Store overview): an icon, a label, an orange chevron,
  * a divider under every row but the last. A row goes to `to`, or does `onClick`.
  */
+// The label's line: 17 px text at the normal 1.5 line height.
+const LINE = "flex h-[25.5px] shrink-0 items-center";
+
 export function SettingsRow({
     icon,
     label,
@@ -18,6 +21,7 @@ export function SettingsRow({
     right,
     dot,
     danger,
+    below,
 }: {
     icon: ReactNode;
     label: string;
@@ -32,32 +36,45 @@ export function SettingsRow({
     dot?: boolean;
     /** The label in red: an ending, as Close Day. */
     danger?: boolean;
+    /** A second action inside the same row, under its label (App info's Update now). */
+    below?: ReactNode;
 }) {
     const inner = (
         <>
-            <span className="text-xl w-6 text-center shrink-0 flex items-center py-5">{icon}</span>
-            <div className="flex-1 min-w-0 flex items-center gap-2 py-5 -mr-4 pr-4 border-b-2 border-slate-100 group-last:border-b-0">
+            {/* The icon and chevron sit level with the label, not the row's middle, as UAC's people. */}
+            <span className="text-xl w-6 text-center shrink-0 flex items-start py-5">
+                <span className={LINE}>{icon}</span>
+            </span>
+            <div
+                className={`flex-1 min-w-0 flex items-start gap-2 py-5 -mr-4 pr-4 ${below ? "pb-4" : "border-b-2 border-slate-100 group-last:border-b-0"}`}
+            >
                 <div className="flex-1 min-w-0">
                     <p
                         className={`text-[17px] font-medium ${danger ? "text-red-600" : "text-gray-800"}`}
                     >
                         {label}
                     </p>
-                    {sublabel && <p className="text-xs text-gray-500 truncate">{sublabel}</p>}
+                    {sublabel && <p className="text-xs text-gray-700 truncate">{sublabel}</p>}
                 </div>
-                {dot && <span className="size-2 rounded-full bg-brand shrink-0" />}
-                {right ?? (
-                    <ChevronRight
-                        size={ICON}
-                        strokeWidth={2.5}
-                        className="text-brand/90 shrink-0"
-                    />
+                {dot && (
+                    <span className={LINE}>
+                        <span className="size-2 rounded-full bg-brand shrink-0" />
+                    </span>
                 )}
+                <span className={LINE}>
+                    {right ?? (
+                        <ChevronRight
+                            size={ICON}
+                            strokeWidth={2.5}
+                            className="text-brand/90 shrink-0"
+                        />
+                    )}
+                </span>
             </div>
         </>
     );
-    const className = "group w-full flex items-stretch gap-3 text-left active:bg-gray-50";
-    return to ? (
+    const className = `${below ? "" : "group "}w-full flex items-stretch gap-3 text-left active:bg-gray-50`;
+    const row = to ? (
         <Link to={to} search={search as never} className={className}>
             {inner}
         </Link>
@@ -65,6 +82,15 @@ export function SettingsRow({
         <button onClick={onClick} className={className}>
             {inner}
         </button>
+    );
+    if (!below) return row;
+    return (
+        <div className="group">
+            {row}
+            <div className="-mr-4 pr-4 pt-4 pb-4 border-t-2 border-b-2 border-slate-100 group-last:border-b-0">
+                {below}
+            </div>
+        </div>
     );
 }
 

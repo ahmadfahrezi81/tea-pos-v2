@@ -1,11 +1,11 @@
 import { useT } from "@tea-pos/i18n/react";
-import { toast } from "@tea-pos/ui/toast";
-import { Check, Download, Info, ScrollText } from "lucide-react";
+import { Info, ScrollText } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 
-import { buildLabel, currentVersion, useAppUpdate } from "../frame/AppUpdate";
-import { APP_TAG } from "@tea-pos/api-client/status";
+import { currentVersion, useAppUpdate, useUpdateState } from "../frame/AppUpdate";
 import { rowIcon, SettingsGroup, SettingsRow } from "../frame/Settings";
+import { UpdateNow } from "../frame/UpdateNow";
+import { useUpdateText } from "../frame/useUpdateText";
 import { useSlug } from "../session/tenant";
 import { LATEST, seen } from "../lib/whatsNew";
 
@@ -17,9 +17,11 @@ import { LATEST, seen } from "../lib/whatsNew";
 export function MoreScreen({ rows, before }: { rows?: ReactNode; before?: ReactNode }) {
     const t = useT();
     const slug = useSlug();
-    const update = useAppUpdate();
+    const { peek } = useAppUpdate();
+    const state = useUpdateState();
+    const stateText = useUpdateText(state);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => update.peek(), []);
+    useEffect(() => peek(), []);
     if (!slug) return null;
     const unseen = LATEST !== "" && seen() !== LATEST;
     return (
@@ -36,54 +38,13 @@ export function MoreScreen({ rows, before }: { rows?: ReactNode; before?: ReactN
             </SettingsGroup>
             <SettingsGroup title={t("more.app")}>
                 <SettingsRow
-                    icon={<Download {...rowIcon} />}
-                    label={t("more.updateApp")}
-                    sublabel={<UpdateStatus />}
-                    onClick={() => {
-                        void update.checkNow().then((result) => {
-                            if (result === "latest") toast(t("more.updateLatest"));
-                            if (result === "offline") toast(t("more.updateOffline"));
-                        });
-                    }}
-                />
-                <SettingsRow
                     to={`/${slug}/app-info`}
                     icon={<Info {...rowIcon} />}
                     label={t("status.title")}
+                    sublabel={[currentVersion(), stateText].filter(Boolean).join(" · ")}
+                    below={state === "available" ? <UpdateNow /> : undefined}
                 />
             </SettingsGroup>
         </div>
-    );
-}
-
-/** This build, then where it stands against the one the server has. */
-function UpdateStatus() {
-    const t = useT();
-    const { phase, percent, next, served } = useAppUpdate();
-    const state =
-        phase === "downloading" ? (
-            <span className="text-brand">
-                ↓ {next}
-                {percent === null ? "…" : ` ${percent}%`}
-            </span>
-        ) : phase === "ready" ? (
-            <span className="text-brand">{t("more.updateReady")}</span>
-        ) : served === APP_TAG ? (
-            <span className="inline-flex items-center gap-0.5 text-green-600">
-                <Check size={12} strokeWidth={3} />
-                {t("more.updateIsLatest")}
-            </span>
-        ) : served === null ? (
-            t("more.updateIsOffline")
-        ) : served ? (
-            <span className="text-brand">
-                {t("more.updateAvailable").replace("{version}", buildLabel(served))}
-            </span>
-        ) : null;
-    return (
-        <>
-            {currentVersion()}
-            {state && <> · {state}</>}
-        </>
     );
 }

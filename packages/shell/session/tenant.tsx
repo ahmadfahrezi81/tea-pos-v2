@@ -2,6 +2,8 @@ import type { Me } from "@tea-pos/api-client/me";
 import { useParams } from "@tanstack/react-router";
 import { createContext, useContext, useSyncExternalStore, type ReactNode } from "react";
 
+import { FIRST_MONTH, FIRST_PAY_MONTH } from "@tea-pos/ui/MonthStepper";
+
 import { useApp } from "./AppContext";
 
 type Tenant = Me["tenants"][number];
@@ -73,16 +75,24 @@ export function TenantProvider({ me, children }: { me: Me | undefined; children:
 
     if (!tenant) return <TenantContext value={null}>{children}</TenantContext>;
 
-    const open = tenant.stores.filter((s) => s.status === "active");
+    // A seller may pick a demo store; a closed (inactive) one never.
+    const usable = tenant.stores.filter((s) => s.status !== "inactive");
     let store: Store | null =
-        tenant.stores.find((s) => s.id === saved && (mode === "all" || s.status === "active")) ??
+        tenant.stores.find((s) => s.id === saved && (mode === "all" || s.status !== "inactive")) ??
         null;
     // Hidden: demo and inactive stores, except the one chosen (as the old apps).
     const stores = hideInactive
         ? tenant.stores.filter((s) => s.status === "active" || s.id === store?.id)
         : tenant.stores;
     if (!store && mode === "one") {
-        store = open.find((s) => s.isDefault) ?? open[0] ?? tenant.stores[0] ?? null;
+        const open = usable.filter((s) => s.status === "active");
+        store =
+            open.find((s) => s.isDefault) ??
+            open[0] ??
+            usable.find((s) => s.isDefault) ??
+            usable[0] ??
+            tenant.stores[0] ??
+            null;
     }
 
     const value: TenantState = {
@@ -106,6 +116,15 @@ export function useTenant(): TenantState | null {
  * Whether a flag is on for this user at the chosen store. The screen's choice only: the
  * route behind it must check the flag in Go too (the RFC's rule), or hiding a button is all it does.
  */
+/**
+ * The earliest month a picker reaches: the tenant's start, or `"2025-08"` before /me has it.
+ * `pay`: pay began later, so its pickers start at whichever is later.
+ */
+export function useFirstMonth(pay = false): string {
+    const since = useTenant()?.tenant.since?.slice(0, 7) || FIRST_MONTH;
+    return pay && FIRST_PAY_MONTH > since ? FIRST_PAY_MONTH : since;
+}
+
 export function useFlag(key: string): boolean {
     return useTenant()?.flags[key] ?? false;
 }
