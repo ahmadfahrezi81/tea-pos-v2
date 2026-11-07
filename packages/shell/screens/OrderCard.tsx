@@ -7,26 +7,17 @@ import { CopyButton } from "@tea-pos/ui/CopyButton";
 import { ICON } from "@tea-pos/ui/icon";
 import { Sheet } from "@tea-pos/ui/Sheet";
 import { MoreVertical } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 
 type Order = components["schemas"]["Order"];
 
 /**
  * One order with its items, in both apps, read like a receipt: which order, what was in it, what it
- * came to. ⋮ opens its details. `number` counts against the whole list, newest highest.
+ * came to: when and where, then who. ⋮ opens its ID. `number` counts against the whole list, newest highest.
  */
-export function OrderCard({
-    order,
-    number,
-    time,
-    place,
-}: {
-    order: Order;
-    number: number;
-    time: string;
-    place?: string;
-}) {
+export function OrderCard({ order, number }: { order: Order; number: number }) {
     const t = useT();
+    const locale = useLocale();
     const [menu, setMenu] = useState(false);
     const title = t("store.orderNumber").replace("{n}", String(number));
     return (
@@ -38,7 +29,9 @@ export function OrderCard({
                         {order.paymentMethod === "qris" && <Badge>QRIS</Badge>}
                     </div>
                     <p className="text-sm text-gray-500 truncate">
-                        {[time, place].filter(Boolean).join(" · ")}
+                        {[formatDateTime(order.at, locale), order.storeName]
+                            .filter(Boolean)
+                            .join(" · ")}
                     </p>
                 </div>
                 <button
@@ -90,7 +83,7 @@ export function OrderCard({
     );
 }
 
-/** An order's details: when, who, where, its ID to copy. Edit and delete come with corrections. */
+/** An order's ID to copy; edit and delete come with corrections. */
 function OrderMenu({
     order,
     title,
@@ -102,28 +95,17 @@ function OrderMenu({
     open: boolean;
     onClose: () => void;
 }) {
-    const t = useT();
-    const locale = useLocale();
-    const row = (label: string, value: ReactNode) => (
-        <div className="flex items-center justify-between gap-3 py-3.5 border-b last:border-b-0">
-            <span className="text-gray-500">{label}</span>
-            <span className="text-gray-900 text-right min-w-0">{value}</span>
-        </div>
-    );
     return (
         <Sheet open={open} onClose={onClose} title={title}>
-            {row(t("orders.fullTimestamp"), formatDateTime(order.at, locale))}
-            {order.seller && row(t("orders.seller"), order.seller)}
-            {order.storeName && row(t("orders.store"), order.storeName)}
-            {row(
-                "ID",
+            <div className="flex items-center justify-between gap-3 py-3.5">
+                <span className="text-gray-500">ID</span>
                 <CopyButton
                     value={order.id}
-                    className="flex items-center gap-1.5 active:opacity-70 min-w-0"
+                    className="flex items-center gap-1.5 active:opacity-70 min-w-0 text-gray-900"
                 >
                     <span className="truncate font-mono text-xs">{order.id}</span>
-                </CopyButton>,
-            )}
+                </CopyButton>
+            </div>
         </Sheet>
     );
 }
