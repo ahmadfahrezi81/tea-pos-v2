@@ -13,6 +13,7 @@ import { decisions, payDate, usePayslip, usePayWrite } from "./pay";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { Drawer } from "@tea-pos/ui/Drawer";
 import { ImagePreview } from "@tea-pos/ui/ImagePreview";
+import { Picture } from "@tea-pos/ui/Picture";
 import { ICON } from "@tea-pos/ui/icon";
 import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
 import { Badge } from "@tea-pos/ui/Badge";
@@ -216,10 +217,10 @@ export function Payslip({ id }: { id: string }) {
                                         onClick={() => setShowProof(true)}
                                         className="block size-20 rounded-lg overflow-hidden bg-gray-100 active:opacity-80"
                                     >
-                                        <img
+                                        <Picture
                                             src={slip.paymentProofUrl}
                                             alt={t("pay.receipt")}
-                                            className="size-full object-cover"
+                                            className="size-full"
                                         />
                                     </button>
                                 </div>

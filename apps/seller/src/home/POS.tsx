@@ -3,6 +3,7 @@ import { useMe } from "@tea-pos/api-client/me";
 import { formatMoney } from "@tea-pos/format";
 import { useT } from "@tea-pos/i18n/react";
 import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
+import { Picture } from "@tea-pos/ui/Picture";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { toast } from "@tea-pos/ui/toast";
 import { useState } from "react";
@@ -105,12 +106,9 @@ function Menu() {
                                 <span className="block p-3">
                                     <span className="flex gap-2 mb-3">
                                         {p.imageUrl && (
-                                            <img
+                                            <Picture
                                                 src={p.imageUrl}
-                                                alt=""
-                                                width={50}
-                                                height={50}
-                                                className="rounded object-cover shrink-0"
+                                                className="size-[50px] rounded"
                                             />
                                         )}
                                         <span className="flex-1">

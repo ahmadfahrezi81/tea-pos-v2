@@ -30,6 +30,7 @@
         "./MonthStepper": "./controls/MonthStepper.tsx",
         "./motion": "./lib/motion.ts",
         "./Panel": "./layout/Panel.tsx",
+        "./Picture": "./feedback/Picture.tsx",
         "./PhotoInput": "./photo/PhotoInput.tsx",
         "./SearchBox": "./controls/SearchBox.tsx",
         "./SectionLabel": "./layout/SectionLabel.tsx",
