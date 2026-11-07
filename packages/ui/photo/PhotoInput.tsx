@@ -79,7 +79,7 @@ export function PhotoInput({
             <button
                 type="button"
                 disabled={busy}
-                className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl text-sm text-gray-500 ${
+                className={`relative flex aspect-[2/1] w-full items-center justify-center overflow-hidden rounded-xl text-sm text-gray-500 ${
                     state.at === "done"
                         ? "bg-black"
                         : "border border-dashed border-gray-300 bg-gray-50"
