@@ -63,11 +63,7 @@
         "sessionActive": "Aktif",
         "sessionEnded": "Selesai",
         "sessionNow": "sekarang",
-        "takenOver": "Diambil alih dari",
-        "session": "sesi",
-        "sessions": "sesi",
-        "person": "orang",
-        "people": "orang"
+        "takenOver": "Diambil alih dari"
     },
     "orders": {
         "showAll": "Tampilkan semua pesanan",
@@ -80,11 +76,6 @@
         "yesterday": "Kemarin",
         "menu": "Menu pesanan",
         "noOrdersForDate": "Tidak ada pesanan untuk tanggal dan toko yang dipilih",
-        "orderDetails": "Detail Pesanan",
-        "store": "Toko",
-        "seller": "Penjual",
-        "fullTimestamp": "Waktu Lengkap",
-        "items": "Item",
         "each": "per produk",
         "cup": "Cup",
         "cups": "Cups",
