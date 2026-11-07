@@ -190,9 +190,9 @@
         "updating": "Memperbarui {app}",
         "updateDownloading": "Mengunduh pembaruan",
         "updateDone": "Selesai. Memulai ulang…",
-        "updateRestartIn": "Restart dalam {n}",
         "updateRestart": "Restart",
-        "updateKeepOpen": "Biarkan aplikasi tetap terbuka"
+        "updateKeepOpen": "Biarkan aplikasi tetap terbuka",
+        "updateReady": "Update siap"
     },
     "signIn": {
         "google": "Lanjutkan dengan Google",

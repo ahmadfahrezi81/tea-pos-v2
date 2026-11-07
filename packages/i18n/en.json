@@ -190,9 +190,9 @@
         "updating": "Updating {app}",
         "updateDownloading": "Downloading update",
         "updateDone": "Updated. Restarting…",
-        "updateRestartIn": "Restarting in {n}",
         "updateRestart": "Restart",
-        "updateKeepOpen": "Please keep the app open"
+        "updateKeepOpen": "Please keep the app open",
+        "updateReady": "Update ready"
     },
     "signIn": {
         "google": "Continue with Google",

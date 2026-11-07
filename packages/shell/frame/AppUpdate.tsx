@@ -188,6 +188,8 @@ const AppUpdateContext = createContext<AppUpdate | null>(null);
  * (a page woken from memory too, as iPhones do) and on a tap, at most once a minute. A new build
  * always downloads behind the header of a tab's root, which then counts down and reloads, on every
  * phone. Only after a 426, when this build is too old to be safe, a full page with no way out.
+ * Intended: an iPhone opened afresh shows no download, only Update ready. iOS fetches the new build
+ * itself on launch, and registerSW waits behind it (task 058).
  */
 export function AppUpdateProvider({ children }: { children: ReactNode }) {
     const [phase, setPhase] = useState<Phase>("idle");
