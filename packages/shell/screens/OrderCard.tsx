@@ -21,7 +21,7 @@ export function OrderCard({ order, number }: { order: Order; number: number }) {
     const [menu, setMenu] = useState(false);
     const title = t("store.orderNumber").replace("{n}", String(number));
     return (
-        <div className="bg-white rounded-2xl p-3.5 space-y-2.5">
+        <div className="bg-white rounded-2xl p-3 space-y-2.5">
             <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                     <div className="flex items-center gap-2">
