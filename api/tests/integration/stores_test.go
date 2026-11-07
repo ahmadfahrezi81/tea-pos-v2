@@ -45,7 +45,7 @@ func TestStoreSettings(t *testing.T) {
 	if s, c, _ := send(admin, http.MethodPut, "/"+made.ID, `{"name":"Pop-up","address":"","status":"active","openTime":"18:00","closeTime":"09:00"}`); s != 422 || c != "bad_hours" {
 		t.Errorf("closing before opening: %d %s", s, c)
 	}
-	if s, c, _ := send(admin, http.MethodPut, "/"+made.ID, `{"name":"Pop-up","address":"","status":"active","openTime":"09:00","closeTime":"17:00","latitude":91}`); s != 422 {
+	if s, c, _ := send(admin, http.MethodPut, "/"+made.ID, `{"name":"Pop-up","address":"","status":"active","openTime":"09:00","closeTime":"17:00","latitude":91}`); s != 400 || c != "bad_request" {
 		t.Errorf("latitude 91: %d %s", s, c)
 	}
 	s, c, changed := send(admin, http.MethodPut, "/"+made.ID, `{"name":"Pop-up 2","address":"Jl. Baru","status":"inactive","openTime":"09:00","closeTime":"17:00"}`)
