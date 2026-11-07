@@ -313,7 +313,7 @@
         "last7": "7 hari terakhir",
         "last30": "30 hari terakhir",
         "thisMonth": "Bulan ini",
-        "lastMonth": "Bulan lalu",
+        "pickMonth": "Pilih bulan",
         "custom": "Rentang khusus",
         "apply": "Terapkan",
         "daysCount": "{n} hari",

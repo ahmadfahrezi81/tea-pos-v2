@@ -14,9 +14,17 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 const span = (from: string, to: string) =>
     (utc(to).getTime() - utc(from).getTime()) / 86_400_000 + 1;
 
+/** The whole of `month` (`2026-10`), but never past `today`. */
+export function monthRange(month: string, today: string): DateRange {
+    const first = utc(`${month}-01`);
+    const last = iso(new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)));
+    return { from: `${month}-01`, to: last > today ? today : last };
+}
+
 /**
- * Picks a range of whole days: a tap on a preset applies it and closes; Custom opens a calendar
- * (tap the first day, then the last, then Apply). Days are `2026-10-22`; none after `today`.
+ * Picks a range of whole days: a tap on a preset applies it and closes; Pick a month opens the
+ * months (a tap applies); Custom opens a calendar (tap the first day, then the last, then Apply).
+ * Days are `2026-10-22`; none after `today`.
  */
 export function DateRangeSheet({
     open,
@@ -36,23 +44,55 @@ export function DateRangeSheet({
     today: string;
     presets: RangePreset[];
     locale: string;
-    labels: { title: string; custom: string; apply: string; days: (n: number) => string };
+    labels: {
+        title: string;
+        custom: string;
+        month: string;
+        apply: string;
+        days: (n: number) => string;
+    };
     formatRange: (range: DateRange) => string;
 }) {
-    const [custom, setCustom] = useState(false);
+    const [view, setView] = useState<"list" | "month" | "custom">("list");
     const close = () => {
-        setCustom(false);
+        setView("list");
         onClose();
     };
     const picked = presets.find((p) => p.from === value.from && p.to === value.to)?.key;
+    const month = value.from.slice(0, 7);
+    const isMonth =
+        !picked &&
+        value.to.slice(0, 7) === month &&
+        monthRange(month, today).from === value.from &&
+        monthRange(month, today).to === value.to;
+    const row =
+        "w-full flex items-center justify-between py-4 text-left text-[17px] font-medium text-gray-900 active:opacity-70";
+    const more = (on: boolean) =>
+        on ? (
+            <Check size={ICON} className="text-brand" />
+        ) : (
+            <ChevronRight size={ICON} className="text-brand/90" />
+        );
     return (
         <Sheet
             open={open}
             onClose={close}
-            title={custom ? labels.custom : labels.title}
-            onBack={custom ? () => setCustom(false) : undefined}
+            title={
+                view === "custom" ? labels.custom : view === "month" ? labels.month : labels.title
+            }
+            onBack={view === "list" ? undefined : () => setView("list")}
         >
-            {custom ? (
+            {view === "month" ? (
+                <Months
+                    value={isMonth ? month : null}
+                    today={today}
+                    locale={locale}
+                    onPick={(m) => {
+                        onChange(monthRange(m, today));
+                        close();
+                    }}
+                />
+            ) : view === "custom" ? (
                 <Calendar
                     value={value}
                     today={today}
@@ -73,26 +113,77 @@ export function DateRangeSheet({
                                 onChange({ from: p.from, to: p.to });
                                 close();
                             }}
-                            className="w-full flex items-center justify-between py-4 text-left text-[17px] font-medium text-gray-900 active:opacity-70"
+                            className={row}
                         >
                             {p.label}
                             {picked === p.key && <Check size={ICON} className="text-brand" />}
                         </button>
                     ))}
-                    <button
-                        onClick={() => setCustom(true)}
-                        className="w-full flex items-center justify-between py-4 text-left text-[17px] font-medium text-gray-900 active:opacity-70"
-                    >
+                    <button onClick={() => setView("month")} className={row}>
+                        {labels.month}
+                        {more(isMonth)}
+                    </button>
+                    <button onClick={() => setView("custom")} className={row}>
                         {labels.custom}
-                        {picked ? (
-                            <ChevronRight size={ICON} className="text-brand/90" />
-                        ) : (
-                            <Check size={ICON} className="text-brand" />
-                        )}
+                        {more(!picked && !isMonth)}
                     </button>
                 </div>
             )}
         </Sheet>
+    );
+}
+
+/** A year's months in a grid, ‹ › for other years; none after `today`'s month. */
+function Months({
+    value,
+    today,
+    locale,
+    onPick,
+}: {
+    value: string | null;
+    today: string;
+    locale: string;
+    onPick: (month: string) => void;
+}) {
+    const [year, setYear] = useState(Number((value ?? today).slice(0, 4)));
+    const thisMonth = today.slice(0, 7);
+    const name = new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" });
+    return (
+        <div className="space-y-3">
+            <div className="flex items-center justify-between">
+                <button onClick={() => setYear(year - 1)} className={STEP_ARROW} aria-label="‹">
+                    <ChevronLeft {...stepIcon} />
+                </button>
+                <p className="font-bold text-gray-900">{year}</p>
+                <button
+                    onClick={() => setYear(year + 1)}
+                    disabled={year >= Number(today.slice(0, 4))}
+                    className={`${STEP_ARROW} disabled:opacity-30`}
+                    aria-label="›"
+                >
+                    <ChevronRight {...stepIcon} />
+                </button>
+            </div>
+            <div className="grid grid-cols-3 gap-2 pb-2">
+                {Array.from({ length: 12 }, (_, i) => {
+                    const month = `${year}-${String(i + 1).padStart(2, "0")}`;
+                    return (
+                        <button
+                            key={month}
+                            disabled={month > thisMonth}
+                            onClick={() => onPick(month)}
+                            className={`h-12 rounded-xl text-base font-semibold disabled:opacity-30 active:opacity-70 ${
+                                month === value
+                                    ? "bg-brand text-white"
+                                    : "bg-gray-100 text-gray-900"
+                            }`}
+                        >
+                            {name.format(new Date(Date.UTC(year, i, 1)))}
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
     );
 }
 
@@ -188,6 +279,10 @@ function Calendar({
                         </button>
                     );
                 })}
+                {/* Always six weeks, so the sheet keeps its height from month to month. */}
+                {Array.from({ length: 42 - blanks - count }, (_, i) => (
+                    <span key={`after-${i}`} className="h-11" />
+                ))}
             </div>
             <p className="text-center text-sm font-medium text-gray-900">
                 {formatRange({ from, to: end })} · {labels.days(days)}

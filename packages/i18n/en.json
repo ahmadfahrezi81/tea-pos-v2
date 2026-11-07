@@ -313,7 +313,7 @@
         "last7": "Last 7 days",
         "last30": "Last 30 days",
         "thisMonth": "This month",
-        "lastMonth": "Last month",
+        "pickMonth": "Pick a month",
         "custom": "Custom range",
         "apply": "Apply",
         "daysCount": "{n} days",
