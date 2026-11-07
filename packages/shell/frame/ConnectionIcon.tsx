@@ -50,7 +50,7 @@ export function ConnectionIcon() {
                 aria-label={t("connection.label")}
                 className={`flex size-[42px] shrink-0 items-center justify-center rounded-full bg-gray-200 active:scale-95 ${color}`}
             >
-                <Icon size={24} strokeWidth={2.5} />
+                <Icon size={24} strokeWidth={3} />
             </button>
             <Sheet open={open} onClose={() => setOpen(false)} title={t("connection.label")}>
                 <div className="space-y-4 pb-2">
