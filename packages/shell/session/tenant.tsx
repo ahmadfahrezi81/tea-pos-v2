@@ -75,16 +75,24 @@ export function TenantProvider({ me, children }: { me: Me | undefined; children:
 
     if (!tenant) return <TenantContext value={null}>{children}</TenantContext>;
 
-    const open = tenant.stores.filter((s) => s.status === "active");
+    // A seller may pick a demo store; a closed (inactive) one never.
+    const usable = tenant.stores.filter((s) => s.status !== "inactive");
     let store: Store | null =
-        tenant.stores.find((s) => s.id === saved && (mode === "all" || s.status === "active")) ??
+        tenant.stores.find((s) => s.id === saved && (mode === "all" || s.status !== "inactive")) ??
         null;
     // Hidden: demo and inactive stores, except the one chosen (as the old apps).
     const stores = hideInactive
         ? tenant.stores.filter((s) => s.status === "active" || s.id === store?.id)
         : tenant.stores;
     if (!store && mode === "one") {
-        store = open.find((s) => s.isDefault) ?? open[0] ?? tenant.stores[0] ?? null;
+        const open = usable.filter((s) => s.status === "active");
+        store =
+            open.find((s) => s.isDefault) ??
+            open[0] ??
+            usable.find((s) => s.isDefault) ??
+            usable[0] ??
+            tenant.stores[0] ??
+            null;
     }
 
     const value: TenantState = {
