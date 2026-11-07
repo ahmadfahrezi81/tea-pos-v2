@@ -72,11 +72,10 @@ export function SettingsRow({
         </button>
     );
     if (!below) return row;
-    // The icon's width and gap: the child lines up with the label.
     return (
         <div className="group">
             {row}
-            <div className="ml-9 -mr-4 pr-4 pb-4 border-b-2 border-slate-100 group-last:border-b-0">
+            <div className="-mr-4 pr-4 pb-4 border-b-2 border-slate-100 group-last:border-b-0">
                 {below}
             </div>
         </div>
