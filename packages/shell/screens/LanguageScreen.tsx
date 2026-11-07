@@ -3,6 +3,7 @@ import { messagesFor, type Locale } from "@tea-pos/i18n";
 import { useLocale, useSwitchLanguage, useT } from "@tea-pos/i18n/react";
 import { ChoiceList } from "@tea-pos/ui/ChoiceList";
 import { toast } from "@tea-pos/ui/toast";
+import type { Me } from "@tea-pos/api-client/me";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useApp } from "../session/AppContext";
@@ -38,7 +39,11 @@ export function LanguageScreen() {
         } catch {
             // Without storage the profile still has it; useMeSync applies it on the next open.
         }
-        // Switched before /me is asked again, so the fresh /me already agrees.
+        // The cached /me says the new language first: useMeSync, seeing the old one beside the
+        // new screen, would switch back until the fresh /me came, a flicker of three switches.
+        queryClient.setQueryData<Me>(["me"], (me) =>
+            me ? { ...me, user: { ...me.user, language } } : me,
+        );
         switchLanguage(language, messages);
         void queryClient.invalidateQueries({ queryKey: ["me"] });
     };
