@@ -20,3 +20,14 @@ DELETE FROM sessions WHERE token_hash = $1;
 -- name: DeleteUserSessions :exec
 -- Signing out everywhere: every app, every phone.
 DELETE FROM sessions WHERE user_id = $1;
+
+-- name: ListUserSessions :many
+-- A person's sessions still running, the latest used first, for UAC.
+SELECT id, token_hash, app, created_at, last_seen_at, ip, user_agent
+FROM sessions
+WHERE user_id = $1 AND expires_at > now()
+ORDER BY last_seen_at DESC, created_at DESC;
+
+-- name: DeleteUserSession :execrows
+-- Ends one of a person's sessions; 0 when it is not theirs or already gone.
+DELETE FROM sessions WHERE id = $1 AND user_id = $2;

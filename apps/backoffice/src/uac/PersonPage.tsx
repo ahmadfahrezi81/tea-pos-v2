@@ -11,11 +11,9 @@ import { Panel, PanelLabel } from "@tea-pos/ui/Panel";
 import { InfoList, InfoRow } from "@tea-pos/ui/DetailList";
 import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
-import { toast } from "@tea-pos/ui/toast";
-import { useMe } from "@tea-pos/api-client/me";
 import { ConfirmSheet, FormFooter } from "@tea-pos/shell/FormFooter";
 import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
-import { LogOutButton, rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
+import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { useAccess, useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { useRouter } from "@tanstack/react-router";
 import {
@@ -29,10 +27,10 @@ import {
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
+import { SessionsCard } from "./Sessions";
 import { useClaimTypes, useCommissionTypes, usePayWrite, writes } from "../pay/pay";
 import {
     storeGroups,
-    useLogoutPerson,
     useSetDetails,
     useSetPerson,
     useUacPerson,
@@ -61,7 +59,6 @@ export function PersonPage({ userId }: { userId: string }) {
     const stores = useTenant()?.tenant.stores ?? [];
     const { data: p } = useUacPerson(userId);
     const { data: claimTypes } = useClaimTypes();
-    const self = useMe().data?.user.id === userId;
     if (!p) return <Skeleton className="h-60 rounded-2xl" />;
     const bank = p.bank;
     // The owner keeps full access, and someone turned off has none to change.
@@ -170,7 +167,7 @@ export function PersonPage({ userId }: { userId: string }) {
                 </InfoList>
             </section>
 
-            {canWrite && !self && (!p.owner || owner) && <LogoutRow person={p} />}
+            {canWrite && <SessionsCard person={p} />}
         </div>
     );
 }
@@ -230,33 +227,6 @@ function StatusRow({ person: p, editable }: { person: Person; editable: boolean 
                         active: !p.active,
                     });
                     setAsking(false);
-                }}
-                onError={() => setAsking(false)}
-                onCancel={() => setAsking(false)}
-            />
-        </div>
-    );
-}
-
-/** Signs them out everywhere, for a lost phone; they can sign in again unless turned off too. */
-function LogoutRow({ person: p }: { person: Person }) {
-    const t = useT();
-    const logout = useLogoutPerson(p.id);
-    const [asking, setAsking] = useState(false);
-    return (
-        <div className="flex justify-center pt-4">
-            <LogOutButton label={t("common.logout")} onClick={() => setAsking(true)} />
-            <ConfirmSheet
-                open={asking}
-                title={t("uac.logoutTitle").replace("{name}", p.name)}
-                message={t("uac.logoutBody")}
-                label={t("common.logout")}
-                busyLabel={t("uac.saving")}
-                tone="orange"
-                onConfirm={async () => {
-                    await logout.mutateAsync({});
-                    setAsking(false);
-                    toast(t("uac.loggedOut").replace("{name}", p.name), { kind: "success" });
                 }}
                 onError={() => setAsking(false)}
                 onCancel={() => setAsking(false)}

@@ -266,6 +266,70 @@ func TestUacLogout(t *testing.T) {
 	}
 }
 
+// TestUacSessions: an admin sees where someone is signed in and ends one session, leaving the
+// others; a guest sees none of it, and an admin cannot end the owner's.
+func TestUacSessions(t *testing.T) {
+	pool := testkit.DB(t)
+	if _, err := pool.Exec(context.Background(), `UPDATE tenants SET owner_id = $1 WHERE slug = 'tenant-a'`, testkit.DriverA); err != nil {
+		t.Fatal(err)
+	}
+	a := testkit.NewAPI(t, pool, "")
+	admin := testkit.Session(a.SignIn(t, testkit.AdminA, "backoffice"))
+	guest := testkit.Session(a.SignIn(t, testkit.GuestA, "backoffice"))
+	phone := testkit.Session(a.SignIn(t, testkit.SellerA, "seller"))
+	laptop := testkit.Session(a.SignIn(t, testkit.SellerA, "seller"))
+	list := func(who *http.Cookie, user string) (int, []contract.UacSession) {
+		resp := a.Request(t, http.MethodGet, "/tenants/tenant-a/uac/people/"+user+"/sessions", "backoffice", who)
+		defer resp.Body.Close()
+		var out struct{ Sessions []contract.UacSession }
+		_ = json.NewDecoder(resp.Body).Decode(&out)
+		return resp.StatusCode, out.Sessions
+	}
+	end := func(user, id string) (int, string) {
+		resp := a.Send(t, http.MethodDelete, "/tenants/tenant-a/uac/people/"+user+"/sessions/"+id, "backoffice", "", nil, admin)
+		return resp.StatusCode, code(t, resp)
+	}
+
+	if s, _ := list(guest, testkit.SellerA); s != 403 {
+		t.Errorf("a guest: %d", s)
+	}
+	s, sessions := list(admin, testkit.SellerA)
+	if s != 200 || len(sessions) != 2 || sessions[0].App != "seller" || sessions[0].Current {
+		t.Fatalf("list: %d %+v", s, sessions)
+	}
+	if _, mine := list(admin, testkit.AdminA); len(mine) != 1 || !mine[0].Current {
+		t.Errorf("the caller's own: %+v", mine)
+	}
+
+	if s, c := end(testkit.SellerA, sessions[0].ID); s != 204 {
+		t.Fatalf("end: %d %s", s, c)
+	}
+	still := 0
+	for _, c := range []*http.Cookie{phone, laptop} {
+		if a.Request(t, http.MethodGet, "/me", "seller", c).StatusCode == 200 {
+			still++
+		}
+	}
+	if still != 1 {
+		t.Errorf("signed in after ending one of two: %d", still)
+	}
+	if s, c := end(testkit.SellerA, sessions[0].ID); s != 404 || c != "session_not_found" {
+		t.Errorf("ended twice: %d %s", s, c)
+	}
+	if s, c := end(testkit.SellerB, sessions[1].ID); s != 404 {
+		t.Errorf("another tenant's person: %d %s", s, c)
+	}
+
+	a.SignIn(t, testkit.DriverA, "seller")
+	_, theirs := list(admin, testkit.DriverA)
+	if len(theirs) != 1 {
+		t.Fatalf("the owner's: %+v", theirs)
+	}
+	if s, c := end(testkit.DriverA, theirs[0].ID); s != 422 || c != "owner_kept" {
+		t.Errorf("an admin ending the owner's: %d %s", s, c)
+	}
+}
+
 // TestUacOtherTenant: an admin reaches nobody outside their tenant, on any write about a person.
 func TestUacOtherTenant(t *testing.T) {
 	pool := testkit.DB(t)

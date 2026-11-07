@@ -78,17 +78,56 @@ export function useSetDetails(userId: string) {
     );
 }
 
+export type Session = components["schemas"]["UacSession"];
+
+const sessionsPath = "/tenants/{tenant}/uac/people/{userId}/sessions";
+
+/** Where a person is signed in; admins only. */
+export function useUacSessions(userId: string, enabled = true) {
+    const tenant = useSlug();
+    return $api.useQuery(
+        "get",
+        sessionsPath,
+        { params: { path: { tenant, userId } } },
+        { enabled: !!tenant && enabled, staleTime: STALE.QUICK },
+    );
+}
+
+const refetchSessions = (queryClient: ReturnType<typeof useQueryClient>) =>
+    void queryClient.invalidateQueries({ predicate: (q) => q.queryKey[1] === sessionsPath });
+
+/** Signs a person out of one phone or computer. */
+export function useEndSession(userId: string) {
+    const tenant = useSlug();
+    const queryClient = useQueryClient();
+    return useApiMutation<unknown, { sessionId: string }>(
+        async ({ sessionId }) => {
+            const res = await api.DELETE(
+                "/tenants/{tenant}/uac/people/{userId}/sessions/{sessionId}",
+                { params: { path: { tenant, userId, sessionId } } },
+            );
+            if (res.error) throw res.error;
+            return null;
+        },
+        { onSettled: () => refetchSessions(queryClient) },
+    );
+}
+
 /** Signs a person out of every app on every phone. */
 export function useLogoutPerson(userId: string) {
     const tenant = useSlug();
-    return useApiMutation<unknown, object>(async (_, headers) => {
-        const res = await api.POST("/tenants/{tenant}/uac/people/{userId}/logout", {
-            params: { path: { tenant, userId } },
-            headers,
-        });
-        if (res.error) throw res.error;
-        return null;
-    });
+    const queryClient = useQueryClient();
+    return useApiMutation<unknown, object>(
+        async (_, headers) => {
+            const res = await api.POST("/tenants/{tenant}/uac/people/{userId}/logout", {
+                params: { path: { tenant, userId } },
+                headers,
+            });
+            if (res.error) throw res.error;
+            return null;
+        },
+        { onSuccess: () => refetchSessions(queryClient) },
+    );
 }
 
 export function useUacRequest(id: string) {
