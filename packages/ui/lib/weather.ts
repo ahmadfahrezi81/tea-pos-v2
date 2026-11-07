@@ -27,8 +27,8 @@ export function weatherOf(code: number, night: boolean): { icon: LucideIcon; key
     if (code === 2000 || code === 2100) return { icon: CloudFog, key: "foggy" };
     if (code >= 3000 && code <= 3002) return { icon: Wind, key: "windy" };
     if (code === 4000) return { icon: night ? CloudMoonRain : CloudDrizzle, key: "drizzle" };
-    if (code === 4001) return { icon: night ? CloudMoonRain : CloudRain, key: "lightRain" };
-    if (code === 4200) return { icon: night ? CloudMoonRain : CloudRain, key: "rain" };
+    if (code === 4001) return { icon: night ? CloudMoonRain : CloudRain, key: "rain" };
+    if (code === 4200) return { icon: night ? CloudMoonRain : CloudRain, key: "lightRain" };
     if (code === 4201) return { icon: night ? CloudMoonRain : CloudRain, key: "heavyRain" };
     if (code >= 5000 && code <= 5101) return { icon: CloudSnow, key: "snow" };
     if (code >= 6000 && code <= 6201)

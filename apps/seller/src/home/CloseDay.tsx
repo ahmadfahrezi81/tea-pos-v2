@@ -13,7 +13,7 @@ import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { toast } from "@tea-pos/ui/toast";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useNavigate } from "@tanstack/react-router";
-import { Check } from "lucide-react";
+import { ArrowDown, Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -103,6 +103,7 @@ export function CloseDay({ oldDay }: { oldDay?: string }) {
     const [counts, setCounts] = useState<Partial<Record<PhotoSlot, number | null>>>({});
     const [cash, setCash] = useState<number | null>(null);
     const [confirmed, setConfirmed] = useState(false);
+    const confirmRef = useRef<HTMLButtonElement>(null);
 
     useEffect(() => {
         if (!dayId || restored.current) return;
@@ -186,6 +187,21 @@ export function CloseDay({ oldDay }: { oldDay?: string }) {
                         >
                             {t("manage.next")}
                         </ActionButton>
+                    ) : !confirmed ? (
+                        // The summary is long: first take the seller down to the box they must tick.
+                        <button
+                            key="review"
+                            onClick={() =>
+                                confirmRef.current?.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "center",
+                                })
+                            }
+                            className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl bg-brand text-white font-semibold text-base active:scale-[0.98] transition-transform"
+                        >
+                            {t("manage.review")}
+                            <ArrowDown size={18} strokeWidth={2.5} />
+                        </button>
                     ) : (
                         <ActionButton
                             key="close"
@@ -201,7 +217,6 @@ export function CloseDay({ oldDay }: { oldDay?: string }) {
                             }}
                             onError={() => {}}
                             busyLabel={t("manage.closing")}
-                            disabled={!confirmed}
                             className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl bg-red-500 text-white font-semibold text-base active:scale-[0.98] transition-transform disabled:opacity-50"
                         >
                             {t("manage.closeDay")}
@@ -282,6 +297,7 @@ export function CloseDay({ oldDay }: { oldDay?: string }) {
                         }
                     >
                         <button
+                            ref={confirmRef}
                             onClick={() => setConfirmed((v) => !v)}
                             className="flex items-center gap-3 p-4 rounded-2xl w-full text-left bg-white"
                         >

@@ -113,7 +113,11 @@
         "app": "Aplikasi",
         "updateApp": "Perbarui aplikasi",
         "updateLatest": "Sudah versi terbaru.",
-        "updateOffline": "Tidak ada koneksi. Coba lagi saat online."
+        "updateOffline": "Tidak ada koneksi. Coba lagi saat online.",
+        "updateIsLatest": "Terbaru",
+        "updateIsOffline": "Offline",
+        "updateReady": "Siap, restart",
+        "updateAvailable": "{version} tersedia"
     },
     "whatsNew": {
         "title": "Yang Baru",
@@ -218,10 +222,12 @@
         "title": "Info aplikasi",
         "api": "API",
         "commit": "Commit API",
-        "app": "Aplikasi",
+        "app": "Versi aplikasi",
         "ok": "Terhubung",
         "down": "Tidak terjangkau",
-        "version": "Versi API"
+        "version": "Versi API",
+        "appCommit": "Commit aplikasi",
+        "latest": "Build terbaru"
     },
     "errors": {
         "account_inactive": "Akun ini tidak aktif. Hubungi pemilik.",

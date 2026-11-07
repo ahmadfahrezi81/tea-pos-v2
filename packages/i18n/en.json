@@ -113,7 +113,11 @@
         "app": "App",
         "updateApp": "Update app",
         "updateLatest": "You are on the latest version.",
-        "updateOffline": "No connection. Try again when you are online."
+        "updateOffline": "No connection. Try again when you are online.",
+        "updateIsLatest": "Latest",
+        "updateIsOffline": "Offline",
+        "updateReady": "Ready, restarting",
+        "updateAvailable": "{version} available"
     },
     "whatsNew": {
         "title": "What's New",
@@ -218,10 +222,12 @@
         "title": "App info",
         "api": "API",
         "commit": "API commit",
-        "app": "App",
+        "app": "App version",
         "ok": "Connected",
         "down": "Unreachable",
-        "version": "API version"
+        "version": "API version",
+        "appCommit": "App commit",
+        "latest": "Latest build"
     },
     "errors": {
         "account_inactive": "This account isn't active. Ask the owner.",
