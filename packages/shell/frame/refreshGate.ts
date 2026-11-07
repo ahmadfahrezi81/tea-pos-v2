@@ -10,7 +10,7 @@ let lastAt = 0;
 
 export const refreshGate = {
     shouldFetch: () => performance.now() - lastAt >= PULL_MIN_INTERVAL_MS,
-    /** Every full refetch marks, including the idle sheet's, which is never gated. */
+    /** Every full refetch marks: a pull, coming back, the socket catching up. */
     mark: () => {
         lastAt = performance.now();
     },

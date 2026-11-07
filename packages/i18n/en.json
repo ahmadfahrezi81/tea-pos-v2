@@ -170,15 +170,8 @@
         "add": "Add",
         "edit": "Edit",
         "moreActions": "More actions",
-        "refreshNow": "Refresh Now",
         "maintenance": "Under Maintenance",
         "maintenanceSub": "We're making some updates to improve your experience. We'll be back shortly.",
-        "inactivity": {
-            "title": "Refresh Required",
-            "body": "You've been inactive — refresh to avoid stale data.",
-            "infoTitle": "Why this appears",
-            "infoBody": "The app has been idle for a while, so what's on screen may no longer match the server."
-        },
         "allStores": "All Stores",
         "pickStore": "Select Store",
         "hideInactiveStores": "Hide inactive stores",
