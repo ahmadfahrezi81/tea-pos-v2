@@ -83,6 +83,8 @@ api.use({
         }
     },
     onError({ request, error }) {
+        // Cancelled by the app (a screen left before its data came): not the connection's fault.
+        if ((error as Error | null)?.name === "AbortError") return;
         // No answer at all: no network, a dead connection, or the time limit.
         if (navigator.onLine) noteTrouble();
         recordFailure({

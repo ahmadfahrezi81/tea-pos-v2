@@ -8,10 +8,10 @@ import { toast } from "@tea-pos/ui/toast";
 import { Wifi, WifiHigh, WifiLow, WifiOff, WifiZero, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-// Grey while all is well; amber or red only when it matters.
+// As the title while all is well; amber or red only when it matters.
 const LOOK: Record<Level, [LucideIcon, string]> = {
-    good: [Wifi, "text-gray-500"],
-    okay: [WifiHigh, "text-gray-500"],
+    good: [Wifi, "text-gray-900"],
+    okay: [WifiHigh, "text-gray-900"],
     slow: [WifiLow, "text-amber-500"],
     failing: [WifiZero, "text-amber-500"],
     offline: [WifiOff, "text-red-600"],
@@ -50,7 +50,7 @@ export function ConnectionIcon() {
                 aria-label={t("connection.label")}
                 className={`flex size-[42px] shrink-0 items-center justify-center rounded-xl active:scale-95 ${color}`}
             >
-                <Icon size={24} strokeWidth={2.5} />
+                <Icon size={28} strokeWidth={2.5} />
             </button>
             <Sheet open={open} onClose={() => setOpen(false)} title={t("connection.label")}>
                 <div className="space-y-4 pb-2">

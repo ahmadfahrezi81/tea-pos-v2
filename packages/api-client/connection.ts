@@ -18,15 +18,17 @@ export interface Connection {
 }
 
 const SAMPLES = 5;
+// Each level is left only a little past its line, so a speed sitting on it does not flicker.
 const OKAY_MS = 300;
 const SLOW_MS = 1000;
+const MARGIN = 0.8;
 
 let offlineSince = typeof navigator !== "undefined" && !navigator.onLine ? Date.now() : 0;
 let failingSince = 0;
 let slowSince = 0;
 let lastAnswerAt = 0;
+let speedLevel: "good" | "okay" | "slow" = "good";
 const samples: number[] = [];
-let snapshot: Connection = make();
 const listeners = new Set<() => void>();
 
 function average() {
@@ -35,19 +37,22 @@ function average() {
         : undefined;
 }
 
+/** The speed's level: up past a line, back down only below 80 % of it. */
+function speed(ms: number | undefined): "good" | "okay" | "slow" {
+    if (ms === undefined) return speedLevel;
+    const slowLine = speedLevel === "slow" ? SLOW_MS * MARGIN : SLOW_MS;
+    const okayLine = speedLevel === "good" ? OKAY_MS : OKAY_MS * MARGIN;
+    return ms > slowLine ? "slow" : ms > okayLine ? "okay" : "good";
+}
+
 function make(): Connection {
     const ms = average();
     if (offlineSince) return { level: "offline", since: offlineSince, lastAnswerAt, ms };
     if (failingSince) return { level: "failing", since: failingSince, lastAnswerAt, ms };
-    if (ms !== undefined && ms > SLOW_MS)
-        return { level: "slow", since: slowSince, lastAnswerAt, ms };
-    return {
-        level: ms !== undefined && ms > OKAY_MS ? "okay" : "good",
-        since: 0,
-        lastAnswerAt,
-        ms,
-    };
+    return { level: speedLevel, since: speedLevel === "slow" ? slowSince : 0, lastAnswerAt, ms };
 }
+
+let snapshot: Connection = make();
 
 function update() {
     const next = make();
@@ -64,9 +69,10 @@ export function noteAnswer(wayMs?: number) {
         samples.push(wayMs);
         if (samples.length > SAMPLES) samples.shift();
     }
-    const slow = (average() ?? 0) > SLOW_MS;
-    if (slow && !slowSince) slowSince = Date.now();
-    if (!slow) slowSince = 0;
+    const next = speed(average());
+    if (next === "slow" && speedLevel !== "slow") slowSince = Date.now();
+    if (next !== "slow") slowSince = 0;
+    speedLevel = next;
     update();
 }
 
