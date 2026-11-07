@@ -147,6 +147,7 @@ function Menu() {
                     });
                     toast(
                         `${t("cart.orderConfirmed")} ${count} ${t("cart.items")} · ${formatMoney(total)}`,
+                        { kind: "success" },
                     );
                     setItems([]);
                     setOpen(false);

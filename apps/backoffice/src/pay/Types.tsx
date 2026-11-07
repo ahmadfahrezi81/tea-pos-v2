@@ -117,8 +117,8 @@ function SlugField({ slug }: { slug: string }) {
                     size={16}
                     label={t("pay.copySlug")}
                     className="p-1 active:scale-90"
-                    onCopied={() => toast(t("pay.slugCopied"))}
-                    onFailed={() => toast(t("pay.slugNotCopied"))}
+                    onCopied={() => toast(t("pay.slugCopied"), { kind: "success" })}
+                    onFailed={() => toast(t("pay.slugNotCopied"), { kind: "error" })}
                 />
             </div>
         </Field>

@@ -3,6 +3,7 @@ import { ArrowLeft, UserCircle, X } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { useAppUpdate } from "./AppUpdate";
+import { ConnectionIcon } from "./ConnectionIcon";
 import { UpdateHeader } from "./UpdateHeader";
 
 interface MobileHeaderProps {
@@ -88,6 +89,7 @@ export function MobileHeader({
                             ref={actionsRef}
                             className="flex shrink-0 items-center justify-end gap-1"
                         />
+                        <ConnectionIcon />
                         {showAccountIcon && (
                             <button
                                 onClick={onAccount}

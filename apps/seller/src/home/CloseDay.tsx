@@ -208,7 +208,7 @@ export function CloseDay({ oldDay }: { oldDay?: string }) {
                             action={async () => {
                                 await close.mutateAsync({ dayId: day.id, actualCash: actual });
                                 writeStep(key, null);
-                                toast(t("manage.dayClosed"));
+                                toast(t("manage.dayClosed"), { kind: "success" });
                                 await navigate({
                                     to: oldDay ? "/$tenant/analytics" : "/$tenant/manage",
                                     params: { tenant: slug },

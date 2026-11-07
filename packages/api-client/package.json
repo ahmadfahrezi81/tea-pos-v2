@@ -9,7 +9,9 @@
         "./status": "./status.ts",
         "./live": "./live.ts",
         "./files": "./files.ts",
-        "./list": "./list.ts"
+        "./list": "./list.ts",
+        "./connection": "./connection.ts",
+        "./failures": "./failures.ts"
     },
     "scripts": {
         "generate": "openapi-typescript ../../api/openapi.yaml -o schema.d.ts",

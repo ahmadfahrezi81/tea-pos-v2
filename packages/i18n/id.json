@@ -111,13 +111,10 @@
         "noStores": "Belum ada toko yang ditugaskan.",
         "default": "Utama",
         "app": "Aplikasi",
-        "updateApp": "Perbarui aplikasi",
-        "updateLatest": "Sudah versi terbaru.",
         "updateOffline": "Tidak ada koneksi. Coba lagi saat online.",
         "updateIsLatest": "Terbaru",
         "updateIsOffline": "Offline",
-        "updateReady": "Siap, restart",
-        "updateAvailable": "{version} tersedia"
+        "updateNow": "Perbarui sekarang"
     },
     "whatsNew": {
         "title": "Yang Baru",
@@ -219,8 +216,7 @@
         "ok": "Terhubung",
         "down": "Tidak terjangkau",
         "version": "Versi API",
-        "appCommit": "Commit aplikasi",
-        "latest": "Build terbaru"
+        "update": "Pembaruan"
     },
     "errors": {
         "account_inactive": "Akun ini tidak aktif. Hubungi pemilik.",
@@ -285,7 +281,8 @@
         "period_closed": "Periode gaji ini sudah ditutup.",
         "no_work_that_day": "Kamu tidak bekerja hari itu.",
         "bad_receipt": "Struk tidak terunggah dengan benar. Tambahkan lagi.",
-        "old_day_open": "Hari sebelumnya masih buka. Tutup dulu di Analitik."
+        "old_day_open": "Hari sebelumnya masih buka. Tutup dulu di Analitik.",
+        "notSavedOffline": "Tidak tersimpan: tidak ada koneksi. Coba lagi."
     },
     "store": {
         "week": "Week",
@@ -342,5 +339,31 @@
         "didntOpen": "Tidak buka",
         "nNotClosed": "{n} belum ditutup",
         "daysClosed": "{n} dari {m} hari ditutup"
+    },
+    "errorSheet": {
+        "title": "Gagal menyimpan",
+        "time": "Waktu",
+        "request": "Permintaan",
+        "status": "Status",
+        "noAnswer": "Tidak ada jawaban",
+        "requestId": "ID permintaan",
+        "app": "Aplikasi",
+        "copy": "Salin detail"
+    },
+    "connection": {
+        "offlineBody": "Kamu masih bisa melihat yang sudah ada di HP ini. Perubahan menunggu dan terkirim saat kembali online, selama aplikasi tetap terbuka.",
+        "slowBody": "Server belum menjawab. Yang ada di layar mungkin belum terbaru, dan menyimpan bisa gagal: coba lagi.",
+        "lastAnswer": "Jawaban terakhir dari server",
+        "never": "Belum ada",
+        "tryAgain": "Tes lagi",
+        "offlineToast": "Kamu sedang offline",
+        "label": "Koneksi",
+        "good": "Bagus",
+        "okay": "Cukup",
+        "slow": "Lambat",
+        "failing": "Tidak sampai ke server",
+        "offline": "Tidak ada koneksi",
+        "answersIn": "Server menjawab dalam",
+        "network": "Jaringan"
     }
 }

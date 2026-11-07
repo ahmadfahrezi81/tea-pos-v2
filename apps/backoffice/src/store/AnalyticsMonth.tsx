@@ -168,7 +168,7 @@ function Total({
     return (
         <div className="text-center">
             {value === undefined ? (
-                <div className="mx-auto h-7 w-8 rounded bg-gray-100" />
+                <Skeleton className="mx-auto h-7 w-8 rounded" />
             ) : (
                 <p className={`text-xl font-bold ${color}`}>{value}</p>
             )}

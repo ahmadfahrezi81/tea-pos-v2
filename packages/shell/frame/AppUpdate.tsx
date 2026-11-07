@@ -132,8 +132,21 @@ export const buildLabel = (build: string) => {
     return /^\d/.test(version) || !commit ? version : commit;
 };
 
-/** This build, for showing. */
-export const currentVersion = () => buildLabel(APP_TAG);
+/** This build, for showing: `2026.11.8 (a3238a0)`, `staging (a3238a0)`. */
+export const currentVersion = () =>
+    `${versionOf(APP_TAG)} (${APP_TAG.split("+")[1]?.slice(0, 7) ?? ""})`;
+
+/**
+ * Where this build stands against the server's: on the latest, a newer one there (and not already
+ * downloading: the header shows that), or the server not reached; undefined until asked.
+ */
+export function useUpdateState(): "latest" | "available" | "offline" | undefined {
+    const { served, phase } = useAppUpdate();
+    if (served === null) return "offline";
+    if (served === undefined) return undefined;
+    if (served === APP_TAG) return "latest";
+    return phase === "idle" ? "available" : undefined;
+}
 
 /** Every address the precache holds, whichever cache the worker is writing to. */
 async function savedFiles(): Promise<Set<string>> {

@@ -8,7 +8,7 @@ import { CalendarDays, Receipt, ReceiptText } from "lucide-react";
 
 import { RangeBar, useRange } from "./range";
 import { useRangeOrders, useSalesHours, useScopeStores, useStoreId } from "./sales";
-import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { Skeleton, SkeletonChart } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { OrderCard } from "@tea-pos/shell/OrderCard";
@@ -148,7 +148,7 @@ function Figure({
     return (
         <div className="text-center">
             {value === undefined ? (
-                <div className="mx-auto h-7 w-8 rounded bg-gray-100" />
+                <Skeleton className="mx-auto h-7 w-8 rounded" />
             ) : (
                 <p className={`text-xl font-bold ${color}`}>{value}</p>
             )}
@@ -187,11 +187,15 @@ export function OrdersChart({ date }: { date: string }) {
                     </div>
                     <div className="text-right">
                         <p className="text-xs text-gray-800">{t("analytics.total")}</p>
-                        <p className="text-2xl font-bold text-brand">{data?.cups ?? "–"}</p>
+                        {data ? (
+                            <p className="text-2xl font-bold text-brand">{data.cups}</p>
+                        ) : (
+                            <Skeleton className="ml-auto mt-1 h-7 w-10 rounded" />
+                        )}
                     </div>
                 </div>
                 {!data ? (
-                    <div className="h-[220px]" />
+                    <SkeletonChart height={220} />
                 ) : data.hours.length === 0 ? (
                     <p className="py-12 text-center text-sm text-gray-500">
                         {t("orders.noSalesData")}
