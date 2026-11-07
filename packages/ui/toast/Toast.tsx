@@ -9,6 +9,8 @@ interface Toast {
     kind: ToastKind;
     detail?: string;
     action?: { label: string; onClick: () => void };
+    /** Sliding back up, just before it goes. */
+    leaving?: boolean;
 }
 
 // As the old apps: the kind's colour filled, white text and icon.
@@ -21,6 +23,7 @@ const KINDS: Record<ToastKind, [LucideIcon, string]> = {
 
 let current: Toast | null = null;
 let timer = 0;
+let leaveTimer = 0;
 let nextId = 1;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((fn) => fn());
@@ -49,7 +52,14 @@ export function toast(
     current = { id, text, kind, detail: options.detail, action: options.action };
     emit();
     clearTimeout(timer);
-    timer = window.setTimeout(() => dismiss(id), options.ms ?? (kind === "error" ? 6000 : 3000));
+    clearTimeout(leaveTimer);
+    const ms = options.ms ?? (kind === "error" ? 6000 : 4000);
+    leaveTimer = window.setTimeout(() => {
+        if (current?.id !== id) return;
+        current = { ...current, leaving: true };
+        emit();
+    }, ms - 300);
+    timer = window.setTimeout(() => dismiss(id), ms);
 }
 
 /** Mounted once, by the shell. A tap, or a swipe up, puts it away. */
@@ -75,7 +85,7 @@ export function ToastHost() {
                 onPointerDown={(e) => (startY.current = e.clientY)}
                 onPointerUp={(e) => e.clientY - startY.current < -20 && dismiss()}
                 onClick={() => !t.action && dismiss()}
-                className={`pointer-events-auto flex w-full max-w-[360px] items-center gap-2.5 rounded-2xl p-3 text-base font-semibold text-white shadow-lg animate-slide-down ${bg}`}
+                className={`pointer-events-auto flex w-full max-w-[360px] items-center gap-2.5 rounded-2xl p-3 text-base font-semibold text-white shadow-lg ${t.leaving ? "animate-slide-up" : "animate-slide-down"} ${bg}`}
             >
                 <Icon size={24} className="shrink-0" />
                 <div className="flex min-w-0 flex-1 flex-col">
