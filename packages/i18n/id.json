@@ -351,15 +351,19 @@
         "copy": "Salin detail"
     },
     "connection": {
-        "offlineTitle": "Tidak ada koneksi",
-        "slowTitle": "Koneksi lambat",
         "offlineBody": "Kamu masih bisa melihat yang sudah ada di HP ini. Perubahan menunggu dan terkirim saat kembali online, selama aplikasi tetap terbuka.",
         "slowBody": "Server belum menjawab. Yang ada di layar mungkin belum terbaru, dan menyimpan bisa gagal: coba lagi.",
-        "since": "Sejak",
         "lastAnswer": "Jawaban terakhir dari server",
         "never": "Belum ada",
-        "tryAgain": "Coba lagi",
+        "tryAgain": "Tes lagi",
         "offlineToast": "Kamu sedang offline",
-        "label": "Koneksi"
+        "label": "Koneksi",
+        "good": "Bagus",
+        "okay": "Cukup",
+        "slow": "Lambat",
+        "failing": "Tidak sampai ke server",
+        "offline": "Tidak ada koneksi",
+        "answersIn": "Server menjawab dalam",
+        "network": "Jaringan"
     }
 }

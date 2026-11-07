@@ -1,63 +1,73 @@
 import { $api } from "@tea-pos/api-client";
-import { useConnection } from "@tea-pos/api-client/connection";
+import { networkKind, useConnection, type Level } from "@tea-pos/api-client/connection";
 import { formatTime } from "@tea-pos/format";
+import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { Sheet } from "@tea-pos/ui/Sheet";
 import { toast } from "@tea-pos/ui/toast";
-import { WifiLow, WifiOff } from "lucide-react";
+import { Wifi, WifiHigh, WifiLow, WifiOff, WifiZero, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+// Grey while all is well; amber or red only when it matters.
+const LOOK: Record<Level, [LucideIcon, string]> = {
+    good: [Wifi, "text-gray-500"],
+    okay: [WifiHigh, "text-gray-500"],
+    slow: [WifiLow, "text-amber-500"],
+    failing: [WifiZero, "text-amber-500"],
+    offline: [WifiOff, "text-red-600"],
+};
+
 /**
- * Beside the avatar, only when something is wrong: no network (red), or the server not answering
- * (amber). A tap says more. Going offline is said once in a toast; coming back is quiet.
+ * Beside the avatar, always: how well the phone reaches the server, as a phone's own wifi bars,
+ * from the requests the app makes anyway. A tap says more. Going offline is said once in a toast.
  */
 export function ConnectionIcon() {
     const t = useT();
     const locale = useLocale();
-    const { state, since, lastAnswerAt } = useConnection();
-    // Open for this trouble only: the next one starts closed.
-    const [openFor, setOpenFor] = useState(0);
-    const open = openFor === since && since > 0;
-    const was = useRef(state);
+    const { level, lastAnswerAt, ms } = useConnection();
+    const [open, setOpen] = useState(false);
+    const was = useRef(level);
     const health = $api.useQuery("get", "/health", {}, { enabled: false, retry: false });
 
     useEffect(() => {
-        if (state === "offline" && was.current !== "offline")
+        if (level === "offline" && was.current !== "offline")
             toast(t("connection.offlineToast"), { kind: "warning" });
-        was.current = state;
-    }, [state, t]);
+        was.current = level;
+    }, [level, t]);
 
-    if (state === "online") return null;
-    const offline = state === "offline";
-    const Icon = offline ? WifiOff : WifiLow;
+    const [Icon, color] = LOOK[level];
+    const kind = networkKind();
+    const meaning: MessageKey | null =
+        level === "offline"
+            ? "connection.offlineBody"
+            : level === "failing" || level === "slow"
+              ? "connection.slowBody"
+              : null;
     return (
         <>
             <button
-                onClick={() => setOpenFor(since)}
+                onClick={() => setOpen(true)}
                 aria-label={t("connection.label")}
-                className={`flex size-[42px] shrink-0 items-center justify-center rounded-xl active:scale-95 ${offline ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-600"}`}
+                className={`flex size-[42px] shrink-0 items-center justify-center rounded-xl active:scale-95 ${color}`}
             >
-                <Icon size={22} strokeWidth={2.5} />
+                <Icon size={24} strokeWidth={2.5} />
             </button>
-            <Sheet
-                open={open}
-                onClose={() => setOpenFor(0)}
-                title={t(offline ? "connection.offlineTitle" : "connection.slowTitle")}
-            >
+            <Sheet open={open} onClose={() => setOpen(false)} title={t("connection.label")}>
                 <div className="space-y-4 pb-2">
-                    <div className="flex justify-center py-2">
+                    <div className="flex flex-col items-center gap-2 py-2">
                         <div className="flex size-24 items-center justify-center rounded-full bg-gray-100">
-                            <Icon size={44} className="text-gray-400" />
+                            <Icon size={44} className={color} />
                         </div>
+                        <p className="text-lg font-bold text-gray-900">
+                            {t(`connection.${level}`)}
+                        </p>
                     </div>
-                    <p className="text-base text-gray-900">
-                        {t(offline ? "connection.offlineBody" : "connection.slowBody")}
-                    </p>
+                    {meaning && <p className="text-base text-gray-900">{t(meaning)}</p>}
                     <div className="rounded-xl bg-slate-100 px-3 py-1 divide-y divide-slate-200 text-sm">
                         <div className="flex justify-between gap-3 py-2">
-                            <span className="text-gray-700">{t("connection.since")}</span>
+                            <span className="text-gray-700">{t("connection.answersIn")}</span>
                             <span className="text-gray-900">
-                                {formatTime(new Date(since).toISOString(), locale)}
+                                {ms === undefined ? t("connection.never") : `~${ms} ms`}
                             </span>
                         </div>
                         <div className="flex justify-between gap-3 py-2">
@@ -68,6 +78,12 @@ export function ConnectionIcon() {
                                     : t("connection.never")}
                             </span>
                         </div>
+                        {kind && (
+                            <div className="flex justify-between gap-3 py-2">
+                                <span className="text-gray-700">{t("connection.network")}</span>
+                                <span className="text-gray-900 uppercase">{kind}</span>
+                            </div>
+                        )}
                     </div>
                     <button
                         onClick={() => void health.refetch()}
