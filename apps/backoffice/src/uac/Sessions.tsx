@@ -3,13 +3,13 @@ import { useLocale, useT } from "@tea-pos/i18n/react";
 import { useMe } from "@tea-pos/api-client/me";
 import { ConfirmSheet } from "@tea-pos/shell/FormFooter";
 import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
-import { LogOutButton, SettingsGroup } from "@tea-pos/shell/Settings";
+import { SettingsGroup } from "@tea-pos/shell/Settings";
 import { useAccess, useSlug } from "@tea-pos/shell/tenant";
 import { Badge } from "@tea-pos/ui/Badge";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { toast } from "@tea-pos/ui/toast";
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, Laptop, Smartphone } from "lucide-react";
+import { ChevronRight, Laptop, LogOut, Smartphone } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import {
@@ -27,6 +27,8 @@ function useCanEnd(p: Person) {
     return canWrite && (!p.owner || owner);
 }
 
+const LOOPBACK = new Set(["::1", "127.0.0.1"]);
+
 // "Today" and "Yesterday" mid-sentence; a date stays as it is.
 const day = (d: string) => (/\d/.test(d) ? d : d.toLowerCase());
 
@@ -39,7 +41,8 @@ function SessionRow({ session: s, right }: { session: Session; right?: ReactNode
     const details = [
         t(s.app === "seller" ? "uac.seller" : "uac.office"),
         t("uac.activeOn").replace("{day}", day(formatDay(s.lastSeenAt, locale))),
-        s.ip,
+        // A session made on a laptop against staging has no outside address: nothing to show.
+        s.ip && !LOOPBACK.has(s.ip) ? s.ip : "",
     ].filter(Boolean);
     return (
         <div className="flex items-center gap-3 border-b-2 border-slate-100 py-3.5 last:border-b-0">
@@ -105,8 +108,8 @@ export function SessionsPage({ userId }: { userId: string }) {
                 ) : (
                     data.sessions.map((s) => <EndRow key={s.id} person={p} session={s} />)
                 )}
+                {!self && data.sessions.length > 0 && <Everywhere person={p} />}
             </SettingsGroup>
-            {!self && data.sessions.length > 0 && <Everywhere person={p} />}
         </div>
     );
 }
@@ -156,8 +159,15 @@ function Everywhere({ person: p }: { person: Person }) {
     const [asking, setAsking] = useState(false);
     if (!canEnd) return null;
     return (
-        <div className="flex justify-center pt-4">
-            <LogOutButton label={t("uac.logoutEverywhere")} onClick={() => setAsking(true)} />
+        // Inside the card under a divider, as App info's Update now.
+        <div className="-mx-4 border-t-2 border-slate-100 px-4 py-3.5">
+            <button
+                onClick={() => setAsking(true)}
+                className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-red-500 px-3 py-2 text-sm font-semibold text-white active:opacity-80"
+            >
+                <LogOut size={16} strokeWidth={2.5} />
+                {t("uac.logoutEverywhere")}
+            </button>
             <ConfirmSheet
                 open={asking}
                 title={t("uac.logoutTitle").replace("{name}", p.name)}
