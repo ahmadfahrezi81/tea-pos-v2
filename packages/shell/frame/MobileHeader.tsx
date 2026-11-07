@@ -1,9 +1,9 @@
 import { useT } from "@tea-pos/i18n/react";
+import { Picture } from "@tea-pos/ui/Picture";
 import { ArrowLeft, UserCircle, X } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { useAppUpdate } from "./AppUpdate";
-import { ConnectionIcon } from "./ConnectionIcon";
 import { UpdateHeader } from "./UpdateHeader";
 
 interface MobileHeaderProps {
@@ -89,7 +89,6 @@ export function MobileHeader({
                             ref={actionsRef}
                             className="flex shrink-0 items-center justify-end gap-1"
                         />
-                        <ConnectionIcon />
                         {showAccountIcon && (
                             <button
                                 onClick={onAccount}
@@ -97,15 +96,13 @@ export function MobileHeader({
                                 aria-label={t("shell.account")}
                             >
                                 {avatarUrl ? (
-                                    <div className="w-[42px] h-[42px] rounded-xl overflow-hidden ring-1 ring-black/10">
-                                        <img
-                                            src={avatarUrl}
-                                            alt=""
-                                            width={42}
-                                            height={42}
-                                            className="object-cover"
-                                        />
-                                    </div>
+                                    <Picture
+                                        src={avatarUrl}
+                                        className="size-[42px] rounded-xl ring-1 ring-black/10"
+                                        fallback={
+                                            <UserCircle size={25} className="text-gray-600" />
+                                        }
+                                    />
                                 ) : (
                                     <div className="w-[42px] h-[42px] rounded-xl bg-gray-100 ring-1 ring-black/10 flex items-center justify-center">
                                         <UserCircle size={25} className="text-gray-600" />

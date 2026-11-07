@@ -13,6 +13,7 @@ import { useLocale, useT } from "@tea-pos/i18n/react";
 import { useSlug } from "@tea-pos/shell/tenant";
 import { CopyButton } from "@tea-pos/ui/CopyButton";
 import { ImagePreview } from "@tea-pos/ui/ImagePreview";
+import { Picture } from "@tea-pos/ui/Picture";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { Link } from "@tanstack/react-router";
 import { CalendarClock, CalendarDays } from "lucide-react";
@@ -312,10 +313,10 @@ export function MyPayslip({ id }: { id: string }) {
                                     onClick={() => setProof(true)}
                                     className="w-20 h-20 shrink-0 rounded-xl overflow-hidden bg-gray-100"
                                 >
-                                    <img
+                                    <Picture
                                         src={slip.paymentProofUrl}
                                         alt={t("earnings.transferProof")}
-                                        className="size-full object-cover"
+                                        className="size-full"
                                     />
                                 </button>
                             )}

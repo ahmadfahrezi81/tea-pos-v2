@@ -48,7 +48,11 @@ export function OpenStore() {
                             );
                             setPhotoUrl(url);
                         }}
+                        onRemove={() => setPhotoUrl(undefined)}
                         failedLabel={t("manage.photoProcessFailed")}
+                        retakeLabel={t("common.retake")}
+                        removeLabel={t("common.remove")}
+                        title={t("manage.openingPhoto")}
                     >
                         {t("manage.photoTapToAdd")}
                     </PhotoInput>

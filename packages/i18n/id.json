@@ -34,7 +34,9 @@
             "saturday": "Sabtu",
             "sunday": "Minggu"
         },
-        "loadMore": "Muat lebih banyak"
+        "loadMore": "Muat lebih banyak",
+        "retake": "Foto ulang",
+        "remove": "Hapus"
     },
     "home": {
         "title": "Beranda",
@@ -351,19 +353,9 @@
         "copy": "Salin detail"
     },
     "connection": {
-        "offlineBody": "Kamu masih bisa melihat yang sudah ada di HP ini. Perubahan menunggu dan terkirim saat kembali online, selama aplikasi tetap terbuka.",
-        "slowBody": "Server belum menjawab. Yang ada di layar mungkin belum terbaru, dan menyimpan bisa gagal: coba lagi.",
-        "lastAnswer": "Jawaban terakhir dari server",
-        "never": "Belum ada",
-        "tryAgain": "Tes lagi",
-        "offlineToast": "Kamu sedang offline",
-        "label": "Koneksi",
-        "good": "Bagus",
-        "okay": "Cukup",
-        "slow": "Lambat",
-        "failing": "Tidak sampai ke server",
         "offline": "Tidak ada koneksi",
-        "answersIn": "Server menjawab dalam",
-        "network": "Jaringan"
+        "failing": "Tidak bisa terhubung ke server",
+        "slow": "Koneksi lambat",
+        "backOnline": "Kembali online"
     }
 }

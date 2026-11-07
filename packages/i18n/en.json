@@ -34,7 +34,9 @@
             "saturday": "Saturday",
             "sunday": "Sunday"
         },
-        "loadMore": "Load more"
+        "loadMore": "Load more",
+        "retake": "Retake",
+        "remove": "Remove"
     },
     "home": {
         "title": "Home",
@@ -351,19 +353,9 @@
         "copy": "Copy details"
     },
     "connection": {
-        "offlineBody": "You can still look at what's already on this phone. A save waits and goes through once you're back online, as long as the app stays open.",
-        "slowBody": "The server isn't answering right now. What's on screen may be out of date, and a save may fail: try it again.",
-        "lastAnswer": "Last answer from the server",
-        "never": "Not yet",
-        "tryAgain": "Test again",
-        "offlineToast": "You're offline",
-        "label": "Connection",
-        "good": "Good",
-        "okay": "Okay",
-        "slow": "Slow",
-        "failing": "Not reaching the server",
         "offline": "No connection",
-        "answersIn": "Server answers in",
-        "network": "Network"
+        "failing": "Can't reach the server",
+        "slow": "Slow connection",
+        "backOnline": "Back online"
     }
 }
