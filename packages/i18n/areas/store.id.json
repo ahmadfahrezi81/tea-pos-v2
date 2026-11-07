@@ -152,10 +152,6 @@
         "confirmCreate": "Tambah {name}?",
         "confirmCreateBody": "Siapa yang kerja di sana diatur di UAC, di toko milik orang itu.",
         "noteTitle": "Cuaca dan peta",
-        "noteBody": "Lokasi dipakai untuk cuaca toko; kosongkan kalau belum tahu.",
-        "delete": "Hapus toko",
-        "deleteTitle": "Hapus {name}?",
-        "deleteBody": "Hanya toko yang belum punya catatan bisa dihapus. Toko dengan penjualan atau hari tetap ada: jadikan Tidak aktif saja.",
-        "deleted": "{name} sudah dihapus."
+        "noteBody": "Lokasi dipakai untuk cuaca toko; kosongkan kalau belum tahu."
     }
 }

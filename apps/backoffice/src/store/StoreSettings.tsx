@@ -2,7 +2,7 @@ import { $api, api, type components } from "@tea-pos/api-client";
 import { STALE } from "@tea-pos/api-client/query";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useT } from "@tea-pos/i18n/react";
-import { ConfirmSheet, FormFooter } from "@tea-pos/shell/FormFooter";
+import { FormFooter } from "@tea-pos/shell/FormFooter";
 import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
 import { useAccess, useSlug } from "@tea-pos/shell/tenant";
 import { useApiMutation } from "@tea-pos/shell/useApiMutation";
@@ -12,8 +12,8 @@ import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { Field } from "@tea-pos/ui/form/Field";
 import { TextInput } from "@tea-pos/ui/form/TextInput";
 import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
+import { Panel } from "@tea-pos/ui/Panel";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
-import { toast } from "@tea-pos/ui/toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
@@ -139,7 +139,8 @@ function Fields({
     const t = useT();
     const field = (key: keyof Form) => (v: string) => set({ ...form, [key]: v });
     return (
-        <div className="bg-white rounded-2xl p-3 space-y-3">
+        // A panel, as UAC's: the status list inside turns grey instead of a white card on white.
+        <Panel>
             <Field label={t("storeSettings.name")} required>
                 <TextInput value={form.name} onChange={field("name")} />
             </Field>
@@ -184,11 +185,11 @@ function Fields({
                     />
                 </Field>
             </div>
-        </div>
+        </Panel>
     );
 }
 
-/** One store's details; Save asks first, and Delete only removes a store with nothing recorded. */
+/** One store's details; Save asks first. */
 export function StoreSettingsEdit({ storeId }: { storeId: string }) {
     const t = useT();
     const tenant = useSlug();
@@ -199,7 +200,6 @@ export function StoreSettingsEdit({ storeId }: { storeId: string }) {
     const [form, setForm] = useState<(Form & { id: string }) | null>(null);
     // Seeded during render once the store arrives, so the form never paints empty first.
     if (data && form?.id !== data.id) setForm({ id: data.id, ...toForm(data) });
-    const [asking, setAsking] = useState(false);
     const save = useApiMutation<unknown, Change>(
         async (body, headers) => {
             const res = await api.PUT(onePath, {
@@ -212,14 +212,6 @@ export function StoreSettingsEdit({ storeId }: { storeId: string }) {
         },
         { onSuccess: refetch },
     );
-    const remove = useApiMutation<unknown, object>(
-        async () => {
-            const res = await api.DELETE(onePath, { params: { path: { tenant, storeId } } });
-            if (res.error) throw res.error;
-            return null;
-        },
-        { onSuccess: refetch },
-    );
     if (!data || !form) return <Skeleton className="h-96 rounded-2xl" />;
     const change = toChange(form);
     const changed = (Object.keys(form) as (keyof Form | "id")[]).some(
@@ -229,16 +221,6 @@ export function StoreSettingsEdit({ storeId }: { storeId: string }) {
         <div className="space-y-4">
             <HeaderTitle>{data.name}</HeaderTitle>
             <Fields form={form} set={(f) => setForm({ ...f, id: data.id })} disabled={!canWrite} />
-            {canWrite && (
-                <div className="flex justify-center">
-                    <button
-                        onClick={() => setAsking(true)}
-                        className="px-4 py-2 text-sm font-semibold text-red-600 active:opacity-60"
-                    >
-                        {t("storeSettings.delete")}
-                    </button>
-                </div>
-            )}
             {canWrite && (
                 <FormFooter
                     label={t("storeSettings.save")}
@@ -260,24 +242,6 @@ export function StoreSettingsEdit({ storeId }: { storeId: string }) {
                     }}
                 />
             )}
-            <ConfirmSheet
-                open={asking}
-                title={t("storeSettings.deleteTitle").replace("{name}", data.name)}
-                message={t("storeSettings.deleteBody")}
-                label={t("storeSettings.delete")}
-                busyLabel={t("storeSettings.saving")}
-                tone="orange"
-                onConfirm={async () => {
-                    await remove.mutateAsync({});
-                    setAsking(false);
-                    toast(t("storeSettings.deleted").replace("{name}", data.name), {
-                        kind: "success",
-                    });
-                    router.history.back();
-                }}
-                onError={() => setAsking(false)}
-                onCancel={() => setAsking(false)}
-            />
         </div>
     );
 }

@@ -152,10 +152,6 @@
         "confirmCreate": "Add {name}?",
         "confirmCreateBody": "Who works there is set in UAC, under a person's stores.",
         "noteTitle": "Weather and the map",
-        "noteBody": "The location places the store for its weather; leave it empty if you don't know it.",
-        "delete": "Delete store",
-        "deleteTitle": "Delete {name}?",
-        "deleteBody": "Only a store with nothing recorded can be deleted. One with sales or days stays: make it Inactive instead.",
-        "deleted": "{name} is deleted."
+        "noteBody": "The location places the store for its weather; leave it empty if you don't know it."
     }
 }
