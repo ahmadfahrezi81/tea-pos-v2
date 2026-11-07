@@ -1,4 +1,4 @@
-import { CircleCheck, CircleX, Info, TriangleAlert, type LucideIcon } from "lucide-react";
+import { AlertCircle, AlertTriangle, CheckCircle2, Info, type LucideIcon } from "lucide-react";
 import { useRef, useSyncExternalStore } from "react";
 
 export type ToastKind = "success" | "error" | "warning" | "info";
@@ -11,11 +11,12 @@ interface Toast {
     action?: { label: string; onClick: () => void };
 }
 
-const ICONS: Record<ToastKind, [LucideIcon, string]> = {
-    success: [CircleCheck, "text-green-600"],
-    error: [CircleX, "text-red-600"],
-    warning: [TriangleAlert, "text-amber-500"],
-    info: [Info, "text-blue-600"],
+// As the old apps: the kind's colour filled, white text and icon.
+const KINDS: Record<ToastKind, [LucideIcon, string]> = {
+    success: [CheckCircle2, "bg-green-500"],
+    error: [AlertCircle, "bg-red-500"],
+    warning: [AlertTriangle, "bg-amber-400"],
+    info: [Info, "bg-blue-500"],
 };
 
 let current: Toast | null = null;
@@ -62,10 +63,10 @@ export function ToastHost() {
     );
     const startY = useRef(0);
     if (!t) return null;
-    const [Icon, color] = ICONS[t.kind];
+    const [Icon, bg] = KINDS[t.kind];
     return (
         <div
-            className="pointer-events-none fixed inset-x-0 top-[calc(0.75rem_+_env(safe-area-inset-top))] z-[60] flex justify-center px-4"
+            className="pointer-events-none fixed inset-x-4 top-[calc(1.5rem_+_env(safe-area-inset-top))] z-[60] flex justify-center"
             role={t.kind === "error" ? "alert" : "status"}
             aria-live={t.kind === "error" ? "assertive" : "polite"}
         >
@@ -74,28 +75,24 @@ export function ToastHost() {
                 onPointerDown={(e) => (startY.current = e.clientY)}
                 onPointerUp={(e) => e.clientY - startY.current < -20 && dismiss()}
                 onClick={() => !t.action && dismiss()}
-                className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl bg-white px-4 py-3 shadow-lg ring-1 ring-black/5 animate-drop-in"
+                className={`pointer-events-auto flex w-full max-w-[360px] items-center gap-2.5 rounded-2xl p-3 text-base font-semibold text-white shadow-lg animate-slide-down ${bg}`}
             >
-                <Icon size={20} strokeWidth={2.5} className={`mt-px shrink-0 ${color}`} />
-                <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-gray-900">{t.text}</p>
-                    {(t.detail || t.action) && (
-                        <div className="mt-0.5 flex items-baseline justify-between gap-3">
-                            <p className="min-w-0 text-sm text-gray-600">{t.detail}</p>
-                            {t.action && (
-                                <button
-                                    onClick={() => {
-                                        dismiss();
-                                        t.action!.onClick();
-                                    }}
-                                    className="shrink-0 text-sm font-semibold text-gray-900 active:opacity-60"
-                                >
-                                    {t.action.label} ›
-                                </button>
-                            )}
-                        </div>
-                    )}
+                <Icon size={24} className="shrink-0" />
+                <div className="flex min-w-0 flex-1 flex-col">
+                    <span>{t.text}</span>
+                    {t.detail && <span className="text-sm font-medium">{t.detail}</span>}
                 </div>
+                {t.action && (
+                    <button
+                        onClick={() => {
+                            dismiss();
+                            t.action!.onClick();
+                        }}
+                        className="shrink-0 rounded-lg bg-white/20 px-2.5 py-1 text-sm font-semibold active:opacity-70"
+                    >
+                        {t.action.label} ›
+                    </button>
+                )}
             </div>
         </div>
     );
