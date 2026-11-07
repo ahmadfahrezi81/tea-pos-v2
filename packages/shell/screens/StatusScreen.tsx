@@ -1,7 +1,8 @@
 import { $api } from "@tea-pos/api-client";
 import { useT } from "@tea-pos/i18n/react";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { useRouter } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import { currentVersion, useAppUpdate, useUpdateState } from "../frame/AppUpdate";
 import { UpdateNow } from "../frame/UpdateNow";
@@ -17,18 +18,19 @@ export function StatusScreen() {
     const stateText = useUpdateText(state);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => peek(), []);
-    const rows: [string, string][] = [
+    const loading = <Skeleton className="h-4 w-16 rounded" />;
+    const rows: [string, ReactNode][] = [
         [
             t("status.api"),
-            health.isSuccess ? t("status.ok") : health.isError ? t("status.down") : "…",
+            health.isSuccess ? t("status.ok") : health.isError ? t("status.down") : loading,
         ],
-        [t("status.version"), health.data?.version ?? "…"],
-        [t("status.commit"), health.data?.commit.slice(0, 7) ?? "…"],
+        [t("status.version"), health.data?.version ?? loading],
+        [t("status.commit"), health.data?.commit.slice(0, 7) ?? loading],
         [t("status.app"), currentVersion()],
         // Behind: no words, the button below says it.
         ...(state === "available"
             ? []
-            : [[t("status.update"), stateText || "…"] as [string, string]]),
+            : [[t("status.update"), stateText || loading] as [string, ReactNode]]),
     ];
 
     return (

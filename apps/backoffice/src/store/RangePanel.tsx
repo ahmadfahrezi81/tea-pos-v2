@@ -36,7 +36,7 @@ export function RangePanel({ stores }: { stores: Store[] | undefined }) {
           }));
     const sum = (of: (s: Store) => number) => (stores ?? []).reduce((n, s) => n + of(s), 0);
     const anyOpen = isToday && stores?.some((s) => s.open);
-    const value = (text: string) => (stores ? text : "–");
+    const value = (text: string) => (stores ? text : undefined);
     const cups = sum((s) => s.cups);
     const daysSold = days.data?.days.filter((d) => d.cups > 0).length ?? 0;
     // Only days whose tea was measured at closing, so today has none until it closes.
