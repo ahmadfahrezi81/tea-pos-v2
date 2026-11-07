@@ -115,7 +115,6 @@
         "app": "App",
         "updateOffline": "No connection. Try again when you are online.",
         "updateIsLatest": "Latest",
-        "updateIsOffline": "Offline",
         "updateNow": "Update now"
     },
     "whatsNew": {

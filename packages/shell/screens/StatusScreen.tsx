@@ -25,7 +25,15 @@ export function StatusScreen() {
     const rows: [string, ReactNode][] = [
         [t("status.app"), currentVersion()],
         [t("status.server"), server || loading],
-        [t("status.build"), state === "available" ? t("status.outdated") : stateText || loading],
+        // Offline: unknown, and the banner already says so.
+        [
+            t("status.build"),
+            state === "available"
+                ? t("status.outdated")
+                : state === "offline"
+                  ? "—"
+                  : stateText || loading,
+        ],
     ];
 
     return (

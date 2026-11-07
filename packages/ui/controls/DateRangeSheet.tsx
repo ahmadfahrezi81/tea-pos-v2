@@ -53,9 +53,10 @@ export function DateRangeSheet({
     };
     formatRange: (range: DateRange) => string;
 }) {
-    const [view, setView] = useState<"list" | "month" | "custom">("list");
+    // null: opens where the range came from, so changing a picked month stays in the months.
+    const [chosen, setView] = useState<"list" | "month" | "custom" | null>(null);
     const close = () => {
-        setView("list");
+        setView(null);
         onClose();
     };
     const picked = presets.find((p) => p.from === value.from && p.to === value.to)?.key;
@@ -65,6 +66,7 @@ export function DateRangeSheet({
         value.to.slice(0, 7) === month &&
         monthRange(month, today).from === value.from &&
         monthRange(month, today).to === value.to;
+    const view = chosen ?? (picked ? "list" : isMonth ? "month" : "custom");
     const row =
         "w-full flex items-center justify-between py-4 text-left text-[17px] font-medium text-gray-900 active:opacity-70";
     const more = (on: boolean) =>
