@@ -28,7 +28,7 @@ export function OrderCard({ order, number }: { order: Order; number: number }) {
                         <p className="text-lg font-bold text-gray-900">{title}</p>
                         {order.paymentMethod === "qris" && <Badge>QRIS</Badge>}
                     </div>
-                    <p className="text-sm text-gray-500 truncate">
+                    <p className="text-sm text-gray-700 truncate">
                         {[formatDateTime(order.at, locale), order.storeName]
                             .filter(Boolean)
                             .join(" · ")}
@@ -60,7 +60,7 @@ export function OrderCard({ order, number }: { order: Order; number: number }) {
                             <p className="font-medium text-gray-900 truncate">
                                 {item.name || t("common.unknown")}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-700">
                                 {formatMoney(item.unitPrice)} {t("orders.each")}
                             </p>
                         </div>
@@ -98,7 +98,7 @@ function OrderMenu({
     return (
         <Sheet open={open} onClose={onClose} title={title}>
             <div className="flex items-center justify-between gap-3 py-3.5">
-                <span className="text-gray-500">ID</span>
+                <span className="text-gray-700">ID</span>
                 <CopyButton
                     value={order.id}
                     className="flex items-center gap-1.5 active:opacity-70 min-w-0 text-gray-900"
