@@ -1022,6 +1022,10 @@ components:
           examples:
             - bi_weekly
           type: string
+        since:
+          description: "When the tenant began: no picker goes before it"
+          format: date
+          type: string
         slug:
           type: string
         stores:

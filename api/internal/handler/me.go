@@ -89,6 +89,7 @@ func registerMe(api huma.API, d Deps) {
 				Slug:         t.Slug,
 				Name:         t.Name,
 				PayFrequency: t.PayFrequency,
+				Since:        sinceDay(t.CreatedAt),
 				Access: contract.MeAccess{
 					Seller:     level("seller", t.SellerAccess),
 					Backoffice: level("backoffice", t.BackofficeAccess),
@@ -147,4 +148,12 @@ func since(t pgtype.Timestamp) string {
 		return ""
 	}
 	return t.Time.UTC().Format(time.RFC3339)
+}
+
+// sinceDay is a tenant's first day, in UTC: only its month is used.
+func sinceDay(t pgtype.Timestamptz) string {
+	if !t.Valid {
+		return ""
+	}
+	return t.Time.UTC().Format(time.DateOnly)
 }

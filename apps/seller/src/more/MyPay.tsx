@@ -11,11 +11,11 @@ import {
 } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { useSlug } from "@tea-pos/shell/tenant";
+import { useFirstMonth, useSlug } from "@tea-pos/shell/tenant";
 import { CopyButton } from "@tea-pos/ui/CopyButton";
 import { ImagePreview } from "@tea-pos/ui/ImagePreview";
 import { Picture } from "@tea-pos/ui/Picture";
-import { FIRST_PAY_MONTH, MonthStepper } from "@tea-pos/ui/MonthStepper";
+import { MonthStepper } from "@tea-pos/ui/MonthStepper";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { Link } from "@tanstack/react-router";
 import { CalendarClock } from "lucide-react";
@@ -45,6 +45,7 @@ const WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
 /** My Pay: how the seller is paid, then a month's periods (the newest month with one first). */
 export function MyPay() {
+    const firstMonth = useFirstMonth(true);
     const t = useT();
     const locale = useLocale();
     const { data, error } = useMyPay();
@@ -108,7 +109,7 @@ export function MyPay() {
                 month={month}
                 label={formatMonth(`${month}-01`, locale)}
                 onChange={setPicked}
-                first={FIRST_PAY_MONTH}
+                first={firstMonth}
                 pick={{ title: t("store.pickMonth"), today, locale }}
             />
             {payouts.length === 0 ? (

@@ -2,7 +2,7 @@ import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
 import { MonthGrid } from "./MonthGrid";
-import { FIRST_DAY, FIRST_MONTH, STEP_ARROW, stepIcon } from "./MonthStepper";
+import { FIRST_MONTH, STEP_ARROW, stepIcon } from "./MonthStepper";
 import { ICON } from "../lib/icon";
 import { Sheet } from "../layout/Sheet";
 
@@ -37,6 +37,7 @@ export function DateRangeSheet({
     locale,
     labels,
     formatRange,
+    firstMonth = FIRST_MONTH,
 }: {
     open: boolean;
     onClose: () => void;
@@ -53,6 +54,8 @@ export function DateRangeSheet({
         days: (n: number) => string;
     };
     formatRange: (range: DateRange) => string;
+    /** The earliest month it reaches: the tenant's start. */
+    firstMonth?: string;
 }) {
     // null: opens where the range came from, so changing a picked month stays in the months.
     const [chosen, setView] = useState<"list" | "month" | "custom" | null>(null);
@@ -88,6 +91,7 @@ export function DateRangeSheet({
             {view === "month" ? (
                 <MonthGrid
                     value={isMonth ? month : null}
+                    first={firstMonth}
                     today={today}
                     locale={locale}
                     onPick={(m) => {
@@ -98,6 +102,7 @@ export function DateRangeSheet({
             ) : view === "custom" ? (
                 <Calendar
                     value={value}
+                    firstMonth={firstMonth}
                     today={today}
                     locale={locale}
                     labels={labels}
@@ -138,6 +143,7 @@ export function DateRangeSheet({
 
 function Calendar({
     value,
+    firstMonth,
     today,
     locale,
     labels,
@@ -145,6 +151,7 @@ function Calendar({
     onApply,
 }: {
     value: DateRange;
+    firstMonth: string;
     today: string;
     locale: string;
     labels: { apply: string; days: (n: number) => string };
@@ -185,7 +192,7 @@ function Calendar({
             <div className="flex items-center justify-between">
                 <button
                     onClick={() => step(-1)}
-                    disabled={month <= FIRST_MONTH}
+                    disabled={month <= firstMonth}
                     className={`${STEP_ARROW} disabled:opacity-30`}
                     aria-label="‹"
                 >
@@ -219,7 +226,7 @@ function Calendar({
                     return (
                         <button
                             key={day}
-                            disabled={day > today || day < FIRST_DAY}
+                            disabled={day > today || day < `${firstMonth}-01`}
                             onClick={() => tap(day)}
                             className={`h-11 text-base font-medium disabled:opacity-30 ${
                                 edge

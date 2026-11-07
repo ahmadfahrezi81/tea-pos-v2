@@ -3,7 +3,7 @@ SELECT id, email, full_name, role, avatar_url, preferred_language, phone_number,
 
 -- name: ListUserTenants :many
 -- The tenants the user is an active member of, with what auth.LevelIn reads.
-SELECT t.id, t.slug, t.name, t.pay_frequency, a.status,
+SELECT t.id, t.slug, t.name, t.pay_frequency, t.created_at, a.status,
     coalesce(t.owner_id = a.user_id, false)::bool AS is_owner,
     coalesce((
         SELECT x.access FROM user_app_access x

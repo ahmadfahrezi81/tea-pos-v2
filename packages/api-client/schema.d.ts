@@ -1467,6 +1467,11 @@ export interface components {
             owner: boolean;
             /** @example bi_weekly */
             payFrequency: string;
+            /**
+             * Format: date
+             * @description When the tenant began: no picker goes before it
+             */
+            since?: string;
             slug: string;
             /** @description Seller: the stores the user is assigned to. Backoffice: every store of the tenant */
             stores: components["schemas"]["MeStore"][];

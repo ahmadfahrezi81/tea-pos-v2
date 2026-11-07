@@ -12,11 +12,11 @@ import { ICON } from "@tea-pos/ui/icon";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { Badge } from "@tea-pos/ui/Badge";
-import { FIRST_PAY_DAY, STEP_ARROW, stepIcon } from "@tea-pos/ui/MonthStepper";
+import { STEP_ARROW, stepIcon } from "@tea-pos/ui/MonthStepper";
 import { ListSection } from "@tea-pos/ui/ListSection";
 import { Tile } from "@tea-pos/ui/Tile";
 import { useRef, type PointerEvent as ReactPointerEvent } from "react";
-import { useSlug } from "@tea-pos/shell/tenant";
+import { useFirstMonth, useSlug } from "@tea-pos/shell/tenant";
 
 type Person = components["schemas"]["Payout"];
 
@@ -31,6 +31,7 @@ export function PeriodHome({ start }: { start: string }) {
     const t = useT();
     const locale = useLocale();
     const slug = useSlug();
+    const firstPay = `${useFirstMonth(true)}-01`;
     const navigate = useNavigate();
     const card = useRef<HTMLDivElement>(null);
     const { data: p } = usePayPeriodAt(start);
@@ -99,7 +100,7 @@ export function PeriodHome({ start }: { start: string }) {
                 if (u.type !== "pointerup" || Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy))
                     return;
                 if (dx > 0) {
-                    if (p.previous >= FIRST_PAY_DAY) go(p.previous);
+                    if (p.previous >= firstPay) go(p.previous);
                 } else if (p.next) go(p.next);
             };
             window.addEventListener("pointermove", move);
@@ -116,7 +117,7 @@ export function PeriodHome({ start }: { start: string }) {
                 className="rounded-2xl bg-white p-3 space-y-3 touch-pan-y"
             >
                 <div className="flex items-center justify-between">
-                    {p.previous >= FIRST_PAY_DAY ? (
+                    {p.previous >= firstPay ? (
                         <Link
                             to="/$tenant/pay"
                             params={{ tenant: slug }}

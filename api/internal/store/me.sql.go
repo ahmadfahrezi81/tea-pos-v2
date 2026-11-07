@@ -171,7 +171,7 @@ func (q *Queries) ListTenantStores(ctx context.Context, userID pgtype.UUID) ([]L
 }
 
 const listUserTenants = `-- name: ListUserTenants :many
-SELECT t.id, t.slug, t.name, t.pay_frequency, a.status,
+SELECT t.id, t.slug, t.name, t.pay_frequency, t.created_at, a.status,
     coalesce(t.owner_id = a.user_id, false)::bool AS is_owner,
     coalesce((
         SELECT x.access FROM user_app_access x
@@ -195,6 +195,7 @@ type ListUserTenantsRow struct {
 	Slug             string
 	Name             string
 	PayFrequency     string
+	CreatedAt        pgtype.Timestamptz
 	Status           string
 	IsOwner          bool
 	SellerAccess     string
@@ -217,6 +218,7 @@ func (q *Queries) ListUserTenants(ctx context.Context, userID pgtype.UUID) ([]Li
 			&i.Slug,
 			&i.Name,
 			&i.PayFrequency,
+			&i.CreatedAt,
 			&i.Status,
 			&i.IsOwner,
 			&i.SellerAccess,

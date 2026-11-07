@@ -5,13 +5,13 @@ import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
 import { HeaderActions } from "@tea-pos/shell/HeaderActions";
-import { useSlug, useTenant } from "@tea-pos/shell/tenant";
+import { useFirstMonth, useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { Field } from "@tea-pos/ui/form/Field";
 import { ReadOnlyInput } from "@tea-pos/ui/form/ReadOnlyInput";
 import { SelectInput } from "@tea-pos/ui/form/SelectInput";
 import { Textarea } from "@tea-pos/ui/form/Textarea";
 import { PhotoInput } from "@tea-pos/ui/PhotoInput";
-import { FIRST_PAY_MONTH, MonthStepper } from "@tea-pos/ui/MonthStepper";
+import { MonthStepper } from "@tea-pos/ui/MonthStepper";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { useRouter } from "@tanstack/react-router";
 import { ReceiptText } from "lucide-react";
@@ -52,6 +52,7 @@ const lastOfMonth = (month: string) => {
 
 /** My Claims: what the seller is entitled to, and their claims month by month. */
 export function MyClaims() {
+    const firstMonth = useFirstMonth(true);
     const t = useT();
     const locale = useLocale();
     const [month, setMonth] = useState(localDate().slice(0, 7));
@@ -94,7 +95,7 @@ export function MyClaims() {
                 month={month}
                 label={formatMonth(`${month}-01`, locale)}
                 onChange={setMonth}
-                first={FIRST_PAY_MONTH}
+                first={firstMonth}
                 pick={{ title: t("store.pickMonth"), today: localDate(), locale }}
             />
 
