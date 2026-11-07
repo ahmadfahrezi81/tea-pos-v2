@@ -13,7 +13,7 @@ const REPEAT_MS = 10_000;
 /**
  * Says what failed where the screen cannot: a refresh that failed behind data still on screen
  * (a first load shows LoadFailed in place), and the brake stopping a loop, which is also reported.
- * A connection that failed says nothing here: the header's connection icon does.
+ * A connection that failed says nothing here: the banner under the tabs does.
  */
 export function useErrorToasts() {
     const t = useT();
