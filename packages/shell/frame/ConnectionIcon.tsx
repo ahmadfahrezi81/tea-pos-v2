@@ -50,13 +50,15 @@ export function ConnectionIcon() {
                 aria-label={t("connection.label")}
                 className={`flex size-[42px] shrink-0 items-center justify-center rounded-full bg-gray-200 active:scale-95 ${color}`}
             >
-                <Icon size={24} strokeWidth={3} />
+                <Bars Icon={Icon} level={level} size={24} />
             </button>
             <Sheet open={open} onClose={() => setOpen(false)} title={t("connection.label")}>
                 <div className="space-y-4 pb-2">
                     <div className="flex flex-col items-center gap-2 py-2">
                         <div className="flex size-24 items-center justify-center rounded-full bg-gray-100">
-                            <Icon size={44} className={color} />
+                            <span className={color}>
+                                <Bars Icon={Icon} level={level} size={44} />
+                            </span>
                         </div>
                         <p className="text-lg font-bold text-gray-900">
                             {t(`connection.${level}`)}
@@ -95,5 +97,18 @@ export function ConnectionIcon() {
                 </div>
             </Sheet>
         </>
+    );
+}
+
+/** As a phone's own: the bars it has over the faint full set, so a drop reads as missing bars. */
+function Bars({ Icon, level, size }: { Icon: LucideIcon; level: Level; size: number }) {
+    const partial = level === "okay" || level === "slow" || level === "failing";
+    return (
+        <span className="relative block" style={{ width: size, height: size }}>
+            {partial && (
+                <Wifi size={size} strokeWidth={3} className="absolute inset-0 opacity-25" />
+            )}
+            <Icon size={size} strokeWidth={3} className="absolute inset-0" />
+        </span>
     );
 }
