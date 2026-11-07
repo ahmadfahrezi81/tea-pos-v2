@@ -12,7 +12,7 @@ import { ICON } from "@tea-pos/ui/icon";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { Badge } from "@tea-pos/ui/Badge";
-import { STEP_ARROW, stepIcon } from "@tea-pos/ui/MonthStepper";
+import { FIRST_DAY, STEP_ARROW, stepIcon } from "@tea-pos/ui/MonthStepper";
 import { ListSection } from "@tea-pos/ui/ListSection";
 import { Tile } from "@tea-pos/ui/Tile";
 import { useRef, type PointerEvent as ReactPointerEvent } from "react";
@@ -98,8 +98,9 @@ export function PeriodHome({ start }: { start: string }) {
                 el.style.transform = "";
                 if (u.type !== "pointerup" || Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy))
                     return;
-                if (dx > 0) go(p.previous);
-                else if (p.next) go(p.next);
+                if (dx > 0) {
+                    if (p.previous >= FIRST_DAY) go(p.previous);
+                } else if (p.next) go(p.next);
             };
             window.addEventListener("pointermove", move);
             window.addEventListener("pointerup", end);
@@ -115,16 +116,20 @@ export function PeriodHome({ start }: { start: string }) {
                 className="rounded-2xl bg-white p-3 space-y-3 touch-pan-y"
             >
                 <div className="flex items-center justify-between">
-                    <Link
-                        to="/$tenant/pay"
-                        params={{ tenant: slug }}
-                        search={{ period: p.previous }}
-                        replace
-                        className={STEP_ARROW}
-                        aria-label="‹"
-                    >
-                        <ChevronLeft {...stepIcon} />
-                    </Link>
+                    {p.previous >= FIRST_DAY ? (
+                        <Link
+                            to="/$tenant/pay"
+                            params={{ tenant: slug }}
+                            search={{ period: p.previous }}
+                            replace
+                            className={STEP_ARROW}
+                            aria-label="‹"
+                        >
+                            <ChevronLeft {...stepIcon} />
+                        </Link>
+                    ) : (
+                        <span className="size-11 shrink-0" />
+                    )}
                     <div className="text-center">
                         <p className="font-mono text-xs font-bold uppercase tracking-widest text-gray-900">
                             {weeks(p.start, p.end, t("pay.week"))}

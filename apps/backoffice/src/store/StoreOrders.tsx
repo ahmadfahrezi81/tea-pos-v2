@@ -10,6 +10,7 @@ import { RangeBar, useRange } from "./range";
 import { useRangeOrders, useSalesHours, useScopeStores, useStoreId } from "./sales";
 import { Skeleton, SkeletonChart } from "@tea-pos/ui/Skeleton";
 import { ICON } from "@tea-pos/ui/icon";
+import { FIRST_DAY } from "@tea-pos/ui/MonthStepper";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { OrderCard } from "@tea-pos/shell/OrderCard";
 
@@ -26,6 +27,8 @@ function DatePicker({ date, onChange }: { date: string; onChange: (date: string)
                 <input
                     type="date"
                     value={date}
+                    min={FIRST_DAY}
+                    max={localDate()}
                     onChange={(e) => onChange(e.target.value || localDate())}
                     className="mt-2 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand/90 focus:outline-none"
                 />

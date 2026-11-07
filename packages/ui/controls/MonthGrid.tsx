@@ -1,9 +1,9 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
-import { STEP_ARROW, stepIcon } from "./MonthStepper";
+import { FIRST_MONTH, STEP_ARROW, stepIcon } from "./MonthStepper";
 
-/** A year's months in a grid, ‹ › for other years; none after `today`'s month. */
+/** A year's months in a grid, ‹ › for other years; none after `today`'s month or before FIRST_MONTH. */
 export function MonthGrid({
     value,
     today,
@@ -21,7 +21,12 @@ export function MonthGrid({
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between">
-                <button onClick={() => setYear(year - 1)} className={STEP_ARROW} aria-label="‹">
+                <button
+                    onClick={() => setYear(year - 1)}
+                    disabled={year <= Number(FIRST_MONTH.slice(0, 4))}
+                    className={`${STEP_ARROW} disabled:opacity-30`}
+                    aria-label="‹"
+                >
                     <ChevronLeft {...stepIcon} />
                 </button>
                 <p className="font-bold text-gray-900">{year}</p>
@@ -40,7 +45,7 @@ export function MonthGrid({
                     return (
                         <button
                             key={month}
-                            disabled={month > thisMonth}
+                            disabled={month > thisMonth || month < FIRST_MONTH}
                             onClick={() => onPick(month)}
                             className={`h-12 rounded-xl text-base font-semibold disabled:opacity-30 active:opacity-70 ${
                                 month === value

@@ -9,6 +9,10 @@ export const STEP_ARROW =
     "size-11 shrink-0 flex items-center justify-center rounded-xl bg-slate-100 text-gray-900 active:scale-95 active:bg-slate-200 disabled:opacity-30";
 export const stepIcon = { size: 26, strokeWidth: 2.75 } as const;
 
+/** The first month with any data (the business began then): no picker goes before it. */
+export const FIRST_MONTH = "2025-07";
+export const FIRST_DAY = `${FIRST_MONTH}-01`;
+
 /**
  * The old backoffice's month bar: ‹ the month ›. Months are "YYYY-MM"; the label is the caller's.
  * With `pick`, a tap on the label opens the months in a sheet; nothing after `pick.today`'s month.
@@ -32,7 +36,12 @@ export function MonthStepper({
     };
     return (
         <div className="flex items-center justify-between gap-2 bg-white rounded-xl px-2 py-1.5">
-            <button onClick={() => step(-1)} className={STEP_ARROW} aria-label="‹">
+            <button
+                onClick={() => step(-1)}
+                disabled={month <= FIRST_MONTH}
+                className={STEP_ARROW}
+                aria-label="‹"
+            >
                 <ChevronLeft {...stepIcon} />
             </button>
             {pick ? (

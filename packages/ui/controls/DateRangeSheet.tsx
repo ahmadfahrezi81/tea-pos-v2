@@ -2,7 +2,7 @@ import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
 import { MonthGrid } from "./MonthGrid";
-import { STEP_ARROW, stepIcon } from "./MonthStepper";
+import { FIRST_DAY, FIRST_MONTH, STEP_ARROW, stepIcon } from "./MonthStepper";
 import { ICON } from "../lib/icon";
 import { Sheet } from "../layout/Sheet";
 
@@ -183,7 +183,12 @@ function Calendar({
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between">
-                <button onClick={() => step(-1)} className={STEP_ARROW} aria-label="‹">
+                <button
+                    onClick={() => step(-1)}
+                    disabled={month <= FIRST_MONTH}
+                    className={`${STEP_ARROW} disabled:opacity-30`}
+                    aria-label="‹"
+                >
                     <ChevronLeft {...stepIcon} />
                 </button>
                 <p className="font-bold text-gray-900">
@@ -214,7 +219,7 @@ function Calendar({
                     return (
                         <button
                             key={day}
-                            disabled={day > today}
+                            disabled={day > today || day < FIRST_DAY}
                             onClick={() => tap(day)}
                             className={`h-11 text-base font-medium disabled:opacity-30 ${
                                 edge
