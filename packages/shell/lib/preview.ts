@@ -50,5 +50,6 @@ export function showPreview(name: string) {
             setTimeout(previews.online!, 2000);
         },
     };
-    previews[name]?.();
+    // Only the previews' own names: a name from the address never reaches Object's methods.
+    if (Object.hasOwn(previews, name)) previews[name]!();
 }
