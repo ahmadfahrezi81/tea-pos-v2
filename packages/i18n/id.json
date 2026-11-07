@@ -281,7 +281,9 @@
         "bad_receipt": "Struk tidak terunggah dengan benar. Tambahkan lagi.",
         "old_day_open": "Hari sebelumnya masih buka. Tutup dulu di Analitik.",
         "notSavedOffline": "Tidak tersimpan: tidak ada koneksi. Coba lagi.",
-        "session_not_found": "Sesi itu sudah berakhir."
+        "session_not_found": "Sesi itu sudah berakhir.",
+        "bad_hours": "Jam buka harus sebelum jam tutup.",
+        "store_has_history": "Toko ini sudah punya penjualan atau hari, jadi tidak bisa dihapus. Jadikan Tidak aktif saja."
     },
     "store": {
         "week": "Week",

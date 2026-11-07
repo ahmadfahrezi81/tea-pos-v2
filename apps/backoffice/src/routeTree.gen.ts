@@ -33,6 +33,9 @@ import { Route as ShellTenantUacHelpRouteImport } from './routes/_shell/$tenant/
 import { Route as ShellTenantPayStartIndexRouteImport } from './routes/_shell/$tenant/pay/$start/index'
 import { Route as ShellTenantPaySettingsIndexRouteImport } from './routes/_shell/$tenant/pay/settings/index'
 import { Route as ShellTenantStoreStoreIdIndexRouteImport } from './routes/_shell/$tenant/store/$storeId/index'
+import { Route as ShellTenantStoreSettingsIndexRouteImport } from './routes/_shell/$tenant/store/settings/index'
+import { Route as ShellTenantStoreSettingsStoreIdRouteImport } from './routes/_shell/$tenant/store/settings/$storeId'
+import { Route as ShellTenantStoreSettingsAddRouteImport } from './routes/_shell/$tenant/store/settings/add'
 import { Route as ShellTenantUacUserIdIndexRouteImport } from './routes/_shell/$tenant/uac/$userId/index'
 import { Route as ShellTenantUacUserIdAppsRouteImport } from './routes/_shell/$tenant/uac/$userId/apps'
 import { Route as ShellTenantUacUserIdClaimsRouteImport } from './routes/_shell/$tenant/uac/$userId/claims'
@@ -180,6 +183,24 @@ const ShellTenantStoreStoreIdIndexRoute =
   ShellTenantStoreStoreIdIndexRouteImport.update({
     id: '/store/$storeId/',
     path: '/store/$storeId/',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantStoreSettingsIndexRoute =
+  ShellTenantStoreSettingsIndexRouteImport.update({
+    id: '/store/settings/',
+    path: '/store/settings/',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantStoreSettingsStoreIdRoute =
+  ShellTenantStoreSettingsStoreIdRouteImport.update({
+    id: '/store/settings/$storeId',
+    path: '/store/settings/$storeId',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantStoreSettingsAddRoute =
+  ShellTenantStoreSettingsAddRouteImport.update({
+    id: '/store/settings/add',
+    path: '/store/settings/add',
     getParentRoute: () => ShellTenantRoute,
   } as any)
 const ShellTenantUacUserIdIndexRoute =
@@ -336,6 +357,8 @@ export interface FileRoutesByFullPath {
   '/$tenant/pay/': typeof ShellTenantPayIndexRoute
   '/$tenant/store/': typeof ShellTenantStoreIndexRoute
   '/$tenant/uac/': typeof ShellTenantUacIndexRoute
+  '/$tenant/store/settings/$storeId': typeof ShellTenantStoreSettingsStoreIdRoute
+  '/$tenant/store/settings/add': typeof ShellTenantStoreSettingsAddRoute
   '/$tenant/uac/$userId/apps': typeof ShellTenantUacUserIdAppsRoute
   '/$tenant/uac/$userId/claims': typeof ShellTenantUacUserIdClaimsRoute
   '/$tenant/uac/$userId/commission': typeof ShellTenantUacUserIdCommissionRoute
@@ -346,6 +369,7 @@ export interface FileRoutesByFullPath {
   '/$tenant/pay/$start/': typeof ShellTenantPayStartIndexRoute
   '/$tenant/pay/settings/': typeof ShellTenantPaySettingsIndexRoute
   '/$tenant/store/$storeId/': typeof ShellTenantStoreStoreIdIndexRoute
+  '/$tenant/store/settings/': typeof ShellTenantStoreSettingsIndexRoute
   '/$tenant/uac/$userId/': typeof ShellTenantUacUserIdIndexRoute
   '/$tenant/pay/$start/$userId/settle': typeof ShellTenantPayStartUserIdSettleRoute
   '/$tenant/pay/settings/claim-types/add': typeof ShellTenantPaySettingsClaimTypesAddRoute
@@ -382,6 +406,8 @@ export interface FileRoutesByTo {
   '/$tenant/pay': typeof ShellTenantPayIndexRoute
   '/$tenant/store': typeof ShellTenantStoreIndexRoute
   '/$tenant/uac': typeof ShellTenantUacIndexRoute
+  '/$tenant/store/settings/$storeId': typeof ShellTenantStoreSettingsStoreIdRoute
+  '/$tenant/store/settings/add': typeof ShellTenantStoreSettingsAddRoute
   '/$tenant/uac/$userId/apps': typeof ShellTenantUacUserIdAppsRoute
   '/$tenant/uac/$userId/claims': typeof ShellTenantUacUserIdClaimsRoute
   '/$tenant/uac/$userId/commission': typeof ShellTenantUacUserIdCommissionRoute
@@ -392,6 +418,7 @@ export interface FileRoutesByTo {
   '/$tenant/pay/$start': typeof ShellTenantPayStartIndexRoute
   '/$tenant/pay/settings': typeof ShellTenantPaySettingsIndexRoute
   '/$tenant/store/$storeId': typeof ShellTenantStoreStoreIdIndexRoute
+  '/$tenant/store/settings': typeof ShellTenantStoreSettingsIndexRoute
   '/$tenant/uac/$userId': typeof ShellTenantUacUserIdIndexRoute
   '/$tenant/pay/$start/$userId/settle': typeof ShellTenantPayStartUserIdSettleRoute
   '/$tenant/pay/settings/claim-types/add': typeof ShellTenantPaySettingsClaimTypesAddRoute
@@ -431,6 +458,8 @@ export interface FileRoutesById {
   '/_shell/$tenant/pay/': typeof ShellTenantPayIndexRoute
   '/_shell/$tenant/store/': typeof ShellTenantStoreIndexRoute
   '/_shell/$tenant/uac/': typeof ShellTenantUacIndexRoute
+  '/_shell/$tenant/store/settings/$storeId': typeof ShellTenantStoreSettingsStoreIdRoute
+  '/_shell/$tenant/store/settings/add': typeof ShellTenantStoreSettingsAddRoute
   '/_shell/$tenant/uac/$userId/apps': typeof ShellTenantUacUserIdAppsRoute
   '/_shell/$tenant/uac/$userId/claims': typeof ShellTenantUacUserIdClaimsRoute
   '/_shell/$tenant/uac/$userId/commission': typeof ShellTenantUacUserIdCommissionRoute
@@ -441,6 +470,7 @@ export interface FileRoutesById {
   '/_shell/$tenant/pay/$start/': typeof ShellTenantPayStartIndexRoute
   '/_shell/$tenant/pay/settings/': typeof ShellTenantPaySettingsIndexRoute
   '/_shell/$tenant/store/$storeId/': typeof ShellTenantStoreStoreIdIndexRoute
+  '/_shell/$tenant/store/settings/': typeof ShellTenantStoreSettingsIndexRoute
   '/_shell/$tenant/uac/$userId/': typeof ShellTenantUacUserIdIndexRoute
   '/_shell/$tenant/pay/$start/$userId/settle': typeof ShellTenantPayStartUserIdSettleRoute
   '/_shell/$tenant/pay/settings/claim-types/add': typeof ShellTenantPaySettingsClaimTypesAddRoute
@@ -480,6 +510,8 @@ export interface FileRouteTypes {
     | '/$tenant/pay/'
     | '/$tenant/store/'
     | '/$tenant/uac/'
+    | '/$tenant/store/settings/$storeId'
+    | '/$tenant/store/settings/add'
     | '/$tenant/uac/$userId/apps'
     | '/$tenant/uac/$userId/claims'
     | '/$tenant/uac/$userId/commission'
@@ -490,6 +522,7 @@ export interface FileRouteTypes {
     | '/$tenant/pay/$start/'
     | '/$tenant/pay/settings/'
     | '/$tenant/store/$storeId/'
+    | '/$tenant/store/settings/'
     | '/$tenant/uac/$userId/'
     | '/$tenant/pay/$start/$userId/settle'
     | '/$tenant/pay/settings/claim-types/add'
@@ -526,6 +559,8 @@ export interface FileRouteTypes {
     | '/$tenant/pay'
     | '/$tenant/store'
     | '/$tenant/uac'
+    | '/$tenant/store/settings/$storeId'
+    | '/$tenant/store/settings/add'
     | '/$tenant/uac/$userId/apps'
     | '/$tenant/uac/$userId/claims'
     | '/$tenant/uac/$userId/commission'
@@ -536,6 +571,7 @@ export interface FileRouteTypes {
     | '/$tenant/pay/$start'
     | '/$tenant/pay/settings'
     | '/$tenant/store/$storeId'
+    | '/$tenant/store/settings'
     | '/$tenant/uac/$userId'
     | '/$tenant/pay/$start/$userId/settle'
     | '/$tenant/pay/settings/claim-types/add'
@@ -574,6 +610,8 @@ export interface FileRouteTypes {
     | '/_shell/$tenant/pay/'
     | '/_shell/$tenant/store/'
     | '/_shell/$tenant/uac/'
+    | '/_shell/$tenant/store/settings/$storeId'
+    | '/_shell/$tenant/store/settings/add'
     | '/_shell/$tenant/uac/$userId/apps'
     | '/_shell/$tenant/uac/$userId/claims'
     | '/_shell/$tenant/uac/$userId/commission'
@@ -584,6 +622,7 @@ export interface FileRouteTypes {
     | '/_shell/$tenant/pay/$start/'
     | '/_shell/$tenant/pay/settings/'
     | '/_shell/$tenant/store/$storeId/'
+    | '/_shell/$tenant/store/settings/'
     | '/_shell/$tenant/uac/$userId/'
     | '/_shell/$tenant/pay/$start/$userId/settle'
     | '/_shell/$tenant/pay/settings/claim-types/add'
@@ -776,6 +815,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellTenantStoreStoreIdIndexRouteImport
       parentRoute: typeof ShellTenantRoute
     }
+    '/_shell/$tenant/store/settings/': {
+      id: '/_shell/$tenant/store/settings/'
+      path: '/store/settings'
+      fullPath: '/$tenant/store/settings/'
+      preLoaderRoute: typeof ShellTenantStoreSettingsIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/store/settings/$storeId': {
+      id: '/_shell/$tenant/store/settings/$storeId'
+      path: '/store/settings/$storeId'
+      fullPath: '/$tenant/store/settings/$storeId'
+      preLoaderRoute: typeof ShellTenantStoreSettingsStoreIdRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/store/settings/add': {
+      id: '/_shell/$tenant/store/settings/add'
+      path: '/store/settings/add'
+      fullPath: '/$tenant/store/settings/add'
+      preLoaderRoute: typeof ShellTenantStoreSettingsAddRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
     '/_shell/$tenant/uac/$userId/': {
       id: '/_shell/$tenant/uac/$userId/'
       path: '/uac/$userId'
@@ -951,6 +1011,8 @@ interface ShellTenantRouteChildren {
   ShellTenantPayIndexRoute: typeof ShellTenantPayIndexRoute
   ShellTenantStoreIndexRoute: typeof ShellTenantStoreIndexRoute
   ShellTenantUacIndexRoute: typeof ShellTenantUacIndexRoute
+  ShellTenantStoreSettingsStoreIdRoute: typeof ShellTenantStoreSettingsStoreIdRoute
+  ShellTenantStoreSettingsAddRoute: typeof ShellTenantStoreSettingsAddRoute
   ShellTenantUacUserIdAppsRoute: typeof ShellTenantUacUserIdAppsRoute
   ShellTenantUacUserIdClaimsRoute: typeof ShellTenantUacUserIdClaimsRoute
   ShellTenantUacUserIdCommissionRoute: typeof ShellTenantUacUserIdCommissionRoute
@@ -961,6 +1023,7 @@ interface ShellTenantRouteChildren {
   ShellTenantPayStartIndexRoute: typeof ShellTenantPayStartIndexRoute
   ShellTenantPaySettingsIndexRoute: typeof ShellTenantPaySettingsIndexRoute
   ShellTenantStoreStoreIdIndexRoute: typeof ShellTenantStoreStoreIdIndexRoute
+  ShellTenantStoreSettingsIndexRoute: typeof ShellTenantStoreSettingsIndexRoute
   ShellTenantUacUserIdIndexRoute: typeof ShellTenantUacUserIdIndexRoute
   ShellTenantPayStartUserIdSettleRoute: typeof ShellTenantPayStartUserIdSettleRoute
   ShellTenantPaySettingsClaimTypesAddRoute: typeof ShellTenantPaySettingsClaimTypesAddRoute
@@ -996,6 +1059,8 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
   ShellTenantPayIndexRoute: ShellTenantPayIndexRoute,
   ShellTenantStoreIndexRoute: ShellTenantStoreIndexRoute,
   ShellTenantUacIndexRoute: ShellTenantUacIndexRoute,
+  ShellTenantStoreSettingsStoreIdRoute: ShellTenantStoreSettingsStoreIdRoute,
+  ShellTenantStoreSettingsAddRoute: ShellTenantStoreSettingsAddRoute,
   ShellTenantUacUserIdAppsRoute: ShellTenantUacUserIdAppsRoute,
   ShellTenantUacUserIdClaimsRoute: ShellTenantUacUserIdClaimsRoute,
   ShellTenantUacUserIdCommissionRoute: ShellTenantUacUserIdCommissionRoute,
@@ -1006,6 +1071,7 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
   ShellTenantPayStartIndexRoute: ShellTenantPayStartIndexRoute,
   ShellTenantPaySettingsIndexRoute: ShellTenantPaySettingsIndexRoute,
   ShellTenantStoreStoreIdIndexRoute: ShellTenantStoreStoreIdIndexRoute,
+  ShellTenantStoreSettingsIndexRoute: ShellTenantStoreSettingsIndexRoute,
   ShellTenantUacUserIdIndexRoute: ShellTenantUacUserIdIndexRoute,
   ShellTenantPayStartUserIdSettleRoute: ShellTenantPayStartUserIdSettleRoute,
   ShellTenantPaySettingsClaimTypesAddRoute:

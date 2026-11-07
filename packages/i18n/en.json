@@ -281,7 +281,9 @@
         "bad_receipt": "That receipt did not upload properly. Add it again.",
         "old_day_open": "An earlier day is still open. Close it in Analytics first.",
         "notSavedOffline": "Not saved: no connection. Try again.",
-        "session_not_found": "That session has already ended."
+        "session_not_found": "That session has already ended.",
+        "bad_hours": "A store has to open before it closes.",
+        "store_has_history": "This store has sales or days, so it can't be deleted. Make it Inactive instead."
     },
     "store": {
         "week": "Week",

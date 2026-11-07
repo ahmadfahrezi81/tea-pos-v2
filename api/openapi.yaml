@@ -772,6 +772,7 @@ components:
             - auto_needs_hours
             - bad_claim_code
             - bad_cursor
+            - bad_hours
             - bad_level
             - bad_photo
             - bad_proof
@@ -822,6 +823,7 @@ components:
             - session_taken
             - staff_not_found
             - store_already_opened
+            - store_has_history
             - store_not_found
             - store_not_open
             - store_required
@@ -1944,6 +1946,51 @@ components:
       required:
         - status
       type: object
+    StoreChange:
+      additionalProperties: false
+      properties:
+        address:
+          description: Empty clears it
+          maxLength: 300
+          type: string
+        closeTime:
+          examples:
+            - "22:00"
+          pattern: ^([01][0-9]|2[0-3]):[0-5][0-9]$
+          type: string
+        latitude:
+          description: Leave out for none
+          format: double
+          maximum: 90
+          minimum: -90
+          type: number
+        longitude:
+          description: Leave out for none
+          format: double
+          maximum: 180
+          minimum: -180
+          type: number
+        name:
+          maxLength: 100
+          type: string
+        openTime:
+          examples:
+            - "08:00"
+          pattern: ^([01][0-9]|2[0-3]):[0-5][0-9]$
+          type: string
+        status:
+          enum:
+            - active
+            - fake
+            - inactive
+          type: string
+      required:
+        - name
+        - address
+        - status
+        - openTime
+        - closeTime
+      type: object
     StoreGate:
       additionalProperties: false
       properties:
@@ -2096,6 +2143,55 @@ components:
         - days
         - notClosed
         - sellers
+      type: object
+    StoreSettings:
+      additionalProperties: false
+      properties:
+        address:
+          type: string
+        closeTime:
+          examples:
+            - "22:00"
+          type: string
+        id:
+          format: uuid
+          type: string
+        latitude:
+          format: double
+          type: number
+        longitude:
+          format: double
+          type: number
+        name:
+          type: string
+        openTime:
+          examples:
+            - "08:00"
+          type: string
+        status:
+          description: "fake: a demo store"
+          enum:
+            - active
+            - fake
+            - inactive
+          type: string
+      required:
+        - id
+        - name
+        - status
+        - openTime
+        - closeTime
+      type: object
+    StoreSettingsListOutputBody:
+      additionalProperties: false
+      properties:
+        stores:
+          description: Active, then demo, then inactive, by name
+          items:
+            $ref: "#/components/schemas/StoreSettings"
+          type: array
+      required:
+        - stores
       type: object
     StoresLiveOutputBody:
       additionalProperties: false
@@ -4046,6 +4142,182 @@ paths:
         - store
       x-access:
         tenant: true
+        signedIn: true
+  /tenants/{tenant}/store-settings:
+    get:
+      operationId: listStoreSettings
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreSettingsListOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Every store with its details, for Store settings
+      tags:
+        - store
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+    post:
+      operationId: createStore
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StoreChange"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreSettings"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Add a store; who works there is set in UAC
+      tags:
+        - store
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/store-settings/{storeId}:
+    delete:
+      operationId: deleteStore
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: storeId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Remove a store that has nothing recorded yet (a mistake); one with history is made Inactive instead
+      tags:
+        - store
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        repeatable: true
+        signedIn: true
+    get:
+      operationId: getStoreSettings
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: storeId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreSettings"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: One store's details
+      tags:
+        - store
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+    put:
+      operationId: updateStore
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: storeId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StoreChange"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreSettings"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Change a store's name, address, hours, status and location, at once
+      tags:
+        - store
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
         signedIn: true
   /tenants/{tenant}/stores/live:
     get:
