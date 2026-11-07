@@ -85,7 +85,7 @@ export function ToastHost() {
                 onPointerDown={(e) => (startY.current = e.clientY)}
                 onPointerUp={(e) => e.clientY - startY.current < -20 && dismiss()}
                 onClick={() => !t.action && dismiss()}
-                className={`pointer-events-auto flex w-full max-w-[360px] items-center gap-2.5 rounded-2xl p-3 text-base font-semibold text-white shadow-lg ${t.leaving ? "animate-slide-up" : "animate-slide-down"} ${bg}`}
+                className={`pointer-events-auto flex w-full max-w-[448px] items-center gap-2.5 rounded-2xl p-3 text-base font-semibold text-white shadow-lg ${t.leaving ? "animate-slide-up" : "animate-slide-down"} ${bg}`}
             >
                 <Icon size={24} className="shrink-0" />
                 <div className="flex min-w-0 flex-1 flex-col">
