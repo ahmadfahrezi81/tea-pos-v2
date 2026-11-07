@@ -76,15 +76,13 @@ export function OrderCard({
                         </span>
                     </div>
                 ))}
-                <div className="mt-1 flex items-baseline justify-between border-t border-slate-200 pt-2 pb-1">
-                    <span className="text-sm font-semibold text-gray-900">
-                        {t("store.total")} · {order.cups}{" "}
-                        {t(order.cups === 1 ? "orders.cup" : "orders.cups")}
-                    </span>
-                    <span className="text-lg font-bold text-green-600">
-                        {formatMoney(order.total)}
-                    </span>
-                </div>
+            </div>
+            <div className="flex items-baseline justify-between px-3 text-sm font-semibold">
+                <span className="text-gray-900">
+                    {t("store.total")} · {order.cups}{" "}
+                    {t(order.cups === 1 ? "orders.cup" : "orders.cups")}
+                </span>
+                <span className="text-green-600">{formatMoney(order.total)}</span>
             </div>
 
             <OrderMenu order={order} title={title} open={menu} onClose={() => setMenu(false)} />
