@@ -52,6 +52,19 @@ function ShellLayout({ tabs }: { tabs: AppTab[] }) {
     useErrorToasts();
     // No profile, saved or answered: the screens would be blank, so say so and offer a retry.
     const noProfile = me.isError && me.data === undefined && !maintenance;
+    const timedOut = noProfile && (me.error as Error | null)?.name === "TimeoutError";
+    useEffect(() => {
+        // Queued with the page views (lib/events.ts), as index.html's watchdog does.
+        if (timedOut)
+            globalThis.__events?.push({
+                type: "error",
+                name: "BootStuck",
+                message: "/me timed out",
+                stack: "",
+                path: location.pathname,
+                at: new Date().toISOString(),
+            });
+    }, [timedOut]);
     return (
         <TenantProvider me={me.data}>
             <Frame tabs={tabs} ready={ready} avatarUrl={me.data?.user.avatarUrl} />

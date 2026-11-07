@@ -30,6 +30,20 @@ const APP_VERSION = process.env.APP_VERSION ?? "dev";
 // X-App-Version, on every request: "seller@2026.10.3+a1b2c3d".
 const appTag = (app: AppConfig) => `${app.id}@${APP_VERSION}+${APP_COMMIT}`;
 
+// If the app has not lifted the splash in 20 s (a file or /me that never arrives), the splash offers
+// a Reload. Each time is remembered and reported by the next load (and by this one, if it recovers).
+const STUCK_KEY = "tea-pos:boot-stuck";
+const WATCHDOG =
+    `setTimeout(function(){var s=document.getElementById("splash");if(!s||s.dataset.leaving!==undefined)return;` +
+    `var at=new Date().toISOString();try{localStorage.setItem("${STUCK_KEY}",at)}catch(e){}` +
+    `__events.push({type:"error",name:"BootStuck",message:"splash still up after 20 s",stack:"",path:location.pathname,at:at});` +
+    `var id=document.documentElement.lang==="id";var p=document.createElement("p");p.className="boot-stuck";` +
+    `p.textContent=id?"Lama sekali. Coba muat ulang.":"Taking too long. Try reloading.";` +
+    `var b=document.createElement("button");b.className="boot-reload";b.textContent=id?"Muat ulang":"Reload";` +
+    `b.onclick=function(){location.reload()};s.appendChild(p);s.appendChild(b)},20000);` +
+    `try{var w=localStorage.getItem("${STUCK_KEY}");if(w){localStorage.removeItem("${STUCK_KEY}");` +
+    `__events.push({type:"error",name:"BootStuck",message:"the last open stayed on the splash",stack:"",path:location.pathname,at:w})}}catch(e){}`;
+
 // Errors from the very start, kept until the shell sends them with the page views (shell/events.ts).
 // At most 20 a page load, so an error in a loop cannot flood. And whether the page was ever hidden
 // while it loaded: such an open time is not the app's (app_ready leaves it out).
@@ -172,8 +186,9 @@ function appHtml(app: AppConfig): Plugin {
                     tag: "script",
                     // /me starts with the page, not after the JavaScript: one round trip less (useMe takes it).
                     children:
-                        `${EARLY_EVENTS};if(location.pathname!=="/login")window.__me=fetch("/api/me",` +
-                        `{headers:{"X-App-Version":${JSON.stringify(appTag(app))}}}).catch(function(){return null})`,
+                        `${EARLY_EVENTS};${WATCHDOG};if(location.pathname!=="/login")window.__me=fetch("/api/me",` +
+                        `{headers:{"X-App-Version":${JSON.stringify(appTag(app))}},` +
+                        `signal:AbortSignal.timeout?AbortSignal.timeout(15000):undefined}).catch(function(){return null})`,
                     injectTo: "head-prepend",
                 },
                 {
