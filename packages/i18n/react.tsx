@@ -1,9 +1,16 @@
-import { createContext, useCallback, useContext, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 
-import { t, type Locale, type MessageKey, type Messages } from "./index";
+import { activate, t, type Locale, type MessageKey, type Messages } from "./index";
 
-const I18nContext = createContext<{ locale: Locale; messages: Messages } | null>(null);
+interface I18n {
+    locale: Locale;
+    messages: Messages;
+    switchTo: (locale: Locale, messages: Messages) => void;
+}
 
+const I18nContext = createContext<I18n | null>(null);
+
+/** The active language; switched in place, without a reload, by `useSwitchLanguage`. */
 export function I18nProvider({
     locale,
     messages,
@@ -13,7 +20,14 @@ export function I18nProvider({
     messages: Messages;
     children: ReactNode;
 }) {
-    return <I18nContext value={{ locale, messages }}>{children}</I18nContext>;
+    const [current, setCurrent] = useState({ locale, messages });
+    const switchTo = useCallback((next: Locale, nextMessages: Messages) => {
+        activate(next, nextMessages);
+        document.documentElement.lang = next;
+        document.documentElement.dataset.locale = next;
+        setCurrent({ locale: next, messages: nextMessages });
+    }, []);
+    return <I18nContext value={{ ...current, switchTo }}>{children}</I18nContext>;
 }
 
 function useI18n() {
@@ -29,4 +43,9 @@ export function useLocale(): Locale {
 export function useT(): (key: MessageKey) => string {
     const { messages } = useI18n();
     return useCallback((key: MessageKey) => t(messages, key), [messages]);
+}
+
+/** Swaps every word on screen to another language's, loaded first with `messagesFor`. */
+export function useSwitchLanguage(): (locale: Locale, messages: Messages) => void {
+    return useI18n().switchTo;
 }
