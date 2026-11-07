@@ -21,6 +21,7 @@
     },
     "moreRows": {
         "weather": "Cuaca",
-        "advanced": "Lanjutan"
+        "advanced": "Lanjutan",
+        "apiDocs": "Dokumentasi API"
     }
 }

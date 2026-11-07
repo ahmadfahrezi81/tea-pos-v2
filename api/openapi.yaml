@@ -2623,7 +2623,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
           description: Error
-      summary: The signed-in user, their tenants and stores
+      summary: The signed-in user, their tenants and stores, their flags and the tenants they asked to join
       tags:
         - me
       x-access:
@@ -4912,3 +4912,5 @@ paths:
       x-access:
         tenant: true
         signedIn: true
+servers:
+  - url: /api

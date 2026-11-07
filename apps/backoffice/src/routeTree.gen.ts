@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ShellIndexRouteImport } from './routes/_shell/index'
 import { Route as ShellTenantRouteImport } from './routes/_shell/$tenant'
 import { Route as ShellTenantIndexRouteImport } from './routes/_shell/$tenant/index'
+import { Route as ShellTenantApiDocsRouteImport } from './routes/_shell/$tenant/api-docs'
 import { Route as ShellTenantAppInfoRouteImport } from './routes/_shell/$tenant/app-info'
 import { Route as ShellTenantChatsRouteImport } from './routes/_shell/$tenant/chats'
 import { Route as ShellTenantMoreRouteImport } from './routes/_shell/$tenant/more'
@@ -77,6 +78,11 @@ const ShellTenantRoute = ShellTenantRouteImport.update({
 const ShellTenantIndexRoute = ShellTenantIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => ShellTenantRoute,
+} as any)
+const ShellTenantApiDocsRoute = ShellTenantApiDocsRouteImport.update({
+  id: '/api-docs',
+  path: '/api-docs',
   getParentRoute: () => ShellTenantRoute,
 } as any)
 const ShellTenantAppInfoRoute = ShellTenantAppInfoRouteImport.update({
@@ -313,6 +319,7 @@ export interface FileRoutesByFullPath {
   '/': typeof ShellIndexRoute
   '/login': typeof LoginRoute
   '/$tenant': typeof ShellTenantRouteWithChildren
+  '/$tenant/api-docs': typeof ShellTenantApiDocsRoute
   '/$tenant/app-info': typeof ShellTenantAppInfoRoute
   '/$tenant/chats': typeof ShellTenantChatsRoute
   '/$tenant/more': typeof ShellTenantMoreRoute
@@ -358,6 +365,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/': typeof ShellIndexRoute
+  '/$tenant/api-docs': typeof ShellTenantApiDocsRoute
   '/$tenant/app-info': typeof ShellTenantAppInfoRoute
   '/$tenant/chats': typeof ShellTenantChatsRoute
   '/$tenant/more': typeof ShellTenantMoreRoute
@@ -406,6 +414,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_shell/$tenant': typeof ShellTenantRouteWithChildren
   '/_shell/': typeof ShellIndexRoute
+  '/_shell/$tenant/api-docs': typeof ShellTenantApiDocsRoute
   '/_shell/$tenant/app-info': typeof ShellTenantAppInfoRoute
   '/_shell/$tenant/chats': typeof ShellTenantChatsRoute
   '/_shell/$tenant/more': typeof ShellTenantMoreRoute
@@ -454,6 +463,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/$tenant'
+    | '/$tenant/api-docs'
     | '/$tenant/app-info'
     | '/$tenant/chats'
     | '/$tenant/more'
@@ -499,6 +509,7 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/'
+    | '/$tenant/api-docs'
     | '/$tenant/app-info'
     | '/$tenant/chats'
     | '/$tenant/more'
@@ -546,6 +557,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_shell/$tenant'
     | '/_shell/'
+    | '/_shell/$tenant/api-docs'
     | '/_shell/$tenant/app-info'
     | '/_shell/$tenant/chats'
     | '/_shell/$tenant/more'
@@ -629,6 +641,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/$tenant/'
       preLoaderRoute: typeof ShellTenantIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/api-docs': {
+      id: '/_shell/$tenant/api-docs'
+      path: '/api-docs'
+      fullPath: '/$tenant/api-docs'
+      preLoaderRoute: typeof ShellTenantApiDocsRouteImport
       parentRoute: typeof ShellTenantRoute
     }
     '/_shell/$tenant/app-info': {
@@ -915,6 +934,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface ShellTenantRouteChildren {
+  ShellTenantApiDocsRoute: typeof ShellTenantApiDocsRoute
   ShellTenantAppInfoRoute: typeof ShellTenantAppInfoRoute
   ShellTenantChatsRoute: typeof ShellTenantChatsRoute
   ShellTenantMoreRoute: typeof ShellTenantMoreRoute
@@ -959,6 +979,7 @@ interface ShellTenantRouteChildren {
 }
 
 const ShellTenantRouteChildren: ShellTenantRouteChildren = {
+  ShellTenantApiDocsRoute: ShellTenantApiDocsRoute,
   ShellTenantAppInfoRoute: ShellTenantAppInfoRoute,
   ShellTenantChatsRoute: ShellTenantChatsRoute,
   ShellTenantMoreRoute: ShellTenantMoreRoute,

@@ -235,6 +235,18 @@ func (q *Queries) ListUserTenants(ctx context.Context, userID pgtype.UUID) ([]Li
 	return items, nil
 }
 
+const ownsATenant = `-- name: OwnsATenant :one
+SELECT EXISTS (SELECT 1 FROM tenants WHERE owner_id = $1)::bool
+`
+
+// Whether the user owns any tenant: the API's reference is for owners only.
+func (q *Queries) OwnsATenant(ctx context.Context, ownerID pgtype.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, ownsATenant, ownerID)
+	var column_1 bool
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const setUserProfile = `-- name: SetUserProfile :exec
 UPDATE users SET
     preferred_language = COALESCE($1, preferred_language),

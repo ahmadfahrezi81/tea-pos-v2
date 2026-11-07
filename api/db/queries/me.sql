@@ -58,3 +58,7 @@ FROM tenant_access_requests r
 JOIN tenants t ON t.id = r.tenant_id
 WHERE r.user_id = $1 AND r.status IN ('pending', 'blocked')
 ORDER BY t.slug;
+
+-- name: OwnsATenant :one
+-- Whether the user owns any tenant: the API's reference is for owners only.
+SELECT EXISTS (SELECT 1 FROM tenants WHERE owner_id = $1)::bool;

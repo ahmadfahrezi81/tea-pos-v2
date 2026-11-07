@@ -21,7 +21,7 @@ func registerMe(api huma.API, d Deps) {
 		OperationID: "getMe",
 		Method:      http.MethodGet,
 		Path:        "/me",
-		Summary:     "The signed-in user, their tenants and stores",
+		Summary:     "The signed-in user, their tenants and stores, their flags and the tenants they asked to join",
 		Tags:        []string{"me"},
 	}, auth.SignedIn, func(ctx context.Context, _ *struct{}) (*contract.MeOutput, error) {
 		caller, _ := auth.CallerFrom(ctx)
