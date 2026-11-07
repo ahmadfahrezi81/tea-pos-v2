@@ -1,15 +1,14 @@
 import { useConnection, type Level } from "@tea-pos/api-client/connection";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useT } from "@tea-pos/i18n/react";
-import { Check, WifiLow, WifiOff, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const BACK_ONLINE_MS = 2000;
 
-const LOOK: Partial<Record<Level, [LucideIcon, MessageKey, string]>> = {
-    offline: [WifiOff, "connection.offline", "bg-gray-900"],
-    failing: [WifiOff, "connection.failing", "bg-gray-900"],
-    slow: [WifiLow, "connection.slow", "bg-amber-600"],
+const LOOK: Partial<Record<Level, [MessageKey, string]>> = {
+    offline: ["connection.offline", "bg-gray-900"],
+    failing: ["connection.failing", "bg-gray-900"],
+    slow: ["connection.slow", "bg-amber-600"],
 };
 
 /** Under the tabs, only when the connection is in trouble, as Spotify and YouTube do; then "Back online" briefly. */
@@ -28,16 +27,15 @@ export function OfflineBanner() {
         return () => clearTimeout(timer);
     }, [level]);
 
-    const look: [LucideIcon, MessageKey, string] | undefined =
-        LOOK[level] ?? (back ? [Check, "connection.backOnline", "bg-green-600"] : undefined);
+    const look: [MessageKey, string] | undefined =
+        LOOK[level] ?? (back ? ["connection.backOnline", "bg-green-600"] : undefined);
     if (!look) return null;
-    const [Icon, key, color] = look;
+    const [key, color] = look;
     return (
         <div
             role="status"
-            className={`flex items-center justify-center gap-2 px-4 py-1.5 text-sm font-semibold text-white ${color}`}
+            className={`px-4 py-1.5 text-center text-sm font-semibold text-white ${color}`}
         >
-            <Icon size={16} strokeWidth={2.75} />
             {t(key)}
         </div>
     );
