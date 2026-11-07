@@ -34,7 +34,9 @@
             "saturday": "Saturday",
             "sunday": "Sunday"
         },
-        "loadMore": "Load more"
+        "loadMore": "Load more",
+        "retake": "Retake",
+        "remove": "Remove"
     },
     "home": {
         "title": "Home",

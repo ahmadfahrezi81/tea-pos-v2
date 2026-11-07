@@ -230,7 +230,11 @@ export function AddClaim() {
                                     );
                                     setPhotoUrl(url);
                                 }}
+                                onRemove={() => setPhotoUrl(undefined)}
                                 failedLabel={t("manage.photoProcessFailed")}
+                                retakeLabel={t("common.retake")}
+                                removeLabel={t("common.remove")}
+                                title={t("claims.receiptPhoto")}
                             >
                                 {t("manage.photoTapToAdd")}
                             </PhotoInput>

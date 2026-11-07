@@ -163,6 +163,10 @@ export function PayConfirm({ id }: { id: string }) {
                         <PhotoInput
                             screenshot
                             failedLabel={t("pay.uploadFailed")}
+                            onRemove={() => setProof(null)}
+                            retakeLabel={t("common.retake")}
+                            removeLabel={t("common.remove")}
+                            title={t("pay.transferScreenshot")}
                             upload={async (photo, onProgress) => {
                                 const done = await uploadPhoto(
                                     { tenant: slug, purpose: "payroll_proof" },

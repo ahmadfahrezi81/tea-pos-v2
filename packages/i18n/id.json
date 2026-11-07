@@ -34,7 +34,9 @@
             "saturday": "Sabtu",
             "sunday": "Minggu"
         },
-        "loadMore": "Muat lebih banyak"
+        "loadMore": "Muat lebih banyak",
+        "retake": "Foto ulang",
+        "remove": "Hapus"
     },
     "home": {
         "title": "Beranda",
