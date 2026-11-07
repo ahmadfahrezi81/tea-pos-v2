@@ -45,6 +45,11 @@ export function showPreview(name: string) {
             window.dispatchEvent(new Event("online"));
             [80, 80, 80, 80, 80].forEach((ms) => noteAnswer(ms));
         },
+        // Offline, then back 2 s later: a fresh page was never offline, so `online` alone shows nothing.
+        back: () => {
+            previews.offline!();
+            setTimeout(previews.online!, 2000);
+        },
     };
     previews[name]?.();
 }
