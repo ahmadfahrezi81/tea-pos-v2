@@ -214,7 +214,8 @@
         "title": "App info",
         "app": "App",
         "server": "Server",
-        "status": "Status"
+        "build": "Build",
+        "outdated": "Outdated"
     },
     "errors": {
         "account_inactive": "This account isn't active. Ask the owner.",

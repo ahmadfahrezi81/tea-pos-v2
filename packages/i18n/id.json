@@ -214,7 +214,8 @@
         "title": "Info aplikasi",
         "app": "Aplikasi",
         "server": "Server",
-        "status": "Status"
+        "build": "Build",
+        "outdated": "Perlu update"
     },
     "errors": {
         "account_inactive": "Akun ini tidak aktif. Hubungi pemilik.",

@@ -21,13 +21,11 @@ export function StatusScreen() {
     const loading = <Skeleton className="h-4 w-28 rounded" />;
     const server = health.data && `${health.data.version} (${health.data.commit.slice(0, 7)})`;
     // The phone's build, the server's (older after a release that only changed screens), then
-    // whether the phone is on the newest; behind, Update now below says it instead.
+    // whether the phone is on the newest; behind, Update now under it.
     const rows: [string, ReactNode][] = [
         [t("status.app"), currentVersion()],
         [t("status.server"), server || loading],
-        ...(state === "available"
-            ? []
-            : [[t("status.status"), stateText || loading] as [string, ReactNode]]),
+        [t("status.build"), state === "available" ? t("status.outdated") : stateText || loading],
     ];
 
     return (
