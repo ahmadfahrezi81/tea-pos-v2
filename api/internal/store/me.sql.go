@@ -171,7 +171,7 @@ func (q *Queries) ListTenantStores(ctx context.Context, userID pgtype.UUID) ([]L
 }
 
 const listUserTenants = `-- name: ListUserTenants :many
-SELECT t.id, t.slug, t.name, t.pay_frequency, a.status,
+SELECT t.id, t.slug, t.name, t.pay_frequency, t.created_at, a.status,
     coalesce(t.owner_id = a.user_id, false)::bool AS is_owner,
     coalesce((
         SELECT x.access FROM user_app_access x
@@ -195,6 +195,7 @@ type ListUserTenantsRow struct {
 	Slug             string
 	Name             string
 	PayFrequency     string
+	CreatedAt        pgtype.Timestamptz
 	Status           string
 	IsOwner          bool
 	SellerAccess     string
@@ -217,6 +218,7 @@ func (q *Queries) ListUserTenants(ctx context.Context, userID pgtype.UUID) ([]Li
 			&i.Slug,
 			&i.Name,
 			&i.PayFrequency,
+			&i.CreatedAt,
 			&i.Status,
 			&i.IsOwner,
 			&i.SellerAccess,
@@ -231,6 +233,18 @@ func (q *Queries) ListUserTenants(ctx context.Context, userID pgtype.UUID) ([]Li
 		return nil, err
 	}
 	return items, nil
+}
+
+const ownsATenant = `-- name: OwnsATenant :one
+SELECT EXISTS (SELECT 1 FROM tenants WHERE owner_id = $1)::bool
+`
+
+// Whether the user owns any tenant: the API's reference is for owners only.
+func (q *Queries) OwnsATenant(ctx context.Context, ownerID pgtype.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, ownsATenant, ownerID)
+	var column_1 bool
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const setUserProfile = `-- name: SetUserProfile :exec

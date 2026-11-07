@@ -1,6 +1,7 @@
 import { addDays, formatCalendarDay, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { useSetSearch } from "@tea-pos/shell/searchParam";
+import { useFirstMonth } from "@tea-pos/shell/tenant";
 import { DateRangeSheet, monthRange, type DateRange } from "@tea-pos/ui/DateRangeSheet";
 import { ICON } from "@tea-pos/ui/icon";
 import { useSearch, type SearchSchemaInput } from "@tanstack/react-router";
@@ -82,6 +83,7 @@ export function useRange() {
 
 /** The heading of a Store screen and its selector at once: what is picked; a tap opens the sheet. */
 export function RangeBar() {
+    const firstMonth = useFirstMonth();
     const t = useT();
     const locale = useLocale();
     const { from, to, today, label, detail, dates } = useRange();
@@ -122,6 +124,7 @@ export function RangeBar() {
                     set(r.from === today && r.to === today ? { from: "", to: "" } : { ...r })
                 }
                 today={today}
+                firstMonth={firstMonth}
                 locale={locale}
                 presets={presets(today).map((p) => ({ ...p, label: t(`store.${p.key}`) }))}
                 labels={{

@@ -8,7 +8,7 @@ import { currentVersion, useAppUpdate, useUpdateState } from "../frame/AppUpdate
 import { UpdateNow } from "../frame/UpdateNow";
 import { useUpdateText } from "../frame/useUpdateText";
 
-/** Is the API reachable, which build is running, and is it the latest: More's App info page. */
+/** Which build this phone runs and whether it is the latest, and which the server runs: More's App info page. */
 export function StatusScreen() {
     const t = useT();
     const router = useRouter();
@@ -18,26 +18,29 @@ export function StatusScreen() {
     const stateText = useUpdateText(state);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => peek(), []);
-    const loading = <Skeleton className="h-4 w-16 rounded" />;
+    const loading = <Skeleton className="h-4 w-28 rounded" />;
+    const server = health.data && `${health.data.version} (${health.data.commit.slice(0, 7)})`;
+    // The phone's build, the server's (older after a release that only changed screens), then
+    // whether the phone is on the newest; behind, Update now under it.
     const rows: [string, ReactNode][] = [
-        [
-            t("status.api"),
-            health.isSuccess ? t("status.ok") : health.isError ? t("status.down") : loading,
-        ],
-        [t("status.version"), health.data?.version ?? loading],
-        [t("status.commit"), health.data?.commit.slice(0, 7) ?? loading],
         [t("status.app"), currentVersion()],
-        // Behind: no words, the button below says it.
-        ...(state === "available"
-            ? []
-            : [[t("status.update"), stateText || loading] as [string, ReactNode]]),
+        [t("status.server"), server || loading],
+        // Offline: unknown, and the banner already says so.
+        [
+            t("status.build"),
+            state === "available"
+                ? t("status.outdated")
+                : state === "offline"
+                  ? "—"
+                  : stateText || loading,
+        ],
     ];
 
     return (
         <div className="rounded-2xl bg-white px-4 py-1 divide-y divide-gray-100">
             {rows.map(([label, value]) => (
                 <div key={label} className="flex justify-between gap-3 py-3 text-sm">
-                    <span className="text-gray-500">{label}</span>
+                    <span className="text-gray-700">{label}</span>
                     <span className="font-mono text-gray-900 text-right">{value}</span>
                 </div>
             ))}

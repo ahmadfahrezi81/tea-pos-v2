@@ -1,6 +1,6 @@
 import { formatMoney, localDate } from "@tea-pos/format";
 import { useT } from "@tea-pos/i18n/react";
-import { useSlug } from "@tea-pos/shell/tenant";
+import { useFirstMonth, useSlug } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { LoadMore } from "@tea-pos/ui/LoadMore";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -18,6 +18,7 @@ const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
 /** The browser's own date picker, as the old app's. */
 function DatePicker({ date, onChange }: { date: string; onChange: (date: string) => void }) {
     const t = useT();
+    const firstMonth = useFirstMonth();
     return (
         <div className="bg-white p-4 rounded-2xl">
             <label className="block text-sm font-medium text-gray-700">
@@ -26,6 +27,8 @@ function DatePicker({ date, onChange }: { date: string; onChange: (date: string)
                 <input
                     type="date"
                     value={date}
+                    min={`${firstMonth}-01`}
+                    max={localDate()}
                     onChange={(e) => onChange(e.target.value || localDate())}
                     className="mt-2 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand/90 focus:outline-none"
                 />

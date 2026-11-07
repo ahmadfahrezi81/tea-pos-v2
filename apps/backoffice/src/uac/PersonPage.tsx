@@ -203,8 +203,10 @@ function StatusRow({ person: p, editable }: { person: Person; editable: boolean 
         body: p.active ? "uac.offBody" : "uac.onBody",
     } as const;
     return (
-        <div className="flex items-center gap-3 border-b-2 border-slate-100 py-4">
-            <UserCheck {...rowIcon} />
+        <div className="flex items-start gap-3 border-b-2 border-slate-100 py-4">
+            <span className="flex h-[25.5px] shrink-0 items-center">
+                <UserCheck {...rowIcon} />
+            </span>
             <div className="flex-1 min-w-0">
                 <p className="text-[17px] font-medium text-gray-800">{t("uac.status")}</p>
                 <p className="text-xs text-gray-500">

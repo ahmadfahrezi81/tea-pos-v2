@@ -16,7 +16,7 @@ import { STEP_ARROW, stepIcon } from "@tea-pos/ui/MonthStepper";
 import { ListSection } from "@tea-pos/ui/ListSection";
 import { Tile } from "@tea-pos/ui/Tile";
 import { useRef, type PointerEvent as ReactPointerEvent } from "react";
-import { useSlug } from "@tea-pos/shell/tenant";
+import { useFirstMonth, useSlug } from "@tea-pos/shell/tenant";
 
 type Person = components["schemas"]["Payout"];
 
@@ -31,6 +31,7 @@ export function PeriodHome({ start }: { start: string }) {
     const t = useT();
     const locale = useLocale();
     const slug = useSlug();
+    const firstPay = `${useFirstMonth(true)}-01`;
     const navigate = useNavigate();
     const card = useRef<HTMLDivElement>(null);
     const { data: p } = usePayPeriodAt(start);
@@ -98,8 +99,9 @@ export function PeriodHome({ start }: { start: string }) {
                 el.style.transform = "";
                 if (u.type !== "pointerup" || Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy))
                     return;
-                if (dx > 0) go(p.previous);
-                else if (p.next) go(p.next);
+                if (dx > 0) {
+                    if (p.previous >= firstPay) go(p.previous);
+                } else if (p.next) go(p.next);
             };
             window.addEventListener("pointermove", move);
             window.addEventListener("pointerup", end);
@@ -115,16 +117,20 @@ export function PeriodHome({ start }: { start: string }) {
                 className="rounded-2xl bg-white p-3 space-y-3 touch-pan-y"
             >
                 <div className="flex items-center justify-between">
-                    <Link
-                        to="/$tenant/pay"
-                        params={{ tenant: slug }}
-                        search={{ period: p.previous }}
-                        replace
-                        className={STEP_ARROW}
-                        aria-label="‹"
-                    >
-                        <ChevronLeft {...stepIcon} />
-                    </Link>
+                    {p.previous >= firstPay ? (
+                        <Link
+                            to="/$tenant/pay"
+                            params={{ tenant: slug }}
+                            search={{ period: p.previous }}
+                            replace
+                            className={STEP_ARROW}
+                            aria-label="‹"
+                        >
+                            <ChevronLeft {...stepIcon} />
+                        </Link>
+                    ) : (
+                        <span className="size-11 shrink-0" />
+                    )}
                     <div className="text-center">
                         <p className="font-mono text-xs font-bold uppercase tracking-widest text-gray-900">
                             {weeks(p.start, p.end, t("pay.week"))}

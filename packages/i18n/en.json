@@ -115,7 +115,6 @@
         "app": "App",
         "updateOffline": "No connection. Try again when you are online.",
         "updateIsLatest": "Latest",
-        "updateIsOffline": "Offline",
         "updateNow": "Update now"
     },
     "whatsNew": {
@@ -212,13 +211,10 @@
     },
     "status": {
         "title": "App info",
-        "api": "API",
-        "commit": "API commit",
-        "app": "App version",
-        "ok": "Connected",
-        "down": "Unreachable",
-        "version": "API version",
-        "update": "Update"
+        "app": "App",
+        "server": "Server",
+        "build": "Build",
+        "outdated": "Outdated"
     },
     "errors": {
         "account_inactive": "This account isn't active. Ask the owner.",
@@ -285,7 +281,9 @@
         "bad_receipt": "That receipt did not upload properly. Add it again.",
         "old_day_open": "An earlier day is still open. Close it in Analytics first.",
         "notSavedOffline": "Not saved: no connection. Try again.",
-        "session_not_found": "That session has already ended."
+        "session_not_found": "That session has already ended.",
+        "bad_hours": "A store has to open before it closes.",
+        "store_has_history": "This store has sales or days, so it can't be deleted. Make it Inactive instead."
     },
     "store": {
         "week": "Week",

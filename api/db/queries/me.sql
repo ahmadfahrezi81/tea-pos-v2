@@ -3,7 +3,7 @@ SELECT id, email, full_name, role, avatar_url, preferred_language, phone_number,
 
 -- name: ListUserTenants :many
 -- The tenants the user is an active member of, with what auth.LevelIn reads.
-SELECT t.id, t.slug, t.name, t.pay_frequency, a.status,
+SELECT t.id, t.slug, t.name, t.pay_frequency, t.created_at, a.status,
     coalesce(t.owner_id = a.user_id, false)::bool AS is_owner,
     coalesce((
         SELECT x.access FROM user_app_access x
@@ -58,3 +58,7 @@ FROM tenant_access_requests r
 JOIN tenants t ON t.id = r.tenant_id
 WHERE r.user_id = $1 AND r.status IN ('pending', 'blocked')
 ORDER BY t.slug;
+
+-- name: OwnsATenant :one
+-- Whether the user owns any tenant: the API's reference is for owners only.
+SELECT EXISTS (SELECT 1 FROM tenants WHERE owner_id = $1)::bool;

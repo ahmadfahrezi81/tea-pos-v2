@@ -1,19 +1,20 @@
 import { LoadFailed } from "@tea-pos/shell/LoadFailed";
 import { uploadPhoto } from "@tea-pos/api-client/files";
-import { addDays, formatCalendarDay, formatMoney, localDate } from "@tea-pos/format";
+import { addDays, formatCalendarDay, formatMoney, formatMonth, localDate } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { FormFooter } from "@tea-pos/shell/FormFooter";
 import { HeaderActions } from "@tea-pos/shell/HeaderActions";
-import { useSlug, useTenant } from "@tea-pos/shell/tenant";
+import { useFirstMonth, useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { Field } from "@tea-pos/ui/form/Field";
 import { ReadOnlyInput } from "@tea-pos/ui/form/ReadOnlyInput";
 import { SelectInput } from "@tea-pos/ui/form/SelectInput";
 import { Textarea } from "@tea-pos/ui/form/Textarea";
 import { PhotoInput } from "@tea-pos/ui/PhotoInput";
+import { MonthStepper } from "@tea-pos/ui/MonthStepper";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { useRouter } from "@tanstack/react-router";
-import { CalendarDays, ReceiptText } from "lucide-react";
+import { ReceiptText } from "lucide-react";
 import { useState } from "react";
 
 import { useCreateClaim, useMyClaims, useMyClaimTypes } from "./mine";
@@ -51,6 +52,7 @@ const lastOfMonth = (month: string) => {
 
 /** My Claims: what the seller is entitled to, and their claims month by month. */
 export function MyClaims() {
+    const firstMonth = useFirstMonth(true);
     const t = useT();
     const locale = useLocale();
     const [month, setMonth] = useState(localDate().slice(0, 7));
@@ -89,18 +91,13 @@ export function MyClaims() {
                 )}
             </div>
 
-            <div className="bg-white p-4 rounded-2xl">
-                <label className="block text-sm font-medium text-gray-700">
-                    <CalendarDays size={16} className="inline mr-1" />
-                    {t("analytics.selectMonth")}
-                    <input
-                        type="month"
-                        value={month}
-                        onChange={(e) => setMonth(e.target.value || localDate().slice(0, 7))}
-                        className="mt-2 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand/90 focus:outline-none"
-                    />
-                </label>
-            </div>
+            <MonthStepper
+                month={month}
+                label={formatMonth(`${month}-01`, locale)}
+                onChange={setMonth}
+                first={firstMonth}
+                pick={{ title: t("store.pickMonth"), today: localDate(), locale }}
+            />
 
             <div className="bg-white rounded-2xl">
                 {error && !claims ? (

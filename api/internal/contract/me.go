@@ -28,6 +28,7 @@ type MeTenant struct {
 	Slug         string    `json:"slug"`
 	Name         string    `json:"name"`
 	PayFrequency string    `json:"payFrequency" example:"bi_weekly"`
+	Since        string    `json:"since,omitempty" format:"date" doc:"When the tenant began: no picker goes before it"`
 	Access       MeAccess  `json:"access" doc:"The user's level in each app here; the screens hide what they cannot do"`
 	Owner        bool      `json:"owner" doc:"The tenant's owner: an admin everywhere, whatever the levels say"`
 	Stores       []MeStore `json:"stores" nullable:"false" doc:"Seller: the stores the user is assigned to. Backoffice: every store of the tenant"`
