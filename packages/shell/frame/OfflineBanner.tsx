@@ -14,7 +14,7 @@ const LOOK: Partial<Record<Level, [MessageKey, string]>> = {
 /** Under the tabs, only when the connection is in trouble, as Spotify and YouTube do; then "Back online" briefly. */
 export function OfflineBanner() {
     const t = useT();
-    const { level } = useConnection();
+    const level = useConnection();
     const [back, setBack] = useState(false);
     const was = useRef(level);
 

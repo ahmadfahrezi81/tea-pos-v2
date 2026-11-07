@@ -40,7 +40,6 @@ export function showPreview(name: string) {
         offline: () => window.dispatchEvent(new Event("offline")),
         failing: () => noteTrouble(),
         slow: () => [1500, 1500, 1500, 1500, 1500].forEach((ms) => noteAnswer(ms)),
-        okay: () => [500, 500, 500, 500, 500].forEach((ms) => noteAnswer(ms)),
         online: () => {
             window.dispatchEvent(new Event("online"));
             [80, 80, 80, 80, 80].forEach((ms) => noteAnswer(ms));
