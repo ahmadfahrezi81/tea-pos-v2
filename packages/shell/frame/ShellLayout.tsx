@@ -54,6 +54,12 @@ function ShellLayout({ tabs }: { tabs: AppTab[] }) {
     useErrorToasts();
     // No profile, saved or answered: the screens would be blank, so say so and offer a retry.
     const noProfile = me.isError && me.data === undefined && !maintenance;
+    useEffect(() => {
+        if (!import.meta.env.DEV) return;
+        const name = new URLSearchParams(location.search).get("preview");
+        if (name)
+            void import("../lib/preview").then((m) => setTimeout(() => m.showPreview(name), 600));
+    }, []);
     const timedOut = noProfile && (me.error as Error | null)?.name === "TimeoutError";
     useEffect(() => {
         // Queued with the page views (lib/events.ts), as index.html's watchdog does.
