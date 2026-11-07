@@ -342,7 +342,6 @@
     },
     "errorSheet": {
         "title": "Couldn't save",
-        "details": "Details",
         "time": "Time",
         "request": "Request",
         "status": "Status",

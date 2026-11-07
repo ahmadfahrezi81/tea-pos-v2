@@ -342,7 +342,6 @@
     },
     "errorSheet": {
         "title": "Gagal menyimpan",
-        "details": "Detail",
         "time": "Waktu",
         "request": "Permintaan",
         "status": "Status",

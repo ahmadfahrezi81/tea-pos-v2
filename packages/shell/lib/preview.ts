@@ -23,11 +23,7 @@ export function showPreview(name: string) {
     };
     const previews: Record<string, () => void> = {
         success: () => toast("Order confirmed 3 items · Rp 21.000", { kind: "success" }),
-        error: () =>
-            toast("This store has closed for today.", {
-                kind: "error",
-                action: { label: "Details", onClick: () => previews.sheet!() },
-            }),
+        error: () => toast("This store has closed for today.", { kind: "error" }),
         warning: () => toast("Not saved: no connection. Try again.", { kind: "warning" }),
         info: () => toast("Copied", { kind: "info" }),
         detail: () =>

@@ -42,20 +42,14 @@ function isBroken(t: (key: MessageKey) => string, error: unknown): boolean {
 
 /**
  * A save that failed: a connection that failed says so; something the person can act on is a red
- * toast with Details; anything else is a bug, and its sheet opens by itself, to copy and send.
+ * toast saying what happened; anything else is a bug, and its sheet opens by itself, to copy and send.
  */
 export function showFailure(t: (key: MessageKey) => string, error: unknown) {
     const code = (error as { code?: string } | null)?.code ?? "";
     if (QUIET.has(code)) return;
     if (isConnection(error)) return toast(t("errors.notSavedOffline"), { kind: "warning" });
-    const problem = {
-        title: t("errorSheet.title"),
-        text: errorMessage(t, error),
-        failure: failureFor(error),
-    };
-    if (isBroken(t, error)) return openErrorSheet(problem);
-    toast(problem.text, {
-        kind: "error",
-        action: { label: t("errorSheet.details"), onClick: () => openErrorSheet(problem) },
-    });
+    const text = errorMessage(t, error);
+    if (isBroken(t, error))
+        return openErrorSheet({ title: t("errorSheet.title"), text, failure: failureFor(error) });
+    toast(text, { kind: "error" });
 }
