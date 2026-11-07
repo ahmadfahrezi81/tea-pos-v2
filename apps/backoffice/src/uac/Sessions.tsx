@@ -6,6 +6,7 @@ import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
 import { SettingsGroup } from "@tea-pos/shell/Settings";
 import { useAccess, useSlug } from "@tea-pos/shell/tenant";
 import { Badge } from "@tea-pos/ui/Badge";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { toast } from "@tea-pos/ui/toast";
 import { Link } from "@tanstack/react-router";
@@ -61,34 +62,39 @@ function SessionRow({ session: s, right }: { session: Session; right?: ReactNode
     );
 }
 
-/** On a person's page: where they are signed in, read only; Manage › ends one. Admins only. */
+/** On a person's page: where they are signed in, read only; Manage › beside its title ends one. Admins only. */
 export function SessionsCard({ person: p }: { person: Person }) {
     const t = useT();
     const slug = useSlug();
     const canEnd = useCanEnd(p);
     const { data, isError } = useUacSessions(p.id);
     return (
-        <SettingsGroup title={t("uac.sessions")}>
-            {isError && !data ? (
-                <p className="py-4 text-sm text-gray-500">{t("common.failed")}</p>
-            ) : !data ? (
-                <Skeleton className="my-3 h-12 rounded-xl" />
-            ) : data.sessions.length === 0 ? (
-                <p className="py-4 text-sm text-gray-500">{t("uac.noSessions")}</p>
-            ) : (
-                data.sessions.map((s) => <SessionRow key={s.id} session={s} />)
-            )}
-            {canEnd && !!data?.sessions.length && (
-                <Link
-                    to="/$tenant/uac/$userId/sessions"
-                    params={{ tenant: slug, userId: p.id }}
-                    className="-mx-4 flex items-center justify-end gap-1 border-t-2 border-slate-100 px-4 py-3.5 text-sm font-semibold text-brand active:bg-gray-50"
-                >
-                    {t("uac.manageSessions")}
-                    <ChevronRight size={18} strokeWidth={2.5} />
-                </Link>
-            )}
-        </SettingsGroup>
+        <section className="space-y-2">
+            <div className="flex items-center justify-between gap-3 pr-1">
+                <SectionLabel>{t("uac.sessions")}</SectionLabel>
+                {canEnd && !!data?.sessions.length && (
+                    <Link
+                        to="/$tenant/uac/$userId/sessions"
+                        params={{ tenant: slug, userId: p.id }}
+                        className="flex items-center gap-0.5 text-sm font-semibold text-brand active:opacity-60"
+                    >
+                        {t("uac.manageSessions")}
+                        <ChevronRight size={18} strokeWidth={2.5} />
+                    </Link>
+                )}
+            </div>
+            <div className="bg-white rounded-2xl px-4 py-1">
+                {isError && !data ? (
+                    <p className="py-4 text-sm text-gray-500">{t("common.failed")}</p>
+                ) : !data ? (
+                    <Skeleton className="my-3 h-12 rounded-xl" />
+                ) : data.sessions.length === 0 ? (
+                    <p className="py-4 text-sm text-gray-500">{t("uac.noSessions")}</p>
+                ) : (
+                    data.sessions.map((s) => <SessionRow key={s.id} session={s} />)
+                )}
+            </div>
+        </section>
     );
 }
 
