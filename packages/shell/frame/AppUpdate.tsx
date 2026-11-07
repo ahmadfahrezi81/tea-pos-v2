@@ -430,7 +430,7 @@ export function UpdateBar({ percent, dark = false }: { percent: number | null; d
             className={`h-1.5 overflow-hidden rounded-full ${dark ? "bg-white/25" : "bg-gray-200"}`}
         >
             {percent === null ? (
-                <div className="skeleton h-full w-full" />
+                <div className="sweep h-full w-full" />
             ) : (
                 <div
                     className={`h-full rounded-full transition-[width] duration-300 ${dark ? "bg-white" : "bg-brand"}`}
