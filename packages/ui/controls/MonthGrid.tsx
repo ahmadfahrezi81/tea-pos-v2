@@ -3,17 +3,19 @@ import { useState } from "react";
 
 import { FIRST_MONTH, STEP_ARROW, stepIcon } from "./MonthStepper";
 
-/** A year's months in a grid, ‹ › for other years; none after `today`'s month or before FIRST_MONTH. */
+/** A year's months in a grid, ‹ › for other years; none after `today`'s month or before `first`. */
 export function MonthGrid({
     value,
     today,
     locale,
     onPick,
+    first = FIRST_MONTH,
 }: {
     value: string | null;
     today: string;
     locale: string;
     onPick: (month: string) => void;
+    first?: string;
 }) {
     const [year, setYear] = useState(Number((value ?? today).slice(0, 4)));
     const thisMonth = today.slice(0, 7);
@@ -23,7 +25,7 @@ export function MonthGrid({
             <div className="flex items-center justify-between">
                 <button
                     onClick={() => setYear(year - 1)}
-                    disabled={year <= Number(FIRST_MONTH.slice(0, 4))}
+                    disabled={year <= Number(first.slice(0, 4))}
                     className={`${STEP_ARROW} disabled:opacity-30`}
                     aria-label="‹"
                 >
@@ -45,7 +47,7 @@ export function MonthGrid({
                     return (
                         <button
                             key={month}
-                            disabled={month > thisMonth || month < FIRST_MONTH}
+                            disabled={month > thisMonth || month < first}
                             onClick={() => onPick(month)}
                             className={`h-12 rounded-xl text-base font-semibold disabled:opacity-30 active:opacity-70 ${
                                 month === value

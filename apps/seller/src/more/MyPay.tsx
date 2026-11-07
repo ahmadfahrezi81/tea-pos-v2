@@ -15,7 +15,7 @@ import { useSlug } from "@tea-pos/shell/tenant";
 import { CopyButton } from "@tea-pos/ui/CopyButton";
 import { ImagePreview } from "@tea-pos/ui/ImagePreview";
 import { Picture } from "@tea-pos/ui/Picture";
-import { MonthStepper } from "@tea-pos/ui/MonthStepper";
+import { FIRST_PAY_MONTH, MonthStepper } from "@tea-pos/ui/MonthStepper";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { Link } from "@tanstack/react-router";
 import { CalendarClock } from "lucide-react";
@@ -108,6 +108,7 @@ export function MyPay() {
                 month={month}
                 label={formatMonth(`${month}-01`, locale)}
                 onChange={setPicked}
+                first={FIRST_PAY_MONTH}
                 pick={{ title: t("store.pickMonth"), today, locale }}
             />
             {payouts.length === 0 ? (

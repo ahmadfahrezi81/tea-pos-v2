@@ -11,7 +11,7 @@ import { ReadOnlyInput } from "@tea-pos/ui/form/ReadOnlyInput";
 import { SelectInput } from "@tea-pos/ui/form/SelectInput";
 import { Textarea } from "@tea-pos/ui/form/Textarea";
 import { PhotoInput } from "@tea-pos/ui/PhotoInput";
-import { MonthStepper } from "@tea-pos/ui/MonthStepper";
+import { FIRST_PAY_MONTH, MonthStepper } from "@tea-pos/ui/MonthStepper";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { useRouter } from "@tanstack/react-router";
 import { ReceiptText } from "lucide-react";
@@ -94,6 +94,7 @@ export function MyClaims() {
                 month={month}
                 label={formatMonth(`${month}-01`, locale)}
                 onChange={setMonth}
+                first={FIRST_PAY_MONTH}
                 pick={{ title: t("store.pickMonth"), today: localDate(), locale }}
             />
 

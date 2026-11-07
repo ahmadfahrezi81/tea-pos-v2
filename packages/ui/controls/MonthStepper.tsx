@@ -12,6 +12,9 @@ export const stepIcon = { size: 26, strokeWidth: 2.75 } as const;
 /** The first month with any data (the business began then): no picker goes before it. */
 export const FIRST_MONTH = "2025-08";
 export const FIRST_DAY = `${FIRST_MONTH}-01`;
+/** Pay (payouts, claims) began later. */
+export const FIRST_PAY_MONTH = "2026-06";
+export const FIRST_PAY_DAY = `${FIRST_PAY_MONTH}-01`;
 
 /**
  * The old backoffice's month bar: ‹ the month ›. Months are "YYYY-MM"; the label is the caller's.
@@ -22,11 +25,14 @@ export function MonthStepper({
     label,
     onChange,
     pick,
+    first = FIRST_MONTH,
 }: {
     month: string;
     label: string;
     onChange: (month: string) => void;
     pick?: { title: string; today: string; locale: string };
+    /** The earliest month it goes to. */
+    first?: string;
 }) {
     const [open, setOpen] = useState(false);
     const step = (by: number) => {
@@ -38,7 +44,7 @@ export function MonthStepper({
         <div className="flex items-center justify-between gap-2 bg-white rounded-xl px-2 py-1.5">
             <button
                 onClick={() => step(-1)}
-                disabled={month <= FIRST_MONTH}
+                disabled={month <= first}
                 className={STEP_ARROW}
                 aria-label="‹"
             >
@@ -69,6 +75,7 @@ export function MonthStepper({
                         // Opens on the shown month's year each time.
                         key={String(open)}
                         value={month}
+                        first={first}
                         today={pick.today}
                         locale={pick.locale}
                         onPick={(m) => {

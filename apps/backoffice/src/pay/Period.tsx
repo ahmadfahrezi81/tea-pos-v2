@@ -12,7 +12,7 @@ import { ICON } from "@tea-pos/ui/icon";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { Badge } from "@tea-pos/ui/Badge";
-import { FIRST_DAY, STEP_ARROW, stepIcon } from "@tea-pos/ui/MonthStepper";
+import { FIRST_PAY_DAY, STEP_ARROW, stepIcon } from "@tea-pos/ui/MonthStepper";
 import { ListSection } from "@tea-pos/ui/ListSection";
 import { Tile } from "@tea-pos/ui/Tile";
 import { useRef, type PointerEvent as ReactPointerEvent } from "react";
@@ -99,7 +99,7 @@ export function PeriodHome({ start }: { start: string }) {
                 if (u.type !== "pointerup" || Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy))
                     return;
                 if (dx > 0) {
-                    if (p.previous >= FIRST_DAY) go(p.previous);
+                    if (p.previous >= FIRST_PAY_DAY) go(p.previous);
                 } else if (p.next) go(p.next);
             };
             window.addEventListener("pointermove", move);
@@ -116,7 +116,7 @@ export function PeriodHome({ start }: { start: string }) {
                 className="rounded-2xl bg-white p-3 space-y-3 touch-pan-y"
             >
                 <div className="flex items-center justify-between">
-                    {p.previous >= FIRST_DAY ? (
+                    {p.previous >= FIRST_PAY_DAY ? (
                         <Link
                             to="/$tenant/pay"
                             params={{ tenant: slug }}
