@@ -10,7 +10,7 @@ export function UpdateNow({ onStarted }: { onStarted?: () => void }) {
     return (
         <button
             onClick={() => void update.checkNow().then((r) => r === "started" && onStarted?.())}
-            className="flex items-center gap-1.5 text-sm font-semibold text-red-600 active:opacity-60"
+            className="flex items-center gap-1.5 rounded-lg bg-red-500 px-3 py-1.5 text-sm font-semibold text-white active:opacity-80"
         >
             <Download size={16} strokeWidth={2.5} />
             {t("more.updateNow")}
