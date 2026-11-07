@@ -3,6 +3,8 @@ import createQueryHooks from "openapi-react-query";
 
 import type { paths } from "./schema";
 import { createBrake } from "./brake";
+import { noteAnswer, noteTrouble } from "./connection";
+import { recordFailure } from "./failures";
 import { APP_TAG, appTooOld, brakeTripped, setMaintenance } from "./status";
 
 // Every app calls the API on its own address (/api, forwarded by the Cloudflare Worker): no CORS.
@@ -34,7 +36,25 @@ api.use({
             request.headers.set("Idempotency-Key", crypto.randomUUID());
         }
     },
-    async onResponse({ response }) {
+    async onResponse({ request, response }) {
+        // Cloudflare's own answer when the API is down or too slow: the way to it fails.
+        if ([502, 504, 522, 524].includes(response.status)) noteTrouble();
+        else noteAnswer();
+        if (!response.ok) {
+            const body = (await response
+                .clone()
+                .json()
+                .catch(() => null)) as { code?: string; message?: string } | null;
+            recordFailure({
+                at: new Date().toISOString(),
+                method: request.method,
+                path: new URL(request.url).pathname,
+                status: response.status,
+                code: body?.code,
+                message: body?.message,
+                requestId: response.headers.get("X-Request-Id") ?? undefined,
+            });
+        }
         // A session that ended (expired, signed out elsewhere) sends the user to sign in again.
         if (response.status === 401 && window.location.pathname !== "/login") {
             window.location.assign("/login");
@@ -49,6 +69,16 @@ api.use({
         } else if (response.ok) {
             setMaintenance(false);
         }
+    },
+    onError({ request, error }) {
+        // No answer at all: no network, a dead connection, or the time limit.
+        if (navigator.onLine) noteTrouble();
+        recordFailure({
+            at: new Date().toISOString(),
+            method: request.method,
+            path: new URL(request.url).pathname,
+            message: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+        });
     },
 });
 

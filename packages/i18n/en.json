@@ -281,7 +281,8 @@
         "period_closed": "This pay period is already closed.",
         "no_work_that_day": "You did not work that day.",
         "bad_receipt": "That receipt did not upload properly. Add it again.",
-        "old_day_open": "An earlier day is still open. Close it in Analytics first."
+        "old_day_open": "An earlier day is still open. Close it in Analytics first.",
+        "notSavedOffline": "Not saved: no connection. Try again."
     },
     "store": {
         "week": "Week",
@@ -338,5 +339,28 @@
         "didntOpen": "Didn't open",
         "nNotClosed": "{n} not closed",
         "daysClosed": "{n} of {m} days closed"
+    },
+    "errorSheet": {
+        "title": "Couldn't save",
+        "details": "Details",
+        "time": "Time",
+        "request": "Request",
+        "status": "Status",
+        "noAnswer": "No answer",
+        "requestId": "Request ID",
+        "app": "App",
+        "copy": "Copy details"
+    },
+    "connection": {
+        "offlineTitle": "No connection",
+        "slowTitle": "Connection is slow",
+        "offlineBody": "You can still look at what's already on this phone. A save waits and goes through once you're back online, as long as the app stays open.",
+        "slowBody": "The server isn't answering right now. What's on screen may be out of date, and a save may fail: try it again.",
+        "since": "Since",
+        "lastAnswer": "Last answer from the server",
+        "never": "Not yet",
+        "tryAgain": "Try again",
+        "offlineToast": "You're offline",
+        "label": "Connection"
     }
 }

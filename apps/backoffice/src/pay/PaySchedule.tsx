@@ -139,7 +139,9 @@ export function PaySchedule() {
                     busyLabel={t("pay.saving")}
                     onConfirm={async () => {
                         await save.mutateAsync({ frequency: pending });
-                        toast(t("pay.scheduleSet").replace("{name}", name(pending)));
+                        toast(t("pay.scheduleSet").replace("{name}", name(pending)), {
+                            kind: "success",
+                        });
                         setPending(null);
                     }}
                     onError={() => setPending(null)}

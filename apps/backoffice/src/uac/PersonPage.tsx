@@ -256,7 +256,7 @@ function LogoutRow({ person: p }: { person: Person }) {
                 onConfirm={async () => {
                     await logout.mutateAsync({});
                     setAsking(false);
-                    toast(t("uac.loggedOut").replace("{name}", p.name));
+                    toast(t("uac.loggedOut").replace("{name}", p.name), { kind: "success" });
                 }}
                 onError={() => setAsking(false)}
                 onCancel={() => setAsking(false)}

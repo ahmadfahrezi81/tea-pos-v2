@@ -281,7 +281,8 @@
         "period_closed": "Periode gaji ini sudah ditutup.",
         "no_work_that_day": "Kamu tidak bekerja hari itu.",
         "bad_receipt": "Struk tidak terunggah dengan benar. Tambahkan lagi.",
-        "old_day_open": "Hari sebelumnya masih buka. Tutup dulu di Analitik."
+        "old_day_open": "Hari sebelumnya masih buka. Tutup dulu di Analitik.",
+        "notSavedOffline": "Tidak tersimpan: tidak ada koneksi. Coba lagi."
     },
     "store": {
         "week": "Week",
@@ -338,5 +339,28 @@
         "didntOpen": "Tidak buka",
         "nNotClosed": "{n} belum ditutup",
         "daysClosed": "{n} dari {m} hari ditutup"
+    },
+    "errorSheet": {
+        "title": "Gagal menyimpan",
+        "details": "Detail",
+        "time": "Waktu",
+        "request": "Permintaan",
+        "status": "Status",
+        "noAnswer": "Tidak ada jawaban",
+        "requestId": "ID permintaan",
+        "app": "Aplikasi",
+        "copy": "Salin detail"
+    },
+    "connection": {
+        "offlineTitle": "Tidak ada koneksi",
+        "slowTitle": "Koneksi lambat",
+        "offlineBody": "Kamu masih bisa melihat yang sudah ada di HP ini. Perubahan menunggu dan terkirim saat kembali online, selama aplikasi tetap terbuka.",
+        "slowBody": "Server belum menjawab. Yang ada di layar mungkin belum terbaru, dan menyimpan bisa gagal: coba lagi.",
+        "since": "Sejak",
+        "lastAnswer": "Jawaban terakhir dari server",
+        "never": "Belum ada",
+        "tryAgain": "Coba lagi",
+        "offlineToast": "Kamu sedang offline",
+        "label": "Koneksi"
     }
 }

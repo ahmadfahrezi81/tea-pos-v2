@@ -6,7 +6,7 @@ import { toast } from "@tea-pos/ui/toast";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useApp } from "../session/AppContext";
-import { errorMessage } from "../session/errors";
+import { showFailure } from "../session/failed";
 
 // Every language the suite has, in the old seller app's order; an app offers only its own.
 const LANGUAGES: { locale: Locale; sublabel: string }[] = [
@@ -26,12 +26,12 @@ export function LanguageScreen() {
         if (language === current) return;
         // Its words first: without them (no signal) nothing is saved or changed.
         const messages = await messagesFor(language).catch(() => null);
-        if (!messages) return toast(t("more.updateOffline"));
+        if (!messages) return toast(t("more.updateOffline"), { kind: "warning" });
         // Not saved (no signal): stay in this language, or the next /me would switch it back.
         const saved = await api
             .PATCH("/me", { body: { language } })
             .catch((e: unknown) => ({ error: e }));
-        if (saved.error) return toast(errorMessage(t, saved.error));
+        if (saved.error) return showFailure(t, saved.error);
         try {
             // The key pickLocale reads before any JavaScript, so the next open starts in it.
             localStorage.setItem("tea-pos:locale", language);
