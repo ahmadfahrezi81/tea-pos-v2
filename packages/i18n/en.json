@@ -111,13 +111,11 @@
         "noStores": "No stores assigned yet.",
         "default": "Default",
         "app": "App",
-        "updateApp": "Update app",
-        "updateLatest": "You are on the latest version.",
         "updateOffline": "No connection. Try again when you are online.",
         "updateIsLatest": "Latest",
         "updateIsOffline": "Offline",
-        "updateReady": "Ready, restarting",
-        "updateAvailable": "{version} available"
+        "updateAvailable": "{version} available",
+        "updateNow": "Update now"
     },
     "whatsNew": {
         "title": "What's New",
@@ -219,8 +217,7 @@
         "ok": "Connected",
         "down": "Unreachable",
         "version": "API version",
-        "appCommit": "App commit",
-        "latest": "Latest build"
+        "update": "Update"
     },
     "errors": {
         "account_inactive": "This account isn't active. Ask the owner.",

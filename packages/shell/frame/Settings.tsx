@@ -18,6 +18,7 @@ export function SettingsRow({
     right,
     dot,
     danger,
+    below,
 }: {
     icon: ReactNode;
     label: string;
@@ -32,11 +33,15 @@ export function SettingsRow({
     dot?: boolean;
     /** The label in red: an ending, as Close Day. */
     danger?: boolean;
+    /** A second action inside the same row, under its label (App info's Update now). */
+    below?: ReactNode;
 }) {
     const inner = (
         <>
             <span className="text-xl w-6 text-center shrink-0 flex items-center py-5">{icon}</span>
-            <div className="flex-1 min-w-0 flex items-center gap-2 py-5 -mr-4 pr-4 border-b-2 border-slate-100 group-last:border-b-0">
+            <div
+                className={`flex-1 min-w-0 flex items-center gap-2 py-5 -mr-4 pr-4 ${below ? "pb-2" : "border-b-2 border-slate-100 group-last:border-b-0"}`}
+            >
                 <div className="flex-1 min-w-0">
                     <p
                         className={`text-[17px] font-medium ${danger ? "text-red-600" : "text-gray-800"}`}
@@ -56,8 +61,8 @@ export function SettingsRow({
             </div>
         </>
     );
-    const className = "group w-full flex items-stretch gap-3 text-left active:bg-gray-50";
-    return to ? (
+    const className = `${below ? "" : "group "}w-full flex items-stretch gap-3 text-left active:bg-gray-50`;
+    const row = to ? (
         <Link to={to} search={search as never} className={className}>
             {inner}
         </Link>
@@ -65,6 +70,16 @@ export function SettingsRow({
         <button onClick={onClick} className={className}>
             {inner}
         </button>
+    );
+    if (!below) return row;
+    // The icon's width and gap: the child lines up with the label.
+    return (
+        <div className="group">
+            {row}
+            <div className="ml-9 -mr-4 pr-4 pb-4 border-b-2 border-slate-100 group-last:border-b-0">
+                {below}
+            </div>
+        </div>
     );
 }
 

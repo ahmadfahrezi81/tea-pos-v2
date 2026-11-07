@@ -1,17 +1,20 @@
 import { $api } from "@tea-pos/api-client";
 import { useT } from "@tea-pos/i18n/react";
-
-import { APP_TAG } from "@tea-pos/api-client/status";
+import { useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import { buildLabel, useAppUpdate } from "../frame/AppUpdate";
-import { APP_COMMIT, APP_VERSION } from "../lib/version";
+import { currentVersion, useAppUpdate, useUpdateState } from "../frame/AppUpdate";
+import { UpdateNow } from "../frame/UpdateNow";
+import { useUpdateText } from "../frame/useUpdateText";
 
-/** Is the API reachable, and which build is running: Account's App info page. */
+/** Is the API reachable, which build is running, and is it the latest: More's App info page. */
 export function StatusScreen() {
     const t = useT();
+    const router = useRouter();
     const health = $api.useQuery("get", "/health");
     const { served, peek } = useAppUpdate();
+    const state = useUpdateState();
+    const stateText = useUpdateText(state, served);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => peek(), []);
     const rows: [string, string][] = [
@@ -21,26 +24,24 @@ export function StatusScreen() {
         ],
         [t("status.version"), health.data?.version ?? "…"],
         [t("status.commit"), health.data?.commit.slice(0, 7) ?? "…"],
-        [t("status.app"), APP_VERSION],
-        [t("status.appCommit"), APP_COMMIT.slice(0, 7)],
-        [
-            t("status.latest"),
-            served === undefined
-                ? "…"
-                : served === null
-                  ? t("more.updateIsOffline")
-                  : `${buildLabel(served)}${served === APP_TAG ? " ✓" : ""}`,
-        ],
+        [t("status.app"), currentVersion()],
+        [t("status.update"), stateText || "…"],
     ];
 
     return (
         <div className="rounded-2xl bg-white px-4 py-1 divide-y divide-gray-100">
             {rows.map(([label, value]) => (
-                <div key={label} className="flex justify-between py-3 text-sm">
+                <div key={label} className="flex justify-between gap-3 py-3 text-sm">
                     <span className="text-gray-500">{label}</span>
-                    <span className="font-mono text-gray-900">{value}</span>
+                    <span className="font-mono text-gray-900 text-right">{value}</span>
                 </div>
             ))}
+            {state === "available" && (
+                // The download shows in a tab's header: back to More, where it runs.
+                <div className="py-3">
+                    <UpdateNow onStarted={() => router.history.back()} />
+                </div>
+            )}
         </div>
     );
 }
