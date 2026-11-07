@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
 import { errorMessage } from "../session/errors";
-import { isConnection, QUIET } from "../session/failed";
+import { isCancelled, isConnection, QUIET, reportUnknown } from "../session/failed";
 
 /** The same words are not shown twice within this. */
 const REPEAT_MS = 10_000;
@@ -32,6 +32,8 @@ export function useErrorToasts() {
             if (event.query.state.data === undefined) return;
             const error = event.action.error as { code?: string; message?: string } | null;
             if (QUIET.has(error?.code ?? error?.message ?? "") || isConnection(error)) return;
+            if (isCancelled(error)) return;
+            reportUnknown(error, `load ${JSON.stringify(event.query.queryKey).slice(0, 200)}`);
             say(errorMessage(t, error));
         });
         const offBrake = onBraked((path) => {
