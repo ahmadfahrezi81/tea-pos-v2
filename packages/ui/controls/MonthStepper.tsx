@@ -10,7 +10,7 @@ export const STEP_ARROW =
 export const stepIcon = { size: 26, strokeWidth: 2.75 } as const;
 
 /** The first month with any data (the business began then): no picker goes before it. */
-export const FIRST_MONTH = "2025-07";
+export const FIRST_MONTH = "2025-08";
 export const FIRST_DAY = `${FIRST_MONTH}-01`;
 
 /**
