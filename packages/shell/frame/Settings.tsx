@@ -54,7 +54,7 @@ export function SettingsRow({
                     >
                         {label}
                     </p>
-                    {sublabel && <p className="text-xs text-gray-500 truncate">{sublabel}</p>}
+                    {sublabel && <p className="text-xs text-gray-700 truncate">{sublabel}</p>}
                 </div>
                 {dot && (
                     <span className={LINE}>

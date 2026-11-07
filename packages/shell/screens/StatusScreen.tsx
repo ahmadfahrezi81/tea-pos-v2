@@ -20,22 +20,21 @@ export function StatusScreen() {
     useEffect(() => peek(), []);
     const loading = <Skeleton className="h-4 w-28 rounded" />;
     const server = health.data && `${health.data.version} (${health.data.commit.slice(0, 7)})`;
-    // Behind: no state word, Update now below says it.
-    const app =
-        state === "available"
-            ? currentVersion()
-            : stateText && `${currentVersion()} · ${stateText}`;
-    // One line each: the phone's build and whether it is the newest, then the server's, which can be older.
+    // The phone's build, the server's (older after a release that only changed screens), then
+    // whether the phone is on the newest; behind, Update now below says it instead.
     const rows: [string, ReactNode][] = [
-        [t("status.app"), app || loading],
+        [t("status.app"), currentVersion()],
         [t("status.server"), server || loading],
+        ...(state === "available"
+            ? []
+            : [[t("status.status"), stateText || loading] as [string, ReactNode]]),
     ];
 
     return (
         <div className="rounded-2xl bg-white px-4 py-1 divide-y divide-gray-100">
             {rows.map(([label, value]) => (
                 <div key={label} className="flex justify-between gap-3 py-3 text-sm">
-                    <span className="text-gray-500">{label}</span>
+                    <span className="text-gray-700">{label}</span>
                     <span className="font-mono text-gray-900 text-right">{value}</span>
                 </div>
             ))}

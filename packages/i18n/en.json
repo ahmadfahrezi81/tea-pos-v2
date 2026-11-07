@@ -213,7 +213,8 @@
     "status": {
         "title": "App info",
         "app": "App",
-        "server": "Server"
+        "server": "Server",
+        "status": "Status"
     },
     "errors": {
         "account_inactive": "This account isn't active. Ask the owner.",

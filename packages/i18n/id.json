@@ -213,7 +213,8 @@
     "status": {
         "title": "Info aplikasi",
         "app": "Aplikasi",
-        "server": "Server"
+        "server": "Server",
+        "status": "Status"
     },
     "errors": {
         "account_inactive": "Akun ini tidak aktif. Hubungi pemilik.",
