@@ -37,6 +37,7 @@ import { Route as ShellTenantUacUserIdAppsRouteImport } from './routes/_shell/$t
 import { Route as ShellTenantUacUserIdClaimsRouteImport } from './routes/_shell/$tenant/uac/$userId/claims'
 import { Route as ShellTenantUacUserIdCommissionRouteImport } from './routes/_shell/$tenant/uac/$userId/commission'
 import { Route as ShellTenantUacUserIdDetailsRouteImport } from './routes/_shell/$tenant/uac/$userId/details'
+import { Route as ShellTenantUacUserIdSessionsRouteImport } from './routes/_shell/$tenant/uac/$userId/sessions'
 import { Route as ShellTenantUacUserIdStoresRouteImport } from './routes/_shell/$tenant/uac/$userId/stores'
 import { Route as ShellTenantUacRequestsIdRouteImport } from './routes/_shell/$tenant/uac/requests/$id'
 import { Route as ShellTenantPayStartUserIdIndexRouteImport } from './routes/_shell/$tenant/pay/$start/$userId/index'
@@ -205,6 +206,12 @@ const ShellTenantUacUserIdDetailsRoute =
     path: '/uac/$userId/details',
     getParentRoute: () => ShellTenantRoute,
   } as any)
+const ShellTenantUacUserIdSessionsRoute =
+  ShellTenantUacUserIdSessionsRouteImport.update({
+    id: '/uac/$userId/sessions',
+    path: '/uac/$userId/sessions',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
 const ShellTenantUacUserIdStoresRoute =
   ShellTenantUacUserIdStoresRouteImport.update({
     id: '/uac/$userId/stores',
@@ -326,6 +333,7 @@ export interface FileRoutesByFullPath {
   '/$tenant/uac/$userId/claims': typeof ShellTenantUacUserIdClaimsRoute
   '/$tenant/uac/$userId/commission': typeof ShellTenantUacUserIdCommissionRoute
   '/$tenant/uac/$userId/details': typeof ShellTenantUacUserIdDetailsRoute
+  '/$tenant/uac/$userId/sessions': typeof ShellTenantUacUserIdSessionsRoute
   '/$tenant/uac/$userId/stores': typeof ShellTenantUacUserIdStoresRoute
   '/$tenant/uac/requests/$id': typeof ShellTenantUacRequestsIdRoute
   '/$tenant/pay/$start/': typeof ShellTenantPayStartIndexRoute
@@ -370,6 +378,7 @@ export interface FileRoutesByTo {
   '/$tenant/uac/$userId/claims': typeof ShellTenantUacUserIdClaimsRoute
   '/$tenant/uac/$userId/commission': typeof ShellTenantUacUserIdCommissionRoute
   '/$tenant/uac/$userId/details': typeof ShellTenantUacUserIdDetailsRoute
+  '/$tenant/uac/$userId/sessions': typeof ShellTenantUacUserIdSessionsRoute
   '/$tenant/uac/$userId/stores': typeof ShellTenantUacUserIdStoresRoute
   '/$tenant/uac/requests/$id': typeof ShellTenantUacRequestsIdRoute
   '/$tenant/pay/$start': typeof ShellTenantPayStartIndexRoute
@@ -417,6 +426,7 @@ export interface FileRoutesById {
   '/_shell/$tenant/uac/$userId/claims': typeof ShellTenantUacUserIdClaimsRoute
   '/_shell/$tenant/uac/$userId/commission': typeof ShellTenantUacUserIdCommissionRoute
   '/_shell/$tenant/uac/$userId/details': typeof ShellTenantUacUserIdDetailsRoute
+  '/_shell/$tenant/uac/$userId/sessions': typeof ShellTenantUacUserIdSessionsRoute
   '/_shell/$tenant/uac/$userId/stores': typeof ShellTenantUacUserIdStoresRoute
   '/_shell/$tenant/uac/requests/$id': typeof ShellTenantUacRequestsIdRoute
   '/_shell/$tenant/pay/$start/': typeof ShellTenantPayStartIndexRoute
@@ -464,6 +474,7 @@ export interface FileRouteTypes {
     | '/$tenant/uac/$userId/claims'
     | '/$tenant/uac/$userId/commission'
     | '/$tenant/uac/$userId/details'
+    | '/$tenant/uac/$userId/sessions'
     | '/$tenant/uac/$userId/stores'
     | '/$tenant/uac/requests/$id'
     | '/$tenant/pay/$start/'
@@ -508,6 +519,7 @@ export interface FileRouteTypes {
     | '/$tenant/uac/$userId/claims'
     | '/$tenant/uac/$userId/commission'
     | '/$tenant/uac/$userId/details'
+    | '/$tenant/uac/$userId/sessions'
     | '/$tenant/uac/$userId/stores'
     | '/$tenant/uac/requests/$id'
     | '/$tenant/pay/$start'
@@ -554,6 +566,7 @@ export interface FileRouteTypes {
     | '/_shell/$tenant/uac/$userId/claims'
     | '/_shell/$tenant/uac/$userId/commission'
     | '/_shell/$tenant/uac/$userId/details'
+    | '/_shell/$tenant/uac/$userId/sessions'
     | '/_shell/$tenant/uac/$userId/stores'
     | '/_shell/$tenant/uac/requests/$id'
     | '/_shell/$tenant/pay/$start/'
@@ -779,6 +792,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellTenantUacUserIdDetailsRouteImport
       parentRoute: typeof ShellTenantRoute
     }
+    '/_shell/$tenant/uac/$userId/sessions': {
+      id: '/_shell/$tenant/uac/$userId/sessions'
+      path: '/uac/$userId/sessions'
+      fullPath: '/$tenant/uac/$userId/sessions'
+      preLoaderRoute: typeof ShellTenantUacUserIdSessionsRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
     '/_shell/$tenant/uac/$userId/stores': {
       id: '/_shell/$tenant/uac/$userId/stores'
       path: '/uac/$userId/stores'
@@ -915,6 +935,7 @@ interface ShellTenantRouteChildren {
   ShellTenantUacUserIdClaimsRoute: typeof ShellTenantUacUserIdClaimsRoute
   ShellTenantUacUserIdCommissionRoute: typeof ShellTenantUacUserIdCommissionRoute
   ShellTenantUacUserIdDetailsRoute: typeof ShellTenantUacUserIdDetailsRoute
+  ShellTenantUacUserIdSessionsRoute: typeof ShellTenantUacUserIdSessionsRoute
   ShellTenantUacUserIdStoresRoute: typeof ShellTenantUacUserIdStoresRoute
   ShellTenantUacRequestsIdRoute: typeof ShellTenantUacRequestsIdRoute
   ShellTenantPayStartIndexRoute: typeof ShellTenantPayStartIndexRoute
@@ -958,6 +979,7 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
   ShellTenantUacUserIdClaimsRoute: ShellTenantUacUserIdClaimsRoute,
   ShellTenantUacUserIdCommissionRoute: ShellTenantUacUserIdCommissionRoute,
   ShellTenantUacUserIdDetailsRoute: ShellTenantUacUserIdDetailsRoute,
+  ShellTenantUacUserIdSessionsRoute: ShellTenantUacUserIdSessionsRoute,
   ShellTenantUacUserIdStoresRoute: ShellTenantUacUserIdStoresRoute,
   ShellTenantUacRequestsIdRoute: ShellTenantUacRequestsIdRoute,
   ShellTenantPayStartIndexRoute: ShellTenantPayStartIndexRoute,

@@ -64,6 +64,30 @@ type UacLogoutInput struct {
 	UserID string `path:"userId" format:"uuid"`
 }
 
+type UacSessionsOutput struct {
+	Body struct {
+		Sessions []UacSession `json:"sessions" nullable:"false" doc:"Still running, the latest used first"`
+	}
+}
+
+// UacSession is one phone or computer a person is signed in on, in one app.
+type UacSession struct {
+	ID         string    `json:"id" format:"uuid"`
+	App        string    `json:"app" enum:"seller,backoffice"`
+	Device     string    `json:"device,omitempty" doc:"Read from the user agent, for example iPhone · Safari; empty when unknown"`
+	UserAgent  string    `json:"userAgent,omitempty"`
+	IP         string    `json:"ip,omitempty"`
+	SignedInAt time.Time `json:"signedInAt"`
+	LastSeenAt time.Time `json:"lastSeenAt" doc:"Moved at most once a day, as the session renews"`
+	Current    bool      `json:"current" doc:"The caller's own session"`
+}
+
+type EndUacSessionInput struct {
+	Tenant    string `path:"tenant"`
+	UserID    string `path:"userId" format:"uuid"`
+	SessionID string `path:"sessionId" format:"uuid"`
+}
+
 // SetUacDetailsInput is what an admin may change of what a person sets for themselves.
 type SetUacDetailsInput struct {
 	Tenant string `path:"tenant"`

@@ -13,6 +13,7 @@ import (
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/domain"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/httpx"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/idem"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/realtime"
@@ -22,12 +23,15 @@ import (
 var (
 	uacAccess = auth.App("backoffice", auth.Guest)
 	uacWrite  = auth.App("backoffice", auth.Admin).Idempotent()
+	// Where and when someone signs in is for admins only.
+	uacAdmin = auth.App("backoffice", auth.Admin)
 
 	errPersonNotFound = httpx.NotFound("person_not_found", "No such person in this tenant")
 	errBadLevel       = httpx.New(http.StatusBadRequest, "bad_level", "That app does not offer that level")
 	errOwnerKept      = httpx.New(http.StatusUnprocessableEntity, "owner_kept", "The owner keeps full access: it cannot be lowered or turned off")
 	errNotYourself    = httpx.New(http.StatusUnprocessableEntity, "not_yourself", "You cannot turn yourself off")
 	errRequestGone    = httpx.NotFound("request_not_found", "No such request waiting")
+	errSessionGone    = httpx.NotFound("session_not_found", "That session has already ended")
 )
 
 // AccessChanged: someone's levels, stores or status changed; UAC refetches, and their app reloads /me.
@@ -154,6 +158,57 @@ func registerUac(api huma.API, d Deps) {
 				return nil, err
 			}
 			return nil, realtime.Announce(ctx, q, realtime.Event{Topic: realtime.UserTopic(p.ID.String()), Kind: realtime.SignedOut})
+		})
+
+	route(api, op("getUacSessions", http.MethodGet, "/people/{userId}/sessions", "Where a person is signed in: each phone or computer, in each app"), uacAdmin,
+		func(ctx context.Context, in *contract.UacPersonInput) (*contract.UacSessionsOutput, error) {
+			caller, _ := auth.CallerFrom(ctx)
+			p, err := person(ctx, d.Queries, caller.TenantID, in.UserID)
+			if err != nil {
+				return nil, err
+			}
+			rows, err := d.Queries.ListUserSessions(ctx, p.ID)
+			if err != nil {
+				return nil, err
+			}
+			out := &contract.UacSessionsOutput{}
+			out.Body.Sessions = make([]contract.UacSession, len(rows))
+			for i, r := range rows {
+				out.Body.Sessions[i] = contract.UacSession{
+					ID: r.ID.String(), App: r.App, Device: domain.Device(r.UserAgent.String),
+					UserAgent: r.UserAgent.String, IP: r.Ip.String,
+					SignedInAt: r.CreatedAt.Time, LastSeenAt: r.LastSeenAt.Time,
+					Current: auth.Is(caller.Token(), r.TokenHash),
+				}
+			}
+			return out, nil
+		})
+
+	end := op("endUacSession", http.MethodDelete, "/people/{userId}/sessions/{sessionId}", "Sign a person out of one phone or computer")
+	end.DefaultStatus = http.StatusNoContent
+	route(api, end, uacAdmin.Repeatable(),
+		func(ctx context.Context, in *contract.EndUacSessionInput) (*struct{}, error) {
+			caller, _ := auth.CallerFrom(ctx)
+			p, err := person(ctx, d.Queries, caller.TenantID, in.UserID)
+			if err != nil {
+				return nil, err
+			}
+			if p.IsOwner && p.ID != caller.UserID {
+				return nil, errOwnerKept
+			}
+			id, err := uuid(in.SessionID, errSessionGone)
+			if err != nil {
+				return nil, err
+			}
+			ended, err := d.Sessions.DeleteOne(ctx, p.ID, id)
+			if err != nil {
+				return nil, err
+			}
+			if !ended {
+				return nil, errSessionGone
+			}
+			// The hub closes that session's sockets; their other phones check and stay signed in.
+			return nil, realtime.Announce(ctx, d.Queries, realtime.Event{Topic: realtime.UserTopic(p.ID.String()), Kind: realtime.SignedOut})
 		})
 
 	route(api, huma.Operation{

@@ -284,7 +284,8 @@
         "no_work_that_day": "Kamu tidak bekerja hari itu.",
         "bad_receipt": "Struk tidak terunggah dengan benar. Tambahkan lagi.",
         "old_day_open": "Hari sebelumnya masih buka. Tutup dulu di Analitik.",
-        "notSavedOffline": "Tidak tersimpan: tidak ada koneksi. Coba lagi."
+        "notSavedOffline": "Tidak tersimpan: tidak ada koneksi. Coba lagi.",
+        "session_not_found": "Sesi itu sudah berakhir."
     },
     "store": {
         "week": "Week",

@@ -78,6 +78,15 @@
         "confirmTitle": "Save {name}'s changes?",
         "logoutTitle": "Log {name} out?",
         "logoutBody": "They are signed out of every app on every phone. They can sign in again.",
-        "loggedOut": "{name} is logged out."
+        "loggedOut": "{name} is logged out.",
+        "sessions": "Sessions",
+        "manageSessions": "Manage",
+        "thisDevice": "This device",
+        "activeOn": "Active {day}",
+        "noSessions": "Not signed in anywhere",
+        "unknownDevice": "Unknown device",
+        "logoutOne": "Log out",
+        "logoutEverywhere": "Log out everywhere",
+        "sessionEnded": "{device} is logged out."
     }
 }

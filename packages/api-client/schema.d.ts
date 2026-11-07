@@ -911,6 +911,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{tenant}/uac/people/{userId}/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Where a person is signed in: each phone or computer, in each app */
+        get: operations["getUacSessions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/uac/people/{userId}/sessions/{sessionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Sign a person out of one phone or computer */
+        delete: operations["endUacSession"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{tenant}/uac/requests/{id}": {
         parameters: {
             query?: never;
@@ -1347,7 +1381,7 @@ export interface components {
              * @example day_already_closed
              * @enum {string}
              */
-            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_claim_code" | "bad_cursor" | "bad_level" | "bad_photo" | "bad_proof" | "bad_range" | "bad_receipt" | "bad_request" | "blank_name" | "claim_done" | "claim_not_eligible" | "claim_not_found" | "claim_too_old" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_closed" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "no_session" | "no_work_that_day" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_your_store" | "not_yourself" | "old_day_open" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_closed" | "period_not_found" | "person_not_found" | "product_changed" | "proof_required" | "request_not_found" | "route_not_found" | "session_taken" | "staff_not_found" | "store_already_opened" | "store_not_found" | "store_not_open" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
+            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_claim_code" | "bad_cursor" | "bad_level" | "bad_photo" | "bad_proof" | "bad_range" | "bad_receipt" | "bad_request" | "blank_name" | "claim_done" | "claim_not_eligible" | "claim_not_found" | "claim_too_old" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_closed" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "no_session" | "no_work_that_day" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_your_store" | "not_yourself" | "old_day_open" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_closed" | "period_not_found" | "person_not_found" | "product_changed" | "proof_required" | "request_not_found" | "route_not_found" | "session_not_found" | "session_taken" | "staff_not_found" | "store_already_opened" | "store_not_found" | "store_not_open" | "store_required" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
             details?: string[] | null;
             /** @example The day is already closed */
             message: string;
@@ -2050,6 +2084,29 @@ export interface components {
             active: boolean;
             /** @description Exactly these of the tenant's stores */
             storeIds: string[];
+        };
+        UacSession: {
+            /** @enum {string} */
+            app: "seller" | "backoffice";
+            /** @description The caller's own session */
+            current: boolean;
+            /** @description Read from the user agent, for example iPhone · Safari; empty when unknown */
+            device?: string;
+            /** Format: uuid */
+            id: string;
+            ip?: string;
+            /**
+             * Format: date-time
+             * @description Moved at most once a day, as the session renews
+             */
+            lastSeenAt: string;
+            /** Format: date-time */
+            signedInAt: string;
+            userAgent?: string;
+        };
+        UacSessionsOutputBody: {
+            /** @description Still running, the latest used first */
+            sessions: components["schemas"]["UacSession"][];
         };
         UpdateClaimTypeInputBody: {
             enabled?: boolean;
@@ -4083,6 +4140,69 @@ export interface operations {
             path: {
                 tenant: string;
                 userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getUacSessions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UacSessionsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    endUacSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                userId: string;
+                sessionId: string;
             };
             cookie?: never;
         };

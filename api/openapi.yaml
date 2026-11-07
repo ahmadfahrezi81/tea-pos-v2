@@ -818,6 +818,7 @@ components:
             - proof_required
             - request_not_found
             - route_not_found
+            - session_not_found
             - session_taken
             - staff_not_found
             - store_already_opened
@@ -2233,6 +2234,52 @@ components:
         - access
         - storeIds
         - active
+      type: object
+    UacSession:
+      additionalProperties: false
+      properties:
+        app:
+          enum:
+            - seller
+            - backoffice
+          type: string
+        current:
+          description: The caller's own session
+          type: boolean
+        device:
+          description: Read from the user agent, for example iPhone · Safari; empty when unknown
+          type: string
+        id:
+          format: uuid
+          type: string
+        ip:
+          type: string
+        lastSeenAt:
+          description: Moved at most once a day, as the session renews
+          format: date-time
+          type: string
+        signedInAt:
+          format: date-time
+          type: string
+        userAgent:
+          type: string
+      required:
+        - id
+        - app
+        - signedInAt
+        - lastSeenAt
+        - current
+      type: object
+    UacSessionsOutputBody:
+      additionalProperties: false
+      properties:
+        sessions:
+          description: Still running, the latest used first
+          items:
+            $ref: "#/components/schemas/UacSession"
+          type: array
+      required:
+        - sessions
       type: object
     UpdateClaimTypeInputBody:
       additionalProperties: false
@@ -4639,6 +4686,81 @@ paths:
         level: admin
         tenant: true
         idempotent: true
+        signedIn: true
+  /tenants/{tenant}/uac/people/{userId}/sessions:
+    get:
+      operationId: getUacSessions
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UacSessionsOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "Where a person is signed in: each phone or computer, in each app"
+      tags:
+        - uac
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/uac/people/{userId}/sessions/{sessionId}:
+    delete:
+      operationId: endUacSession
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: sessionId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Sign a person out of one phone or computer
+      tags:
+        - uac
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        repeatable: true
         signedIn: true
   /tenants/{tenant}/uac/requests/{id}:
     get:
