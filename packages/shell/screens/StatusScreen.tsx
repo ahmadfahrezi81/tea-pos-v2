@@ -12,9 +12,9 @@ export function StatusScreen() {
     const t = useT();
     const router = useRouter();
     const health = $api.useQuery("get", "/health");
-    const { served, peek } = useAppUpdate();
+    const { peek } = useAppUpdate();
     const state = useUpdateState();
-    const stateText = useUpdateText(state, served);
+    const stateText = useUpdateText(state);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => peek(), []);
     const rows: [string, string][] = [
@@ -25,7 +25,10 @@ export function StatusScreen() {
         [t("status.version"), health.data?.version ?? "…"],
         [t("status.commit"), health.data?.commit.slice(0, 7) ?? "…"],
         [t("status.app"), currentVersion()],
-        [t("status.update"), stateText || "…"],
+        // Behind: no words, the button below says it.
+        ...(state === "available"
+            ? []
+            : [[t("status.update"), stateText || "…"] as [string, string]]),
     ];
 
     return (

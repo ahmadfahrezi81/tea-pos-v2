@@ -114,7 +114,6 @@
         "updateOffline": "No connection. Try again when you are online.",
         "updateIsLatest": "Latest",
         "updateIsOffline": "Offline",
-        "updateAvailable": "{version} available",
         "updateNow": "Update now"
     },
     "whatsNew": {

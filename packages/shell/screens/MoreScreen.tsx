@@ -17,9 +17,9 @@ import { LATEST, seen } from "../lib/whatsNew";
 export function MoreScreen({ rows, before }: { rows?: ReactNode; before?: ReactNode }) {
     const t = useT();
     const slug = useSlug();
-    const { peek, served } = useAppUpdate();
+    const { peek } = useAppUpdate();
     const state = useUpdateState();
-    const stateText = useUpdateText(state, served);
+    const stateText = useUpdateText(state);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => peek(), []);
     if (!slug) return null;

@@ -114,7 +114,6 @@
         "updateOffline": "Tidak ada koneksi. Coba lagi saat online.",
         "updateIsLatest": "Terbaru",
         "updateIsOffline": "Offline",
-        "updateAvailable": "{version} tersedia",
         "updateNow": "Perbarui sekarang"
     },
     "whatsNew": {
