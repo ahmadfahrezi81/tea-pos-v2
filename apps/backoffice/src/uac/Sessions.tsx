@@ -159,8 +159,8 @@ function Everywhere({ person: p }: { person: Person }) {
     const [asking, setAsking] = useState(false);
     if (!canEnd) return null;
     return (
-        // Inside the card under a divider, as App info's Update now.
-        <div className="-mx-4 border-t-2 border-slate-100 px-4 py-3.5">
+        // Inside the card, under the last row's divider, as App info's Update now.
+        <div className="py-3.5">
             <button
                 onClick={() => setAsking(true)}
                 className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-red-500 px-3 py-2 text-sm font-semibold text-white active:opacity-80"
