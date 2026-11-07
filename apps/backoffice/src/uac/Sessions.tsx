@@ -63,10 +63,12 @@ export function SessionsCard({ person: p }: { person: Person }) {
     const t = useT();
     const slug = useSlug();
     const canEnd = useCanEnd(p);
-    const { data } = useUacSessions(p.id);
+    const { data, isError } = useUacSessions(p.id);
     return (
         <SettingsGroup title={t("uac.sessions")}>
-            {!data ? (
+            {isError && !data ? (
+                <p className="py-4 text-sm text-gray-500">{t("common.failed")}</p>
+            ) : !data ? (
                 <Skeleton className="my-3 h-12 rounded-xl" />
             ) : data.sessions.length === 0 ? (
                 <p className="py-4 text-sm text-gray-500">{t("uac.noSessions")}</p>
