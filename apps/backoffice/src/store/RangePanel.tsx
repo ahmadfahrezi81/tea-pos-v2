@@ -5,30 +5,39 @@ import { useLocale, useT } from "@tea-pos/i18n/react";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { Panel, PanelLabel } from "@tea-pos/ui/Panel";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
-import { Tile } from "@tea-pos/ui/Tile";
 
 import { useRange } from "./range";
-import { plain, useSalesDays, useSalesHours } from "./sales";
+import { useSalesDays, useSalesHours } from "./sales";
 
 const TILE = "rounded-xl bg-slate-100 p-3";
 
 type Store = components["schemas"]["StoreLive"];
 
+// A label and its value across the row, as a payslip's details.
+const fact = (label: string, value: string) => (
+    <div key={label} className="flex items-center justify-between">
+        <span className="text-gray-900">{label}</span>
+        <span className="font-medium text-gray-800">{value}</span>
+    </div>
+);
+
 /**
- * The store cards below added up. Sales, then one day: cups, expenses and stores open, cups by hour;
- * several days: cups, cups a day and the best day, cups by day.
+ * The store cards below added up: sales, the cups chart (by hour or by day), then its figures.
  */
 export function RangePanel({
     stores,
+    facts = [],
     children,
 }: {
     stores: Store[] | undefined;
+    /** More label and value rows under the panel's own: one store's status and seller. */
+    facts?: { label: string; value: string }[];
     /** Under the chart, in the same card: one store's sellers over a range. */
     children?: ReactNode;
 }) {
     const t = useT();
     const locale = useLocale();
-    const { from, to, single, isToday } = useRange();
+    const { from, to, single } = useRange();
     const hours = useSalesHours(single ? from : "");
     const days = useSalesDays(single ? "" : from, to);
     const points = single
@@ -43,7 +52,6 @@ export function RangePanel({
               value: d.cups,
           }));
     const sum = (of: (s: Store) => number) => (stores ?? []).reduce((n, s) => n + of(s), 0);
-    const value = (text: string) => (stores ? text : undefined);
     const cups = sum((s) => s.cups);
     const daysSold = days.data?.days.filter((d) => d.cups > 0).length ?? 0;
     // The day with the most cups, from the chart's own data: no request of its own.
@@ -51,58 +59,16 @@ export function RangePanel({
         (top, d) => (d.cups > (top?.cups ?? 0) ? d : top),
         undefined,
     );
-    // Today: how many are selling now; a past day: how many opened at all.
-    const total = stores?.length ?? 0;
-    const opened = isToday ? sum((s) => (s.open ? 1 : 0)) : sum((s) => (s.days > 0 ? 1 : 0));
     return (
         <Panel>
             <div className="px-1">
-                <p className="text-sm font-medium text-gray-900">{t("store.salesShort")}</p>
+                <p className="text-xs font-semibold text-gray-900">{t("store.salesShort")}</p>
                 {stores ? (
                     <p className="text-[22px] leading-tight font-bold tracking-tight text-green-600">
                         {formatMoney(sum((s) => s.sales))}
                     </p>
                 ) : (
                     <Skeleton className="h-7 w-40 rounded" />
-                )}
-            </div>
-            {/* A range's best day reads long ("7 Nov · 312"): 2/5 of the row, the other two 1.5/5. */}
-            <div className={`grid gap-1.5 ${single ? "grid-cols-3" : "grid-cols-10"}`}>
-                <Tile
-                    label={t("store.cups")}
-                    value={value(String(cups))}
-                    className={`bg-orange-100 ${single ? "" : "col-span-3"}`}
-                />
-                {single ? (
-                    <>
-                        <Tile
-                            label={t("store.expenses")}
-                            value={value(plain(sum((s) => s.expenses)))}
-                            className="bg-red-100"
-                        />
-                        <Tile
-                            label={t(isToday ? "store.openNow" : "store.opened")}
-                            value={value(`${opened}/${total}`)}
-                            className="bg-slate-100"
-                        />
-                    </>
-                ) : (
-                    <>
-                        <Tile
-                            label={t("store.cupsPerDay")}
-                            value={daysSold ? String(Math.round(cups / daysSold)) : "–"}
-                            className="col-span-3 bg-blue-100"
-                        />
-                        <Tile
-                            label={t("store.bestDay")}
-                            value={
-                                best
-                                    ? `${formatCalendarDay(best.date, locale, "dayMonth")} · ${best.cups}`
-                                    : "–"
-                            }
-                            className="col-span-4 bg-green-100"
-                        />
-                    </>
                 )}
             </div>
             {points &&
@@ -118,6 +84,27 @@ export function RangePanel({
                 ) : (
                     <p className={`${TILE} text-sm text-gray-900`}>{t("store.noSales")}</p>
                 ))}
+            {/* Under the chart, as label and value rows: one day only its cups, several days also cups a day and the best day. */}
+            {stores && (
+                <div className="space-y-2 px-1 text-sm">
+                    {fact(t("store.cupsTotal"), String(cups))}
+                    {!single && (
+                        <>
+                            {fact(
+                                t("store.cupsPerDay"),
+                                daysSold ? String(Math.round(cups / daysSold)) : "–",
+                            )}
+                            {fact(
+                                t("store.bestDay"),
+                                best
+                                    ? `${formatCalendarDay(best.date, locale, "dayMonth")} · ${best.cups}`
+                                    : "–",
+                            )}
+                        </>
+                    )}
+                    {facts.map((f) => fact(f.label, f.value))}
+                </div>
+            )}
             {children}
         </Panel>
     );

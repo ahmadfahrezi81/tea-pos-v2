@@ -86,6 +86,8 @@
         "noSessions": "Tidak masuk di mana pun",
         "unknownDevice": "Device tidak dikenal",
         "logoutOne": "Logout",
+        "logoutOneTitle": "Logout {device}?",
+        "logoutOneBody": "{name} logout dari {app} di device ini. Mereka bisa masuk lagi.",
         "logoutEverywhere": "Logout di semua device",
         "sessionEnded": "{device} sudah logout."
     }

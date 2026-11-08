@@ -86,6 +86,8 @@
         "noSessions": "Not signed in anywhere",
         "unknownDevice": "Unknown device",
         "logoutOne": "Log out",
+        "logoutOneTitle": "Log out {device}?",
+        "logoutOneBody": "{name} is signed out of {app} on this device. They can sign in again.",
         "logoutEverywhere": "Log out everywhere",
         "sessionEnded": "{device} is logged out."
     }

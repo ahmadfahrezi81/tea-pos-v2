@@ -30,6 +30,7 @@ var (
 	sellerWrite  = auth.App("seller", auth.Member).Idempotent()
 
 	errNotYourStore   = httpx.New(http.StatusForbidden, "not_your_store", "You are not assigned to this store")
+	errTooFarBack     = httpx.New(http.StatusUnprocessableEntity, "too_far_back", "That date is too far back")
 	errStoreOpened    = httpx.New(http.StatusConflict, "store_already_opened", "This store is already open today")
 	errDayClosed      = httpx.New(http.StatusConflict, "day_closed", "This store has closed for today")
 	errStoreNotOpen   = httpx.New(http.StatusConflict, "store_not_open", "This store is not open")

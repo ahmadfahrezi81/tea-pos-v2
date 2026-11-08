@@ -1,16 +1,17 @@
 import { LoadFailed } from "@tea-pos/shell/LoadFailed";
-import { formatMoney, localDate } from "@tea-pos/format";
-import { useT } from "@tea-pos/i18n/react";
+import { formatCalendarDay, formatMoney, localDate } from "@tea-pos/format";
+import { useLocale, useT } from "@tea-pos/i18n/react";
 import { OrderCard } from "@tea-pos/shell/OrderCard";
 import { useTenant } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
-import { ICON } from "@tea-pos/ui/icon";
 import { LoadMore } from "@tea-pos/ui/LoadMore";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
-import { Receipt, ReceiptText } from "lucide-react";
+import { Tile } from "@tea-pos/ui/Tile";
+import { ReceiptText } from "lucide-react";
 
 import { useDayOrders, useHours } from "./home";
+import { DayBar, useSellerDay } from "./period";
 
 const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
 
@@ -24,65 +25,59 @@ function emptyHours(open = "", close = "") {
     }));
 }
 
-/** Today's orders at the store: its totals, its cups by hour (only to look at), every order. Earlier days are the backoffice's. */
+/** A day's orders at the store (today unless picked, back to SellerEarliest): its totals, its cups by hour, every order. */
 export function Orders() {
     const t = useT();
-    const today = localDate();
-    const date = today;
+    const locale = useLocale();
+    const [date] = useSellerDay();
     const { data: day } = useHours(date);
     const orders = useDayOrders(date);
     const store = useTenant()?.store;
     const list = orders.data ?? [];
-    const title = t("orders.today");
-    const figure = (value: number | undefined, label: string, color: string) => (
-        <div className="text-center">
-            {value === undefined ? (
-                <Skeleton className="mx-auto h-7 w-8 rounded" />
-            ) : (
-                <p className={`text-xl font-bold ${color}`}>{value}</p>
-            )}
-            <p className="text-sm text-gray-600">{label}</p>
-        </div>
-    );
+    const title =
+        date === localDate() ? t("orders.today") : formatCalendarDay(date, locale, "short");
     return (
-        <div className="flex flex-col gap-4">
-            <div className="bg-white p-4 rounded-2xl">
-                <div className="flex items-center gap-2 mb-3">
-                    <Receipt size={ICON} className="text-gray-600" />
-                    <h3 className="font-semibold text-gray-800">{t("orders.totalToday")}</h3>
-                </div>
-                <div className="grid grid-cols-4 gap-2">
-                    {figure(day?.orders, t("analytics.orders"), "text-blue-600")}
-                    {figure(day?.cups, t("analytics.cups"), "text-orange-600")}
-                    <div className="text-center col-span-2 border-l-2 border-gray-300">
-                        <p className="text-sm text-gray-600">{t("analytics.totalSales")}</p>
-                        {day ? (
-                            <p className="text-xl font-bold text-green-600">
-                                {formatMoney(day.sales)}
-                            </p>
-                        ) : (
-                            <Skeleton className="mx-auto mt-1 h-7 w-24 rounded" />
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {day && (
-                <div className="bg-white rounded-2xl p-2 pb-1">
-                    <AreaChart
-                        points={(day.hours.length > 0
-                            ? day.hours
-                            : emptyHours(store?.openTime, store?.closeTime)
-                        ).map((h) => ({
-                            key: String(h.hour),
-                            label: hourLabel(h.hour),
-                            value: h.cups,
-                        }))}
-                        unit={t("orders.cups")}
-                        height={130}
+        <div className="flex flex-col gap-3">
+            <DayBar />
+            {/* The totals and the cups by hour: one card. */}
+            <div className="bg-white rounded-2xl">
+                <div className="grid grid-cols-4 gap-1.5 p-3">
+                    <Tile
+                        label={t("analytics.orders")}
+                        value={day && String(day.orders)}
+                        className="bg-blue-100"
+                        color="text-blue-900"
+                    />
+                    <Tile
+                        label={t("analytics.cups")}
+                        value={day && String(day.cups)}
+                        className="bg-orange-100"
+                        color="text-orange-900"
+                    />
+                    <Tile
+                        label={t("analytics.totalSales")}
+                        value={day && formatMoney(day.sales)}
+                        className="col-span-2 bg-green-100"
+                        color="text-green-900"
                     />
                 </div>
-            )}
+                {day && (
+                    <div className="px-2 pb-1">
+                        <AreaChart
+                            points={(day.hours.length > 0
+                                ? day.hours
+                                : emptyHours(store?.openTime, store?.closeTime)
+                            ).map((h) => ({
+                                key: String(h.hour),
+                                label: hourLabel(h.hour),
+                                value: h.cups,
+                            }))}
+                            unit={t("orders.cups")}
+                            height={130}
+                        />
+                    </div>
+                )}
+            </div>
 
             {orders.error && list.length === 0 ? (
                 <LoadFailed error={orders.error} />

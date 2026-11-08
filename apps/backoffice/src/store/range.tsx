@@ -3,9 +3,8 @@ import { useLocale, useT } from "@tea-pos/i18n/react";
 import { useSetSearch } from "@tea-pos/shell/searchParam";
 import { useFirstMonth } from "@tea-pos/shell/tenant";
 import { DateRangeSheet, monthRange, type DateRange } from "@tea-pos/ui/DateRangeSheet";
-import { ICON } from "@tea-pos/ui/icon";
+import { PickerButton } from "@tea-pos/ui/PickerButton";
 import { useSearch, type SearchSchemaInput } from "@tanstack/react-router";
-import { CalendarDays, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 import { isoWeek } from "../pay/dates";
@@ -91,31 +90,7 @@ export function RangeBar() {
     const [open, setOpen] = useState(false);
     return (
         <>
-            <button
-                onClick={() => setOpen(true)}
-                className="w-full flex items-center gap-2 rounded-2xl bg-white px-3 py-2.5 text-left active:bg-gray-50"
-            >
-                <span className="flex-1 min-w-0">
-                    <span className="flex items-center gap-1">
-                        <span className="text-[22px] leading-tight font-bold tracking-tight text-gray-900 truncate">
-                            {label}
-                        </span>
-                        <ChevronDown
-                            size={ICON}
-                            strokeWidth={2.5}
-                            className="text-brand/90 shrink-0"
-                        />
-                    </span>
-                    {detail && (
-                        <span className="block text-sm font-medium text-gray-900 truncate">
-                            {detail}
-                        </span>
-                    )}
-                </span>
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand/10">
-                    <CalendarDays size={ICON} className="text-brand" />
-                </span>
-            </button>
+            <PickerButton label={label} detail={detail} onClick={() => setOpen(true)} />
             <DateRangeSheet
                 open={open}
                 onClose={() => setOpen(false)}

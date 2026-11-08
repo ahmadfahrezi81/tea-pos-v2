@@ -25,7 +25,8 @@ export function monthRange(month: string, today: string): DateRange {
 
 /**
  * Picks a range of whole days: a tap on a preset applies it and closes; Pick a month opens the
- * months (a tap applies); Custom opens a calendar (tap the first day, then the last, then Apply).
+ * months (a tap applies); Custom opens a calendar (tap the first day, then the last, then Apply;
+ * with `single`, the day tapped applies).
  * Days are `2026-10-22`; none after `today`.
  */
 export function DateRangeSheet({
@@ -39,6 +40,8 @@ export function DateRangeSheet({
     labels,
     formatRange,
     firstMonth = FIRST_MONTH,
+    single = false,
+    only,
 }: {
     open: boolean;
     onClose: () => void;
@@ -57,6 +60,10 @@ export function DateRangeSheet({
     formatRange: (range: DateRange) => string;
     /** The earliest month it reaches: the tenant's start. */
     firstMonth?: string;
+    /** One day only: Custom's calendar applies the day tapped. */
+    single?: boolean;
+    /** Straight to the months or the calendar, no list and no back. */
+    only?: "month" | "custom";
 }) {
     // null: opens where the range came from, so changing a picked month stays in the months.
     const [chosen, setView] = useState<"list" | "month" | "custom" | null>(null);
@@ -71,7 +78,7 @@ export function DateRangeSheet({
         value.to.slice(0, 7) === month &&
         monthRange(month, today).from === value.from &&
         monthRange(month, today).to === value.to;
-    const view = chosen ?? (picked ? "list" : isMonth ? "month" : "custom");
+    const view = only ?? chosen ?? (picked ? "list" : isMonth ? "month" : "custom");
     const row =
         "w-full flex items-center justify-between py-4 text-left text-[17px] font-medium text-gray-900 active:opacity-70";
     const more = (on: boolean) =>
@@ -83,7 +90,7 @@ export function DateRangeSheet({
             title={
                 view === "custom" ? labels.custom : view === "month" ? labels.month : labels.title
             }
-            onBack={view === "list" ? undefined : () => setView("list")}
+            onBack={view === "list" || only ? undefined : () => setView("list")}
         >
             {view === "month" ? (
                 <MonthGrid
@@ -104,6 +111,7 @@ export function DateRangeSheet({
                     locale={locale}
                     labels={labels}
                     formatRange={formatRange}
+                    single={single}
                     onApply={(r) => {
                         onChange(r);
                         close();
@@ -145,8 +153,10 @@ function Calendar({
     locale,
     labels,
     formatRange,
+    single,
     onApply,
 }: {
+    single: boolean;
     value: DateRange;
     firstMonth: string;
     today: string;
@@ -170,6 +180,7 @@ function Calendar({
             iso(new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + n, 1))).slice(0, 7),
         );
     const tap = (day: string) => {
+        if (single) return onApply({ from: day, to: day });
         if (to !== null || day < from) {
             setFrom(day);
             setTo(null);
@@ -242,16 +253,20 @@ function Calendar({
                     <span key={`after-${i}`} className="h-11" />
                 ))}
             </div>
-            <p className="text-center text-sm font-medium text-gray-900">
-                {formatRange({ from, to: end })} · {labels.days(days)}
-            </p>
-            <button
-                disabled={days > MAX_DAYS}
-                onClick={() => onApply({ from, to: end })}
-                className="w-full rounded-xl bg-brand py-3.5 font-semibold text-white disabled:opacity-40"
-            >
-                {labels.apply}
-            </button>
+            {!single && (
+                <>
+                    <p className="text-center text-sm font-medium text-gray-900">
+                        {formatRange({ from, to: end })} · {labels.days(days)}
+                    </p>
+                    <button
+                        disabled={days > MAX_DAYS}
+                        onClick={() => onApply({ from, to: end })}
+                        className="w-full rounded-xl bg-brand py-3.5 font-semibold text-white disabled:opacity-40"
+                    >
+                        {labels.apply}
+                    </button>
+                </>
+            )}
         </div>
     );
 }

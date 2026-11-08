@@ -1,5 +1,5 @@
 import type { components } from "@tea-pos/api-client";
-import { formatDateTime, formatDay, formatMoney, formatTime, localDate } from "@tea-pos/format";
+import { formatDateTime, formatMoney, formatTime, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { useSlug } from "@tea-pos/shell/tenant";
@@ -10,7 +10,7 @@ import { ListCard, ListRow } from "@tea-pos/ui/ListRow";
 import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { Tile } from "@tea-pos/ui/Tile";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { ChartNoAxesCombined, CircleHelp, ReceiptText, Settings } from "lucide-react";
 
 import { RangeBar, useRange } from "./range";
@@ -82,7 +82,7 @@ export function StoreList() {
     );
 }
 
-function useStatus() {
+export function useStatus() {
     const t = useT();
     const locale = useLocale();
     return (
@@ -130,33 +130,28 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
             search={{ from, to }}
             className="block rounded-xl bg-white p-3 space-y-2.5 active:scale-[0.99]"
         >
-            <div className="min-w-0">
-                <p className="text-lg font-bold text-gray-900 truncate">{s.name}</p>
-                <StatusPill {...pill} />
+            <div className="flex items-center justify-between gap-2">
+                <p className="min-w-0 text-lg font-bold text-gray-900 truncate">{s.name}</p>
+                <span className="shrink-0">
+                    <StatusPill {...pill} />
+                </span>
             </div>
             {/* Analytics' cash summary, condensed: two rows of three, short words. */}
             <div className="grid grid-cols-3 gap-1.5">
                 {single ? (
                     <>
-                        <Split
-                            className="col-span-2 bg-blue-100"
-                            left={{
-                                label: t("store.opening"),
-                                value: plain(s.opening),
-                                color: "text-blue-900",
-                            }}
-                            right={{
-                                label: t("store.salesShort"),
-                                value: plain(s.sales),
-                                color: "text-blue-900",
-                            }}
-                        />
-                        <OrdersCups orders={s.orders} cups={s.cups} />
+                        {/* Row by row: Opening, Revenue (opening + sales), Expected; + Sales, − Expenses, Actual; the cash summary's colours. */}
                         <Tile
-                            label={t("store.expenses")}
-                            value={plain(s.expenses)}
-                            className="bg-red-100"
-                            color="text-red-900"
+                            label={t("store.opening")}
+                            value={plain(s.opening)}
+                            className="bg-blue-100"
+                            color="text-blue-900"
+                        />
+                        <Tile
+                            label={t("store.revenue")}
+                            value={plain(s.opening + s.sales)}
+                            className="bg-blue-100"
+                            color="text-blue-900"
                         />
                         <Tile
                             label={t("store.expected")}
@@ -164,7 +159,24 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
                             className="bg-purple-100"
                             color="text-purple-900"
                         />
-                        <Counted store={s} />
+                        <Tile
+                            label={`+ ${t("store.salesShort")}`}
+                            value={plain(s.sales)}
+                            className="bg-green-100"
+                            color="text-green-900"
+                        />
+                        <Tile
+                            label={`− ${t("store.expenses")}`}
+                            value={plain(s.expenses)}
+                            className="bg-red-100"
+                            color="text-red-900"
+                        />
+                        <Tile
+                            label={t("store.actual")}
+                            value={s.closedDays > 0 ? plain(s.cashCounted) : "—"}
+                            className="bg-amber-100"
+                            color="text-amber-900"
+                        />
                     </>
                 ) : (
                     <>
@@ -207,61 +219,26 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
                 )}
             </div>
             {s.sellers.length > 0 && <Sellers sellers={s.sellers} />}
+            {/* One day closed with its cash off: the difference as a bar, as the day's cash summary. */}
+            {single && s.closedDays > 0 && s.cashDiff !== 0 && (
+                <div className="space-y-1">
+                    <p className="px-1 text-sm font-semibold text-gray-900">
+                        {t("store.cashVariance")}
+                    </p>
+                    <p
+                        className={`rounded-xl px-3 py-2 text-base font-bold ${s.cashDiff > 0 ? "bg-green-100 text-green-900" : "bg-red-100 text-red-900"}`}
+                    >
+                        {s.cashDiff > 0 ? "+" : "−"}
+                        {formatMoney(Math.abs(s.cashDiff))}
+                    </p>
+                </div>
+            )}
         </Link>
-    );
-}
-
-type Half = { label: string; value: string; color: string };
-
-/** Two figures in one tile, each with its own word, side by side. */
-function Split({ left, right, className }: { left: Half; right: Half; className: string }) {
-    const half = (h: Half) => (
-        <div className="min-w-0">
-            <p className="text-xs font-semibold text-gray-900 truncate">{h.label}</p>
-            <p className={`text-base font-bold truncate ${h.color}`}>{h.value}</p>
-        </div>
-    );
-    return (
-        <div className={`grid min-w-0 grid-cols-2 gap-2 rounded-lg p-2 ${className}`}>
-            {half(left)}
-            {half(right)}
-        </div>
-    );
-}
-
-function OrdersCups({ orders, cups }: { orders: number; cups: number }) {
-    const t = useT();
-    return (
-        <Split
-            className="bg-violet-100"
-            left={{ label: t("store.orders"), value: String(orders), color: "text-violet-900" }}
-            right={{ label: t("store.cups"), value: String(cups), color: "text-violet-900" }}
-        />
     );
 }
 
 const offBy = (diff: number) =>
     diff === 0 ? "+0" : `${diff < 0 ? "−" : "+"}${plain(Math.abs(diff))}`;
-
-/** Cash counted at closing, and under it how far it was off: green when right, red when not. */
-function Counted({ store: s }: { store: Store }) {
-    const t = useT();
-    return (
-        <div className="min-w-0 rounded-lg bg-amber-100 p-2">
-            <p className="text-xs font-semibold text-gray-900 truncate">{t("store.counted")}</p>
-            <p className="text-base font-bold truncate text-amber-900">
-                {s.closedDays > 0 ? plain(s.cashCounted) : "—"}
-            </p>
-            {s.closedDays > 0 && (
-                <p
-                    className={`text-xs font-bold ${s.cashDiff === 0 ? "text-green-700" : "text-red-700"}`}
-                >
-                    {offBy(s.cashDiff)}
-                </p>
-            )}
-        </div>
-    );
-}
 
 /** The line under a store's name: did its day, or days, go as they should? */
 function StatusPill({ text, alert }: { text: string; alert: boolean }) {
@@ -274,26 +251,6 @@ function StatusPill({ text, alert }: { text: string; alert: boolean }) {
     );
 }
 
-/** Open or Closed, as a badge. */
-export function OpenBadge({ store: s }: { store: Store }) {
-    const t = useT();
-    return <Badge>{t(s.open ? "store.open" : "store.closed")}</Badge>;
-}
-
-/** `Closed 21:04 yesterday`, or `Not opened yet`. */
-export function closedLine(
-    s: Store,
-    t: ReturnType<typeof useT>,
-    locale: ReturnType<typeof useLocale>,
-): string {
-    return s.lastClosed
-        ? t("store.closedAt").replace(
-              "{when}",
-              `${formatTime(s.lastClosed, locale)} ${formatDay(s.lastClosed, locale).toLowerCase()}`,
-          )
-        : t("store.notOpened");
-}
-
 /** The newest orders across the stores, as they come in (live, and every minute today). */
 function LatestOrders() {
     const t = useT();
@@ -301,6 +258,14 @@ function LatestOrders() {
     const slug = useSlug();
     const { from, to, single } = useRange();
     const orders = useLatestOrders(from, to);
+    const navigate = useNavigate();
+    // A row opens the same list as See all.
+    const all = () =>
+        navigate({
+            to: "/$tenant/store/$storeId/orders",
+            params: { tenant: slug, storeId: ALL },
+            search: { from, to },
+        });
     return (
         <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -326,6 +291,7 @@ function LatestOrders() {
                             (orders.data?.items ?? []).map((o) => (
                                 <ListRow
                                     key={o.id}
+                                    onClick={all}
                                     title={
                                         <span className="text-[15px]">
                                             {single

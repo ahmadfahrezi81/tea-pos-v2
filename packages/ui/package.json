@@ -8,6 +8,7 @@
         "./Avatar": "./controls/Avatar.tsx",
         "./avatarUrl": "./lib/avatarUrl.ts",
         "./Badge": "./controls/Badge.tsx",
+        "./PickerButton": "./controls/PickerButton.tsx",
         "./BarChart": "./chart/BarChart.tsx",
         "./Callout": "./feedback/Callout.tsx",
         "./ChoiceList": "./controls/ChoiceList.tsx",

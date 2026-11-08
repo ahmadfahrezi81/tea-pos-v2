@@ -57,7 +57,6 @@
     },
     "orders": {
         "noOrders": "No orders found",
-        "totalToday": "Total today",
         "selectDate": "Select Date",
         "today": "Today",
         "menu": "Order menu",

@@ -337,7 +337,12 @@ function whatsNewLatest(app: AppConfig): string {
 }
 
 // The one Vite setup every app shares; an app only passes its config.
-export function appConfig(app: AppConfig) {
+export function appConfig(config: AppConfig) {
+    // Staging, previews and a laptop install as "<name> Dev", so they never pass for production on a phone.
+    const dev = ["staging", "preview", "dev"].includes(APP_VERSION);
+    const app = dev
+        ? { ...config, name: `${config.name} Dev`, shortName: `${config.shortName} Dev` }
+        : config;
     return defineConfig({
         define: {
             __APP_COMMIT__: JSON.stringify(APP_COMMIT),
