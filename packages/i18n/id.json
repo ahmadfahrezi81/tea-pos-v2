@@ -262,8 +262,6 @@
         "oneDay": "1 hari",
         "stores": "Toko",
         "cash": "Kas",
-        "cashShort": "Kas kurang {amount}",
-        "cashOver": "Kas lebih {amount}",
         "salesShort": "Penjualan",
         "expenses": "Pengeluaran",
         "expected": "Perkiraan",

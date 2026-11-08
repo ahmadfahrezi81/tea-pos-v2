@@ -262,8 +262,6 @@
         "oneDay": "1 day",
         "stores": "Stores",
         "cash": "Cash",
-        "cashShort": "Cash short {amount}",
-        "cashOver": "Cash over {amount}",
         "salesShort": "Sales",
         "expenses": "Expenses",
         "expected": "Expected",

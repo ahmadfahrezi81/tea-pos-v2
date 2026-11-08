@@ -200,7 +200,7 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
 
 type Half = { label: string; value: string; color: string };
 
-/** Two figures in one tile, each with its own word, split down the middle. */
+/** Two figures in one tile, each with its own word, side by side. */
 function Split({ left, right, className }: { left: Half; right: Half; className: string }) {
     const half = (h: Half) => (
         <div className="min-w-0">
@@ -211,7 +211,7 @@ function Split({ left, right, className }: { left: Half; right: Half; className:
     return (
         <div className={`grid min-w-0 grid-cols-2 gap-2 rounded-lg p-2 ${className}`}>
             {half(left)}
-            <div className="min-w-0 border-l border-black/10 pl-2">{half(right)}</div>
+            {half(right)}
         </div>
     );
 }
