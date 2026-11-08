@@ -252,7 +252,6 @@
         "latestOrders": "Latest orders",
         "seeAll": "See all",
         "dayByDay": "Analytics",
-        "dayDetail": "That day's detail",
         "helpTitle": "How stores work",
         "noSales": "No sales in this range",
         "totalCups": "Cups by day",
@@ -279,7 +278,8 @@
         "openNow": "Open",
         "opened": "Opened",
         "cupsPerDay": "Cups/day",
-        "bestDay": "Best day"
+        "bestDay": "Best day",
+        "details": "Details"
     },
     "errorSheet": {
         "title": "Couldn't save",

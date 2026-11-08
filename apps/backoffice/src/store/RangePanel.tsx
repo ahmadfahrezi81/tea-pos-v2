@@ -1,4 +1,5 @@
 import type { components } from "@tea-pos/api-client";
+import type { ReactNode } from "react";
 import { formatCalendarDay, formatMoney } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
@@ -17,7 +18,14 @@ type Store = components["schemas"]["StoreLive"];
  * The store cards below added up. Sales, then one day: cups, expenses and stores open, cups by hour;
  * several days: cups, cups a day and the best day, cups by day.
  */
-export function RangePanel({ stores }: { stores: Store[] | undefined }) {
+export function RangePanel({
+    stores,
+    children,
+}: {
+    stores: Store[] | undefined;
+    /** Under the chart, in the same card: one store's sellers over a range. */
+    children?: ReactNode;
+}) {
     const t = useT();
     const locale = useLocale();
     const { from, to, single, isToday } = useRange();
@@ -110,6 +118,7 @@ export function RangePanel({ stores }: { stores: Store[] | undefined }) {
                 ) : (
                     <p className={`${TILE} text-sm text-gray-900`}>{t("store.noSales")}</p>
                 ))}
+            {children}
         </Panel>
     );
 }

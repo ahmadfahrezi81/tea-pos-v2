@@ -172,28 +172,6 @@ export function useRangeOrders(from: string, to: string) {
     );
 }
 
-/** A store page's snippet: only the newest few. Refetched while a live range is on screen. */
-export function useLatestOrders(from: string, to: string) {
-    const scope = useStoreScope();
-    return $api.useQuery(
-        "get",
-        "/tenants/{tenant}/orders",
-        {
-            params: {
-                path: { tenant: scope?.tenant ?? "" },
-                query: { from, to, storeId: scope?.storeId, limit: 3 },
-            },
-        },
-        {
-            enabled: !!scope,
-            staleTime: STALE.WARM,
-            placeholderData: sameStores(scope),
-            refetchInterval: to === localDate() ? 60_000 : false,
-            meta: { live: ["order"] },
-        },
-    );
-}
-
 /** Every store, with a range's sales. v1 writes without telling the hub, so it refetches every minute while on screen. */
 export function useStoresLive(from: string, to: string) {
     const tenant = useSlug();

@@ -252,7 +252,6 @@
         "latestOrders": "Pesanan terbaru",
         "seeAll": "Lihat semua",
         "dayByDay": "Analitik",
-        "dayDetail": "Rincian hari itu",
         "helpTitle": "Cara kerja toko",
         "noSales": "Tidak ada penjualan di rentang ini",
         "totalCups": "Cup per hari",
@@ -279,7 +278,8 @@
         "openNow": "Buka",
         "opened": "Dibuka",
         "cupsPerDay": "Cups/hari",
-        "bestDay": "Hari terbaik"
+        "bestDay": "Hari terbaik",
+        "details": "Detail"
     },
     "errorSheet": {
         "title": "Gagal menyimpan",

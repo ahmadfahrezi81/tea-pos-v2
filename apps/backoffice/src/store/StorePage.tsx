@@ -1,24 +1,20 @@
-import { formatDateTime, formatMoney, formatTime } from "@tea-pos/format";
+import { formatTime } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { useSlug } from "@tea-pos/shell/tenant";
 import { Avatar } from "@tea-pos/ui/Avatar";
-import { ListCard, ListRow } from "@tea-pos/ui/ListRow";
-import { SectionLabel } from "@tea-pos/ui/SectionLabel";
-import { Skeleton } from "@tea-pos/ui/Skeleton";
-import { Link } from "@tanstack/react-router";
-import { ChartNoAxesCombined } from "lucide-react";
+import { ChartNoAxesCombined, Info, ReceiptText } from "lucide-react";
 
 import { RangeBar, useRange } from "./range";
 import { RangePanel } from "./RangePanel";
-import { useDays, useLatestOrders, useScopeStores, useStoreId } from "./sales";
+import { useDays, useScopeStores, useStoreId } from "./sales";
 import { Sellers } from "@tea-pos/shell/Sellers";
 import { closedLine, OpenBadge } from "./StoreList";
 
 /**
- * One store over the range: who is on (today), the numbers, the latest orders coming in, then
- * Day by day. Everyday information is here; Orders and Day by day are for going further.
+ * One store over the range: who is on (today), the numbers and who sold, then Orders and the
+ * day's Details (a range: Analytics) for going further.
  */
 export function StorePage() {
     const t = useT();
@@ -28,7 +24,6 @@ export function StorePage() {
     const { from, to, single, isToday } = useRange();
     const { stores } = useScopeStores(from, to);
     const store = stores?.[0];
-    const orders = useLatestOrders(from, to);
     // Only one day needs them here, to go straight to its detail; a range's list loads when opened.
     const days = useDays(from, to, single);
     const search = { from, to };
@@ -66,59 +61,20 @@ export function StorePage() {
                 </div>
             )}
 
-            <RangePanel stores={stores} />
-
-            {store && !isToday && store.sellers.length > 0 && (
-                <div className="rounded-2xl bg-white p-3">
+            {/* A range's sellers sit in the same card, under the chart. */}
+            <RangePanel stores={stores}>
+                {store && !isToday && store.sellers.length > 0 && (
                     <Sellers sellers={store.sellers} />
-                </div>
-            )}
-
-            <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                    <SectionLabel>{t("store.latestOrders")}</SectionLabel>
-                    <Link
-                        to="/$tenant/store/$storeId/orders"
-                        params={{ tenant: slug, storeId }}
-                        search={search}
-                        className="px-1 text-sm font-semibold text-brand active:opacity-70"
-                    >
-                        {t("store.seeAll")} ›
-                    </Link>
-                </div>
-                {orders.isPending ? (
-                    <Skeleton className="h-40 rounded-2xl" />
-                ) : (
-                    <div className="rounded-2xl bg-slate-200/70 p-1.5">
-                        <ListCard>
-                            {(orders.data?.items ?? []).length === 0 ? (
-                                <p className="py-4 text-gray-900">{t("store.noSales")}</p>
-                            ) : (
-                                (orders.data?.items ?? []).map((o) => (
-                                    <ListRow
-                                        key={o.id}
-                                        title={
-                                            <span className="text-[15px]">
-                                                {single
-                                                    ? formatTime(o.at, locale)
-                                                    : formatDateTime(o.at, locale)}
-                                                {` · ${o.cups} ${t("store.cupsUnit")}${o.seller ? ` · ${o.seller}` : ""}`}
-                                            </span>
-                                        }
-                                        trailing={
-                                            <span className="font-bold text-gray-900">
-                                                {formatMoney(o.total)}
-                                            </span>
-                                        }
-                                    />
-                                ))
-                            )}
-                        </ListCard>
-                    </div>
                 )}
-            </div>
+            </RangePanel>
 
             <SettingsGroup>
+                <SettingsRow
+                    to={`/${slug}/store/${storeId}/orders`}
+                    search={search}
+                    icon={<ReceiptText {...rowIcon} />}
+                    label={t("store.orders")}
+                />
                 <SettingsRow
                     to={
                         onlyDay
@@ -126,8 +82,8 @@ export function StorePage() {
                             : `/${slug}/store/${storeId}/analytics`
                     }
                     search={onlyDay ? undefined : search}
-                    icon={<ChartNoAxesCombined {...rowIcon} />}
-                    label={t(single ? "store.dayDetail" : "store.dayByDay")}
+                    icon={single ? <Info {...rowIcon} /> : <ChartNoAxesCombined {...rowIcon} />}
+                    label={t(single ? "store.details" : "store.dayByDay")}
                 />
             </SettingsGroup>
         </div>
