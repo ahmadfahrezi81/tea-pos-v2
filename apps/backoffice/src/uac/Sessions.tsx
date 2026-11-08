@@ -39,8 +39,8 @@ function SessionRow({ session: s, right }: { session: Session; right?: ReactNode
     const locale = useLocale();
     const phone = /iPhone|Android|iPad/.test(s.device ?? "");
     const Icon = phone ? Smartphone : Laptop;
+    const seller = s.app === "seller";
     const details = [
-        t(s.app === "seller" ? "uac.seller" : "uac.office"),
         t("uac.activeOn").replace("{day}", day(formatDay(s.lastSeenAt, locale))),
         // A session made on a laptop against staging has no outside address: nothing to show.
         s.ip && !LOOPBACK.has(s.ip) ? s.ip : "",
@@ -49,10 +49,13 @@ function SessionRow({ session: s, right }: { session: Session; right?: ReactNode
         <div className="flex items-center gap-3 border-b-2 border-slate-100 py-3.5 last:border-b-0">
             <Icon size={22} strokeWidth={2} className="shrink-0 text-gray-900" />
             <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                    <p className="truncate text-base font-medium text-gray-900">
+                <div className="flex items-center gap-1.5">
+                    <p className="min-w-0 truncate text-base font-medium text-gray-900">
                         {s.device || t("uac.unknownDevice")}
                     </p>
+                    <Badge tone={seller ? "blue" : "orange"}>
+                        {t(seller ? "uac.seller" : "uac.office")}
+                    </Badge>
                     {s.current && <Badge>{t("uac.thisDevice")}</Badge>}
                 </div>
                 <p className="truncate text-xs text-gray-500">{details.join(" · ")}</p>
@@ -124,33 +127,43 @@ function EndRow({ person: p, session: s }: { person: Person; session: Session })
     const t = useT();
     const end = useEndSession(p.id);
     const canEnd = useCanEnd(p);
+    const [asking, setAsking] = useState(false);
+    const device = s.device || t("uac.unknownDevice");
+    const app = t(s.app === "seller" ? "uac.seller" : "uac.office");
     return (
         <SessionRow
             session={s}
             right={
                 canEnd &&
                 !s.current && (
-                    <button
-                        disabled={end.isPending}
-                        onClick={() =>
-                            end.mutate(
-                                { sessionId: s.id },
-                                {
-                                    onSuccess: () =>
-                                        toast(
-                                            t("uac.sessionEnded").replace(
-                                                "{device}",
-                                                s.device || t("uac.unknownDevice"),
-                                            ),
-                                            { kind: "success" },
-                                        ),
-                                },
-                            )
-                        }
-                        className="shrink-0 rounded-lg bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-600 active:opacity-70 disabled:opacity-50"
-                    >
-                        {t("uac.logoutOne")}
-                    </button>
+                    <>
+                        <button
+                            onClick={() => setAsking(true)}
+                            className="shrink-0 rounded-lg bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-600 active:opacity-70"
+                        >
+                            {t("uac.logoutOne")}
+                        </button>
+                        <ConfirmSheet
+                            open={asking}
+                            title={t("uac.logoutOneTitle").replace("{device}", device)}
+                            message={t("uac.logoutOneBody")
+                                .replace("{name}", p.name)
+                                .replace("{app}", app)}
+                            label={t("uac.logoutOne")}
+                            busyLabel={t("uac.saving")}
+                            emoji="lockedWithKey"
+                            tone="orange"
+                            onConfirm={async () => {
+                                await end.mutateAsync({ sessionId: s.id });
+                                setAsking(false);
+                                toast(t("uac.sessionEnded").replace("{device}", device), {
+                                    kind: "success",
+                                });
+                            }}
+                            onError={() => setAsking(false)}
+                            onCancel={() => setAsking(false)}
+                        />
+                    </>
                 )
             }
         />
@@ -180,6 +193,7 @@ function Everywhere({ person: p }: { person: Person }) {
                 message={t("uac.logoutBody")}
                 label={t("uac.logoutEverywhere")}
                 busyLabel={t("uac.saving")}
+                emoji="lockedWithKey"
                 tone="orange"
                 onConfirm={async () => {
                     await logout.mutateAsync({});

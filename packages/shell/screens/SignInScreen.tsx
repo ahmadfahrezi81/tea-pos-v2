@@ -1,6 +1,7 @@
 import type { MessageKey } from "@tea-pos/i18n";
 import { useT } from "@tea-pos/i18n/react";
 import { ActionButton } from "@tea-pos/ui/ActionButton";
+import { useEffect, useState } from "react";
 
 import { useApp } from "../session/AppContext";
 
@@ -18,6 +19,13 @@ export function SignInScreen() {
     const { logo, titleKey, subtitleKey } = useApp().signIn;
     const reason = new URLSearchParams(window.location.search).get("error");
     const error = reason ? (ERRORS[reason] ?? "signIn.errors.signInFailed") : null;
+    // Back from Google restores this page as it was left, button spinning: a fresh button instead.
+    const [shown, setShown] = useState(0);
+    useEffect(() => {
+        const onShow = (e: PageTransitionEvent) => e.persisted && setShown((n) => n + 1);
+        window.addEventListener("pageshow", onShow);
+        return () => window.removeEventListener("pageshow", onShow);
+    }, []);
 
     // Go runs the Google sign-in and comes back to "/" signed in; the button spins through the redirect.
     const signIn = () => {
@@ -38,6 +46,7 @@ export function SignInScreen() {
                         </div>
                     </div>
                     <ActionButton
+                        key={shown}
                         action={signIn}
                         busyLabel={t("signIn.signingIn")}
                         className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 text-gray-800 font-bold py-4 px-5 pl-4 rounded-2xl transition-all duration-100 disabled:opacity-60 disabled:cursor-not-allowed text-base shadow-[0_4px_0_0_#d1d5db,0_4px_0_1px_#e5e7eb] hover:shadow-[0_2px_0_0_#d1d5db,0_2px_0_1px_#e5e7eb] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]"
