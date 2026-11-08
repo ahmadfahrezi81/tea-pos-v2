@@ -180,12 +180,13 @@ func rangeScope(ctx context.Context, q *store.Queries, in *contract.RangeInput) 
 	if err != nil {
 		return caller.TenantID, nil, from, to, err
 	}
-	ids, err := storeScope(ctx, q, caller.TenantID, in.StoreIDs)
+	ids, err := storeScope(ctx, q, caller.TenantID, in.StoreIDs, in.From)
 	return caller.TenantID, ids, from, to, err
 }
 
 // storeScope is the stores a Store screen adds up: the ones named, each the tenant's, or all.
-func storeScope(ctx context.Context, q *store.Queries, tenantID pgtype.UUID, named []string) ([]pgtype.UUID, error) {
+// A seller reads only from SellerEarliest on; from is the range's first day.
+func storeScope(ctx context.Context, q *store.Queries, tenantID pgtype.UUID, named []string, from string) ([]pgtype.UUID, error) {
 	caller, _ := auth.CallerFrom(ctx)
 	seller := caller.App == "seller"
 	if len(named) == 0 {
@@ -214,6 +215,9 @@ func storeScope(ctx context.Context, q *store.Queries, tenantID pgtype.UUID, nam
 		}
 		if int(mine) != len(uniq(named)) {
 			return nil, errNotYourStore
+		}
+		if from < domain.SellerEarliest(time.Now()).Format(time.DateOnly) {
+			return nil, errTooFarBack
 		}
 	}
 	return ids, nil

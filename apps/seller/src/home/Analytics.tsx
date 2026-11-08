@@ -1,6 +1,6 @@
 import { LoadFailed } from "@tea-pos/shell/LoadFailed";
 import type { components } from "@tea-pos/api-client";
-import { addDays, formatDate, formatDay, formatMoney, localDate } from "@tea-pos/format";
+import { formatDate, formatDay, formatMoney, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { DayCard, DayMenu } from "@tea-pos/shell/DayCard";
 import { useSlug } from "@tea-pos/shell/tenant";
@@ -8,23 +8,23 @@ import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { ICON } from "@tea-pos/ui/icon";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { Tile } from "@tea-pos/ui/Tile";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Receipt, X } from "lucide-react";
+import { AlertTriangle, X } from "lucide-react";
 import { useState } from "react";
 
 import { useMonthDays, useMonthSales } from "./home";
+import { MonthBar, useSellerMonth } from "./period";
 
 type Day = components["schemas"]["Day"];
 
-/** The store's last 30 days, day by day. A day left open from before can be closed from here. */
+/** The store's month, day by day (this one or the two before). A day left open from before can be closed from here. */
 export function Analytics() {
     const t = useT();
     const locale = useLocale();
     const slug = useSlug();
     const today = localDate();
-    // The last 30 days, today included; earlier ones are the backoffice's.
-    const from = addDays(today, -29);
-    const to = today;
+    const [{ from, to, month }] = useSellerMonth();
     const { data, error } = useMonthDays(from, to);
     const { data: sales } = useMonthSales(from, to);
     const [dismissed, setDismissed] = useState(false);
@@ -32,18 +32,9 @@ export function Analytics() {
     const list = data?.days;
     const unclosed = (list ?? []).filter((d) => !d.closedAt && d.date !== today);
     const total = (pick: (d: Day) => number) => (list ?? []).reduce((n, d) => n + pick(d), 0);
-    const figure = (value: number | undefined, label: string, color: string) => (
-        <div className="text-center">
-            {value === undefined ? (
-                <Skeleton className="mx-auto h-7 w-8 rounded" />
-            ) : (
-                <p className={`text-xl font-bold ${color}`}>{value}</p>
-            )}
-            <p className="text-sm text-gray-600">{label}</p>
-        </div>
-    );
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
+            <MonthBar />
             {unclosed.length > 0 && !dismissed && (
                 <div className="bg-red-100 p-3.5 rounded-xl">
                     <div className="flex items-start justify-between mb-2">
@@ -71,40 +62,55 @@ export function Analytics() {
                 </div>
             )}
 
-            <div className="bg-white p-4 rounded-2xl">
-                <div className="flex items-center gap-2 mb-3">
-                    <Receipt size={ICON} className="text-gray-600" />
-                    <h3 className="font-semibold text-gray-800">{t("store.last30")}</h3>
-                </div>
-                <div className="grid grid-cols-4 gap-2">
-                    {figure(list && total((d) => d.orders), t("analytics.orders"), "text-blue-600")}
-                    {figure(list && total((d) => d.cups), t("analytics.cups"), "text-orange-600")}
-                    <div className="text-center col-span-2 border-l-2 border-gray-300">
-                        <p className="text-sm text-gray-600">{t("analytics.totalSales")}</p>
-                        {list ? (
-                            <p className="text-xl font-bold text-green-600">
-                                {formatMoney(total((d) => d.sales))}
-                            </p>
-                        ) : (
-                            <Skeleton className="mx-auto mt-1 h-7 w-24 rounded" />
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {sales && sales.days.length > 0 && (
-                <div className="bg-white rounded-2xl p-2 pb-1">
-                    <AreaChart
-                        points={sales.days.map((d) => ({
-                            key: d.date,
-                            label: formatDate(d.date, locale),
-                            value: d.cups,
-                        }))}
-                        unit={t("orders.cups")}
-                        height={130}
+            {/* The totals and the cups by day: one card. */}
+            <div className="bg-white rounded-2xl">
+                <div className="grid grid-cols-4 gap-1.5 p-3">
+                    <Tile
+                        label={t("analytics.orders")}
+                        value={list && String(total((d) => d.orders))}
+                        className="bg-blue-100"
+                        color="text-blue-900"
+                    />
+                    <Tile
+                        label={t("analytics.cups")}
+                        value={list && String(total((d) => d.cups))}
+                        className="bg-orange-100"
+                        color="text-orange-900"
+                    />
+                    <Tile
+                        label={t("analytics.totalSales")}
+                        value={list && formatMoney(total((d) => d.sales))}
+                        className="col-span-2 bg-green-100"
+                        color="text-green-900"
                     />
                 </div>
-            )}
+                {sales && sales.days.length > 0 && (
+                    <div className="block px-2 pb-1">
+                        <AreaChart
+                            points={sales.days.map((d) => ({
+                                key: d.date,
+                                label: formatDate(d.date, locale),
+                                value: d.cups,
+                            }))}
+                            unit={t("orders.cups")}
+                            height={130}
+                        />
+                    </div>
+                )}
+            </div>
+
+            <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-800">
+                    {new Intl.DateTimeFormat(locale, {
+                        month: "long",
+                        year: "numeric",
+                        timeZone: "UTC",
+                    }).format(new Date(`${month}-01T00:00:00Z`))}
+                </h3>
+                <span className="text-sm text-gray-500">
+                    {list?.length ?? 0} {t("store.days")}
+                </span>
+            </div>
 
             <div className="space-y-3">
                 {error && !list ? (

@@ -44,7 +44,7 @@ func registerDays(api huma.API, d Deps) {
 		if err != nil {
 			return nil, err
 		}
-		ids, err := storeScope(ctx, d.Queries, caller.TenantID, in.StoreIDs)
+		ids, err := storeScope(ctx, d.Queries, caller.TenantID, in.StoreIDs, in.From)
 		if err != nil {
 			return nil, err
 		}

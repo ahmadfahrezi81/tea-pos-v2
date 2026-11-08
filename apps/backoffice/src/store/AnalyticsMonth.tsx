@@ -5,12 +5,13 @@ import { useLocale, useT } from "@tea-pos/i18n/react";
 import { useSlug } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Receipt, X } from "lucide-react";
+import { AlertTriangle, X } from "lucide-react";
 import { useState } from "react";
 
 import { RangeBar, useRange } from "./range";
 import { ALL, useDays, useSalesDays, useStoreId } from "./sales";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { Tile } from "@tea-pos/ui/Tile";
 import { ICON } from "@tea-pos/ui/icon";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { DayCard, DayMenu } from "@tea-pos/shell/DayCard";
@@ -39,7 +40,7 @@ export function AnalyticsMonth() {
     const total = (pick: (d: Day) => number) => (list ?? []).reduce((sum, d) => sum + pick(d), 0);
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             <RangeBar />
             {unclosed.length > 0 && !warningDismissed && (
                 <div className="bg-red-100 p-3.5 rounded-xl">
@@ -68,53 +69,47 @@ export function AnalyticsMonth() {
                 </div>
             )}
 
-            <div className="bg-white p-4 rounded-2xl">
-                <div className="flex items-center gap-2 mb-3">
-                    <Receipt size={ICON} className="text-gray-600" />
-                    <h3 className="font-semibold text-gray-800">{t("store.totals")}</h3>
-                </div>
-                <div className="grid grid-cols-4 gap-2">
-                    <Total
+            {/* The totals and the cups by day: one card. */}
+            <div className="bg-white rounded-2xl">
+                <div className="grid grid-cols-4 gap-1.5 p-3">
+                    <Tile
                         label={t("analytics.orders")}
                         value={list && String(total((d) => d.orders))}
-                        color="text-blue-600"
+                        className="bg-blue-100"
+                        color="text-blue-900"
                     />
-                    <Total
+                    <Tile
                         label={t("analytics.cups")}
                         value={list && String(total((d) => d.cups))}
-                        color="text-orange-600"
+                        className="bg-orange-100"
+                        color="text-orange-900"
                     />
-                    <div className="text-center col-span-2 border-l-2 border-gray-300">
-                        <p className="text-sm text-gray-600">{t("analytics.totalSales")}</p>
-                        {list ? (
-                            <p className="text-xl font-bold text-green-600">
-                                {formatMoney(total((d) => d.sales))}
-                            </p>
-                        ) : (
-                            <Skeleton className="mx-auto mt-1 h-7 w-24 rounded" />
-                        )}
-                    </div>
+                    <Tile
+                        label={t("analytics.totalSales")}
+                        value={list && formatMoney(total((d) => d.sales))}
+                        className="col-span-2 bg-green-100"
+                        color="text-green-900"
+                    />
                 </div>
+                {perDay.data && perDay.data.days.length > 0 && (
+                    <Link
+                        to="/$tenant/store/$storeId/analytics/charts"
+                        params={{ tenant: slug, storeId }}
+                        search={{ from, to }}
+                        className="block px-2 pb-1"
+                    >
+                        <AreaChart
+                            points={perDay.data.days.map((d) => ({
+                                key: d.date,
+                                label: formatDate(d.date, locale),
+                                value: d.cups,
+                            }))}
+                            unit={t("orders.cups")}
+                            height={130}
+                        />
+                    </Link>
+                )}
             </div>
-
-            {perDay.data && perDay.data.days.length > 0 && (
-                <Link
-                    to="/$tenant/store/$storeId/analytics/charts"
-                    params={{ tenant: slug, storeId }}
-                    search={{ from, to }}
-                    className="block bg-white rounded-2xl p-2 pb-1"
-                >
-                    <AreaChart
-                        points={perDay.data.days.map((d) => ({
-                            key: d.date,
-                            label: formatDate(d.date, locale),
-                            value: d.cups,
-                        }))}
-                        unit={t("orders.cups")}
-                        height={130}
-                    />
-                </Link>
-            )}
 
             <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-800">{label}</h3>
@@ -152,27 +147,6 @@ export function AnalyticsMonth() {
                 }
                 base={active ? `/${slug}/store/${storeId}/analytics/days/${active.id}` : ""}
             />
-        </div>
-    );
-}
-
-function Total({
-    label,
-    value,
-    color,
-}: {
-    label: string;
-    value: string | undefined;
-    color: string;
-}) {
-    return (
-        <div className="text-center">
-            {value === undefined ? (
-                <Skeleton className="mx-auto h-7 w-8 rounded" />
-            ) : (
-                <p className={`text-xl font-bold ${color}`}>{value}</p>
-            )}
-            <p className="text-sm text-gray-600">{label}</p>
         </div>
     );
 }

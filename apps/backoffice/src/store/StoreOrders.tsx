@@ -4,13 +4,13 @@ import { useFirstMonth, useSlug } from "@tea-pos/shell/tenant";
 import { AreaChart } from "@tea-pos/ui/AreaChart";
 import { LoadMore } from "@tea-pos/ui/LoadMore";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { CalendarDays, Receipt, ReceiptText } from "lucide-react";
+import { CalendarDays, ReceiptText } from "lucide-react";
 
 import { RangeBar, useRange } from "./range";
 import { useRangeOrders, useSalesHours, useScopeStores, useStoreId } from "./sales";
 import { Skeleton, SkeletonChart } from "@tea-pos/ui/Skeleton";
-import { ICON } from "@tea-pos/ui/icon";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
+import { Tile } from "@tea-pos/ui/Tile";
 import { OrderCard } from "@tea-pos/shell/OrderCard";
 
 const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
@@ -52,55 +52,49 @@ export function StoreOrders() {
     const list = orders.data ?? [];
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
             <RangeBar />
-            <div className="bg-white p-4 rounded-2xl">
-                <div className="flex items-center gap-2 mb-3">
-                    <Receipt size={ICON} className="text-gray-600" />
-                    <h3 className="font-semibold text-gray-800">{t("store.totals")}</h3>
-                </div>
-                <div className="grid grid-cols-4 gap-2">
-                    <Figure
+            {/* The totals and, on one day, the cups by hour: one card. */}
+            <div className="bg-white rounded-2xl">
+                <div className="grid grid-cols-4 gap-1.5 p-3">
+                    <Tile
                         label={t("analytics.orders")}
                         value={totals && String(totals.orders)}
-                        color="text-blue-600"
+                        className="bg-blue-100"
+                        color="text-blue-900"
                     />
-                    <Figure
+                    <Tile
                         label={t("analytics.cups")}
                         value={totals && String(totals.cups)}
-                        color="text-orange-600"
+                        className="bg-orange-100"
+                        color="text-orange-900"
                     />
-                    <div className="text-center col-span-2 border-l-2 border-gray-300">
-                        <p className="text-sm text-gray-600">{t("analytics.totalSales")}</p>
-                        {totals ? (
-                            <p className="text-xl font-bold text-green-600">
-                                {formatMoney(totals.sales)}
-                            </p>
-                        ) : (
-                            <Skeleton className="mx-auto mt-1 h-7 w-24 rounded" />
-                        )}
-                    </div>
+                    <Tile
+                        label={t("analytics.totalSales")}
+                        value={totals && formatMoney(totals.sales)}
+                        className="col-span-2 bg-green-100"
+                        color="text-green-900"
+                    />
                 </div>
+                {single && hours.data && hours.data.hours.length > 0 && (
+                    <Link
+                        to="/$tenant/store/$storeId/orders/chart"
+                        params={{ tenant: slug, storeId }}
+                        search={{ date: from }}
+                        className="block px-2 pb-1"
+                    >
+                        <AreaChart
+                            points={hours.data.hours.map((h) => ({
+                                key: String(h.hour),
+                                label: hourLabel(h.hour),
+                                value: h.cups,
+                            }))}
+                            unit={t("orders.cups")}
+                            height={130}
+                        />
+                    </Link>
+                )}
             </div>
-
-            {single && hours.data && hours.data.hours.length > 0 && (
-                <Link
-                    to="/$tenant/store/$storeId/orders/chart"
-                    params={{ tenant: slug, storeId }}
-                    search={{ date: from }}
-                    className="block bg-white rounded-2xl p-2 pb-1"
-                >
-                    <AreaChart
-                        points={hours.data.hours.map((h) => ({
-                            key: String(h.hour),
-                            label: hourLabel(h.hour),
-                            value: h.cups,
-                        }))}
-                        unit={t("orders.cups")}
-                        height={130}
-                    />
-                </Link>
-            )}
 
             {orders.isPending ? (
                 Array.from({ length: 3 }).map((_, i) => (
@@ -139,28 +133,6 @@ export function StoreOrders() {
     );
 }
 
-function Figure({
-    label,
-    value,
-    color,
-}: {
-    label: string;
-    value: string | undefined;
-    color: string;
-}) {
-    return (
-        <div className="text-center">
-            {value === undefined ? (
-                <Skeleton className="mx-auto h-7 w-8 rounded" />
-            ) : (
-                <p className={`text-xl font-bold ${color}`}>{value}</p>
-            )}
-            <p className="text-sm text-gray-600">{label}</p>
-        </div>
-    );
-}
-
-/** The old seller app's orders chart: a day's cups by hour, larger, with its total. */
 export function OrdersChart({ date }: { date: string }) {
     const t = useT();
     const navigate = useNavigate();

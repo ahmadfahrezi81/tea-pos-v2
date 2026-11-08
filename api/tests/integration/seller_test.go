@@ -384,3 +384,30 @@ func TestOldDayOpen(t *testing.T) {
 		t.Errorf("a phone left on the menu: %d %s", s, b)
 	}
 }
+
+// A seller reads this month and the two before; earlier is refused, the backoffice still reads it.
+func TestSellerHistoryWindow(t *testing.T) {
+	pool := testkit.DB(t)
+	a := testkit.NewAPI(t, pool, "")
+	seller := testkit.Session(a.SignIn(t, testkit.SellerA, "seller"))
+	if _, err := pool.Exec(t.Context(), `INSERT INTO user_store_assignments (user_id, store_id) SELECT $1, $2
+		WHERE NOT EXISTS (SELECT 1 FROM user_store_assignments WHERE user_id = $1 AND store_id = $2)`, testkit.SellerA, storeACentral); err != nil {
+		t.Fatal(err)
+	}
+	earliest := domain.SellerEarliest(time.Now())
+	ok := earliest.Format(time.DateOnly)
+	old := earliest.AddDate(0, 0, -1).Format(time.DateOnly)
+	for path, want := range map[string]int{
+		"/orders?from=" + ok + "&to=" + ok:      200,
+		"/orders?from=" + old + "&to=" + ok:     422,
+		"/days?from=" + old + "&to=" + ok:       422,
+		"/sales/days?from=" + old + "&to=" + ok: 422,
+		"/sales/hours?date=" + old:              422,
+	} {
+		resp := a.Request(t, http.MethodGet, "/tenants/tenant-a"+path+"&storeId="+storeACentral, "seller", seller)
+		resp.Body.Close()
+		if resp.StatusCode != want {
+			t.Errorf("%s: %d, want %d", path, resp.StatusCode, want)
+		}
+	}
+}

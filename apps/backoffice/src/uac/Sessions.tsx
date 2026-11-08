@@ -53,10 +53,16 @@ function SessionRow({ session: s, right }: { session: Session; right?: ReactNode
                     <p className="min-w-0 truncate text-base font-medium text-gray-900">
                         {s.device || t("uac.unknownDevice")}
                     </p>
+                    <span className="text-base font-medium text-gray-900">·</span>
                     <Badge tone={seller ? "blue" : "orange"}>
                         {t(seller ? "uac.seller" : "uac.office")}
                     </Badge>
-                    {s.current && <Badge>{t("uac.thisDevice")}</Badge>}
+                    {s.current && (
+                        <>
+                            <span className="text-base font-medium text-gray-900">·</span>
+                            <Badge>{t("uac.thisDevice")}</Badge>
+                        </>
+                    )}
                 </div>
                 <p className="truncate text-xs text-gray-500">{details.join(" · ")}</p>
             </div>

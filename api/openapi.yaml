@@ -826,6 +826,7 @@ components:
             - store_not_found
             - store_not_open
             - store_required
+            - too_far_back
             - too_large
             - too_many_requests
             - unauthorized
