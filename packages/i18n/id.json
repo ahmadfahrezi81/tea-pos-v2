@@ -277,13 +277,8 @@
         "nNotClosed": "{n} belum ditutup",
         "daysClosed": "{n} dari {m} hari ditutup",
         "settingsTitle": "Settings toko",
-        "openingBalance": "Saldo Awal",
-        "totalSales": "Total Penjualan",
-        "openingPlusSales": "Saldo Awal + Jual",
-        "expectedCash": "Kas Seharusnya",
-        "actualCash": "Kas Aktual (Dihitung)",
-        "notCounted": "Belum dihitung",
-        "daysClosedLabel": "Hari ditutup"
+        "daysClosedLabel": "Hari ditutup",
+        "counted": "Dihitung"
     },
     "errorSheet": {
         "title": "Gagal menyimpan",

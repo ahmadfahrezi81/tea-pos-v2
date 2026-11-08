@@ -277,13 +277,8 @@
         "nNotClosed": "{n} not closed",
         "daysClosed": "{n} of {m} days closed",
         "settingsTitle": "Store settings",
-        "openingBalance": "Opening Balance",
-        "totalSales": "Total Sales",
-        "openingPlusSales": "Opening + Sales",
-        "expectedCash": "Net Expected Cash",
-        "actualCash": "Actual Cash (Counted)",
-        "notCounted": "Not counted",
-        "daysClosedLabel": "Days closed"
+        "daysClosedLabel": "Days closed",
+        "counted": "Counted"
     },
     "errorSheet": {
         "title": "Couldn't save",

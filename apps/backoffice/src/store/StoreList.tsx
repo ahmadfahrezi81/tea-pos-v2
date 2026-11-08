@@ -1,5 +1,5 @@
 import type { components } from "@tea-pos/api-client";
-import { formatDay, formatMoney, formatTime, localDate } from "@tea-pos/format";
+import { formatDay, formatTime, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { useSlug } from "@tea-pos/shell/tenant";
@@ -130,50 +130,24 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
                 <p className="text-lg font-bold text-gray-900 truncate">{s.name}</p>
                 <StatusPill {...pill} />
             </div>
-            {/* Analytics' cash summary as tiles: two rows of three. */}
+            {/* Analytics' cash summary, condensed: two rows of three, short words. */}
             <div className="grid grid-cols-3 gap-1.5">
                 {single ? (
                     <>
-                        <Tile
-                            label={t("store.openingBalance")}
-                            value={plain(s.opening)}
-                            className="bg-blue-100"
-                            color="text-blue-900"
-                        />
-                        <Tile
-                            label={t("store.totalSales")}
-                            value={plain(s.sales)}
-                            className="bg-green-100"
-                            color="text-green-900"
-                        />
-                        <Tile
-                            label={t("store.openingPlusSales")}
-                            value={plain(s.opening + s.sales)}
-                            className="bg-blue-100"
-                            color="text-blue-900"
+                        <Split
+                            className="col-span-2 bg-blue-100"
+                            left={{
+                                label: t("store.opening"),
+                                value: plain(s.opening),
+                                color: "text-blue-900",
+                            }}
+                            right={{
+                                label: t("store.salesShort"),
+                                value: plain(s.sales),
+                                color: "text-green-900",
+                            }}
                         />
                         <OrdersCups orders={s.orders} cups={s.cups} />
-                        <Tile
-                            label={t("store.expectedCash")}
-                            value={plain(dayCash(s, true))}
-                            className="bg-purple-100"
-                            color="text-purple-900"
-                        />
-                        <Tile
-                            label={t("store.actualCash")}
-                            value={s.closedDays > 0 ? plain(s.cashCounted) : t("store.notCounted")}
-                            className="bg-amber-100"
-                            color="text-amber-900"
-                        />
-                    </>
-                ) : (
-                    <>
-                        <Tile
-                            label={t("store.totalSales")}
-                            value={plain(s.sales)}
-                            className="bg-green-100"
-                            color="text-green-900"
-                        />
                         <Tile
                             label={t("store.expenses")}
                             value={plain(s.expenses)}
@@ -181,60 +155,97 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
                             color="text-red-900"
                         />
                         <Tile
+                            label={t("store.expected")}
+                            value={plain(dayCash(s, true))}
+                            className="bg-purple-100"
+                            color="text-purple-900"
+                        />
+                        <Counted store={s} withOff />
+                    </>
+                ) : (
+                    <>
+                        <Split
+                            className="col-span-2 bg-green-100"
+                            left={{
+                                label: t("store.salesShort"),
+                                value: plain(s.sales),
+                                color: "text-green-900",
+                            }}
+                            right={{
+                                label: t("store.expenses"),
+                                value: plain(s.expenses),
+                                color: "text-red-900",
+                            }}
+                        />
+                        <OrdersCups orders={s.orders} cups={s.cups} />
+                        <Tile
                             label={t("store.daysClosedLabel")}
                             value={`${s.days - s.notClosed}/${s.days}`}
                             className="bg-slate-100"
                         />
-                        <OrdersCups orders={s.orders} cups={s.cups} />
                         <Tile
                             label={t("store.cashOff")}
-                            value={
-                                s.cashDiff === 0
-                                    ? "0"
-                                    : `${s.cashDiff < 0 ? "−" : "+"}${plain(Math.abs(s.cashDiff))}`
-                            }
+                            value={offBy(s.cashDiff)}
                             className={s.cashDiff === 0 ? "bg-green-100" : "bg-red-100"}
                             color={s.cashDiff === 0 ? "text-green-900" : "text-red-900"}
                         />
-                        <Tile
-                            label={t("store.actualCash")}
-                            value={plain(s.cashCounted)}
-                            className="bg-amber-100"
-                            color="text-amber-900"
-                        />
+                        <Counted store={s} />
                     </>
                 )}
             </div>
             {s.sellers.length > 0 && <Sellers sellers={s.sellers} />}
-            {single && s.cashDiff !== 0 && (
-                <p className="rounded-xl bg-red-100 px-3 py-1.5 text-sm font-bold text-red-700">
-                    {t(s.cashDiff < 0 ? "store.cashShort" : "store.cashOver").replace(
-                        "{amount}",
-                        formatMoney(Math.abs(s.cashDiff)),
-                    )}
-                </p>
-            )}
         </Link>
     );
 }
 
-/** Orders and cups sharing one cell, two half tiles in their own colours, as Analytics shows them. */
+type Half = { label: string; value: string; color: string };
+
+/** Two figures in one tile, each with its own word, split down the middle. */
+function Split({ left, right, className }: { left: Half; right: Half; className: string }) {
+    const half = (h: Half) => (
+        <div className="min-w-0">
+            <p className="text-xs font-semibold text-gray-900 truncate">{h.label}</p>
+            <p className={`text-base font-bold truncate ${h.color}`}>{h.value}</p>
+        </div>
+    );
+    return (
+        <div className={`grid min-w-0 grid-cols-2 gap-2 rounded-lg p-2 ${className}`}>
+            {half(left)}
+            <div className="min-w-0 border-l border-black/10 pl-2">{half(right)}</div>
+        </div>
+    );
+}
+
 function OrdersCups({ orders, cups }: { orders: number; cups: number }) {
     const t = useT();
     return (
-        <div className="grid grid-cols-2 gap-1.5">
-            <Tile
-                label={t("store.orders")}
-                value={String(orders)}
-                className="bg-violet-100"
-                color="text-violet-900"
-            />
-            <Tile
-                label={t("store.cups")}
-                value={String(cups)}
-                className="bg-orange-100"
-                color="text-orange-900"
-            />
+        <Split
+            className="bg-violet-100"
+            left={{ label: t("store.orders"), value: String(orders), color: "text-violet-900" }}
+            right={{ label: t("store.cups"), value: String(cups), color: "text-orange-900" }}
+        />
+    );
+}
+
+const offBy = (diff: number) =>
+    diff === 0 ? "+0" : `${diff < 0 ? "−" : "+"}${plain(Math.abs(diff))}`;
+
+/** Cash counted at closing, and under it how far it was off: green when right, red when not. */
+function Counted({ store: s, withOff = false }: { store: Store; withOff?: boolean }) {
+    const t = useT();
+    return (
+        <div className="min-w-0 rounded-lg bg-amber-100 p-2">
+            <p className="text-xs font-semibold text-gray-900 truncate">{t("store.counted")}</p>
+            <p className="text-base font-bold truncate text-amber-900">
+                {s.closedDays > 0 ? plain(s.cashCounted) : "—"}
+            </p>
+            {withOff && s.closedDays > 0 && (
+                <p
+                    className={`text-xs font-bold ${s.cashDiff === 0 ? "text-green-700" : "text-red-700"}`}
+                >
+                    {offBy(s.cashDiff)}
+                </p>
+            )}
         </div>
     );
 }
