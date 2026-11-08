@@ -1,6 +1,5 @@
 {
     "pay": {
-        "payouts": "Pembayaran Staf",
         "commissionTypes": "Jenis Komisi",
         "claimTypes": "Jenis Klaim",
         "schedule": "Jadwal Gaji",
@@ -10,7 +9,6 @@
         "editClaimType": "Ubah Jenis Klaim",
         "lastDay": "hari terakhir",
         "daysLeft": "{n} hari lagi",
-        "approved": "Disetujui",
         "searchStaff": "Cari staf...",
         "noStaff": "Tidak ada staf.",
         "commissionType": "Jenis Komisi",
@@ -22,7 +20,6 @@
         "accountNumber": "Nomor rekening",
         "accountHolder": "Atas nama",
         "noBank": "Staf belum mengisi rekening.",
-        "noCommissionTypes": "Belum ada jenis komisi.",
         "noCommissionTypesYet": "Belum ada jenis komisi.",
         "noClaimTypesYet": "Belum ada jenis klaim.",
         "saveChanges": "Simpan Perubahan",
@@ -141,12 +138,6 @@
         "staff": "Staf",
         "week": "Week",
         "workDays": "Hari Kerja",
-        "filters": {
-            "all": "Semua",
-            "ongoing": "Berjalan",
-            "paid": "Dibayar",
-            "needs_review": "Perlu Ditinjau"
-        },
         "alreadyPaid": "Sudah dibayar",
         "alreadyClosed": "Periode sudah ditutup",
         "alreadySub": "Tidak ada lagi yang perlu dikonfirmasi. Rinciannya di slip gaji.",
