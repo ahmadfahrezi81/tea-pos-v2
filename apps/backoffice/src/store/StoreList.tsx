@@ -45,7 +45,7 @@ export function StoreList() {
             ) : shown.length === 0 ? (
                 <EmptyState title={t("store.noStores")} />
             ) : (
-                <ListSection title={t("store.stores")} count={shown.length}>
+                <ListSection title={t("store.stores")} count={shown.length} framed>
                     {shown.map((s) => (
                         <StoreCard key={s.id} store={s} slug={slug} />
                     ))}
