@@ -7,15 +7,15 @@ import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { Tile } from "@tea-pos/ui/Tile";
 
 import { useRange } from "./range";
-import { dayCash, plain, useSalesDays, useSalesHours, useTeaWaste } from "./sales";
+import { plain, useSalesDays, useSalesHours } from "./sales";
 
 const TILE = "rounded-xl bg-slate-100 p-3";
 
 type Store = components["schemas"]["StoreLive"];
 
 /**
- * The store cards below added up. Sales, then one day: cups, cash and tea waste, cups by hour;
- * several days: cups, cups a day and tea waste a day, cups by day.
+ * The store cards below added up. Sales, then one day: cups, expenses and stores open, cups by hour;
+ * several days: cups, cups a day and the best day, cups by day.
  */
 export function RangePanel({ stores }: { stores: Store[] | undefined }) {
     const t = useT();
@@ -35,15 +35,17 @@ export function RangePanel({ stores }: { stores: Store[] | undefined }) {
               value: d.cups,
           }));
     const sum = (of: (s: Store) => number) => (stores ?? []).reduce((n, s) => n + of(s), 0);
-    const anyOpen = isToday && stores?.some((s) => s.open);
     const value = (text: string) => (stores ? text : undefined);
     const cups = sum((s) => s.cups);
     const daysSold = days.data?.days.filter((d) => d.cups > 0).length ?? 0;
-    // Only days whose tea was measured at closing, so today has none until it closes.
-    const measured = useTeaWaste(from, to).data?.days ?? [];
-    const litres = measured.length
-        ? `${(measured.reduce((n, d) => n + d.litres, 0) / measured.length).toLocaleString(locale, { maximumFractionDigits: 1 })} L`
-        : "–";
+    // The day with the most cups, from the chart's own data: no request of its own.
+    const best = days.data?.days.reduce<(typeof days.data.days)[number] | undefined>(
+        (top, d) => (d.cups > (top?.cups ?? 0) ? d : top),
+        undefined,
+    );
+    // Today: how many are selling now; a past day: how many opened at all.
+    const total = stores?.length ?? 0;
+    const opened = isToday ? sum((s) => (s.open ? 1 : 0)) : sum((s) => (s.days > 0 ? 1 : 0));
     return (
         <Panel>
             <div className="px-1">
@@ -63,19 +65,36 @@ export function RangePanel({ stores }: { stores: Store[] | undefined }) {
                     className="bg-orange-100"
                 />
                 {single ? (
-                    <Tile
-                        label={t(anyOpen ? "store.expected" : "store.total")}
-                        value={value(plain(sum((s) => dayCash(s, isToday && s.open))))}
-                        className="bg-green-100"
-                    />
+                    <>
+                        <Tile
+                            label={t("store.expenses")}
+                            value={value(plain(sum((s) => s.expenses)))}
+                            className="bg-red-100"
+                        />
+                        <Tile
+                            label={t(isToday ? "store.openNow" : "store.opened")}
+                            value={value(`${opened}/${total}`)}
+                            className="bg-slate-100"
+                        />
+                    </>
                 ) : (
-                    <Tile
-                        label={t("store.avgPerDay")}
-                        value={daysSold ? String(Math.round(cups / daysSold)) : "–"}
-                        className="bg-blue-100"
-                    />
+                    <>
+                        <Tile
+                            label={t("store.cupsPerDay")}
+                            value={daysSold ? String(Math.round(cups / daysSold)) : "–"}
+                            className="bg-blue-100"
+                        />
+                        <Tile
+                            label={t("store.bestDay")}
+                            value={
+                                best
+                                    ? `${formatCalendarDay(best.date, locale, "dayMonth")} · ${best.cups}`
+                                    : "–"
+                            }
+                            className="bg-green-100"
+                        />
+                    </>
                 )}
-                <Tile label={t("store.teaWaste")} value={litres} className="bg-teal-100" />
             </div>
             {points &&
                 (points.length > 0 ? (

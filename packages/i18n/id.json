@@ -223,8 +223,6 @@
     },
     "store": {
         "week": "Week",
-        "avgPerDay": "Rata-rata/hari",
-        "teaWaste": "Tea waste",
         "title": "Toko",
         "open": "Buka",
         "closed": "Tutup",
@@ -277,7 +275,11 @@
         "settingsTitle": "Settings toko",
         "counted": "Dihitung",
         "net": "Bersih",
-        "perDay": "Per hari"
+        "perDay": "Per hari",
+        "openNow": "Buka",
+        "opened": "Dibuka",
+        "cupsPerDay": "Cups/hari",
+        "bestDay": "Hari terbaik"
     },
     "errorSheet": {
         "title": "Gagal menyimpan",
