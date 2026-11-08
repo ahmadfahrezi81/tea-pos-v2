@@ -194,6 +194,28 @@ export function useStoresLive(from: string, to: string) {
     );
 }
 
+/** The Store home's live orders: only the newest few, all stores. Refetched while a live range is on screen. */
+export function useLatestOrders(from: string, to: string) {
+    const scope = useStoreScope();
+    return $api.useQuery(
+        "get",
+        "/tenants/{tenant}/orders",
+        {
+            params: {
+                path: { tenant: scope?.tenant ?? "" },
+                query: { from, to, storeId: scope?.storeId, limit: 3 },
+            },
+        },
+        {
+            enabled: !!scope,
+            staleTime: STALE.WARM,
+            placeholderData: sameStores(scope),
+            refetchInterval: to === localDate() ? 60_000 : false,
+            meta: { live: ["order"] },
+        },
+    );
+}
+
 /** The stores a screen adds up, from the live list, and their totals: real stores, or the one in the address. */
 export function useScopeStores(from: string, to: string) {
     const storeId = useStoreId();

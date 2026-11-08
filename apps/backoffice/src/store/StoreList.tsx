@@ -1,11 +1,13 @@
 import type { components } from "@tea-pos/api-client";
-import { formatDay, formatTime, localDate } from "@tea-pos/format";
+import { formatDateTime, formatDay, formatMoney, formatTime, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { useSlug } from "@tea-pos/shell/tenant";
 import { Badge } from "@tea-pos/ui/Badge";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { ListSection } from "@tea-pos/ui/ListSection";
+import { ListCard, ListRow } from "@tea-pos/ui/ListRow";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { Tile } from "@tea-pos/ui/Tile";
 import { Link } from "@tanstack/react-router";
@@ -13,7 +15,7 @@ import { ChartNoAxesCombined, CircleHelp, ReceiptText, Settings } from "lucide-r
 
 import { RangeBar, useRange } from "./range";
 import { RangePanel } from "./RangePanel";
-import { ALL, dayCash, plain, useScopeStores } from "./sales";
+import { ALL, dayCash, plain, useLatestOrders, useScopeStores } from "./sales";
 import { Sellers } from "@tea-pos/shell/Sellers";
 
 type Store = components["schemas"]["StoreLive"];
@@ -49,6 +51,8 @@ export function StoreList() {
                     ))}
                 </ListSection>
             )}
+
+            <LatestOrders />
 
             <SettingsGroup>
                 <SettingsRow
@@ -288,4 +292,57 @@ export function closedLine(
               `${formatTime(s.lastClosed, locale)} ${formatDay(s.lastClosed, locale).toLowerCase()}`,
           )
         : t("store.notOpened");
+}
+
+/** The newest orders across the stores, as they come in (live, and every minute today). */
+function LatestOrders() {
+    const t = useT();
+    const locale = useLocale();
+    const slug = useSlug();
+    const { from, to, single } = useRange();
+    const orders = useLatestOrders(from, to);
+    return (
+        <div className="space-y-2">
+            <div className="flex items-center justify-between">
+                <SectionLabel>{t("store.latestOrders")}</SectionLabel>
+                <Link
+                    to="/$tenant/store/$storeId/orders"
+                    params={{ tenant: slug, storeId: ALL }}
+                    search={{ from, to }}
+                    className="px-1 text-sm font-semibold text-brand active:opacity-70"
+                >
+                    {t("store.seeAll")} ›
+                </Link>
+            </div>
+            {orders.isPending ? (
+                <Skeleton className="h-40 rounded-2xl" />
+            ) : (
+                <ListCard>
+                    {(orders.data?.items ?? []).length === 0 ? (
+                        <p className="py-4 text-gray-900">{t("store.noSales")}</p>
+                    ) : (
+                        (orders.data?.items ?? []).map((o) => (
+                            <ListRow
+                                key={o.id}
+                                title={
+                                    <span className="text-[15px]">
+                                        {single
+                                            ? formatTime(o.at, locale)
+                                            : formatDateTime(o.at, locale)}
+                                        {` · ${o.cups} ${t("store.cupsUnit")}`}
+                                    </span>
+                                }
+                                subtitle={[o.storeName, o.seller].filter(Boolean).join(" · ")}
+                                trailing={
+                                    <span className="font-bold text-gray-900">
+                                        {formatMoney(o.total)}
+                                    </span>
+                                }
+                            />
+                        ))
+                    )}
+                </ListCard>
+            )}
+        </div>
+    );
 }

@@ -277,7 +277,9 @@
         "opened": "Opened",
         "cupsPerDay": "Cups/day",
         "bestDay": "Best day",
-        "details": "Details"
+        "details": "Details",
+        "latestOrders": "Latest orders",
+        "seeAll": "See all"
     },
     "errorSheet": {
         "title": "Couldn't save",

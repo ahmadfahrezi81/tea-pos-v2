@@ -277,7 +277,9 @@
         "opened": "Dibuka",
         "cupsPerDay": "Cups/hari",
         "bestDay": "Hari terbaik",
-        "details": "Detail"
+        "details": "Detail",
+        "latestOrders": "Pesanan terbaru",
+        "seeAll": "Lihat semua"
     },
     "errorSheet": {
         "title": "Gagal menyimpan",
