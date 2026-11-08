@@ -176,12 +176,17 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
                             className="bg-red-100"
                             color="text-red-900"
                         />
-                        <OrdersCups orders={s.orders} cups={s.cups} />
                         <Tile
                             label={t("store.net")}
                             value={plain(s.sales - s.expenses)}
                             className="bg-blue-100"
                             color="text-blue-900"
+                        />
+                        <Tile
+                            label={t("store.cups")}
+                            value={String(s.cups)}
+                            className="bg-orange-100"
+                            color="text-orange-900"
                         />
                         <Tile
                             label={t("store.perDay")}
@@ -191,8 +196,8 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
                         <Tile
                             label={t("store.cashOff")}
                             value={offBy(s.cashDiff)}
-                            className={s.cashDiff === 0 ? "bg-green-100" : "bg-red-100"}
-                            color={s.cashDiff === 0 ? "text-green-900" : "text-red-900"}
+                            className={s.cashDiff === 0 ? "bg-slate-100" : "bg-red-100"}
+                            color={s.cashDiff === 0 ? "text-gray-900" : "text-red-900"}
                         />
                     </>
                 )}
