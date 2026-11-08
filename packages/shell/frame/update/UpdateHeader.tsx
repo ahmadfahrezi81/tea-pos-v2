@@ -1,5 +1,5 @@
 import { useT } from "@tea-pos/i18n/react";
-import { ArrowDown, Check } from "lucide-react";
+import { ArrowDown, PackageCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { UpdateBar, useAppUpdate } from "./AppUpdate";
@@ -46,7 +46,7 @@ export function UpdateHeader() {
             className="flex h-[42px] min-w-0 flex-1 items-center gap-2.5 rounded-xl bg-gray-900 px-3 text-white"
         >
             {update.phase === "ready" ? (
-                <Check size={18} strokeWidth={3} className="mx-0.5 shrink-0" />
+                <PackageCheck size={20} strokeWidth={2.5} className="shrink-0" />
             ) : (
                 <span className="update-drop relative block size-[22px] shrink-0 overflow-hidden">
                     <ArrowDown size={18} strokeWidth={2.75} className="absolute left-0.5 top-0" />

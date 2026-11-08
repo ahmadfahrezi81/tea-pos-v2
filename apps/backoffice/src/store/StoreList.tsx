@@ -1,11 +1,13 @@
 import type { components } from "@tea-pos/api-client";
-import { formatDay, formatMoney, formatTime, localDate } from "@tea-pos/format";
+import { formatDateTime, formatDay, formatMoney, formatTime, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { useSlug } from "@tea-pos/shell/tenant";
 import { Badge } from "@tea-pos/ui/Badge";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { ListSection } from "@tea-pos/ui/ListSection";
+import { ListCard, ListRow } from "@tea-pos/ui/ListRow";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { Tile } from "@tea-pos/ui/Tile";
 import { Link } from "@tanstack/react-router";
@@ -13,7 +15,7 @@ import { ChartNoAxesCombined, CircleHelp, ReceiptText, Settings } from "lucide-r
 
 import { RangeBar, useRange } from "./range";
 import { RangePanel } from "./RangePanel";
-import { ALL, dayCash, plain, useScopeStores } from "./sales";
+import { ALL, dayCash, plain, useLatestOrders, useScopeStores } from "./sales";
 import { Sellers } from "@tea-pos/shell/Sellers";
 
 type Store = components["schemas"]["StoreLive"];
@@ -43,12 +45,14 @@ export function StoreList() {
             ) : shown.length === 0 ? (
                 <EmptyState title={t("store.noStores")} />
             ) : (
-                <ListSection title={t("store.stores")} count={shown.length}>
+                <ListSection title={t("store.stores")} count={shown.length} framed>
                     {shown.map((s) => (
                         <StoreCard key={s.id} store={s} slug={slug} />
                     ))}
                 </ListSection>
             )}
+
+            <LatestOrders />
 
             <SettingsGroup>
                 <SettingsRow
@@ -66,7 +70,7 @@ export function StoreList() {
                 <SettingsRow
                     to={`/${slug}/store/settings`}
                     icon={<Settings {...rowIcon} />}
-                    label={t("storeSettings.title")}
+                    label={t("store.settingsTitle")}
                 />
                 <SettingsRow
                     to={`/${slug}/store/help`}
@@ -126,78 +130,136 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
             search={{ from, to }}
             className="block rounded-xl bg-white p-3 space-y-2.5 active:scale-[0.99]"
         >
-            {/* A grid, so the status pill and the amount share one row and one bottom line. */}
-            <div className="grid grid-cols-[1fr_auto] items-end gap-x-3 gap-y-1">
+            <div className="min-w-0">
                 <p className="text-lg font-bold text-gray-900 truncate">{s.name}</p>
-                <p className="text-xs font-semibold text-gray-900 text-right">
-                    {t(!single ? "store.salesShort" : open ? "store.expected" : "store.total")}
-                </p>
-                <div>
-                    <StatusPill {...pill} />
-                </div>
-                <p
-                    className={`font-bold leading-5 text-right whitespace-nowrap ${single ? "text-orange-600" : "text-green-600"}`}
-                >
-                    {!single
-                        ? formatMoney(s.sales)
-                        : open
-                          ? formatMoney(dayCash(s, true))
-                          : s.closedDays > 0
-                            ? formatMoney(dayCash(s, false))
-                            : "—"}
-                </p>
+                <StatusPill {...pill} />
             </div>
-            {single ? (
-                <div className="grid grid-cols-3 gap-1.5">
-                    <Tile
-                        label={t("store.opening")}
-                        value={plain(s.opening)}
-                        className="bg-slate-100"
-                    />
-                    <Tile
-                        label={`+ ${t("store.salesShort")}`}
-                        value={plain(s.sales)}
-                        className="bg-blue-100"
-                    />
-                    <Tile
-                        label={`− ${t("store.expenses")}`}
-                        value={plain(s.expenses)}
-                        className="bg-purple-100"
-                    />
-                </div>
-            ) : (
-                <div className="grid grid-cols-3 gap-1.5">
-                    <Tile
-                        label={t("store.cups")}
-                        value={String(s.cups)}
-                        className="bg-orange-100"
-                    />
-                    <Tile
-                        label={t("store.expenses")}
-                        value={plain(s.expenses)}
-                        className="bg-purple-100"
-                    />
-                    <Tile
-                        label={t("store.cashOff")}
-                        value={
-                            s.cashDiff === 0
-                                ? "0"
-                                : `${s.cashDiff < 0 ? "−" : "+"}${plain(Math.abs(s.cashDiff))}`
-                        }
-                        className={s.cashDiff === 0 ? "bg-green-100" : "bg-red-100"}
-                    />
-                </div>
-            )}
+            {/* Analytics' cash summary, condensed: two rows of three, short words. */}
+            <div className="grid grid-cols-3 gap-1.5">
+                {single ? (
+                    <>
+                        <Split
+                            className="col-span-2 bg-blue-100"
+                            left={{
+                                label: t("store.opening"),
+                                value: plain(s.opening),
+                                color: "text-blue-900",
+                            }}
+                            right={{
+                                label: t("store.salesShort"),
+                                value: plain(s.sales),
+                                color: "text-blue-900",
+                            }}
+                        />
+                        <OrdersCups orders={s.orders} cups={s.cups} />
+                        <Tile
+                            label={t("store.expenses")}
+                            value={plain(s.expenses)}
+                            className="bg-red-100"
+                            color="text-red-900"
+                        />
+                        <Tile
+                            label={t("store.expected")}
+                            value={plain(dayCash(s, true))}
+                            className="bg-purple-100"
+                            color="text-purple-900"
+                        />
+                        <Counted store={s} />
+                    </>
+                ) : (
+                    <>
+                        <Tile
+                            label={t("store.salesShort")}
+                            value={plain(s.sales)}
+                            className="bg-green-100"
+                            color="text-green-900"
+                        />
+                        <Tile
+                            label={t("store.expenses")}
+                            value={plain(s.expenses)}
+                            className="bg-red-100"
+                            color="text-red-900"
+                        />
+                        <Tile
+                            label={t("store.net")}
+                            value={plain(s.sales - s.expenses)}
+                            className="bg-blue-100"
+                            color="text-blue-900"
+                        />
+                        <Tile
+                            label={t("store.cups")}
+                            value={String(s.cups)}
+                            className="bg-orange-100"
+                            color="text-orange-900"
+                        />
+                        <Tile
+                            label={t("store.perDay")}
+                            value={s.days > 0 ? plain(Math.round(s.sales / s.days)) : "—"}
+                            className="bg-slate-100"
+                        />
+                        <Tile
+                            label={t("store.cashOff")}
+                            value={offBy(s.cashDiff)}
+                            className={s.cashDiff === 0 ? "bg-slate-100" : "bg-red-100"}
+                            color={s.cashDiff === 0 ? "text-gray-900" : "text-red-900"}
+                        />
+                    </>
+                )}
+            </div>
             {s.sellers.length > 0 && <Sellers sellers={s.sellers} />}
-            {single && s.cashDiff !== 0 && (
-                <p className="rounded-xl bg-red-100 px-3 py-1.5 text-sm font-bold text-red-700">
-                    {t(s.cashDiff < 0 ? "store.cashShort" : "store.cashOver").replace(
-                        "{amount}",
-                        formatMoney(Math.abs(s.cashDiff)),
-                    )}
+        </Link>
+    );
+}
+
+type Half = { label: string; value: string; color: string };
+
+/** Two figures in one tile, each with its own word, side by side. */
+function Split({ left, right, className }: { left: Half; right: Half; className: string }) {
+    const half = (h: Half) => (
+        <div className="min-w-0">
+            <p className="text-xs font-semibold text-gray-900 truncate">{h.label}</p>
+            <p className={`text-base font-bold truncate ${h.color}`}>{h.value}</p>
+        </div>
+    );
+    return (
+        <div className={`grid min-w-0 grid-cols-2 gap-2 rounded-lg p-2 ${className}`}>
+            {half(left)}
+            {half(right)}
+        </div>
+    );
+}
+
+function OrdersCups({ orders, cups }: { orders: number; cups: number }) {
+    const t = useT();
+    return (
+        <Split
+            className="bg-violet-100"
+            left={{ label: t("store.orders"), value: String(orders), color: "text-violet-900" }}
+            right={{ label: t("store.cups"), value: String(cups), color: "text-violet-900" }}
+        />
+    );
+}
+
+const offBy = (diff: number) =>
+    diff === 0 ? "+0" : `${diff < 0 ? "−" : "+"}${plain(Math.abs(diff))}`;
+
+/** Cash counted at closing, and under it how far it was off: green when right, red when not. */
+function Counted({ store: s }: { store: Store }) {
+    const t = useT();
+    return (
+        <div className="min-w-0 rounded-lg bg-amber-100 p-2">
+            <p className="text-xs font-semibold text-gray-900 truncate">{t("store.counted")}</p>
+            <p className="text-base font-bold truncate text-amber-900">
+                {s.closedDays > 0 ? plain(s.cashCounted) : "—"}
+            </p>
+            {s.closedDays > 0 && (
+                <p
+                    className={`text-xs font-bold ${s.cashDiff === 0 ? "text-green-700" : "text-red-700"}`}
+                >
+                    {offBy(s.cashDiff)}
                 </p>
             )}
-        </Link>
+        </div>
     );
 }
 
@@ -230,4 +292,60 @@ export function closedLine(
               `${formatTime(s.lastClosed, locale)} ${formatDay(s.lastClosed, locale).toLowerCase()}`,
           )
         : t("store.notOpened");
+}
+
+/** The newest orders across the stores, as they come in (live, and every minute today). */
+function LatestOrders() {
+    const t = useT();
+    const locale = useLocale();
+    const slug = useSlug();
+    const { from, to, single } = useRange();
+    const orders = useLatestOrders(from, to);
+    return (
+        <div className="space-y-2">
+            <div className="flex items-center justify-between">
+                <SectionLabel>{t("store.latestOrders")}</SectionLabel>
+                <Link
+                    to="/$tenant/store/$storeId/orders"
+                    params={{ tenant: slug, storeId: ALL }}
+                    search={{ from, to }}
+                    className="px-1 text-sm font-semibold text-brand active:opacity-70"
+                >
+                    {t("store.seeAll")} ›
+                </Link>
+            </div>
+            {orders.isPending ? (
+                <Skeleton className="h-40 rounded-2xl" />
+            ) : (
+                // A thin grey frame around the list, as the store page had it.
+                <div className="rounded-2xl bg-slate-200/70 p-1">
+                    <ListCard>
+                        {(orders.data?.items ?? []).length === 0 ? (
+                            <p className="py-4 text-gray-900">{t("store.noSales")}</p>
+                        ) : (
+                            (orders.data?.items ?? []).map((o) => (
+                                <ListRow
+                                    key={o.id}
+                                    title={
+                                        <span className="text-[15px]">
+                                            {single
+                                                ? formatTime(o.at, locale)
+                                                : formatDateTime(o.at, locale)}
+                                            {` · ${o.cups} ${t("store.cupsUnit")}`}
+                                        </span>
+                                    }
+                                    subtitle={[o.storeName, o.seller].filter(Boolean).join(" · ")}
+                                    trailing={
+                                        <span className="font-bold text-gray-900">
+                                            {formatMoney(o.total)}
+                                        </span>
+                                    }
+                                />
+                            ))
+                        )}
+                    </ListCard>
+                </div>
+            )}
+        </div>
+    );
 }

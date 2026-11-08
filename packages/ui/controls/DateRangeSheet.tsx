@@ -1,6 +1,7 @@
-import { Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
+import { RadioMark } from "./ChoiceList";
 import { MonthGrid } from "./MonthGrid";
 import { FIRST_MONTH, STEP_ARROW, stepIcon } from "./MonthStepper";
 import { ICON } from "../lib/icon";
@@ -74,11 +75,7 @@ export function DateRangeSheet({
     const row =
         "w-full flex items-center justify-between py-4 text-left text-[17px] font-medium text-gray-900 active:opacity-70";
     const more = (on: boolean) =>
-        on ? (
-            <Check size={ICON} className="text-brand" />
-        ) : (
-            <ChevronRight size={ICON} className="text-brand/90" />
-        );
+        on ? <RadioMark on /> : <ChevronRight size={ICON} className="text-brand/90" />;
     return (
         <Sheet
             open={open}
@@ -124,7 +121,7 @@ export function DateRangeSheet({
                             className={row}
                         >
                             {p.label}
-                            {picked === p.key && <Check size={ICON} className="text-brand" />}
+                            <RadioMark on={picked === p.key} />
                         </button>
                     ))}
                     <button onClick={() => setView("month")} className={row}>

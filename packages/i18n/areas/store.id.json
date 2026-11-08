@@ -114,7 +114,6 @@
         "helpFreshBody": "Angka di-refresh setiap menit, atau saat ditarik ke bawah.\nCup per hari berasal dari hari yang sudah ditutup, jadi hari yang masih buka bisa terbaca rendah."
     },
     "storeSettings": {
-        "title": "Settings toko",
         "new": "Toko baru",
         "none": "Belum ada toko",
         "name": "Nama",

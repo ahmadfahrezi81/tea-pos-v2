@@ -36,14 +36,21 @@ export function ChoiceList<T extends string>({
                                 </p>
                             )}
                         </div>
-                        <span
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${selected ? "border-brand/90 bg-brand/90" : "border-gray-300 bg-white"}`}
-                        >
-                            {selected && <Check size={16} className="text-white" strokeWidth={4} />}
-                        </span>
+                        <RadioMark on={selected} />
                     </button>
                 );
             })}
         </div>
+    );
+}
+
+/** The round mark of a pick-one list: a filled circle with a tick on the chosen, empty on the rest. */
+export function RadioMark({ on }: { on: boolean }) {
+    return (
+        <span
+            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${on ? "border-brand/90 bg-brand/90" : "border-gray-300 bg-white"}`}
+        >
+            {on && <Check size={16} className="text-white" strokeWidth={4} />}
+        </span>
     );
 }
