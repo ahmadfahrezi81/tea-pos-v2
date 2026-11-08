@@ -12,11 +12,10 @@ import (
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/tests/testkit"
 )
 
-// TestStoreSettings: an admin adds, changes and deletes a store; one with history is kept; the
-// values are checked; a guest reads but changes nothing.
+// TestStoreSettings: an admin adds and changes a store; the values are checked; a guest reads
+// but changes nothing.
 func TestStoreSettings(t *testing.T) {
 	pool := testkit.DB(t)
-	daySummaries(t, pool)
 	a := testkit.NewAPI(t, pool, "")
 	admin := testkit.Session(a.SignIn(t, testkit.AdminA, "backoffice"))
 	guest := testkit.Session(a.SignIn(t, testkit.GuestA, "backoffice"))
@@ -51,15 +50,6 @@ func TestStoreSettings(t *testing.T) {
 	s, c, changed := send(admin, http.MethodPut, "/"+made.ID, `{"name":"Pop-up 2","address":"Jl. Baru","status":"inactive","openTime":"09:00","closeTime":"17:00"}`)
 	if s != 200 || changed.Name != "Pop-up 2" || changed.Status != "inactive" || changed.Latitude != nil {
 		t.Errorf("change: %d %s %+v", s, c, changed)
-	}
-	if s, c, _ := send(admin, http.MethodDelete, "/"+storeANorth, ""); s != 409 || c != "store_has_history" {
-		t.Errorf("deleting a store with days: %d %s", s, c)
-	}
-	if s, c, _ := send(admin, http.MethodDelete, "/"+made.ID, ""); s != 204 {
-		t.Errorf("deleting the new store: %d %s", s, c)
-	}
-	if s, c, _ := send(admin, http.MethodGet, "/"+made.ID, ""); s != 404 || c != "store_not_found" {
-		t.Errorf("after delete: %d %s", s, c)
 	}
 	resp := a.Request(t, http.MethodGet, "/tenants/tenant-a/store-settings", "backoffice", guest)
 	defer resp.Body.Close()

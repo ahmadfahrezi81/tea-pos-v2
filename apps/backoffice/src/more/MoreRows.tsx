@@ -1,16 +1,16 @@
 import { useT } from "@tea-pos/i18n/react";
 import { rowIcon, SettingsRow } from "@tea-pos/shell/Settings";
 import { useAccess, useSlug } from "@tea-pos/shell/tenant";
-import { Cloud, FileCode, SlidersHorizontal } from "lucide-react";
+import { Cloud, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 
 import { WeatherSheet } from "./WeatherSheet";
 
-/** The backoffice's own More rows, as the old app: Weather (a sheet); then Advanced, for admins; API docs, for the owner. */
+/** The backoffice's own More rows, as the old app: Weather (a sheet); then Advanced, for admins. */
 export function MoreRows() {
     const t = useT();
     const slug = useSlug();
-    const { canWrite, owner } = useAccess();
+    const { canWrite } = useAccess();
     const [weather, setWeather] = useState(false);
     return (
         <>
@@ -24,13 +24,6 @@ export function MoreRows() {
                     to={`/${slug}/advanced`}
                     icon={<SlidersHorizontal {...rowIcon} />}
                     label={t("moreRows.advanced")}
-                />
-            )}
-            {owner && (
-                <SettingsRow
-                    to={`/${slug}/api-docs`}
-                    icon={<FileCode {...rowIcon} />}
-                    label={t("moreRows.apiDocs")}
                 />
             )}
             <WeatherSheet open={weather} onClose={() => setWeather(false)} />
