@@ -5,8 +5,8 @@ import { useT } from "@tea-pos/i18n/react";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { registerSW } from "virtual:pwa-register";
 
-import { whenIdle } from "../lib/idle";
-import { useApp } from "../session/AppContext";
+import { whenIdle } from "../../lib/idle";
+import { useApp } from "../../session/AppContext";
 
 /** Taps can fire in bursts; one check a minute is plenty for a deploy. */
 const CHECK_THROTTLE_MS = 60_000;

@@ -15,8 +15,8 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { AppContext } from "./AppContext";
-import { AppUpdateProvider } from "../frame/AppUpdate";
-import { refreshAll } from "../frame/refreshAll";
+import { AppUpdateProvider } from "../frame/update/AppUpdate";
+import { refreshAll } from "../frame/refresh/refreshAll";
 import { whenIdle } from "../lib/idle";
 import { savedUser } from "./session";
 import { hideSplash } from "../lib/splash";
