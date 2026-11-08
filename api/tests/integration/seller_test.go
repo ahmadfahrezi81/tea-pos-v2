@@ -232,13 +232,15 @@ func TestSellerCloseDay(t *testing.T) {
 		}
 	}
 
-	// Both apps' reads, kept to the seller's own stores.
+	// Both apps' reads, kept to the seller's own stores (today: older is too far back for a seller).
 	exec(`DELETE FROM user_store_assignments WHERE user_id = $1 AND store_id = $2`, testkit.SellerA, storeANorth)
+	today := time.Now().In(domain.WIB).Format(time.DateOnly)
+	todays := "/tenants/tenant-a/orders?from=" + today + "&to=" + today
 	for path, want := range map[string]int{
-		"/tenants/tenant-a/days/" + g.DayID:                                               200,
-		"/tenants/tenant-a/orders?from=2020-01-01&to=2020-01-02&storeId=" + storeACentral: 200,
-		"/tenants/tenant-a/orders?from=2020-01-01&to=2020-01-02&storeId=" + storeANorth:   403,
-		"/tenants/tenant-a/orders?from=2020-01-01&to=2020-01-02":                          403,
+		"/tenants/tenant-a/days/" + g.DayID:  200,
+		todays + "&storeId=" + storeACentral: 200,
+		todays + "&storeId=" + storeANorth:   403,
+		todays:                               403,
 	} {
 		if resp := a.Request(t, http.MethodGet, path, "seller", seller); resp.StatusCode != want {
 			t.Errorf("%s: %d, want %d", path, resp.StatusCode, want)
