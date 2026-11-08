@@ -58,7 +58,8 @@ export function RangePanel({ stores }: { stores: Store[] | undefined }) {
                     <Skeleton className="h-7 w-40 rounded" />
                 )}
             </div>
-            <div className="grid grid-cols-3 gap-1.5">
+            {/* A range's best day reads long ("7 Nov · 312"): half the row, the other two a quarter. */}
+            <div className={`grid gap-1.5 ${single ? "grid-cols-3" : "grid-cols-4"}`}>
                 <Tile
                     label={t("store.cups")}
                     value={value(String(cups))}
@@ -91,7 +92,7 @@ export function RangePanel({ stores }: { stores: Store[] | undefined }) {
                                     ? `${formatCalendarDay(best.date, locale, "dayMonth")} · ${best.cups}`
                                     : "–"
                             }
-                            className="bg-green-100"
+                            className="col-span-2 bg-green-100"
                         />
                     </>
                 )}
