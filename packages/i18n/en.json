@@ -253,7 +253,7 @@
         "daysCount": "{n} days",
         "latestOrders": "Latest orders",
         "seeAll": "See all",
-        "dayByDay": "Day by day",
+        "dayByDay": "Analytics",
         "dayDetail": "That day's detail",
         "helpTitle": "How stores work",
         "noSales": "No sales in this range",
@@ -276,7 +276,14 @@
         "didntOpen": "Didn't open",
         "nNotClosed": "{n} not closed",
         "daysClosed": "{n} of {m} days closed",
-        "settingsTitle": "Store settings"
+        "settingsTitle": "Store settings",
+        "openingBalance": "Opening Balance",
+        "totalSales": "Total Sales",
+        "openingPlusSales": "Opening + Sales",
+        "expectedCash": "Net Expected Cash",
+        "actualCash": "Actual Cash (Counted)",
+        "notCounted": "Not counted",
+        "daysClosedLabel": "Days closed"
     },
     "errorSheet": {
         "title": "Couldn't save",
