@@ -137,28 +137,33 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
                         <Tile
                             label={t("store.openingBalance")}
                             value={plain(s.opening)}
-                            className="bg-slate-100"
+                            className="bg-blue-100"
+                            color="text-blue-900"
                         />
                         <Tile
                             label={t("store.totalSales")}
                             value={plain(s.sales)}
                             className="bg-green-100"
+                            color="text-green-900"
                         />
                         <Tile
                             label={t("store.openingPlusSales")}
                             value={plain(s.opening + s.sales)}
                             className="bg-blue-100"
+                            color="text-blue-900"
                         />
                         <OrdersCups orders={s.orders} cups={s.cups} />
                         <Tile
                             label={t("store.expectedCash")}
                             value={plain(dayCash(s, true))}
                             className="bg-purple-100"
+                            color="text-purple-900"
                         />
                         <Tile
                             label={t("store.actualCash")}
                             value={s.closedDays > 0 ? plain(s.cashCounted) : t("store.notCounted")}
                             className="bg-amber-100"
+                            color="text-amber-900"
                         />
                     </>
                 ) : (
@@ -167,11 +172,13 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
                             label={t("store.totalSales")}
                             value={plain(s.sales)}
                             className="bg-green-100"
+                            color="text-green-900"
                         />
                         <Tile
                             label={t("store.expenses")}
                             value={plain(s.expenses)}
                             className="bg-red-100"
+                            color="text-red-900"
                         />
                         <Tile
                             label={t("store.daysClosedLabel")}
@@ -187,11 +194,13 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
                                     : `${s.cashDiff < 0 ? "−" : "+"}${plain(Math.abs(s.cashDiff))}`
                             }
                             className={s.cashDiff === 0 ? "bg-green-100" : "bg-red-100"}
+                            color={s.cashDiff === 0 ? "text-green-900" : "text-red-900"}
                         />
                         <Tile
                             label={t("store.actualCash")}
                             value={plain(s.cashCounted)}
                             className="bg-amber-100"
+                            color="text-amber-900"
                         />
                     </>
                 )}
@@ -209,19 +218,23 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
     );
 }
 
-/** Orders and cups in one tile, split down the middle, as Analytics shows them side by side. */
+/** Orders and cups sharing one cell, two half tiles in their own colours, as Analytics shows them. */
 function OrdersCups({ orders, cups }: { orders: number; cups: number }) {
     const t = useT();
     return (
-        <div className="grid grid-cols-2 gap-1 rounded-lg bg-orange-100 p-2">
-            <div className="min-w-0">
-                <p className="text-xs font-semibold text-gray-900 truncate">{t("store.orders")}</p>
-                <p className="text-base font-bold text-gray-900">{orders}</p>
-            </div>
-            <div className="min-w-0 border-l border-orange-200 pl-2">
-                <p className="text-xs font-semibold text-gray-900 truncate">{t("store.cups")}</p>
-                <p className="text-base font-bold text-gray-900">{cups}</p>
-            </div>
+        <div className="grid grid-cols-2 gap-1.5">
+            <Tile
+                label={t("store.orders")}
+                value={String(orders)}
+                className="bg-violet-100"
+                color="text-violet-900"
+            />
+            <Tile
+                label={t("store.cups")}
+                value={String(cups)}
+                className="bg-orange-100"
+                color="text-orange-900"
+            />
         </div>
     );
 }
