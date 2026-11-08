@@ -160,27 +160,32 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
                             className="bg-purple-100"
                             color="text-purple-900"
                         />
-                        <Counted store={s} withOff />
+                        <Counted store={s} />
                     </>
                 ) : (
                     <>
-                        <Split
-                            className="col-span-2 bg-green-100"
-                            left={{
-                                label: t("store.salesShort"),
-                                value: plain(s.sales),
-                                color: "text-green-900",
-                            }}
-                            right={{
-                                label: t("store.expenses"),
-                                value: plain(s.expenses),
-                                color: "text-green-900",
-                            }}
+                        <Tile
+                            label={t("store.salesShort")}
+                            value={plain(s.sales)}
+                            className="bg-green-100"
+                            color="text-green-900"
+                        />
+                        <Tile
+                            label={t("store.expenses")}
+                            value={plain(s.expenses)}
+                            className="bg-red-100"
+                            color="text-red-900"
                         />
                         <OrdersCups orders={s.orders} cups={s.cups} />
                         <Tile
-                            label={t("store.daysClosedLabel")}
-                            value={`${s.days - s.notClosed}/${s.days}`}
+                            label={t("store.net")}
+                            value={plain(s.sales - s.expenses)}
+                            className="bg-blue-100"
+                            color="text-blue-900"
+                        />
+                        <Tile
+                            label={t("store.perDay")}
+                            value={s.days > 0 ? plain(Math.round(s.sales / s.days)) : "—"}
                             className="bg-slate-100"
                         />
                         <Tile
@@ -189,7 +194,6 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
                             className={s.cashDiff === 0 ? "bg-green-100" : "bg-red-100"}
                             color={s.cashDiff === 0 ? "text-green-900" : "text-red-900"}
                         />
-                        <Counted store={s} />
                     </>
                 )}
             </div>
@@ -231,7 +235,7 @@ const offBy = (diff: number) =>
     diff === 0 ? "+0" : `${diff < 0 ? "−" : "+"}${plain(Math.abs(diff))}`;
 
 /** Cash counted at closing, and under it how far it was off: green when right, red when not. */
-function Counted({ store: s, withOff = false }: { store: Store; withOff?: boolean }) {
+function Counted({ store: s }: { store: Store }) {
     const t = useT();
     return (
         <div className="min-w-0 rounded-lg bg-amber-100 p-2">
@@ -239,7 +243,7 @@ function Counted({ store: s, withOff = false }: { store: Store; withOff?: boolea
             <p className="text-base font-bold truncate text-amber-900">
                 {s.closedDays > 0 ? plain(s.cashCounted) : "—"}
             </p>
-            {withOff && s.closedDays > 0 && (
+            {s.closedDays > 0 && (
                 <p
                     className={`text-xs font-bold ${s.cashDiff === 0 ? "text-green-700" : "text-red-700"}`}
                 >
