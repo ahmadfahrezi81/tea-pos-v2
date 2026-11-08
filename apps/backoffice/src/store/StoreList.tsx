@@ -144,7 +144,7 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
                             right={{
                                 label: t("store.salesShort"),
                                 value: plain(s.sales),
-                                color: "text-green-900",
+                                color: "text-blue-900",
                             }}
                         />
                         <OrdersCups orders={s.orders} cups={s.cups} />
@@ -174,7 +174,7 @@ function StoreCard({ store: s, slug }: { store: Store; slug: string }) {
                             right={{
                                 label: t("store.expenses"),
                                 value: plain(s.expenses),
-                                color: "text-red-900",
+                                color: "text-green-900",
                             }}
                         />
                         <OrdersCups orders={s.orders} cups={s.cups} />
@@ -222,7 +222,7 @@ function OrdersCups({ orders, cups }: { orders: number; cups: number }) {
         <Split
             className="bg-violet-100"
             left={{ label: t("store.orders"), value: String(orders), color: "text-violet-900" }}
-            right={{ label: t("store.cups"), value: String(cups), color: "text-orange-900" }}
+            right={{ label: t("store.cups"), value: String(cups), color: "text-violet-900" }}
         />
     );
 }
