@@ -318,7 +318,7 @@ function LatestOrders() {
                 <Skeleton className="h-40 rounded-2xl" />
             ) : (
                 // A thin grey frame around the list, as the store page had it.
-                <div className="rounded-2xl bg-slate-200/70 p-1.5">
+                <div className="rounded-2xl bg-slate-200/70 p-1">
                     <ListCard>
                         {(orders.data?.items ?? []).length === 0 ? (
                             <p className="py-4 text-gray-900">{t("store.noSales")}</p>
