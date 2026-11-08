@@ -4,9 +4,9 @@
         "save": "Simpan",
         "back": "Kembali",
         "close": "Tutup",
-        "logout": "Keluar",
+        "logout": "Logout",
         "retry": "Coba Lagi",
-        "refresh": "Muat Ulang",
+        "refresh": "Refresh",
         "unknown": "Tidak dikenal",
         "profileFailed": "Gagal memuat profil",
         "failed": "Gagal",
@@ -33,7 +33,7 @@
         "remove": "Hapus"
     },
     "home": {
-        "title": "Beranda",
+        "title": "Home",
         "noTenant": "Kamu sudah masuk, tapi belum terdaftar di usaha mana pun. Buka tautan dari pemilik untuk meminta akses.",
         "storeStatus": {
             "inactive": "Tidak aktif",
@@ -53,7 +53,7 @@
     "account": {
         "personalDetails": "Data Pribadi",
         "language": "Bahasa",
-        "logoutConfirm": "Apakah Anda yakin ingin keluar?",
+        "logoutConfirm": "Yakin ingin logout?",
         "email": "Email",
         "userId": "ID Pengguna",
         "firstName": "Nama Depan",
@@ -62,7 +62,7 @@
         "memberSince": "Bergabung Sejak",
         "saving": "Menyimpan...",
         "title": "Akun",
-        "signingOut": "Sedang keluar…",
+        "signingOut": "Sedang logout…",
         "confirmSave": "Simpan data Anda?",
         "confirmSaveBody": "Nama Anda berubah di semua tempat, di setiap aplikasi."
     },
@@ -78,8 +78,8 @@
         "default": "Utama",
         "app": "Aplikasi",
         "updateOffline": "Tidak ada koneksi. Coba lagi saat online.",
-        "updateIsLatest": "Terbaru",
-        "updateNow": "Perbarui sekarang"
+        "updateIsLatest": "Latest",
+        "updateNow": "Update sekarang"
     },
     "whatsNew": {
         "title": "Yang Baru",
@@ -106,7 +106,7 @@
         "edit": "Ubah",
         "moreActions": "Aksi lainnya",
         "maintenance": "Sedang Perbaikan",
-        "maintenanceSub": "Kami sedang melakukan pembaruan untuk meningkatkan pengalaman Anda. Kami akan segera kembali.",
+        "maintenanceSub": "Kami sedang melakukan update untuk meningkatkan pengalaman Anda. Kami akan segera kembali.",
         "allStores": "Semua Toko",
         "pickStore": "Pilih Toko",
         "hideInactiveStores": "Sembunyikan toko tidak aktif",
@@ -122,8 +122,8 @@
         "noAccessBody": "Minta bergabung ke usaha ini. Admin akan mengizinkanmu masuk.",
         "requestAccess": "Minta akses",
         "requestSent": "Permintaan terkirim. Kamu bisa masuk setelah admin menyetujuinya.",
-        "updating": "Memperbarui {app}",
-        "updateDownloading": "Mengunduh pembaruan",
+        "updating": "Sedang update {app}",
+        "updateDownloading": "Mengunduh update",
         "updateDone": "Selesai. Memulai ulang…",
         "updateRestart": "Restart",
         "updateKeepOpen": "Biarkan aplikasi tetap terbuka",
@@ -155,9 +155,9 @@
     },
     "errors": {
         "account_inactive": "Akun ini tidak aktif. Hubungi pemilik.",
-        "app_too_old": "Versi ini terlalu lama. Memperbarui…",
+        "app_too_old": "Versi ini terlalu lama. Sedang update…",
         "bad_request": "Ada yang belum benar di formulir ini.",
-        "conflict": "Ini sudah berubah. Muat ulang dan coba lagi.",
+        "conflict": "Ini sudah berubah. Refresh dan coba lagi.",
         "error": "Terjadi kesalahan.",
         "read_only": "Hanya baca: terhubung ke production.",
         "not_your_store": "Anda tidak ditugaskan di toko ini.",
@@ -168,7 +168,7 @@
         "bad_claim_code": "Kodenya salah.",
         "no_session": "Tidak ada yang berjualan di toko ini.",
         "product_changed": "Produk atau harganya berubah. Periksa keranjang.",
-        "files_unavailable": "Foto belum bisa diunggah. Coba lagi nanti.",
+        "files_unavailable": "Foto belum bisa di-upload. Coba lagi nanti.",
         "forbidden": "Anda tidak diizinkan melakukan ini.",
         "idempotency_key_required": "Terjadi kesalahan. Coba lagi.",
         "idempotency_key_reused": "Terjadi kesalahan. Coba lagi.",
@@ -209,16 +209,16 @@
         "bad_proof": "Tangkapan layar itu bukan bukti gaji usaha ini.",
         "request_not_found": "Permintaan itu sudah dijawab.",
         "blank_name": "Nama tidak boleh kosong",
-        "bad_photo": "Foto tidak terunggah dengan benar. Ambil lagi.",
+        "bad_photo": "Foto gagal di-upload. Ambil lagi.",
         "claim_not_eligible": "Kamu tidak bisa mengajukan klaim ini.",
         "claim_too_old": "Tanggalnya terlalu lama.",
         "claim_done": "Klaim ini sudah kamu ajukan.",
         "period_closed": "Periode gaji ini sudah ditutup.",
         "no_work_that_day": "Kamu tidak bekerja hari itu.",
-        "bad_receipt": "Struk tidak terunggah dengan benar. Tambahkan lagi.",
+        "bad_receipt": "Struk gagal di-upload. Tambahkan lagi.",
         "old_day_open": "Hari sebelumnya masih buka. Tutup dulu di Analitik.",
         "notSavedOffline": "Tidak tersimpan: tidak ada koneksi. Coba lagi.",
-        "session_not_found": "Sesi itu sudah berakhir.",
+        "session_not_found": "Session itu sudah berakhir.",
         "bad_hours": "Jam buka harus sebelum jam tutup."
     },
     "store": {
@@ -285,7 +285,7 @@
         "noAnswer": "Tidak ada jawaban",
         "requestId": "ID permintaan",
         "app": "Aplikasi",
-        "copy": "Salin detail"
+        "copy": "Copy detail"
     },
     "connection": {
         "offline": "Tidak ada koneksi",

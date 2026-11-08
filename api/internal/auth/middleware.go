@@ -95,8 +95,7 @@ func Middleware(sessions *Sessions, q *store.Queries, limiter, perSession *Limit
 			return
 		}
 		if err != nil {
-			logLookup(ctx.Context(), "session lookup", err)
-			write(ctx, errNoAccess)
+			lookupFailed(ctx, "session lookup", err)
 			return
 		}
 
@@ -144,8 +143,7 @@ func Middleware(sessions *Sessions, q *store.Queries, limiter, perSession *Limit
 				return
 			}
 			if err != nil {
-				logLookup(ctx.Context(), "tenant lookup", err)
-				write(ctx, errNoAccess)
+				lookupFailed(ctx, "tenant lookup", err)
 				return
 			}
 			// An inactive member is out of the tenant from their next request; anyone in it needs a
@@ -191,6 +189,19 @@ func write(ctx huma.Context, e *httpx.Error) {
 	ctx.SetHeader("Content-Type", "application/json")
 	ctx.SetStatus(e.Status)
 	_ = json.NewEncoder(ctx.BodyWriter()).Encode(e)
+}
+
+// lookupFailed answers a lookup that failed: 500, or 499 for a request the phone gave up on, so a
+// 500 in the log is always a real one, as httpx does for the handlers.
+func lookupFailed(ctx huma.Context, what string, err error) {
+	logLookup(ctx.Context(), what, err)
+	if errors.Is(err, context.Canceled) {
+		e := *errNoAccess
+		e.Status = httpx.StatusClientClosed
+		write(ctx, &e)
+		return
+	}
+	write(ctx, errNoAccess)
 }
 
 // logLookup logs a failed lookup; a request the phone gave up on (a reload) is no failure of ours.

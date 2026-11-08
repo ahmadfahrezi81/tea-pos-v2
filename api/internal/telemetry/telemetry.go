@@ -5,6 +5,7 @@ package telemetry
 import (
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/posthog/posthog-go"
@@ -134,9 +135,15 @@ func (quietLogger) Debugf(string, ...any) {}
 func (quietLogger) Logf(f string, a ...any) {
 	slog.Debug("posthog", "detail", fmt.Sprintf(f, a...))
 }
-func (quietLogger) Warnf(f string, a ...any) {
-	slog.Warn("posthog", "detail", fmt.Sprintf(f, a...))
-}
-func (quietLogger) Errorf(f string, a ...any) {
-	slog.Warn("posthog", "detail", fmt.Sprintf(f, a...))
+func (quietLogger) Warnf(f string, a ...any)  { warn(fmt.Sprintf(f, a...)) }
+func (quietLogger) Errorf(f string, a ...any) { warn(fmt.Sprintf(f, a...)) }
+
+func warn(detail string) {
+	// /me asks for every flag without a store; a flag whose rule needs one (a store's own, read
+	// per store) cannot answer there, and says so on every /me: expected, so not a warning.
+	if strings.HasPrefix(detail, "Unable to compute flag locally") {
+		slog.Debug("posthog", "detail", detail)
+		return
+	}
+	slog.Warn("posthog", "detail", detail)
 }
