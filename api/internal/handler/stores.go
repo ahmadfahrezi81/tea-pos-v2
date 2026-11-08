@@ -8,7 +8,6 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
@@ -20,11 +19,10 @@ import (
 )
 
 var (
-	errBadHours        = httpx.New(http.StatusUnprocessableEntity, "bad_hours", "A store opens before it closes")
-	errStoreHasHistory = httpx.New(http.StatusConflict, "store_has_history", "This store has sales or days: make it Inactive instead")
+	errBadHours = httpx.New(http.StatusUnprocessableEntity, "bad_hours", "A store opens before it closes")
 )
 
-// storesChanged: a store was added, changed or removed; every app reloads /me, which lists them.
+// storesChanged: a store was added or changed; every app reloads /me, which lists them.
 const storesChanged = "stores"
 
 func registerStores(api huma.API, d Deps) {
@@ -116,29 +114,6 @@ func registerStores(api huma.API, d Deps) {
 				return nil, err
 			}
 			return &contract.StoreSettingsOutput{Body: storeSettings(s)}, nil
-		})
-
-	del := op("deleteStore", http.MethodDelete, "/store-settings/{storeId}", "Remove a store that has nothing recorded yet (a mistake); one with history is made Inactive instead")
-	del.DefaultStatus = http.StatusNoContent
-	route(api, del, write.Repeatable(),
-		func(ctx context.Context, in *contract.StoreSettingsInput) (*struct{}, error) {
-			caller, _ := auth.CallerFrom(ctx)
-			id, err := uuid(in.StoreID, errStoreNotFound)
-			if err != nil {
-				return nil, err
-			}
-			n, err := d.Queries.DeleteStore(ctx, store.DeleteStoreParams{ID: id, TenantID: caller.TenantID})
-			var pg *pgconn.PgError
-			if errors.As(err, &pg) && pg.Code == "23503" {
-				return nil, errStoreHasHistory
-			}
-			if err != nil {
-				return nil, err
-			}
-			if n == 0 {
-				return nil, errStoreNotFound
-			}
-			return nil, announceStores(ctx, d.Queries, caller)
 		})
 }
 

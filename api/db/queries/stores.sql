@@ -20,7 +20,3 @@ UPDATE stores
 SET name = @name, address = nullif(@address::text, ''), latitude = sqlc.narg(latitude), longitude = sqlc.narg(longitude),
     status = @status, open_time = @open_time, close_time = @close_time, updated_at = now()
 WHERE id = @id AND tenant_id = @tenant_id;
-
--- name: DeleteStore :execrows
--- Only a store with nothing recorded: every table that keeps history refuses it (no cascade).
-DELETE FROM stores WHERE id = @id AND tenant_id = @tenant_id;

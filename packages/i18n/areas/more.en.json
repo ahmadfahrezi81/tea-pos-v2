@@ -21,7 +21,6 @@
     },
     "moreRows": {
         "weather": "Weather",
-        "advanced": "Advanced",
-        "apiDocs": "API docs"
+        "advanced": "Advanced"
     }
 }

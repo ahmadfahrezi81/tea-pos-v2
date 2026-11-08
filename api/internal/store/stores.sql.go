@@ -44,24 +44,6 @@ func (q *Queries) CreateStore(ctx context.Context, arg CreateStoreParams) (pgtyp
 	return id, err
 }
 
-const deleteStore = `-- name: DeleteStore :execrows
-DELETE FROM stores WHERE id = $1 AND tenant_id = $2
-`
-
-type DeleteStoreParams struct {
-	ID       pgtype.UUID
-	TenantID pgtype.UUID
-}
-
-// Only a store with nothing recorded: every table that keeps history refuses it (no cascade).
-func (q *Queries) DeleteStore(ctx context.Context, arg DeleteStoreParams) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteStore, arg.ID, arg.TenantID)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
-}
-
 const getStoreSettings = `-- name: GetStoreSettings :one
 SELECT id, name, coalesce(address, '')::text AS address, latitude, longitude, status, open_time, close_time
 FROM stores

@@ -1,6 +1,5 @@
 {
     "pay": {
-        "payouts": "Staff Payouts",
         "commissionTypes": "Commission Types",
         "claimTypes": "Claim Types",
         "schedule": "Pay Schedule",
@@ -10,7 +9,6 @@
         "editClaimType": "Edit Claim Type",
         "lastDay": "last day",
         "daysLeft": "{n}d left",
-        "approved": "Approved",
         "searchStaff": "Search staff...",
         "noStaff": "No staff found.",
         "commissionType": "Commission Type",
@@ -22,7 +20,6 @@
         "accountNumber": "Account number",
         "accountHolder": "Account holder",
         "noBank": "No bank details set by staff yet.",
-        "noCommissionTypes": "No commission types configured yet.",
         "noCommissionTypesYet": "No commission types yet.",
         "noClaimTypesYet": "No claim types yet.",
         "saveChanges": "Save Changes",
@@ -141,12 +138,6 @@
         "staff": "Staff",
         "week": "Week",
         "workDays": "Work Days",
-        "filters": {
-            "all": "All",
-            "ongoing": "Ongoing",
-            "paid": "Paid",
-            "needs_review": "Needs Review"
-        },
         "alreadyPaid": "Already paid",
         "alreadyClosed": "Period already closed",
         "alreadySub": "Nothing left to confirm here. The payslip has the details.",
