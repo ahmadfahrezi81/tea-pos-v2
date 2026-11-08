@@ -275,7 +275,8 @@
         "notClosed": "Belum ditutup",
         "didntOpen": "Tidak buka",
         "nNotClosed": "{n} belum ditutup",
-        "daysClosed": "{n} dari {m} hari ditutup"
+        "daysClosed": "{n} dari {m} hari ditutup",
+        "settingsTitle": "Settings toko"
     },
     "errorSheet": {
         "title": "Gagal menyimpan",

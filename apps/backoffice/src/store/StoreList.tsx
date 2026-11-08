@@ -66,7 +66,7 @@ export function StoreList() {
                 <SettingsRow
                     to={`/${slug}/store/settings`}
                     icon={<Settings {...rowIcon} />}
-                    label={t("storeSettings.title")}
+                    label={t("store.settingsTitle")}
                 />
                 <SettingsRow
                     to={`/${slug}/store/help`}

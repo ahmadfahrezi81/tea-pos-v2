@@ -114,7 +114,6 @@
         "helpFreshBody": "The numbers refresh every minute, or when you pull down.\nCups by day come from closed days, so a day still open can read low there."
     },
     "storeSettings": {
-        "title": "Store settings",
         "new": "New store",
         "none": "No stores yet",
         "name": "Name",

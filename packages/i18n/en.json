@@ -275,7 +275,8 @@
         "notClosed": "Not closed",
         "didntOpen": "Didn't open",
         "nNotClosed": "{n} not closed",
-        "daysClosed": "{n} of {m} days closed"
+        "daysClosed": "{n} of {m} days closed",
+        "settingsTitle": "Store settings"
     },
     "errorSheet": {
         "title": "Couldn't save",
