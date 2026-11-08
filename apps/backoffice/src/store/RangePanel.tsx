@@ -58,12 +58,12 @@ export function RangePanel({ stores }: { stores: Store[] | undefined }) {
                     <Skeleton className="h-7 w-40 rounded" />
                 )}
             </div>
-            {/* A range's best day reads long ("7 Nov · 312"): half the row, the other two a quarter. */}
-            <div className={`grid gap-1.5 ${single ? "grid-cols-3" : "grid-cols-4"}`}>
+            {/* A range's best day reads long ("7 Nov · 312"): 2/5 of the row, the other two 1.5/5. */}
+            <div className={`grid gap-1.5 ${single ? "grid-cols-3" : "grid-cols-10"}`}>
                 <Tile
                     label={t("store.cups")}
                     value={value(String(cups))}
-                    className="bg-orange-100"
+                    className={`bg-orange-100 ${single ? "" : "col-span-3"}`}
                 />
                 {single ? (
                     <>
@@ -83,7 +83,7 @@ export function RangePanel({ stores }: { stores: Store[] | undefined }) {
                         <Tile
                             label={t("store.cupsPerDay")}
                             value={daysSold ? String(Math.round(cups / daysSold)) : "–"}
-                            className="bg-blue-100"
+                            className="col-span-3 bg-blue-100"
                         />
                         <Tile
                             label={t("store.bestDay")}
@@ -92,7 +92,7 @@ export function RangePanel({ stores }: { stores: Store[] | undefined }) {
                                     ? `${formatCalendarDay(best.date, locale, "dayMonth")} · ${best.cups}`
                                     : "–"
                             }
-                            className="col-span-2 bg-green-100"
+                            className="col-span-4 bg-green-100"
                         />
                     </>
                 )}
