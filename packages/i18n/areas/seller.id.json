@@ -6,11 +6,11 @@
         "storeLabel": "Toko",
         "date": "Tanggal",
         "openingBalanceLabel": "Saldo Awal",
-        "openingPhoto": "Foto Pembukaan",
+        "openingPhoto": "Foto Opening",
         "opening": "Membuka...",
         "previous": "Sebelumnya",
         "next": "Lanjut",
-        "uploading": "Mengunggah...",
+        "uploading": "Sedang upload...",
         "closing": "Menutup...",
         "noOpenSummary": "Tidak ada ringkasan open.",
         "noExpenses": "Belum ada pengeluaran hari ini.",
@@ -18,7 +18,7 @@
         "type": "Tipe",
         "amount": "Jumlah",
         "submitExpense": "Kirim Pengeluaran Toko",
-        "sessionCode": "Kode Sesi",
+        "sessionCode": "Kode Session",
         "closeSteps": {
             "ice": "Es",
             "syrup": "Sirup",
@@ -67,8 +67,8 @@
             "expense_created": "Pengeluaran ditambah",
             "expense_updated": "Pengeluaran diubah",
             "expense_deleted": "Pengeluaran dihapus",
-            "session_transferred": "Sesi diserahkan",
-            "session_ended": "Sesi berakhir",
+            "session_transferred": "Session diserahkan",
+            "session_ended": "Session berakhir",
             "supply_request_created": "Permintaan stok",
             "incident_report_created": "Laporan insiden"
         },
@@ -145,15 +145,15 @@
         "commissionConfig": "Konfig Komisi",
         "freqWeekly": "Mingguan",
         "freqBiWeekly": "Dua Mingguan",
-        "freqFourWeekly": "Setiap 4 Minggu"
+        "freqFourWeekly": "Setiap 4 Week"
     },
     "gate": {
         "notOpen": "Toko belum dibuka",
         "notOpenSub": "Buka toko untuk mulai menerima pesanan hari ini.",
         "openStore": "Buka Toko",
         "closed": "Toko sudah tutup",
-        "closedSub": "Sesi hari ini telah berakhir.",
-        "takenBy": "Sesi sudah diambil alih oleh",
+        "closedSub": "Session hari ini telah berakhir.",
+        "takenBy": "Session sudah diambil alih oleh",
         "askCode": "Minta kode 2 digit dari penjual saat ini untuk mengambil alih.",
         "takeOver": "Ambil Alih"
     }
