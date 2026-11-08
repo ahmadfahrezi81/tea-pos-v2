@@ -205,14 +205,14 @@ export function PeriodHome({ start }: { start: string }) {
                 <EmptyState title={t("pay.noPeople")} body={t("pay.noPeopleBody")} />
             )}
             {open.length > 0 && (
-                <ListSection title={t("pay.payoutsList")} count={open.length}>
+                <ListSection title={t("pay.payoutsList")} count={open.length} framed>
                     {open.map((x) => (
                         <PersonCard key={x.id} person={x} start={p.start} />
                     ))}
                 </ListSection>
             )}
             {done.length > 0 && (
-                <ListSection title={t("pay.done")} count={done.length}>
+                <ListSection title={t("pay.done")} count={done.length} framed>
                     {done.map((x) => (
                         <PersonCard key={x.id} person={x} start={p.start} />
                     ))}

@@ -1,16 +1,15 @@
-import { formatTime } from "@tea-pos/format";
-import { useLocale, useT } from "@tea-pos/i18n/react";
+import { localDate } from "@tea-pos/format";
+import { useT } from "@tea-pos/i18n/react";
 import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { useSlug } from "@tea-pos/shell/tenant";
-import { Avatar } from "@tea-pos/ui/Avatar";
 import { ChartNoAxesCombined, Info, ReceiptText } from "lucide-react";
 
 import { RangeBar, useRange } from "./range";
 import { RangePanel } from "./RangePanel";
 import { useDays, useScopeStores, useStoreId } from "./sales";
 import { Sellers } from "@tea-pos/shell/Sellers";
-import { closedLine, OpenBadge } from "./StoreList";
+import { useStatus } from "./StoreList";
 
 /**
  * One store over the range: who is on (today), the numbers and who sold, then Orders and the
@@ -18,7 +17,6 @@ import { closedLine, OpenBadge } from "./StoreList";
  */
 export function StorePage() {
     const t = useT();
-    const locale = useLocale();
     const slug = useSlug();
     const storeId = useStoreId();
     const { from, to, single, isToday } = useRange();
@@ -30,39 +28,30 @@ export function StorePage() {
     // One day of one store: straight to its detail, there is no list to scroll.
     const onlyDay = single && days.data?.days.length === 1 ? days.data.days[0] : undefined;
 
+    // One day: how it went (Open · 10:02, Closed · 19:06), and who sells while open.
+    const status = useStatus();
+    const open = isToday && !!store?.open;
+    const facts =
+        store && single
+            ? [
+                  {
+                      label: t("store.status"),
+                      value: status(store, { single, isToday, open, today: to === localDate() })
+                          .text,
+                  },
+                  ...(open && store.sellerName
+                      ? [{ label: t("store.sellerLabel"), value: store.sellerName }]
+                      : []),
+              ]
+            : [];
+
     return (
         <div className="flex flex-col gap-3">
             <HeaderTitle>{store?.name ?? ""}</HeaderTitle>
             <RangeBar />
 
-            {store && isToday && (
-                <div className="rounded-2xl bg-white p-4 flex items-center gap-3">
-                    {store.open ? (
-                        <>
-                            <Avatar url={store.sellerAvatar} size={40} />
-                            <div className="flex-1 min-w-0">
-                                <p className="truncate font-semibold text-gray-900">
-                                    {t("store.isSelling").replace("{name}", store.sellerName ?? "")}
-                                </p>
-                                {store.openSince && (
-                                    <p className="text-sm text-gray-900">
-                                        {t("store.openSince").replace(
-                                            "{time}",
-                                            formatTime(store.openSince, locale),
-                                        )}
-                                    </p>
-                                )}
-                            </div>
-                        </>
-                    ) : (
-                        <p className="flex-1 text-gray-900">{closedLine(store, t, locale)}</p>
-                    )}
-                    <OpenBadge store={store} />
-                </div>
-            )}
-
             {/* A range's sellers sit in the same card, under the chart. */}
-            <RangePanel stores={stores}>
+            <RangePanel stores={stores} facts={facts}>
                 {store && !isToday && store.sellers.length > 0 && (
                     <Sellers sellers={store.sellers} />
                 )}
