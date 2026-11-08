@@ -1,6 +1,5 @@
 {
     "pay": {
-        "payouts": "Pembayaran Staf",
         "commissionTypes": "Jenis Komisi",
         "claimTypes": "Jenis Klaim",
         "schedule": "Jadwal Gaji",
@@ -10,7 +9,6 @@
         "editClaimType": "Ubah Jenis Klaim",
         "lastDay": "hari terakhir",
         "daysLeft": "{n} hari lagi",
-        "approved": "Disetujui",
         "searchStaff": "Cari staf...",
         "noStaff": "Tidak ada staf.",
         "commissionType": "Jenis Komisi",
@@ -22,7 +20,6 @@
         "accountNumber": "Nomor rekening",
         "accountHolder": "Atas nama",
         "noBank": "Staf belum mengisi rekening.",
-        "noCommissionTypes": "Belum ada jenis komisi.",
         "noCommissionTypesYet": "Belum ada jenis komisi.",
         "noClaimTypesYet": "Belum ada jenis klaim.",
         "saveChanges": "Simpan Perubahan",
@@ -38,7 +35,7 @@
         "claimNameHint": "mis. Uang Makan",
         "slugCopied": "Slug disalin!",
         "slugNotCopied": "Gagal menyalin slug",
-        "copySlug": "Salin slug",
+        "copySlug": "Copy slug",
         "createCommissionType": "Buat Jenis Komisi",
         "confirmCreateCommission": "Buat jenis komisi?",
         "confirmCreateCommissionSub": "Staf bisa diberi jenis ini setelahnya dari halaman gaji staf.",
@@ -76,12 +73,12 @@
         "cadence": {
             "weekly": "Mingguan",
             "bi_weekly": "Dua mingguan",
-            "four_weekly": "Tiap 4 minggu"
+            "four_weekly": "Tiap 4 week"
         },
         "cadenceSub": {
-            "weekly": "1 minggu per periode · dibayar tiap Senin",
-            "bi_weekly": "2 minggu per periode · 26 kali setahun",
-            "four_weekly": "4 minggu per periode · 13 kali setahun"
+            "weekly": "1 week per periode · dibayar tiap Senin",
+            "bi_weekly": "2 week per periode · 26 kali setahun",
+            "four_weekly": "4 week per periode · 13 kali setahun"
         },
         "currentPeriod": "Periode sekarang",
         "next": "Berikutnya",
@@ -141,12 +138,6 @@
         "staff": "Staf",
         "week": "Week",
         "workDays": "Hari Kerja",
-        "filters": {
-            "all": "Semua",
-            "ongoing": "Berjalan",
-            "paid": "Dibayar",
-            "needs_review": "Perlu Ditinjau"
-        },
         "alreadyPaid": "Sudah dibayar",
         "alreadyClosed": "Periode sudah ditutup",
         "alreadySub": "Tidak ada lagi yang perlu dikonfirmasi. Rinciannya di slip gaji.",
@@ -158,9 +149,9 @@
         "accountName": "Atas Nama",
         "notSet": "Belum diisi",
         "transferScreenshot": "Tangkapan Layar Transfer",
-        "uploadFailed": "Gagal mengunggah — ketuk untuk coba lagi",
+        "uploadFailed": "Upload gagal — ketuk untuk coba lagi",
         "addScreenshot": "Tambah tangkapan layar transfer",
-        "noteSkipHint": "mis. Tidak ada shift dua minggu ini",
+        "noteSkipHint": "mis. Tidak ada shift 2 week ini",
         "notePayHint": "mis. Dibayar lebih awal untuk libur",
         "noteShownPay": "Ditampilkan ke {name} di slip gajinya. Tidak bisa diubah setelah dibayar.",
         "noteShownSkip": "Ditampilkan ke {name} di slip gajinya. Tidak bisa diubah setelah periode ditutup.",
@@ -178,14 +169,14 @@
         "recordsSkip": "Periode ditutup tanpa transfer, atas nama Anda dan tanggal hari ini. Komisi dan klaimnya tidak bisa lagi disetujui atau ditolak.",
         "payDay": "Hari gajian: {n} harus dibayar",
         "waiting": "{n} menunggu",
-        "settingsTitle": "Pengaturan Gaji",
+        "settingsTitle": "Settings Gaji",
         "noPeople": "Tidak ada yang dibayar pada periode ini.",
         "noPayslip": "Tidak ada untuk orang ini pada periode ini.",
         "noPeopleBody": "Slip gaji muncul di sini setelah penjual menutup hari di periode ini.",
         "dayLeftLong": "1 hari lagi",
         "readyBadge": "Siap",
         "advancedTitle": "Lanjutan",
-        "advancedNote": "Pengaturan yang jarang dipakai. Perubahan di sini memengaruhi hari gajian semua staf.",
+        "advancedNote": "Settings yang jarang dipakai. Perubahan di sini memengaruhi hari gajian semua staf.",
         "typesCount": "{n} jenis",
         "helpTitle": "Cara kerja gaji",
         "helpPeriod": "Periode",
@@ -194,8 +185,8 @@
         "helpReviewBody": "Setiap hari yang ditutup menghasilkan komisi; staf mengirim klaim.\nSetiap orang menampilkan apa yang masih menunggu.\nHanya jumlah yang disetujui yang masuk total.",
         "helpPaying": "Membayar",
         "helpPayingBody": "Buka seseorang untuk melihat rinciannya, lalu bayar atau lewati.\nBayar: menyimpan bukti transfer dan menutup periodenya.\nLewati: menutupnya tanpa transfer.\nPeriode yang sudah dibayar atau dilewati tidak bisa diubah lagi.",
-        "helpSetup": "Pengaturan",
-        "helpSetupBody": "Jenis komisi dan klaim: di Pengaturan Gaji.\nKomisi dan bank seseorang: di halamannya di Orang.\nJadwal gaji: di Lainnya, Lanjutan.",
+        "helpSetup": "Settings",
+        "helpSetupBody": "Jenis komisi dan klaim: di Settings Gaji.\nKomisi dan bank seseorang: di halamannya di Orang.\nJadwal gaji: di Lainnya, Lanjutan.",
         "payoutsList": "Pembayaran",
         "totalPayout": "Total pembayaran"
     }

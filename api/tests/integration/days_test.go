@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -65,9 +66,12 @@ func oneDay(t *testing.T, pool *pgxpool.Pool) {
 		tenantA, testkit.SellerA, storeACentral, dayCentral)
 }
 
-// fakeStorage signs whatever it is asked, as Storage would for files it holds.
-func fakeStorage(t *testing.T) string {
+// fakeStorage signs whatever it is asked, as Storage would for files it holds; calls counts its
+// sign calls.
+func fakeStorage(t *testing.T) (url string, calls *atomic.Int32) {
+	calls = &atomic.Int32{}
 	fake := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls.Add(1)
 		var in struct{ Paths []string }
 		_ = json.NewDecoder(r.Body).Decode(&in)
 		out := []map[string]any{}
@@ -77,13 +81,13 @@ func fakeStorage(t *testing.T) string {
 		_ = json.NewEncoder(w).Encode(out)
 	}))
 	t.Cleanup(fake.Close)
-	return fake.URL
+	return fake.URL, calls
 }
 
 func TestDays(t *testing.T) {
 	pool := testkit.DB(t)
 	oneDay(t, pool)
-	storage := fakeStorage(t)
+	storage, signCalls := fakeStorage(t)
 	a := testkit.NewAPIWith(t, pool, testkit.Options{StorageURL: storage})
 	admin := testkit.Session(a.SignIn(t, testkit.AdminA, "backoffice"))
 	get := func(path string, out any) int {
@@ -123,6 +127,16 @@ func TestDays(t *testing.T) {
 	if len(detail.Photos) != 2 || !strings.HasPrefix(detail.Photos[0].URL, storage+"/storage/v1/object/sign/daily-photos/a/opening.jpg") ||
 		detail.Photos[1].Quantity == nil || detail.Photos[1].Quantity.Value != 1.5 {
 		t.Errorf("photos: %+v", detail.Photos)
+	}
+
+	// Opened again: the signed addresses come from memory, no second call to Storage.
+	before := signCalls.Load()
+	var again contract.DayDetail
+	if s := get("/days/"+dayCentral, &again); s != 200 || len(again.Photos) != 2 || again.Photos[0].URL != detail.Photos[0].URL {
+		t.Errorf("day again: %d %+v", s, again.Photos)
+	}
+	if n := signCalls.Load() - before; n != 0 {
+		t.Errorf("signed again on a second open: %d calls", n)
 	}
 
 	// Activity: the day's events only (not payroll), the photo address signed.

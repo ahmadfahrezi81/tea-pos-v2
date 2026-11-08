@@ -9,7 +9,7 @@ import { ConfirmSheet } from "../frame/FormFooter";
 import { signOut } from "../session/session";
 import { LogOutButton, rowIcon, SettingsRow } from "../frame/Settings";
 import { useSlug } from "../session/tenant";
-import { currentVersion } from "../frame/AppUpdate";
+import { currentVersion } from "../frame/update/AppUpdate";
 
 /**
  * The old apps' Account: who is signed in, the settings rows (Personal details, Language), then Log Out

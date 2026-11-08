@@ -4,9 +4,9 @@ import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { useRouter } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
-import { currentVersion, useAppUpdate, useUpdateState } from "../frame/AppUpdate";
-import { UpdateNow } from "../frame/UpdateNow";
-import { useUpdateText } from "../frame/useUpdateText";
+import { currentVersion, useAppUpdate, useUpdateState } from "../frame/update/AppUpdate";
+import { UpdateNow } from "../frame/update/UpdateNow";
+import { useUpdateText } from "../frame/update/useUpdateText";
 
 /** Which build this phone runs and whether it is the latest, and which the server runs: More's App info page. */
 export function StatusScreen() {

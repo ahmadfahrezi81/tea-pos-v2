@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import { navProgress } from "./navProgress";
+import { navProgress } from "../navProgress";
 import { refreshGate } from "./refreshGate";
 
 /**

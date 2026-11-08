@@ -3,8 +3,8 @@ import { Picture } from "@tea-pos/ui/Picture";
 import { ArrowLeft, UserCircle, X } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { useAppUpdate } from "./AppUpdate";
-import { UpdateHeader } from "./UpdateHeader";
+import { useAppUpdate } from "./update/AppUpdate";
+import { UpdateHeader } from "./update/UpdateHeader";
 
 interface MobileHeaderProps {
     title: string;

@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -47,6 +48,16 @@ const UploadTTL = 2 * time.Minute
 type Storage struct {
 	URL, Key string
 	HTTP     *http.Client
+
+	// Signed read addresses kept while they still have most of their life left, so a day opened
+	// again does not wait on Storage (its one sign call is about half a second).
+	mu    sync.Mutex
+	reads map[string]signedRead
+}
+
+type signedRead struct {
+	url   string
+	until time.Time
 }
 
 func NewStorage(supabaseURL, secretKey string) *Storage {
@@ -95,9 +106,22 @@ func (s *Storage) SignRead(ctx context.Context, bucket, path string, ttl time.Du
 // does not have is left out.
 func (s *Storage) SignReads(ctx context.Context, bucket string, paths []string, ttl time.Duration) (map[string]string, error) {
 	out := map[string]string{}
-	if len(paths) == 0 {
+	now := time.Now()
+	var missing []string
+	s.mu.Lock()
+	for _, p := range paths {
+		// Reused only while at least half its life is left: a phone keeps it some minutes.
+		if r, ok := s.reads[bucket+"/"+p]; ok && now.Add(ttl/2).Before(r.until) {
+			out[p] = r.url
+		} else {
+			missing = append(missing, p)
+		}
+	}
+	s.mu.Unlock()
+	if len(missing) == 0 {
 		return out, nil
 	}
+	paths = missing
 	var signed []struct {
 		Path      string  `json:"path"`
 		SignedURL *string `json:"signedURL"`
@@ -105,9 +129,16 @@ func (s *Storage) SignReads(ctx context.Context, bucket string, paths []string, 
 	if err := s.post(ctx, "/object/sign/"+bucket, map[string]any{"expiresIn": int(ttl.Seconds()), "paths": paths}, &signed); err != nil {
 		return nil, err
 	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	// Bounded: past 5,000 it starts over, re-signed on the next open anyway.
+	if s.reads == nil || len(s.reads) > 5000 {
+		s.reads = map[string]signedRead{}
+	}
 	for _, p := range signed {
 		if p.SignedURL != nil {
 			out[p.Path] = s.URL + "/storage/v1" + *p.SignedURL
+			s.reads[bucket+"/"+p.Path] = signedRead{url: out[p.Path], until: now.Add(ttl)}
 		}
 	}
 	return out, nil

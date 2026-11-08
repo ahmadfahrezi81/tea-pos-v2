@@ -2,10 +2,10 @@ import { useT } from "@tea-pos/i18n/react";
 import { Info, ScrollText } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 
-import { currentVersion, useAppUpdate, useUpdateState } from "../frame/AppUpdate";
+import { currentVersion, useAppUpdate, useUpdateState } from "../frame/update/AppUpdate";
 import { rowIcon, SettingsGroup, SettingsRow } from "../frame/Settings";
-import { UpdateNow } from "../frame/UpdateNow";
-import { useUpdateText } from "../frame/useUpdateText";
+import { UpdateNow } from "../frame/update/UpdateNow";
+import { useUpdateText } from "../frame/update/useUpdateText";
 import { useSlug } from "../session/tenant";
 import { LATEST, seen } from "../lib/whatsNew";
 

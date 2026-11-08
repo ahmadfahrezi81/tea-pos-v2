@@ -823,7 +823,6 @@ components:
             - session_taken
             - staff_not_found
             - store_already_opened
-            - store_has_history
             - store_not_found
             - store_not_open
             - store_required
@@ -4210,38 +4209,6 @@ paths:
         idempotent: true
         signedIn: true
   /tenants/{tenant}/store-settings/{storeId}:
-    delete:
-      operationId: deleteStore
-      parameters:
-        - in: path
-          name: tenant
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: storeId
-          required: true
-          schema:
-            format: uuid
-            type: string
-      responses:
-        "204":
-          description: No Content
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-          description: Error
-      summary: Remove a store that has nothing recorded yet (a mistake); one with history is made Inactive instead
-      tags:
-        - store
-      x-access:
-        app: backoffice
-        level: admin
-        tenant: true
-        repeatable: true
-        signedIn: true
     get:
       operationId: getStoreSettings
       parameters:

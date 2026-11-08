@@ -52,7 +52,7 @@ type Schedule struct {
 // Schedules is v2's whole cron, in one place: a new one is a line here. Railway runs them
 // (JOBS_SCHEDULE); a laptop's worker runs only what is queued.
 var Schedules = []Schedule{
-	{ID: "cleanup", Production: Every(time.Hour), Staging: Every(time.Hour),
+	{ID: "cleanup", Production: Every(time.Hour), Staging: DailyAt(4),
 		Args: func(string) river.JobArgs { return CleanupArgs{} }},
 	// Off until the old cron website stops fetching (Step 45): then production
 	// Every(20*time.Minute), staging DailyAt(21).
@@ -86,8 +86,9 @@ func NewWorker(pool *pgxpool.Pool, d Deps, env string, schedule bool) (*Client, 
 		Workers:      workers,
 		PeriodicJobs: periodic,
 		JobTimeout:   5 * time.Minute,
-		// New jobs arrive by LISTEN at once; this is only the fallback, kept slow to spare the database.
-		FetchPollInterval: 5 * time.Second,
+		// New jobs arrive by LISTEN at once; this is only the fallback for a missed notice. Each
+		// poll is a query, all day in both environments: most of the worker's CPU and traffic.
+		FetchPollInterval: time.Minute,
 		Logger:            slog.Default(),
 	})
 }
