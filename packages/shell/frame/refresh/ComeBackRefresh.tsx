@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
-import { useAppUpdate } from "./AppUpdate";
+import { useAppUpdate } from "../update/AppUpdate";
 import { refreshAll } from "./refreshAll";
 
 /** Away this long (the live socket closes after the same): coming back refetches. */
