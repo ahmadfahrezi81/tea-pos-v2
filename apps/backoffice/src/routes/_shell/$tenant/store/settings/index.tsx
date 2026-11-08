@@ -7,7 +7,7 @@ import { StoreSettingsList } from "../../../../../store/StoreSettings";
 
 export const Route = createFileRoute("/_shell/$tenant/store/settings/")({
     loader: () => loadArea("store"),
-    staticData: { shell: { titleKey: "storeSettings.title", parent: "..", refreshable: true } },
+    staticData: { shell: { titleKey: "store.settingsTitle", parent: "..", refreshable: true } },
     component: function Screen() {
         const { canWrite } = useAccess();
         return (
