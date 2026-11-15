@@ -2008,6 +2008,11 @@ export interface components {
             /** Format: int64 */
             sales: number;
             sellerAvatar?: string;
+            /**
+             * Format: int64
+             * @description The holder's cups that day, all their sessions
+             */
+            sellerCups?: number;
             /** Format: uuid */
             sellerId?: string;
             sellerName?: string;

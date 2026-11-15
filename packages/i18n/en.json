@@ -127,7 +127,11 @@
         "updateDone": "Updated. Restarting…",
         "updateRestart": "Restart",
         "updateKeepOpen": "Please keep the app open",
-        "updateReady": "Update ready"
+        "updateReady": "Update ready",
+        "store": "Store",
+        "storeAndDate": "Store and date",
+        "date": "Date",
+        "month": "Month"
     },
     "signIn": {
         "google": "Continue with Google",
@@ -278,7 +282,12 @@
         "bestDay": "Best day",
         "details": "Details",
         "latestOrders": "Latest orders",
-        "seeAll": "See all"
+        "seeAll": "See all",
+        "busiestHour": "Busiest hour",
+        "cupsPerStore": "Cups per store",
+        "slowestDay": "Slowest day",
+        "cupsPerStoreDay": "Cups per store a day",
+        "ordersTotal": "Total orders"
     },
     "errorSheet": {
         "title": "Couldn't save",

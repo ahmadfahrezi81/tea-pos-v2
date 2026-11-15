@@ -124,6 +124,7 @@ export function formatDay(value: DateInput, locale: Locale, now: DateInput = new
     }).format(toDate(value));
 }
 
+const count = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 });
 const money = new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
@@ -131,6 +132,11 @@ const money = new Intl.NumberFormat("id-ID", {
 });
 
 /** `Rp 15.000`. Rupiah in Indonesian style whatever the language. */
+/** A count with the same thousands mark as money, whatever the language: `6.203`. */
+export function formatCount(n: number): string {
+    return count.format(Math.round(n));
+}
+
 export function formatMoney(amount: number): string {
     return money.format(amount).replace(/^Rp\s*/, "Rp ");
 }

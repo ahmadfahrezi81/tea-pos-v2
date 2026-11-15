@@ -413,3 +413,57 @@ func TestSellerHistoryWindow(t *testing.T) {
 		}
 	}
 }
+
+// The gate's "taken by" card: the holder's cups for everyone; the session code for the holder and
+// the tenant's owner only (the owner's way to take a day over in an emergency).
+func TestGateOwnerAndCups(t *testing.T) {
+	pool := testkit.DB(t)
+	a := testkit.NewAPI(t, pool, "")
+	exec := func(sql string, args ...any) {
+		t.Helper()
+		if _, err := pool.Exec(t.Context(), sql, args...); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, who := range []string{testkit.SellerA, testkit.AdminA} {
+		exec(`INSERT INTO user_store_assignments (user_id, store_id) SELECT $1, $2
+			WHERE NOT EXISTS (SELECT 1 FROM user_store_assignments WHERE user_id = $1 AND store_id = $2)`, who, storeACentral)
+	}
+	var product string
+	if err := pool.QueryRow(t.Context(), `INSERT INTO tenant_products (name, price, tenant_id, status) VALUES ('Tea', 5000, $1, 'active') RETURNING id::text`, tenantA).Scan(&product); err != nil {
+		t.Fatal(err)
+	}
+	seller := testkit.Session(a.SignIn(t, testkit.SellerA, "seller"))
+	admin := testkit.Session(a.SignIn(t, testkit.AdminA, "seller"))
+	n := 0
+	write := func(path, body string) {
+		t.Helper()
+		n++
+		resp := a.Send(t, http.MethodPost, "/tenants/tenant-a/stores/"+storeACentral+path, "seller", body,
+			[]string{fmt.Sprintf("Idempotency-Key: gate-owner-%04d", n)}, seller)
+		defer resp.Body.Close()
+		if resp.StatusCode != 200 {
+			data, _ := io.ReadAll(resp.Body)
+			t.Fatalf("%s: %d %s", path, resp.StatusCode, data)
+		}
+	}
+	gate := func(who *http.Cookie) contract.StoreGate {
+		var g contract.StoreGate
+		decode(t, a.Request(t, http.MethodGet, "/tenants/tenant-a/stores/"+storeACentral+"/gate", "seller", who), &g)
+		return g
+	}
+
+	write("/open", `{"openingBalance":0}`)
+	write("/orders", fmt.Sprintf(`{"items":[{"productId":%q,"quantity":3,"unitPrice":5000}]}`, product))
+	held := gate(seller)
+	if held.ClaimCode == "" || held.SellerCups != 3 {
+		t.Fatalf("the holder: %+v", held)
+	}
+	if g := gate(admin); g.ClaimCode != "" || g.SellerCups != 3 {
+		t.Errorf("an admin, not the owner: code %q, cups %d", g.ClaimCode, g.SellerCups)
+	}
+	exec(`UPDATE tenants SET owner_id = $1 WHERE id = $2`, testkit.AdminA, tenantA)
+	if g := gate(admin); g.ClaimCode != held.ClaimCode {
+		t.Errorf("the owner: code %q, want %q", g.ClaimCode, held.ClaimCode)
+	}
+}

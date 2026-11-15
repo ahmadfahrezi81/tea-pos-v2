@@ -10,6 +10,17 @@ import { Sheet } from "../layout/Sheet";
 export type DateRange = { from: string; to: string };
 export type RangePreset = DateRange & { key: string; label: string };
 
+/** The screen's store, picked in the same sheet: a menu of Store and Date first, each its own view. */
+export type StoreChoice = {
+    /** The menu's title, and its two rows' labels. */
+    menuTitle: string;
+    label: string;
+    dateLabel: string;
+    options: { id: string | null; name: string }[];
+    picked: string | null;
+    onPick: (id: string | null) => void;
+};
+
 const MAX_DAYS = 400;
 const utc = (date: string) => new Date(`${date}T00:00:00Z`);
 const iso = (d: Date) => d.toISOString().slice(0, 10);
@@ -26,7 +37,8 @@ export function monthRange(month: string, today: string): DateRange {
 /**
  * Picks a range of whole days: a tap on a preset applies it and closes; Pick a month opens the
  * months (a tap applies); Custom opens a calendar (tap the first day, then the last, then Apply;
- * with `single`, the day tapped applies).
+ * with `single`, the day tapped applies). With `store` (two stores or more), it opens on a menu of
+ * Store and Date instead; each opens its own view, and back returns to the menu.
  * Days are `2026-10-22`; none after `today`.
  */
 export function DateRangeSheet({
@@ -42,6 +54,7 @@ export function DateRangeSheet({
     firstMonth = FIRST_MONTH,
     single = false,
     only,
+    store,
 }: {
     open: boolean;
     onClose: () => void;
@@ -64,9 +77,10 @@ export function DateRangeSheet({
     single?: boolean;
     /** Straight to the months or the calendar, no list and no back. */
     only?: "month" | "custom";
+    store?: StoreChoice;
 }) {
     // null: opens where the range came from, so changing a picked month stays in the months.
-    const [chosen, setView] = useState<"list" | "month" | "custom" | null>(null);
+    const [chosen, setView] = useState<"menu" | "store" | "list" | "month" | "custom" | null>(null);
     const close = () => {
         setView(null);
         onClose();
@@ -78,7 +92,16 @@ export function DateRangeSheet({
         value.to.slice(0, 7) === month &&
         monthRange(month, today).from === value.from &&
         monthRange(month, today).to === value.to;
-    const view = only ?? chosen ?? (picked ? "list" : isMonth ? "month" : "custom");
+    const withStore = !!store && store.options.length > 1;
+    const dateView = only ?? (picked ? "list" : isMonth ? "month" : "custom");
+    const view = chosen ?? (withStore ? "menu" : dateView);
+    const toMenu = withStore ? () => setView("menu") : undefined;
+    const back =
+        view === "menu"
+            ? undefined
+            : view === "store" || view === "list" || only
+              ? toMenu
+              : () => setView("list");
     const row =
         "w-full flex items-center justify-between py-4 text-left text-[17px] font-medium text-gray-900 active:opacity-70";
     const more = (on: boolean) =>
@@ -88,11 +111,58 @@ export function DateRangeSheet({
             open={open}
             onClose={close}
             title={
-                view === "custom" ? labels.custom : view === "month" ? labels.month : labels.title
+                view === "menu"
+                    ? store!.menuTitle
+                    : view === "store"
+                      ? store!.label
+                      : view === "custom"
+                        ? labels.custom
+                        : view === "month"
+                          ? labels.month
+                          : labels.title
             }
-            onBack={view === "list" || only ? undefined : () => setView("list")}
+            onBack={back}
         >
-            {view === "month" ? (
+            {view === "menu" && store ? (
+                <div className="divide-y divide-gray-100">
+                    {[
+                        {
+                            label: store.label,
+                            value: store.options.find((o) => o.id === store.picked)?.name ?? "",
+                            go: () => setView("store"),
+                        },
+                        {
+                            label: store.dateLabel,
+                            value: formatRange(value),
+                            go: () => setView(dateView),
+                        },
+                    ].map((r) => (
+                        <button key={r.label} onClick={r.go} className={row}>
+                            <span className="shrink-0">{r.label}</span>
+                            <span className="flex min-w-0 items-center gap-1 text-gray-600">
+                                <span className="truncate">{r.value}</span>
+                                <ChevronRight size={ICON} className="shrink-0 text-brand/90" />
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            ) : view === "store" && store ? (
+                <div className="divide-y divide-gray-100">
+                    {store.options.map((o) => (
+                        <button
+                            key={o.id ?? "all"}
+                            onClick={() => {
+                                store.onPick(o.id);
+                                setView("menu");
+                            }}
+                            className={row}
+                        >
+                            <span className="truncate">{o.name}</span>
+                            <RadioMark on={o.id === store.picked} />
+                        </button>
+                    ))}
+                </div>
+            ) : view === "month" ? (
                 <MonthGrid
                     value={isMonth ? month : null}
                     first={firstMonth}

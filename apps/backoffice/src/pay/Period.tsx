@@ -246,7 +246,7 @@ function PersonCard({ person: x, start }: { person: Person; start: string }) {
         <Link
             to="/$tenant/pay/$start/$userId"
             params={{ tenant: slug, start, userId: x.userId }}
-            className="block bg-white rounded-xl p-3 space-y-2.5 active:bg-gray-50"
+            className="block bg-white rounded-xl p-3 space-y-2.5 active:scale-[0.99]"
         >
             {/* A grid, so the badges and the amount share one row and one bottom line. */}
             <div className="grid grid-cols-[auto_1fr_auto] items-end gap-x-3 gap-y-1">

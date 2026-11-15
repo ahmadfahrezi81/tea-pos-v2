@@ -1,6 +1,8 @@
 import { addDays, formatCalendarDay, isoWeek, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { useSearchParam } from "@tea-pos/shell/searchParam";
+import { useStoreChoice } from "@tea-pos/shell/StoreLabel";
+import { useTenant } from "@tea-pos/shell/tenant";
 import { DateRangeSheet, monthRange, type DateRange } from "@tea-pos/ui/DateRangeSheet";
 import { PickerButton } from "@tea-pos/ui/PickerButton";
 import { useState } from "react";
@@ -63,9 +65,12 @@ export function DayBar() {
     const preset = presets.find((p) => p.from === date);
     const short = formatCalendarDay(date, locale, "short");
     const week = `${t("store.week")} ${isoWeek(date)}`;
+    const store = useTenant()?.store?.name;
+    const choice = useStoreChoice(t("shell.date"));
     return (
         <>
             <PickerButton
+                heading={store}
                 label={preset ? preset.label : short}
                 detail={preset ? `${short} · ${week}` : week}
                 onClick={() => setOpen(true)}
@@ -83,6 +88,7 @@ export function DayBar() {
                 formatRange={(r) => formatCalendarDay(r.from, locale, "short")}
                 single
                 only="custom"
+                store={choice}
             />
         </>
     );
@@ -106,10 +112,13 @@ export function MonthBar() {
     }));
     const days = (r: DateRange) =>
         `${formatCalendarDay(r.from, locale, "day")} – ${formatCalendarDay(r.to, locale)}`;
+    const store = useTenant()?.store?.name;
+    const choice = useStoreChoice(t("shell.month"));
     return (
         <>
             <PickerButton
                 label={presets.find((p) => p.key === range.month)?.label ?? name(range.month)}
+                heading={store}
                 detail={days(range)}
                 onClick={() => setOpen(true)}
             />
@@ -125,6 +134,7 @@ export function MonthBar() {
                 labels={sheetLabels(t, t("store.pickMonth"))}
                 formatRange={days}
                 only="month"
+                store={choice}
             />
         </>
     );

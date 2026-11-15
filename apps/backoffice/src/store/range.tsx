@@ -1,13 +1,24 @@
 import { addDays, formatCalendarDay, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { useSetSearch } from "@tea-pos/shell/searchParam";
-import { useFirstMonth } from "@tea-pos/shell/tenant";
-import { DateRangeSheet, monthRange, type DateRange } from "@tea-pos/ui/DateRangeSheet";
+import { useFirstMonth, useSlug, useTenant } from "@tea-pos/shell/tenant";
+import {
+    DateRangeSheet,
+    monthRange,
+    type DateRange,
+    type StoreChoice,
+} from "@tea-pos/ui/DateRangeSheet";
 import { PickerButton } from "@tea-pos/ui/PickerButton";
-import { useSearch, type SearchSchemaInput } from "@tanstack/react-router";
+import {
+    useLocation,
+    useNavigate,
+    useSearch,
+    type SearchSchemaInput,
+} from "@tanstack/react-router";
 import { useState } from "react";
 
 import { isoWeek } from "../pay/dates";
+import { ALL, useStoreId } from "./sales";
 
 const isDay = (v: unknown): v is string => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
 
@@ -88,10 +99,17 @@ export function RangeBar() {
     const { from, to, today, label, detail, dates } = useRange();
     const set = useSetSearch();
     const [open, setOpen] = useState(false);
+    const store = useStoreChoice();
     return (
         <>
-            <PickerButton label={label} detail={detail} onClick={() => setOpen(true)} />
+            <PickerButton
+                heading={store.options.find((o) => o.id === store.picked)?.name}
+                label={label}
+                detail={detail}
+                onClick={() => setOpen(true)}
+            />
             <DateRangeSheet
+                store={store}
                 open={open}
                 onClose={() => setOpen(false)}
                 value={{ from, to }}
@@ -116,4 +134,39 @@ export function RangeBar() {
             />
         </>
     );
+}
+
+/**
+ * A Store screen's store, for its picker card and the sheet's Store and Date menu: All stores, then
+ * each store the tenant shows. The store is in the address, so a pick goes to the same screen of the
+ * other store, keeping the dates: the Store home to a store's page, a store's page back to All stores
+ * as the Store home.
+ */
+function useStoreChoice(): StoreChoice {
+    const t = useT();
+    const slug = useSlug();
+    const storeId = useStoreId();
+    const stores = useTenant()?.stores ?? [];
+    const path = useLocation({ select: (l) => l.pathname });
+    const navigate = useNavigate();
+    const rest = path.match(/\/store\/[^/]+(\/.*)?$/)?.[1] ?? "";
+    const pick = (id: string | null) => {
+        const to = rest
+            ? `/${slug}/store/${id ?? ALL}${rest}`
+            : id
+              ? `/${slug}/store/${id}`
+              : `/${slug}/store`;
+        void navigate({ to, search: ((prev: object) => prev) as never, replace: true });
+    };
+    return {
+        menuTitle: t("shell.storeAndDate"),
+        label: t("shell.store"),
+        dateLabel: t("shell.date"),
+        options: [
+            { id: null, name: t("shell.allStores") },
+            ...stores.map((s) => ({ id: s.id, name: s.name })),
+        ],
+        picked: storeId === ALL ? null : storeId,
+        onPick: pick,
+    };
 }
