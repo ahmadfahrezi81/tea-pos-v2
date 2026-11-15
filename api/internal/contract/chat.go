@@ -1,5 +1,7 @@
 package contract
 
+import "github.com/ahmadfahrezi81/tea-pos-v2/api/internal/page"
+
 type ChatChannelsOutput struct {
 	Body struct {
 		Channels []ChatChannel `json:"channels" nullable:"false" doc:"The caller's channels, the newest message first"`
@@ -44,4 +46,51 @@ type ChatMember struct {
 	Name   string `json:"name"`
 	Avatar string `json:"avatar,omitempty"`
 	ReadAt string `json:"readAt,omitempty" format:"date-time" doc:"Read everything up to here; absent: never opened"`
+}
+
+type ChatMessagesInput struct {
+	Tenant string `path:"tenant"`
+	ID     string `path:"id" format:"uuid"`
+	page.Input
+}
+
+type ChatMessagesOutput struct {
+	// Newest first; with since, only what came after it, oldest first.
+	Body page.Output[ChatMessage]
+}
+
+type ChatMessage struct {
+	ID       string         `json:"id" format:"uuid"`
+	AuthorID string         `json:"authorId,omitempty" format:"uuid" doc:"Absent on a system message"`
+	Author   string         `json:"author,omitempty"`
+	Avatar   string         `json:"avatar,omitempty"`
+	Event    string         `json:"event,omitempty" doc:"A system message's kind, written in the reader's language"`
+	Data     map[string]any `json:"data,omitempty"`
+	Body     string         `json:"body"`
+	// The phone's Idempotency-Key, so it swaps its own copy for this one.
+	ClientKey string `json:"clientKey,omitempty"`
+	EditedAt  string `json:"editedAt,omitempty" format:"date-time"`
+	Deleted   bool   `json:"deleted,omitempty"`
+	At        string `json:"at" format:"date-time"`
+}
+
+type PostChatMessageInput struct {
+	Tenant string `path:"tenant"`
+	ID     string `path:"id" format:"uuid"`
+	Key    string `header:"Idempotency-Key"`
+	Body   struct {
+		Body string `json:"body" minLength:"1" maxLength:"4000"`
+	}
+}
+
+type ChatMessageOutput struct {
+	Body ChatMessage
+}
+
+type ReadChatInput struct {
+	Tenant string `path:"tenant"`
+	ID     string `path:"id" format:"uuid"`
+	Body   struct {
+		At string `json:"at" format:"date-time" doc:"Everything up to this message's time is read; only ever moves forward"`
+	}
 }

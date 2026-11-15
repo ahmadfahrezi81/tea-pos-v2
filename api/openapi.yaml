@@ -245,6 +245,43 @@ components:
         - id
         - name
       type: object
+    ChatMessage:
+      additionalProperties: false
+      properties:
+        at:
+          format: date-time
+          type: string
+        author:
+          type: string
+        authorId:
+          description: Absent on a system message
+          format: uuid
+          type: string
+        avatar:
+          type: string
+        body:
+          type: string
+        clientKey:
+          type: string
+        data:
+          additionalProperties: {}
+          type: object
+        deleted:
+          type: boolean
+        editedAt:
+          format: date-time
+          type: string
+        event:
+          description: A system message's kind, written in the reader's language
+          type: string
+        id:
+          format: uuid
+          type: string
+      required:
+        - id
+        - body
+        - at
+      type: object
     ChatPreview:
       additionalProperties: false
       properties:
@@ -903,8 +940,11 @@ components:
             - bad_range
             - bad_receipt
             - bad_request
+            - blank_message
             - blank_name
             - channel_not_found
+            - channel_read_only
+            - chat_too_fast
             - claim_done
             - claim_not_eligible
             - claim_not_found
@@ -1417,6 +1457,18 @@ components:
         - unitPrice
         - totalPrice
       type: object
+    OutputChatMessage:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+          type: array
+        next:
+          type: string
+      required:
+        - items
+      type: object
     OutputOrder:
       additionalProperties: false
       properties:
@@ -1804,6 +1856,16 @@ components:
         - ratePerCup
         - amount
       type: object
+    PostChatMessageInputBody:
+      additionalProperties: false
+      properties:
+        body:
+          maxLength: 4000
+          minLength: 1
+          type: string
+      required:
+        - body
+      type: object
     Product:
       additionalProperties: false
       properties:
@@ -1835,6 +1897,16 @@ components:
           type: array
       required:
         - products
+      type: object
+    ReadChatInputBody:
+      additionalProperties: false
+      properties:
+        at:
+          description: Everything up to this message's time is read; only ever moves forward
+          format: date-time
+          type: string
+      required:
+        - at
       type: object
     RejectRequestInputBody:
       additionalProperties: false
@@ -2944,6 +3016,151 @@ paths:
         app: chat
         level: member
         tenant: true
+        signedIn: true
+  /tenants/{tenant}/chat/channels/{id}/messages:
+    get:
+      operationId: listChatMessages
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - description: From the previous page's next; empty for the first
+          explode: false
+          in: query
+          name: cursor
+          schema:
+            description: From the previous page's next; empty for the first
+            type: string
+        - explode: false
+          in: query
+          name: limit
+          schema:
+            default: 30
+            format: int64
+            maximum: 100
+            minimum: 1
+            type: integer
+        - description: Only rows changed after this (a list catching up)
+          explode: false
+          in: query
+          name: since
+          schema:
+            description: Only rows changed after this (a list catching up)
+            format: date-time
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutputChatMessage"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: A page of messages, newest first; with since, only what came after
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        signedIn: true
+    post:
+      operationId: postChatMessage
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: header
+          name: Idempotency-Key
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostChatMessageInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Post a message; the same Idempotency-Key never posts twice
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/chat/channels/{id}/read:
+    post:
+      operationId: readChat
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReadChatInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Everything up to a time is read; only ever moves forward
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        repeatable: true
         signedIn: true
   /tenants/{tenant}/days:
     get:

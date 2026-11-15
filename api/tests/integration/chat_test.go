@@ -157,3 +157,127 @@ func TestChatMembers(t *testing.T) {
 		t.Fatalf("members %+v", out.Body.Members)
 	}
 }
+
+// channelOf is one of user's channels by kind (and name, for a store's).
+func channelOf(t *testing.T, a *testkit.API, user, app, kind, name string) string {
+	t.Helper()
+	for _, c := range chatChannels(t, a, user, app) {
+		if c.Kind == kind && c.Name == name {
+			return c.ID
+		}
+	}
+	t.Fatalf("no %s %q", kind, name)
+	return ""
+}
+
+func post(t *testing.T, a *testkit.API, user, app, channel, body, key string) (*http.Response, contract.ChatMessage) {
+	t.Helper()
+	resp := a.Send(t, http.MethodPost, "/tenants/tenant-a/chat/channels/"+channel+"/messages", app,
+		`{"body":`+string(must(json.Marshal(body)))+`}`, []string{"Idempotency-Key: " + key}, testkit.Session(a.SignIn(t, user, app)))
+	var m contract.ChatMessage
+	if resp.StatusCode == http.StatusOK {
+		if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return resp, m
+}
+
+func must(b []byte, err error) []byte {
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func messages(t *testing.T, a *testkit.API, user, app, channel, query string) []contract.ChatMessage {
+	t.Helper()
+	resp := a.Request(t, http.MethodGet, "/tenants/tenant-a/chat/channels/"+channel+"/messages"+query, app, testkit.Session(a.SignIn(t, user, app)))
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status %d, code %q", resp.StatusCode, code(t, resp))
+	}
+	var out contract.ChatMessagesOutput
+	if err := json.NewDecoder(resp.Body).Decode(&out.Body); err != nil {
+		t.Fatal(err)
+	}
+	return out.Body.Items
+}
+
+func TestChatPostAndRead(t *testing.T) {
+	db := testkit.DB(t)
+	giveChat(t, db, testkit.SellerA, "member")
+	giveChat(t, db, testkit.GuestA, "member")
+	a := testkit.NewAPI(t, db, "")
+	general := channelOf(t, a, testkit.SellerA, "seller", "general", "")
+
+	resp, first := post(t, a, testkit.SellerA, "seller", general, "  Gelas habis  ", "key-00000001")
+	if resp.StatusCode != http.StatusOK || first.Body != "Gelas habis" || first.ClientKey != "key-00000001" || first.Author != "Seller A" {
+		t.Fatalf("status %d, %+v", resp.StatusCode, first)
+	}
+	// The same key never posts twice.
+	if resp, again := post(t, a, testkit.SellerA, "seller", general, "  Gelas habis  ", "key-00000001"); resp.StatusCode != http.StatusOK || again.ID != first.ID {
+		t.Fatalf("again: %d %s", resp.StatusCode, again.ID)
+	}
+	_, second := post(t, a, testkit.SellerA, "seller", general, "Dikirim jam 9", "key-00000002")
+
+	got := messages(t, a, testkit.GuestA, "seller", general, "")
+	if len(got) != 2 || got[0].ID != second.ID || got[1].ID != first.ID {
+		t.Fatalf("page: %+v", got)
+	}
+	since := messages(t, a, testkit.GuestA, "seller", general, "?since="+first.At)
+	if len(since) != 1 || since[0].ID != second.ID {
+		t.Fatalf("since: %+v", since)
+	}
+
+	// Guest A has two unread; reading moves them to none, and Seen by counts them.
+	var unread int
+	for _, c := range chatChannels(t, a, testkit.GuestA, "seller") {
+		if c.ID == general {
+			unread = c.Unread
+		}
+	}
+	if unread != 2 {
+		t.Fatalf("unread %d", unread)
+	}
+	read := a.Send(t, http.MethodPost, "/tenants/tenant-a/chat/channels/"+general+"/read", "seller",
+		`{"at":"`+second.At+`"}`, nil, testkit.Session(a.SignIn(t, testkit.GuestA, "seller")))
+	if read.StatusCode != http.StatusNoContent {
+		t.Fatalf("read %d", read.StatusCode)
+	}
+	for _, c := range chatChannels(t, a, testkit.GuestA, "seller") {
+		if c.ID == general && c.Unread != 0 {
+			t.Fatalf("still unread %d", c.Unread)
+		}
+	}
+	resp = a.Request(t, http.MethodGet, "/tenants/tenant-a/chat/channels/"+general, "seller", testkit.Session(a.SignIn(t, testkit.SellerA, "seller")))
+	var ch contract.ChatChannelOutput
+	if err := json.NewDecoder(resp.Body).Decode(&ch.Body); err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range ch.Body.Members {
+		if m.Name == "Guest A" && m.ReadAt < second.At {
+			t.Fatalf("guest read %q, want %q", m.ReadAt, second.At)
+		}
+	}
+}
+
+func TestChatReadOnlyAndNotMine(t *testing.T) {
+	db := testkit.DB(t)
+	giveChat(t, db, testkit.SellerA, "member")
+	giveChat(t, db, testkit.AdminA, "admin")
+	a := testkit.NewAPI(t, db, "")
+	inbox := channelOf(t, a, testkit.SellerA, "seller", "personal", "")
+	if resp, _ := post(t, a, testkit.SellerA, "seller", inbox, "hi", "key-00000001"); resp.StatusCode != http.StatusForbidden || code(t, resp) != "channel_read_only" {
+		t.Fatalf("inbox: %d", resp.StatusCode)
+	}
+	admin := channelOf(t, a, testkit.AdminA, "backoffice", "admin", "")
+	if resp, _ := post(t, a, testkit.SellerA, "seller", admin, "hi", "key-00000002"); resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("admin channel: %d", resp.StatusCode)
+	}
+	// Someone else's inbox is not theirs either.
+	adminInbox := channelOf(t, a, testkit.AdminA, "backoffice", "personal", "")
+	resp := a.Request(t, http.MethodGet, "/tenants/tenant-a/chat/channels/"+adminInbox+"/messages", "seller", testkit.Session(a.SignIn(t, testkit.SellerA, "seller")))
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("their inbox: %d", resp.StatusCode)
+	}
+}

@@ -24,6 +24,7 @@
         "members": "Anggota",
         "today": "Hari ini",
         "yesterday": "Kemarin",
+        "earlier": "Pesan sebelumnya",
         "tooLong": "Maksimal 4.000 karakter"
     }
 }

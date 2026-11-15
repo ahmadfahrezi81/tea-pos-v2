@@ -1,6 +1,6 @@
 # Task 065 — Chat: the tables, chat access, the Chats tab
 
-**Status: in progress 2026-11-15 on `feat/chat-phase-1` (local only, no push: owner's ask), approved by the owner with the RFC that night.**
+**Status: built 2026-11-15 on `feat/chat-phase-1` (local only, no push: the owner's ask), approved by the owner with the RFC that night.**
 
 ## The goal
 

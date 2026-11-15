@@ -157,6 +157,9 @@
         "outdated": "Perlu update"
     },
     "errors": {
+        "channel_read_only": "Tidak ada yang bisa mengirim di chat ini",
+        "blank_message": "Tulis sesuatu dulu",
+        "chat_too_fast": "Terlalu banyak pesan. Tunggu sebentar.",
         "channel_not_found": "Chat itu tidak ditemukan",
         "account_inactive": "Akun ini tidak aktif. Hubungi pemilik.",
         "app_too_old": "Versi ini terlalu lama. Sedang update…",

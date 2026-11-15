@@ -175,6 +175,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{tenant}/chat/channels/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A page of messages, newest first; with since, only what came after */
+        get: operations["listChatMessages"];
+        put?: never;
+        /** Post a message; the same Idempotency-Key never posts twice */
+        post: operations["postChatMessage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/chat/channels/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Everything up to a time is read; only ever moves forward */
+        post: operations["readChat"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{tenant}/days": {
         parameters: {
             query?: never;
@@ -1210,6 +1245,29 @@ export interface components {
              */
             readAt?: string;
         };
+        ChatMessage: {
+            /** Format: date-time */
+            at: string;
+            author?: string;
+            /**
+             * Format: uuid
+             * @description Absent on a system message
+             */
+            authorId?: string;
+            avatar?: string;
+            body: string;
+            clientKey?: string;
+            data?: {
+                [key: string]: unknown;
+            };
+            deleted?: boolean;
+            /** Format: date-time */
+            editedAt?: string;
+            /** @description A system message's kind, written in the reader's language */
+            event?: string;
+            /** Format: uuid */
+            id: string;
+        };
         ChatPreview: {
             author?: string;
             body?: string;
@@ -1514,7 +1572,7 @@ export interface components {
              * @example day_already_closed
              * @enum {string}
              */
-            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_claim_code" | "bad_cursor" | "bad_hours" | "bad_level" | "bad_photo" | "bad_proof" | "bad_range" | "bad_receipt" | "bad_request" | "blank_name" | "channel_not_found" | "claim_done" | "claim_not_eligible" | "claim_not_found" | "claim_too_old" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_closed" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "no_session" | "no_work_that_day" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_your_store" | "not_yourself" | "old_day_open" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_closed" | "period_not_found" | "person_not_found" | "product_changed" | "proof_required" | "request_not_found" | "route_not_found" | "session_not_found" | "session_taken" | "staff_not_found" | "store_already_opened" | "store_not_found" | "store_not_open" | "store_required" | "too_far_back" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
+            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_claim_code" | "bad_cursor" | "bad_hours" | "bad_level" | "bad_photo" | "bad_proof" | "bad_range" | "bad_receipt" | "bad_request" | "blank_message" | "blank_name" | "channel_not_found" | "channel_read_only" | "chat_too_fast" | "claim_done" | "claim_not_eligible" | "claim_not_found" | "claim_too_old" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_closed" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "no_session" | "no_work_that_day" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_your_store" | "not_yourself" | "old_day_open" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_closed" | "period_not_found" | "person_not_found" | "product_changed" | "proof_required" | "request_not_found" | "route_not_found" | "session_not_found" | "session_taken" | "staff_not_found" | "store_already_opened" | "store_not_found" | "store_not_open" | "store_required" | "too_far_back" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
             details?: string[] | null;
             /** @example The day is already closed */
             message: string;
@@ -1719,6 +1777,10 @@ export interface components {
             totalPrice: number;
             /** Format: int64 */
             unitPrice: number;
+        };
+        OutputChatMessage: {
+            items: components["schemas"]["ChatMessage"][];
+            next?: string;
         };
         OutputOrder: {
             items: components["schemas"]["Order"][];
@@ -1933,6 +1995,9 @@ export interface components {
             status: "pending" | "approved" | "rejected";
             storeName?: string;
         };
+        PostChatMessageInputBody: {
+            body: string;
+        };
         Product: {
             /** Format: uuid */
             categoryId?: string;
@@ -1946,6 +2011,13 @@ export interface components {
         ProductsOutputBody: {
             /** @description Most popular first */
             products: components["schemas"]["Product"][];
+        };
+        ReadChatInputBody: {
+            /**
+             * Format: date-time
+             * @description Everything up to this message's time is read; only ever moves forward
+             */
+            at: string;
         };
         RejectRequestInputBody: {
             /** @description Also drop this person's later asks, quietly */
@@ -2696,6 +2768,116 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ChatChannelOutputBody"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listChatMessages: {
+        parameters: {
+            query?: {
+                /** @description From the previous page's next; empty for the first */
+                cursor?: string;
+                limit?: number;
+                /** @description Only rows changed after this (a list catching up) */
+                since?: string;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutputChatMessage"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postChatMessage: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostChatMessageInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatMessage"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    readChat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReadChatInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

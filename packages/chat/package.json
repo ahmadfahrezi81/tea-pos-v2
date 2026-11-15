@@ -3,7 +3,8 @@
     "private": true,
     "type": "module",
     "exports": {
-        "./ChatsScreen": "./ChatsScreen.tsx"
+        "./ChatsScreen": "./ChatsScreen.tsx",
+        "./ChannelScreen": "./ChannelScreen.tsx"
     },
     "scripts": {
         "lint": "eslint .",

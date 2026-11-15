@@ -24,6 +24,7 @@
         "members": "Members",
         "today": "Today",
         "yesterday": "Yesterday",
+        "earlier": "Earlier messages",
         "tooLong": "At most 4,000 characters"
     }
 }
