@@ -304,3 +304,41 @@ func TestChatPhotos(t *testing.T) {
 		t.Fatalf("messages: %+v", got)
 	}
 }
+
+func TestChatPushQueuedOncePerBurst(t *testing.T) {
+	db := testkit.DB(t)
+	giveChat(t, db, testkit.SellerA, "member")
+	a := testkit.NewAPI(t, db, "")
+	general := channelOf(t, a, testkit.SellerA, "seller", "general", "")
+	post(t, a, testkit.SellerA, "seller", general, "one", "key-00000001")
+	post(t, a, testkit.SellerA, "seller", general, "two", "key-00000002")
+	var n int
+	if err := db.QueryRow(context.Background(),
+		`SELECT count(*) FROM river.river_job WHERE kind = 'chat_push' AND args->>'channel_id' = $1`, general).Scan(&n); err != nil {
+		t.Fatal(err)
+	}
+	if n != 1 {
+		t.Fatalf("%d push jobs, want 1", n)
+	}
+}
+
+func TestPushSubscription(t *testing.T) {
+	db := testkit.DB(t)
+	a := testkit.NewAPI(t, db, "")
+	seller := testkit.Session(a.SignIn(t, testkit.SellerA, "seller"))
+	sub := `{"endpoint":"https://push.example/abc","p256dh":"key","auth":"secret"}`
+	for range 2 {
+		if resp := a.Send(t, http.MethodPut, "/push/subscription", "seller", sub, nil, seller); resp.StatusCode != http.StatusNoContent {
+			t.Fatalf("subscribe %d", resp.StatusCode)
+		}
+	}
+	if n := count(t, db, `SELECT count(*) FROM push_subscriptions`); n != 1 {
+		t.Fatalf("%d rows", n)
+	}
+	if resp := a.Send(t, http.MethodPost, "/push/subscription/off", "seller", `{"endpoint":"https://push.example/abc"}`, nil, seller); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("off %d", resp.StatusCode)
+	}
+	if n := count(t, db, `SELECT count(*) FROM push_subscriptions`); n != 0 {
+		t.Fatalf("%d rows after off", n)
+	}
+}

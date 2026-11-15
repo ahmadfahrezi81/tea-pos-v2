@@ -80,8 +80,23 @@ CREATE TABLE public.chat_reads (
 );
 CREATE INDEX chat_reads_channel ON public.chat_reads (channel_id);
 
+-- A phone's push subscription (Step 68), upserted by its endpoint on every start: the row is
+-- the real off switch. Push is not only chat's.
+CREATE TABLE public.push_subscriptions (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES public.users (id),
+    endpoint text NOT NULL UNIQUE,
+    p256dh text NOT NULL,
+    auth text NOT NULL,
+    user_agent text NOT NULL DEFAULT '',
+    created_at timestamptz NOT NULL DEFAULT now(),
+    last_seen_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX push_subscriptions_user ON public.push_subscriptions (user_id);
+
 -- Go is the only way in: v1's browser carries the Supabase key, and these must not be readable through it.
 ALTER TABLE public.chat_channels ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_reads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_message_photos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;

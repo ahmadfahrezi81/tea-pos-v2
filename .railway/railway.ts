@@ -51,6 +51,9 @@ export default defineRailway((ctx) => {
             POSTHOG_FLAGS_POLL_SECONDS: "300",
             // The worker's weather (it references this; Infisical syncs into api only).
             TOMORROW_IO_API_KEY: preserve(),
+            // Web Push for chat (Step 68): api hands phones the public key, the worker signs with both.
+            VAPID_PUBLIC_KEY: preserve(),
+            VAPID_PRIVATE_KEY: preserve(),
             // When a release breaks older apps, its PR adds e.g. MIN_APP_VERSION: "seller@2026.11.2"
             // (426, and the app updates itself).
 
@@ -82,6 +85,8 @@ export default defineRailway((ctx) => {
             ...env("100MiB", "2"),
             DATABASE_URL: api.env.DATABASE_URL,
             TOMORROW_IO_API_KEY: api.env.TOMORROW_IO_API_KEY,
+            VAPID_PUBLIC_KEY: api.env.VAPID_PUBLIC_KEY,
+            VAPID_PRIVATE_KEY: api.env.VAPID_PRIVATE_KEY,
             POSTHOG_KEY: api.env.POSTHOG_KEY,
             // v2's cron, its schedules per environment in internal/jobs (Schedules).
             JOBS_SCHEDULE: "on",

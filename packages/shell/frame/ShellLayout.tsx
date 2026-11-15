@@ -106,6 +106,10 @@ function Frame({
     const channels = useChatChannels(slug, hasChat && own.some((t) => t.chat));
     const unread = hasChat ? unreadTotal(channels.data?.channels) : 0;
     useAppBadge(unread);
+    useEffect(() => {
+        // Loaded after the first screen, and only for someone with chat.
+        if (hasChat) void import("../lib/push").then((m) => m.renewPush()).catch(() => {});
+    }, [hasChat]);
     const root = slug ? `/${slug}` : "/";
     const under = (path: string) => (path ? `${root}/${path}` : root);
     const tabs: Tab[] = slug

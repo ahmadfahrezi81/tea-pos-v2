@@ -220,6 +220,17 @@ type PayrollUserInfo struct {
 	UpdatedAt          pgtype.Timestamptz
 }
 
+type PushSubscription struct {
+	ID         pgtype.UUID
+	UserID     pgtype.UUID
+	Endpoint   string
+	P256dh     string
+	Auth       string
+	UserAgent  string
+	CreatedAt  pgtype.Timestamptz
+	LastSeenAt pgtype.Timestamptz
+}
+
 type RiverRiverJob struct {
 	ID           int64
 	State        RiverRiverJobState

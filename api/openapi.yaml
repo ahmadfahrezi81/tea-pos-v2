@@ -1955,6 +1955,43 @@ components:
       required:
         - products
       type: object
+    PushKeyOutputBody:
+      additionalProperties: false
+      properties:
+        key:
+          description: The VAPID public key a phone subscribes with; empty while push is off
+          type: string
+      required:
+        - key
+      type: object
+    PushOffInputBody:
+      additionalProperties: false
+      properties:
+        endpoint:
+          format: uri
+          maxLength: 1000
+          type: string
+      required:
+        - endpoint
+      type: object
+    PushSubscriptionInputBody:
+      additionalProperties: false
+      properties:
+        auth:
+          maxLength: 100
+          type: string
+        endpoint:
+          format: uri
+          maxLength: 1000
+          type: string
+        p256dh:
+          maxLength: 200
+          type: string
+      required:
+        - endpoint
+        - p256dh
+        - auth
+      type: object
     ReadChatInputBody:
       additionalProperties: false
       properties:
@@ -3006,6 +3043,80 @@ paths:
       summary: Change the signed-in user's own language, name or phone
       tags:
         - me
+      x-access:
+        repeatable: true
+        signedIn: true
+  /push/key:
+    get:
+      operationId: getPushKey
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PushKeyOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: The public key phones subscribe with
+      tags:
+        - push
+      x-access:
+        signedIn: true
+  /push/subscription:
+    put:
+      operationId: putPushSubscription
+      parameters:
+        - in: header
+          name: User-Agent
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushSubscriptionInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: This phone's subscription, kept per endpoint
+      tags:
+        - push
+      x-access:
+        repeatable: true
+        signedIn: true
+  /push/subscription/off:
+    post:
+      operationId: pushOff
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushOffInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: This phone wants no more pushes
+      tags:
+        - push
       x-access:
         repeatable: true
         signedIn: true

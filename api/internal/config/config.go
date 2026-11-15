@@ -37,6 +37,8 @@ type Config struct {
 	PostHogHost     string
 	// TomorrowKey is Tomorrow.io's, for the worker's weather.
 	TomorrowKey string
+	// VAPID keys for Web Push (chat's notifications); unset sends none.
+	VapidPublicKey, VapidPrivateKey, VapidSubject string
 	// JobsSchedule runs the worker's schedules (JOBS_SCHEDULE=on on Railway; off on a laptop,
 	// so a local worker never runs them against staging's database).
 	JobsSchedule bool
@@ -58,6 +60,9 @@ func Load() (Config, error) {
 		PostHogFlagsKey:   os.Getenv("POSTHOG_FLAGS_KEY"),
 		PostHogHost:       getenv("POSTHOG_HOST", "https://us.i.posthog.com"),
 		TomorrowKey:       os.Getenv("TOMORROW_IO_API_KEY"),
+		VapidPublicKey:    os.Getenv("VAPID_PUBLIC_KEY"),
+		VapidPrivateKey:   os.Getenv("VAPID_PRIVATE_KEY"),
+		VapidSubject:      getenv("VAPID_SUBJECT", "https://lykostech.app"),
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, errors.New("DATABASE_URL is required")

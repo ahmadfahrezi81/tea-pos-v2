@@ -18,6 +18,7 @@ import (
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/files"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/httpx"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/idem"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/jobs"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/page"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/realtime"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
@@ -212,6 +213,12 @@ func registerChat(api huma.API, d Deps) {
 			// On each member's own topic: the hub needs no chat topics, and only members hear of it.
 			if err := announceChat(ctx, q, chatChanged, ch.ID, ids); err != nil {
 				return nil, err
+			}
+			// The push, in the same transaction: a message saved is a push that will be tried.
+			if tx, ok := idem.Tx(ctx); ok && d.Jobs != nil {
+				if err := jobs.Insert(ctx, d.Jobs, tx, jobs.ChatPushArgs{ChannelID: ch.ID.String()}); err != nil {
+					return nil, err
+				}
 			}
 			out := &contract.ChatMessageOutput{Body: contract.ChatMessage{
 				ID: row.ID.String(), AuthorID: caller.UserID.String(), Author: name, Avatar: avatar,
