@@ -5,9 +5,11 @@ import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { useSlug } from "@tea-pos/shell/tenant";
 import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
-import { Banknote, ReceiptText, Store } from "lucide-react";
+import { Switch } from "@tea-pos/ui/form/Switch";
+import { Banknote, Eye, ReceiptText, Store } from "lucide-react";
 import { useEffect, useRef } from "react";
 
+import { useLookSwitch } from "../home/lookOnly";
 import { useMyWorkDays } from "./mine";
 
 const PAST_WEEKS = 3;
@@ -16,6 +18,7 @@ const PAST_WEEKS = 3;
 export function More() {
     const t = useT();
     const slug = useSlug();
+    const look = useLookSwitch();
     return (
         <MoreScreen
             before={
@@ -41,6 +44,22 @@ export function More() {
                             label={t("more.myStores")}
                         />
                     </SettingsGroup>
+                    {look.owner && (
+                        <SettingsGroup title={t("gate.ownerGroup")}>
+                            <SettingsRow
+                                icon={<Eye {...rowIcon} />}
+                                label={t("gate.lookSwitch")}
+                                sublabel={t("gate.lookSwitchSub")}
+                                right={
+                                    <Switch
+                                        on={look.on}
+                                        onChange={look.set}
+                                        label={t("gate.lookSwitch")}
+                                    />
+                                }
+                            />
+                        </SettingsGroup>
+                    )}
                 </>
             }
         />

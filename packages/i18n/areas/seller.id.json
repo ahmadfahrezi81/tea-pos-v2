@@ -156,7 +156,9 @@
         "takenBy": "Session sudah diambil alih oleh",
         "askCode": "Minta kode 2 digit dari penjual saat ini untuk mengambil alih.",
         "takeOver": "Ambil Alih",
-        "lookAnyway": "Lihat saja (owner)",
+        "ownerGroup": "Owner",
+        "lookSwitch": "Lihat melewati gerbang POS",
+        "lookSwitchSub": "Hanya lihat, tidak disimpan",
         "lookOnly": "Hanya lihat: tidak ada yang tersimpan"
     }
 }
