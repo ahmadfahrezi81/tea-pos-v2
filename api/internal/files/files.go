@@ -37,6 +37,7 @@ var Purposes = map[string]Purpose{
 	"reimbursement": {Bucket: "reimbursements", Private: true},
 	"payroll_proof": {Bucket: "payroll-proofs", Roles: []string{"ADMIN"}, Private: true},
 	"product_image": {Bucket: "product-images", Roles: []string{"ADMIN"}},
+	"chat_photo":    {Bucket: "chat-photos", Private: true},
 }
 
 // MaxBytes is the buckets' own limit. The phone shrinks each photo to about 0.4 MB first.

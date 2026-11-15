@@ -54,6 +54,17 @@ CREATE INDEX chat_messages_channel ON public.chat_messages (channel_id, created_
 CREATE INDEX chat_messages_thread ON public.chat_messages (thread_root_id, created_at) WHERE thread_root_id IS NOT NULL;
 CREATE UNIQUE INDEX chat_messages_client_key ON public.chat_messages (author_id, client_key) WHERE client_key IS NOT NULL;
 
+-- A message's photos (Step 67): the 1080 px copy and its 320 px preview, in a private bucket.
+CREATE TABLE public.chat_message_photos (
+    message_id uuid NOT NULL REFERENCES public.chat_messages (id),
+    position smallint NOT NULL CHECK (position BETWEEN 0 AND 3),
+    path text NOT NULL,
+    preview_path text NOT NULL,
+    width int NOT NULL,
+    height int NOT NULL,
+    PRIMARY KEY (message_id, position)
+);
+
 -- Per person and channel: how far they have read, how much they are told. For a chat admin outside
 -- a channel, the row is also their follow (Step 70).
 CREATE TABLE public.chat_reads (
@@ -70,3 +81,4 @@ CREATE INDEX chat_reads_channel ON public.chat_reads (channel_id);
 ALTER TABLE public.chat_channels ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_reads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_message_photos ENABLE ROW LEVEL SECURITY;

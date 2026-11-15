@@ -281,3 +281,26 @@ func TestChatReadOnlyAndNotMine(t *testing.T) {
 		t.Fatalf("their inbox: %d", resp.StatusCode)
 	}
 }
+
+func TestChatPhotos(t *testing.T) {
+	db := testkit.DB(t)
+	giveChat(t, db, testkit.SellerA, "member")
+	a := testkit.NewAPI(t, db, "")
+	general := channelOf(t, a, testkit.SellerA, "seller", "general", "")
+	send := func(key, photos string) *http.Response {
+		return a.Send(t, http.MethodPost, "/tenants/tenant-a/chat/channels/"+general+"/messages", "seller",
+			`{"body":"","photos":`+photos+`}`, []string{"Idempotency-Key: " + key}, testkit.Session(a.SignIn(t, testkit.SellerA, "seller")))
+	}
+	own := tenantA + "/x/"
+	if resp := send("key-00000001", `[{"path":"`+own+`a.webp","previewPath":"`+own+`a-s.webp","width":1080,"height":810},{"path":"`+own+`b.webp","previewPath":"`+own+`b-s.webp","width":810,"height":1080}]`); resp.StatusCode != http.StatusOK {
+		t.Fatalf("photos: %d %s", resp.StatusCode, code(t, resp))
+	}
+	// Someone else's folder is refused.
+	if resp := send("key-00000002", `[{"path":"00000000-0000-0000-0000-00000000000b/a.webp","previewPath":"`+own+`a-s.webp","width":1,"height":1}]`); resp.StatusCode != http.StatusUnprocessableEntity {
+		t.Fatalf("other tenant's photo: %d", resp.StatusCode)
+	}
+	got := messages(t, a, testkit.SellerA, "seller", general, "")
+	if len(got) != 1 || len(got[0].Photos) != 2 || got[0].Photos[0].Width != 1080 || got[0].Photos[1].Height != 1080 {
+		t.Fatalf("messages: %+v", got)
+	}
+}

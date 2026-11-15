@@ -167,6 +167,32 @@ func (q *Queries) InsertChatMessage(ctx context.Context, arg InsertChatMessagePa
 	return i, err
 }
 
+const insertChatPhoto = `-- name: InsertChatPhoto :exec
+INSERT INTO chat_message_photos (message_id, position, path, preview_path, width, height)
+VALUES ($1, $2, $3, $4, $5, $6)
+`
+
+type InsertChatPhotoParams struct {
+	MessageID   pgtype.UUID
+	Position    int16
+	Path        string
+	PreviewPath string
+	Width       int32
+	Height      int32
+}
+
+func (q *Queries) InsertChatPhoto(ctx context.Context, arg InsertChatPhotoParams) error {
+	_, err := q.db.Exec(ctx, insertChatPhoto,
+		arg.MessageID,
+		arg.Position,
+		arg.Path,
+		arg.PreviewPath,
+		arg.Width,
+		arg.Height,
+	)
+	return err
+}
+
 const listChatChannels = `-- name: ListChatChannels :many
 SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name,
     coalesce(s.status, 'active')::text AS store_status,
@@ -437,6 +463,41 @@ func (q *Queries) ListChatMessagesSince(ctx context.Context, arg ListChatMessage
 			&i.EditedAt,
 			&i.DeletedAt,
 			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listChatPhotos = `-- name: ListChatPhotos :many
+SELECT message_id, position, path, preview_path, width, height
+FROM chat_message_photos
+WHERE message_id = ANY($1::uuid[])
+ORDER BY message_id, position
+`
+
+// The photos of a page of messages, in their order.
+func (q *Queries) ListChatPhotos(ctx context.Context, messageIds []pgtype.UUID) ([]ChatMessagePhoto, error) {
+	rows, err := q.db.Query(ctx, listChatPhotos, messageIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ChatMessagePhoto
+	for rows.Next() {
+		var i ChatMessagePhoto
+		if err := rows.Scan(
+			&i.MessageID,
+			&i.Position,
+			&i.Path,
+			&i.PreviewPath,
+			&i.Width,
+			&i.Height,
 		); err != nil {
 			return nil, err
 		}

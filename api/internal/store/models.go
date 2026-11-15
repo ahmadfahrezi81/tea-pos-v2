@@ -93,6 +93,15 @@ type ChatMessage struct {
 	CreatedAt    pgtype.Timestamptz
 }
 
+type ChatMessagePhoto struct {
+	MessageID   pgtype.UUID
+	Position    int16
+	Path        string
+	PreviewPath string
+	Width       int32
+	Height      int32
+}
+
 type ChatRead struct {
 	UserID      pgtype.UUID
 	ChannelID   pgtype.UUID

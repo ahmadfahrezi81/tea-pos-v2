@@ -277,10 +277,60 @@ components:
         id:
           format: uuid
           type: string
+        photos:
+          items:
+            $ref: "#/components/schemas/ChatPhoto"
+          type:
+            - array
+            - "null"
       required:
         - id
         - body
         - at
+      type: object
+    ChatPhoto:
+      additionalProperties: false
+      properties:
+        height:
+          format: int64
+          type: integer
+        previewUrl:
+          type: string
+        url:
+          type: string
+        width:
+          format: int64
+          type: integer
+      required:
+        - url
+        - previewUrl
+        - width
+        - height
+      type: object
+    ChatPhotoInput:
+      additionalProperties: false
+      properties:
+        height:
+          format: int64
+          maximum: 4096
+          minimum: 1
+          type: integer
+        path:
+          maxLength: 300
+          type: string
+        previewPath:
+          maxLength: 300
+          type: string
+        width:
+          format: int64
+          maximum: 4096
+          minimum: 1
+          type: integer
+      required:
+        - path
+        - previewPath
+        - width
+        - height
       type: object
     ChatPreview:
       additionalProperties: false
@@ -1860,9 +1910,16 @@ components:
       additionalProperties: false
       properties:
         body:
+          description: May be empty with photos
           maxLength: 4000
-          minLength: 1
           type: string
+        photos:
+          items:
+            $ref: "#/components/schemas/ChatPhotoInput"
+          maxItems: 4
+          type:
+            - array
+            - "null"
       required:
         - body
       type: object
@@ -2626,6 +2683,7 @@ components:
             - reimbursement
             - payroll_proof
             - product_image
+            - chat_photo
           type: string
         size:
           description: Bytes, after the phone shrank it

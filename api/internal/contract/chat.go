@@ -68,10 +68,27 @@ type ChatMessage struct {
 	Data     map[string]any `json:"data,omitempty"`
 	Body     string         `json:"body"`
 	// The phone's Idempotency-Key, so it swaps its own copy for this one.
-	ClientKey string `json:"clientKey,omitempty"`
-	EditedAt  string `json:"editedAt,omitempty" format:"date-time"`
-	Deleted   bool   `json:"deleted,omitempty"`
-	At        string `json:"at" format:"date-time"`
+	ClientKey string      `json:"clientKey,omitempty"`
+	EditedAt  string      `json:"editedAt,omitempty" format:"date-time"`
+	Deleted   bool        `json:"deleted,omitempty"`
+	At        string      `json:"at" format:"date-time"`
+	Photos    []ChatPhoto `json:"photos,omitempty"`
+}
+
+// ChatPhoto is one of a message's photos: signed addresses that work for a few hours.
+type ChatPhoto struct {
+	URL        string `json:"url"`
+	PreviewURL string `json:"previewUrl"`
+	Width      int    `json:"width"`
+	Height     int    `json:"height"`
+}
+
+// ChatPhotoInput is a photo the phone has uploaded (purpose chat_photo), in both sizes.
+type ChatPhotoInput struct {
+	Path        string `json:"path" maxLength:"300"`
+	PreviewPath string `json:"previewPath" maxLength:"300"`
+	Width       int    `json:"width" minimum:"1" maximum:"4096"`
+	Height      int    `json:"height" minimum:"1" maximum:"4096"`
 }
 
 type PostChatMessageInput struct {
@@ -79,7 +96,8 @@ type PostChatMessageInput struct {
 	ID     string `path:"id" format:"uuid"`
 	Key    string `header:"Idempotency-Key"`
 	Body   struct {
-		Body string `json:"body" minLength:"1" maxLength:"4000"`
+		Body   string           `json:"body" maxLength:"4000" doc:"May be empty with photos"`
+		Photos []ChatPhotoInput `json:"photos,omitempty" maxItems:"4"`
 	}
 }
 

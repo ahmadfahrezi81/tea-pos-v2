@@ -7,10 +7,11 @@ import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
 import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
 import { useSlug } from "@tea-pos/shell/tenant";
 import { Avatar } from "@tea-pos/ui/Avatar";
+import { ImagePreview } from "@tea-pos/ui/ImagePreview";
 import { Sheet } from "@tea-pos/ui/Sheet";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckCheck, Clock, SendHorizontal } from "lucide-react";
+import { Camera, CheckCheck, Clock, SendHorizontal, X } from "lucide-react";
 import {
     Fragment,
     useEffect,
@@ -179,13 +180,16 @@ function Message({
     );
     if (mine)
         return (
-            <div className={`flex flex-col items-end ${grouped ? "" : "pt-2"}`}>
-                <button
-                    onClick={onSeen}
-                    className="max-w-[80%] rounded-2xl rounded-br-md bg-brand px-3 py-2 text-left text-[15px] text-white whitespace-pre-wrap break-words active:opacity-80"
-                >
-                    {text}
-                </button>
+            <div className={`flex flex-col items-end gap-1 ${grouped ? "" : "pt-2"}`}>
+                {!m.deleted && m.photos?.length ? <Photos photos={m.photos} mine /> : null}
+                {(m.body || m.deleted) && (
+                    <button
+                        onClick={onSeen}
+                        className="max-w-[80%] rounded-2xl rounded-br-md bg-brand px-3 py-2 text-left text-[15px] text-white whitespace-pre-wrap break-words active:opacity-80"
+                    >
+                        {text}
+                    </button>
+                )}
                 <span className="mt-0.5 flex items-center gap-1 text-[11px] text-gray-500">
                     {formatTime(m.at, locale)}
                     {seen !== undefined && seen > 0 && (
@@ -202,9 +206,16 @@ function Message({
             <span className="w-8 shrink-0">{!grouped && <Avatar url={m.avatar} size={32} />}</span>
             <div className="max-w-[78%]">
                 {!grouped && <p className="px-1 text-xs font-semibold text-gray-700">{m.author}</p>}
-                <div className="rounded-2xl rounded-bl-md bg-white px-3 py-2 text-[15px] text-gray-900 whitespace-pre-wrap break-words">
-                    {text}
-                </div>
+                {!m.deleted && m.photos?.length ? (
+                    <div className="py-0.5">
+                        <Photos photos={m.photos} mine={false} />
+                    </div>
+                ) : null}
+                {(m.body || m.deleted) && (
+                    <div className="rounded-2xl rounded-bl-md bg-white px-3 py-2 text-[15px] text-gray-900 whitespace-pre-wrap break-words">
+                        {text}
+                    </div>
+                )}
                 <span className="px-1 text-[11px] text-gray-500">{formatTime(m.at, locale)}</span>
             </div>
         </div>
@@ -223,14 +234,30 @@ function Outgoing({ p, slug }: { p: Pending; slug: string }) {
     const queryClient = useQueryClient();
     const failed = p.state === "failed";
     return (
-        <div className="flex flex-col items-end pt-2">
-            <button
-                disabled={!failed}
-                onClick={() => retry(queryClient, slug, p.key)}
-                className={`max-w-[80%] rounded-2xl rounded-br-md px-3 py-2 text-left text-[15px] text-white whitespace-pre-wrap break-words ${failed ? "bg-red-500" : "bg-brand/70"}`}
-            >
-                {p.body}
-            </button>
+        <div className="flex flex-col items-end gap-1 pt-2">
+            {p.photos.length > 0 && (
+                <div
+                    className={`grid gap-1 ${p.photos.length === 1 ? "grid-cols-1 w-56" : "grid-cols-2 w-60"} ${failed ? "" : "opacity-70"}`}
+                >
+                    {p.photos.map((ph) => (
+                        <img
+                            key={ph.local}
+                            src={ph.local}
+                            alt=""
+                            className="block w-full rounded-xl object-cover aspect-square"
+                        />
+                    ))}
+                </div>
+            )}
+            {p.body && (
+                <button
+                    disabled={!failed}
+                    onClick={() => retry(queryClient, slug, p.key)}
+                    className={`max-w-[80%] rounded-2xl rounded-br-md px-3 py-2 text-left text-[15px] text-white whitespace-pre-wrap break-words ${failed ? "bg-red-500" : "bg-brand/70"}`}
+                >
+                    {p.body}
+                </button>
+            )}
             {failed ? (
                 <span className="mt-0.5 flex items-center gap-3 text-[11px]">
                     <button
@@ -275,6 +302,9 @@ function EarlierButton({ channelId }: { channelId: string }) {
 }
 
 /** The white bar at the bottom: the message and send; a note instead where nobody posts. */
+/** At most this many photos in one message. */
+const MAX_PHOTOS = 4;
+
 function Composer({
     channelId,
     readOnly,
@@ -288,13 +318,31 @@ function Composer({
     const slug = useSlug();
     const queryClient = useQueryClient();
     const [text, setText] = useState("");
+    const [photos, setPhotos] = useState<{ file: File; url: string }[]>([]);
     const box = useRef<HTMLTextAreaElement>(null);
+    const picker = useRef<HTMLInputElement>(null);
     const body = text.trim();
+    const ready = (body !== "" || photos.length > 0) && body.length <= MAX_LENGTH;
     const submit = () => {
-        if (!body || body.length > MAX_LENGTH) return;
-        send(queryClient, slug, channelId, body);
+        if (!ready) return;
+        send(
+            queryClient,
+            slug,
+            channelId,
+            body,
+            photos.map((p) => p.file),
+        );
+        photos.forEach((p) => URL.revokeObjectURL(p.url));
+        setPhotos([]);
         setText("");
-        box.current?.focus();
+        if (box.current) box.current.style.height = "auto";
+    };
+    const pick = (files: FileList | null) => {
+        const chosen = [...(files ?? [])].slice(0, MAX_PHOTOS - photos.length);
+        setPhotos((now) => [
+            ...now,
+            ...chosen.map((file) => ({ file, url: URL.createObjectURL(file) })),
+        ]);
     };
     return (
         <FooterSlot>
@@ -304,33 +352,126 @@ function Composer({
                         {t(kind === "personal" ? "chat.readOnly" : "chat.storeClosed")}
                     </p>
                 ) : (
-                    <div className="flex items-end gap-2">
-                        <textarea
-                            ref={box}
-                            rows={1}
-                            value={text}
-                            maxLength={MAX_LENGTH}
-                            onChange={(e) => {
-                                setText(e.target.value);
-                                // Grows with the text, up to about five lines.
-                                e.target.style.height = "auto";
-                                e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
-                            }}
-                            placeholder={t("chat.message")}
-                            className="flex-1 resize-none rounded-2xl bg-slate-100 px-3 py-2.5 text-[16px] leading-5 outline-none"
-                        />
-                        <button
-                            onClick={submit}
-                            disabled={!body}
-                            aria-label={t("chat.send")}
-                            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand text-white disabled:opacity-40 active:scale-95"
-                        >
-                            <SendHorizontal size={20} />
-                        </button>
-                    </div>
+                    <>
+                        {photos.length > 0 && (
+                            <div className="flex gap-2 pb-2">
+                                {photos.map((p) => (
+                                    <span key={p.url} className="relative size-16 shrink-0">
+                                        <img
+                                            src={p.url}
+                                            alt=""
+                                            className="size-16 rounded-xl object-cover"
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                URL.revokeObjectURL(p.url);
+                                                setPhotos((now) =>
+                                                    now.filter((x) => x.url !== p.url),
+                                                );
+                                            }}
+                                            aria-label={t("chat.delete")}
+                                            className="absolute -right-1.5 -top-1.5 flex size-6 items-center justify-center rounded-full bg-gray-900 text-white"
+                                        >
+                                            <X size={14} strokeWidth={3} />
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                        <div className="flex items-end gap-2">
+                            <button
+                                onClick={() => picker.current?.click()}
+                                disabled={photos.length >= MAX_PHOTOS}
+                                aria-label={t("chat.photo")}
+                                className="flex size-10 shrink-0 items-center justify-center rounded-full text-brand disabled:opacity-40 active:scale-95"
+                            >
+                                <Camera size={24} />
+                            </button>
+                            <input
+                                ref={picker}
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                hidden
+                                onChange={(e) => {
+                                    pick(e.target.files);
+                                    e.target.value = "";
+                                }}
+                            />
+                            <textarea
+                                ref={box}
+                                rows={1}
+                                value={text}
+                                maxLength={MAX_LENGTH}
+                                onChange={(e) => {
+                                    setText(e.target.value);
+                                    // Grows with the text, up to about five lines.
+                                    e.target.style.height = "auto";
+                                    e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
+                                }}
+                                placeholder={t("chat.message")}
+                                className="flex-1 resize-none rounded-2xl bg-slate-100 px-3 py-2.5 text-[16px] leading-5 outline-none"
+                            />
+                            <button
+                                onClick={submit}
+                                disabled={!ready}
+                                aria-label={t("chat.send")}
+                                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand text-white disabled:opacity-40 active:scale-95"
+                            >
+                                <SendHorizontal size={20} />
+                            </button>
+                        </div>
+                    </>
                 )}
             </div>
         </FooterSlot>
+    );
+}
+
+/** A message's photos: previews only, the space kept before they load; a tap opens the full one. */
+function Photos({
+    photos,
+    mine,
+}: {
+    photos: { url: string; previewUrl: string; width: number; height: number }[];
+    mine: boolean;
+}) {
+    const t = useT();
+    const [open, setOpen] = useState<string | null>(null);
+    const one = photos.length === 1;
+    return (
+        <>
+            <div
+                className={`grid gap-1 ${one ? "grid-cols-1 w-56" : "grid-cols-2 w-60"} ${mine ? "ml-auto" : ""}`}
+            >
+                {photos.map((p, i) => (
+                    <button
+                        key={i}
+                        onClick={() => p.url && setOpen(p.url)}
+                        className="overflow-hidden rounded-xl bg-slate-200"
+                    >
+                        <img
+                            src={p.previewUrl || undefined}
+                            width={p.width}
+                            height={p.height}
+                            loading="lazy"
+                            decoding="async"
+                            alt=""
+                            className={`block w-full object-cover ${one ? "h-auto" : "aspect-square"}`}
+                            style={one ? { aspectRatio: `${p.width} / ${p.height}` } : undefined}
+                        />
+                    </button>
+                ))}
+            </div>
+            {open && (
+                <ImagePreview
+                    open
+                    onClose={() => setOpen(null)}
+                    src={open}
+                    title={t("chat.photo")}
+                />
+            )}
+        </>
     );
 }
 

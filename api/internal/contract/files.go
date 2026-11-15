@@ -3,7 +3,7 @@ package contract
 type UploadInput struct {
 	Tenant string `path:"tenant"`
 	Body   struct {
-		Purpose     string `json:"purpose" enum:"daily_photo,report,request,reimbursement,payroll_proof,product_image"`
+		Purpose     string `json:"purpose" enum:"daily_photo,report,request,reimbursement,payroll_proof,product_image,chat_photo"`
 		ContentType string `json:"contentType" enum:"image/webp,image/jpeg"`
 		Size        int    `json:"size" minimum:"1" maximum:"1048576" doc:"Bytes, after the phone shrank it"`
 		StoreID     string `json:"storeId,omitempty" format:"uuid" doc:"For a store's photos: daily_photo, report, request"`

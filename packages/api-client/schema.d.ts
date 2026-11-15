@@ -1267,6 +1267,23 @@ export interface components {
             event?: string;
             /** Format: uuid */
             id: string;
+            photos?: components["schemas"]["ChatPhoto"][] | null;
+        };
+        ChatPhoto: {
+            /** Format: int64 */
+            height: number;
+            previewUrl: string;
+            url: string;
+            /** Format: int64 */
+            width: number;
+        };
+        ChatPhotoInput: {
+            /** Format: int64 */
+            height: number;
+            path: string;
+            previewPath: string;
+            /** Format: int64 */
+            width: number;
         };
         ChatPreview: {
             author?: string;
@@ -1996,7 +2013,9 @@ export interface components {
             storeName?: string;
         };
         PostChatMessageInputBody: {
+            /** @description May be empty with photos */
             body: string;
+            photos?: components["schemas"]["ChatPhotoInput"][] | null;
         };
         Product: {
             /** Format: uuid */
@@ -2383,7 +2402,7 @@ export interface components {
             /** @enum {string} */
             contentType: "image/webp" | "image/jpeg";
             /** @enum {string} */
-            purpose: "daily_photo" | "report" | "request" | "reimbursement" | "payroll_proof" | "product_image";
+            purpose: "daily_photo" | "report" | "request" | "reimbursement" | "payroll_proof" | "product_image" | "chat_photo";
             /**
              * Format: int64
              * @description Bytes, after the phone shrank it

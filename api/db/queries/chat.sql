@@ -140,3 +140,14 @@ RETURNING (SELECT coalesce((SELECT last_read_at FROM before), '-infinity'::times
 SELECT DISTINCT author_id::uuid FROM chat_messages
 WHERE channel_id = @channel_id AND author_id IS NOT NULL AND author_id <> @reader_id
   AND created_at > @after::timestamptz AND created_at <= @until::timestamptz;
+
+-- name: InsertChatPhoto :exec
+INSERT INTO chat_message_photos (message_id, position, path, preview_path, width, height)
+VALUES (@message_id, @position, @path, @preview_path, @width, @height);
+
+-- name: ListChatPhotos :many
+-- The photos of a page of messages, in their order.
+SELECT message_id, position, path, preview_path, width, height
+FROM chat_message_photos
+WHERE message_id = ANY(@message_ids::uuid[])
+ORDER BY message_id, position;

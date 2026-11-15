@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/files"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/httpx"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/idem"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/page"
@@ -29,6 +31,9 @@ var (
 	errChatTooFast     = httpx.New(http.StatusTooManyRequests, "chat_too_fast", "Too many messages, wait a moment")
 	errBadReadTime     = httpx.New(http.StatusBadRequest, "bad_request", "Not a time")
 )
+
+// chatPhotoTTL: a signed photo address works this long; the phone keeps it with the page it came in.
+const chatPhotoTTL = 6 * time.Hour
 
 // chatLimit: about 30 messages a minute per person, so a stuck phone or a loop cannot flood a channel.
 var chatLimit = auth.NewLimiter(30, time.Minute)
@@ -123,7 +128,7 @@ func registerChat(api huma.API, d Deps) {
 				for i, r := range rows {
 					out.Body.Items[i] = chatMessage(store.ListChatMessagesRow(r))
 				}
-				return out, nil
+				return out, attachPhotos(ctx, d, out.Body.Items)
 			}
 			cursor, err := page.Decode(in.Cursor)
 			if err != nil {
@@ -139,7 +144,7 @@ func registerChat(api huma.API, d Deps) {
 			out.Body = page.Map(page.Rows(rows, in.Limit, func(r store.ListChatMessagesRow) page.Cursor {
 				return page.Cursor{At: r.CreatedAt.Time, ID: r.ID}
 			}), chatMessage)
-			return out, nil
+			return out, attachPhotos(ctx, d, out.Body.Items)
 		})
 
 	route(api, huma.Operation{
@@ -152,8 +157,15 @@ func registerChat(api huma.API, d Deps) {
 				return nil, errChatTooFast
 			}
 			body := strings.TrimSpace(in.Body.Body)
-			if body == "" {
+			if body == "" && len(in.Body.Photos) == 0 {
 				return nil, errBlankMessage
+			}
+			// Only photos uploaded into this tenant's own folder.
+			for _, p := range in.Body.Photos {
+				own := caller.TenantID.String() + "/"
+				if !strings.HasPrefix(p.Path, own) || !strings.HasPrefix(p.PreviewPath, own) || strings.Contains(p.Path+p.PreviewPath, "..") {
+					return nil, errBadPhoto
+				}
 			}
 			q := idem.Queries(ctx, d.Queries)
 			ch, err := chatChannel(ctx, q, caller, in.ID)
@@ -169,6 +181,14 @@ func registerChat(api huma.API, d Deps) {
 			})
 			if err != nil {
 				return nil, err
+			}
+			for i, p := range in.Body.Photos {
+				if err := q.InsertChatPhoto(ctx, store.InsertChatPhotoParams{
+					MessageID: row.ID, Position: int16(i), Path: p.Path, PreviewPath: p.PreviewPath,
+					Width: int32(p.Width), Height: int32(p.Height),
+				}); err != nil {
+					return nil, err
+				}
 			}
 			if err := q.SetChatChannelLast(ctx, store.SetChatChannelLastParams{MessageID: row.ID, At: row.CreatedAt, ID: ch.ID}); err != nil {
 				return nil, err
@@ -193,10 +213,20 @@ func registerChat(api huma.API, d Deps) {
 			if err := announceChat(ctx, q, chatChanged, ch.ID, ids); err != nil {
 				return nil, err
 			}
-			return &contract.ChatMessageOutput{Body: contract.ChatMessage{
+			out := &contract.ChatMessageOutput{Body: contract.ChatMessage{
 				ID: row.ID.String(), AuthorID: caller.UserID.String(), Author: name, Avatar: avatar,
 				Body: body, ClientKey: in.Key, At: nano(row.CreatedAt),
-			}}, nil
+			}}
+			items := []contract.ChatMessage{out.Body}
+			if len(in.Body.Photos) > 0 {
+				photos := make([]store.ChatMessagePhoto, len(in.Body.Photos))
+				for i, p := range in.Body.Photos {
+					photos[i] = store.ChatMessagePhoto{MessageID: row.ID, Position: int16(i), Path: p.Path, PreviewPath: p.PreviewPath, Width: int32(p.Width), Height: int32(p.Height)}
+				}
+				signPhotosInto(ctx, d.Files, items, photos)
+			}
+			out.Body = items[0]
+			return out, nil
 		})
 
 	route(api, huma.Operation{
@@ -315,4 +345,51 @@ func chatMessage(r store.ListChatMessagesRow) contract.ChatMessage {
 		m.Deleted, m.Body = true, ""
 	}
 	return m
+}
+
+// attachPhotos puts each message's photos on it, every address signed in one batch.
+func attachPhotos(ctx context.Context, d Deps, items []contract.ChatMessage) error {
+	ids := make([]pgtype.UUID, 0, len(items))
+	for _, m := range items {
+		var id pgtype.UUID
+		if id.Scan(m.ID) == nil {
+			ids = append(ids, id)
+		}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	photos, err := d.Queries.ListChatPhotos(ctx, ids)
+	if err != nil || len(photos) == 0 {
+		return err
+	}
+	signPhotosInto(ctx, d.Files, items, photos)
+	return nil
+}
+
+// signPhotosInto signs photos' addresses in one call; one that cannot be signed is left empty.
+func signPhotosInto(ctx context.Context, s *files.Storage, items []contract.ChatMessage, photos []store.ChatMessagePhoto) {
+	paths := make([]string, 0, 2*len(photos))
+	for _, p := range photos {
+		paths = append(paths, p.Path, p.PreviewPath)
+	}
+	signed := map[string]string{}
+	if s != nil {
+		var err error
+		signed, err = s.SignReads(ctx, files.Purposes["chat_photo"].Bucket, paths, chatPhotoTTL)
+		if err != nil && !errors.Is(err, files.ErrNotConfigured) {
+			slog.WarnContext(ctx, "sign chat photos", "err", err)
+		}
+	}
+	at := map[string]int{}
+	for i, m := range items {
+		at[m.ID] = i
+	}
+	for _, p := range photos {
+		if i, ok := at[p.MessageID.String()]; ok {
+			items[i].Photos = append(items[i].Photos, contract.ChatPhoto{
+				URL: signed[p.Path], PreviewURL: signed[p.PreviewPath], Width: int(p.Width), Height: int(p.Height),
+			})
+		}
+	}
 }
