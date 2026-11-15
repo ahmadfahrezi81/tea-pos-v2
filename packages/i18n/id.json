@@ -127,7 +127,11 @@
         "updateDone": "Selesai. Memulai ulang…",
         "updateRestart": "Restart",
         "updateKeepOpen": "Biarkan aplikasi tetap terbuka",
-        "updateReady": "Update siap"
+        "updateReady": "Update siap",
+        "store": "Toko",
+        "storeAndDate": "Toko dan tanggal",
+        "date": "Tanggal",
+        "month": "Bulan"
     },
     "signIn": {
         "google": "Lanjutkan dengan Google",
@@ -278,7 +282,12 @@
         "bestDay": "Hari terbaik",
         "details": "Detail",
         "latestOrders": "Pesanan terbaru",
-        "seeAll": "Lihat semua"
+        "seeAll": "Lihat semua",
+        "busiestHour": "Jam tersibuk",
+        "cupsPerStore": "Cups per toko",
+        "slowestDay": "Hari tersepi",
+        "cupsPerStoreDay": "Cups per toko sehari",
+        "ordersTotal": "Total pesanan"
     },
     "errorSheet": {
         "title": "Gagal menyimpan",

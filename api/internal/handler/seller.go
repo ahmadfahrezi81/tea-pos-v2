@@ -117,7 +117,11 @@ func storeGate(ctx context.Context, q *store.Queries, caller auth.Caller, s pgty
 	at := session.StartedAt.Time
 	g.Gate, g.SessionID, g.SellerID, g.SellerName = "open", session.ID.String(), session.UserID.String(), session.FullName
 	g.SellerAvatar, g.StartedAt = session.AvatarUrl, &at
-	if session.UserID == caller.UserID {
+	if g.SellerCups, err = q.SellerDayCups(ctx, store.SellerDayCupsParams{DayID: day.ID, TenantID: caller.TenantID, UserID: session.UserID}); err != nil {
+		return g, err
+	}
+	// The holder's code, and the owner's too: the owner looks past the gate and may hand a day on.
+	if session.UserID == caller.UserID || caller.Owner {
 		g.ClaimCode = session.ClaimCode
 	}
 	return g, nil

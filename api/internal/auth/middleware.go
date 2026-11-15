@@ -26,7 +26,9 @@ type Caller struct {
 	// caller's level in this app there.
 	TenantID pgtype.UUID
 	Level    Level
-	token    string
+	// Owner: the caller owns that tenant.
+	Owner bool
+	token string
 }
 
 type callerKey struct{}
@@ -159,7 +161,7 @@ func Middleware(sessions *Sessions, q *store.Queries, limiter, perSession *Limit
 				write(ctx, errNotAllowed)
 				return
 			}
-			caller.TenantID, caller.Level = m.ID, level
+			caller.TenantID, caller.Level, caller.Owner = m.ID, level, m.IsOwner
 			info.SetCaller(caller.UserID.String(), m.ID.String())
 		}
 		// After the tenant, so a rule can name one; routes outside a tenant match on role and app only.

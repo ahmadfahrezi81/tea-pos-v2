@@ -4,16 +4,62 @@ import { ActionButton } from "@tea-pos/ui/ActionButton";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { DOT_GRID } from "@tea-pos/ui/dot-grid";
 import { Emoji, type EmojiName } from "@tea-pos/ui/Emoji";
-import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { useState, type ReactNode } from "react";
 
 import { useResumeStore, useTakeOver, type Gate } from "./home";
+import { LookAnyway, LookOnlyBanner, useLookOnly } from "./lookOnly";
 
 function GateIcon({ name, size = 100 }: { name: EmojiName; size?: number }) {
     return (
         <div className="relative -mx-6 mb-5 flex justify-center py-3">
             <div aria-hidden className="pointer-events-none absolute inset-0" style={DOT_GRID} />
             <Emoji name={name} size={size} className="relative" />
+        </div>
+    );
+}
+
+/** The screen behind the gate when the store is the caller's; else the gate (and, for the owner, a way to look past it). */
+export function Gated({
+    gate,
+    mine,
+    children,
+}: {
+    gate: Gate;
+    mine: boolean;
+    children: ReactNode;
+}) {
+    const look = useLookOnly(gate, mine);
+    const navigate = useNavigate();
+    const slug = useSlug();
+    const onManage = useLocation({ select: (l) => l.pathname.endsWith("/manage") });
+    if (mine) return <>{children}</>;
+    if (look.looking)
+        return (
+            <>
+                <LookOnlyBanner
+                    onClose={() => {
+                        look.stop();
+                        // Manage is not a screen of its own at the gate: back to POS.
+                        if (onManage)
+                            void navigate({
+                                to: "/$tenant/pos",
+                                params: { tenant: slug },
+                                replace: true,
+                            });
+                    }}
+                />
+                {children}
+            </>
+        );
+    // The card takes the free height down to the tabs, as v1; no min-h-0, so a card taller than the
+    // screen (the keyboard up, a short phone) still grows and the page scrolls.
+    return (
+        <div className="flex flex-1 flex-col gap-2">
+            <div className="flex flex-1">
+                <StoreGate gate={gate} />
+            </div>
+            {look.offered && <LookAnyway onClick={look.start} />}
         </div>
     );
 }
@@ -78,6 +124,10 @@ function TakeOver({ gate }: { gate: Gate }) {
                 <div className="flex items-center gap-2 mt-1 justify-center bg-slate-100 rounded-xl px-2 py-2 pr-4 w-fit mx-auto">
                     <Avatar url={gate.sellerAvatar} size={28} />
                     <p className="text-lg font-bold text-gray-900 truncate">{gate.sellerName}</p>
+                    {/* Their cups so far today, as v1. */}
+                    <span className="shrink-0 rounded-lg bg-orange-100 px-2 py-0.5 text-sm font-bold text-orange-700">
+                        {gate.sellerCups ?? 0} {t("store.cupsUnit")}
+                    </span>
                 </div>
             )}
             <p className="text-sm text-gray-500 mt-2 mb-3 leading-tight">{t("gate.askCode")}</p>

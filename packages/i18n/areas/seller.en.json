@@ -155,6 +155,8 @@
         "closedSub": "Today's session has ended.",
         "takenBy": "Session already taken by",
         "askCode": "Ask the current seller for their 2-digit code to take over.",
-        "takeOver": "Take Over"
+        "takeOver": "Take Over",
+        "lookAnyway": "Look anyway (owner)",
+        "lookOnly": "Look only: nothing here is saved"
     }
 }
