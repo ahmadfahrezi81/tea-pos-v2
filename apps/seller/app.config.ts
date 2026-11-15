@@ -12,6 +12,7 @@ export default defineApp({
         titleKey: "signIn.sellerTitle",
         subtitleKey: "signIn.sellerSub",
     },
-    locales: ["en", "id"],
+    // Indonesian first: the default; English for whoever picks it in More.
+    locales: ["id", "en"],
     stores: "one",
 });

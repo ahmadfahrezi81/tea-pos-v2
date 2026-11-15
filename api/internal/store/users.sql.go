@@ -12,8 +12,8 @@ import (
 )
 
 const createPendingUser = `-- name: CreatePendingUser :exec
-INSERT INTO users (id, email, full_name, role, status, avatar_url)
-VALUES ($1, $2, $3, 'USER', 'pending', $4)
+INSERT INTO users (id, email, full_name, role, status, avatar_url, preferred_language)
+VALUES ($1, $2, $3, 'USER', 'pending', $4, 'id')
 ON CONFLICT (id) DO NOTHING
 `
 
@@ -25,7 +25,8 @@ type CreatePendingUserParams struct {
 }
 
 // Someone new: an account in no tenant and no app, waiting until a tenant lets them in. v1 lets
-// a pending account in nowhere either.
+// a pending account in nowhere either. Indonesian first, the business's language (the column's
+// own default, 'en', is v1's and left alone).
 func (q *Queries) CreatePendingUser(ctx context.Context, arg CreatePendingUserParams) error {
 	_, err := q.db.Exec(ctx, createPendingUser,
 		arg.ID,

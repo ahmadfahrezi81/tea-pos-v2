@@ -38,7 +38,8 @@ WHERE u.email = $1
 
 -- name: CreatePendingUser :exec
 -- Someone new: an account in no tenant and no app, waiting until a tenant lets them in. v1 lets
--- a pending account in nowhere either.
-INSERT INTO users (id, email, full_name, role, status, avatar_url)
-VALUES (@id, @email, @full_name, 'USER', 'pending', sqlc.narg(avatar_url))
+-- a pending account in nowhere either. Indonesian first, the business's language (the column's
+-- own default, 'en', is v1's and left alone).
+INSERT INTO users (id, email, full_name, role, status, avatar_url, preferred_language)
+VALUES (@id, @email, @full_name, 'USER', 'pending', sqlc.narg(avatar_url), 'id')
 ON CONFLICT (id) DO NOTHING;
