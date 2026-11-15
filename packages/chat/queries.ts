@@ -21,6 +21,8 @@ export interface Thread {
 }
 
 const PAGE = 30;
+/** Held messages older than this are fetched again, so their signed photo addresses are new. */
+const FRESH_MS = 60 * 60 * 1000;
 
 export const threadKey = (tenant: string, id: string) => ["chat-messages", tenant, id] as const;
 
@@ -45,8 +47,12 @@ export function useThread(tenant: string, id: string) {
         queryFn: async ({ signal }): Promise<Thread> => {
             const held = queryClient.getQueryData<Thread>(threadKey(tenant, id));
             const newest = held?.items.at(-1);
+            // Photo addresses last 6 hours: older held pages start again from the newest page.
+            const age =
+                Date.now() - (queryClient.getQueryState(threadKey(tenant, id))?.dataUpdatedAt ?? 0);
+            const fresh = age < FRESH_MS;
             const path = { tenant, id };
-            if (held && newest) {
+            if (held && newest && fresh) {
                 const { data, error } = await api.GET(
                     "/tenants/{tenant}/chat/channels/{id}/messages",
                     {

@@ -69,7 +69,8 @@ export default function ChannelScreen({ channelId }: { channelId: string }) {
     const others = channel.members.filter((m) => m.id !== me);
     const lastMine = [...items].reverse().find((m) => m.authorId === me);
     const firstNew = items.find(
-        (m) => m.authorId !== me && readAtOpen !== null && m.at > readAtOpen,
+        // Never opened before: no line, everything is new.
+        (m) => m.authorId !== me && !!readAtOpen && m.at > readAtOpen,
     )?.id;
 
     return (
