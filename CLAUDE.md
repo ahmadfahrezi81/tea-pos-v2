@@ -63,6 +63,7 @@ Dockerfile           one image, every program under /app/; Railway picks one by 
 ops/backup/          nightly dump of production to R2 (cron service backup) and restore.sh
 docs/runbook.md      restore, run a backup, roll back
 docs/benchmark.js    the benchmark read by hand in DevTools; `pnpm bench <url>` (scripts/bench.mjs) runs it the same way every time
+docs/icons/          the app icons: the family's rules (README.md), glyphs.json, build.py (fits, exports both apps' PNGs)
 apps/seller, backoffice  Vite apps, Pages projects tea-pos and tea-office. app.config.ts: everything that differs
                      per app (name, brand colour, sign-in words, languages). src/routes: TanStack Router file
                      routes (routeTree.gen.ts generated). functions/api forwards /api to Railway

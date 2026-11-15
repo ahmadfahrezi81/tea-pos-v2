@@ -8,7 +8,7 @@ export default defineApp({
     // blue-600
     brand: "oklch(0.546 0.245 262.881)",
     signIn: {
-        logo: "/LEMONI-512x512.png",
+        logo: "/icons/icon-192x192.png",
         titleKey: "signIn.sellerTitle",
         subtitleKey: "signIn.sellerSub",
     },

@@ -1,7 +1,6 @@
 import { useT } from "@tea-pos/i18n/react";
 import { Picture } from "@tea-pos/ui/Picture";
 import { ArrowLeft, UserCircle, X } from "lucide-react";
-import type { ReactNode } from "react";
 
 import { useAppUpdate } from "./update/AppUpdate";
 import { UpdateHeader } from "./update/UpdateHeader";
@@ -19,8 +18,6 @@ interface MobileHeaderProps {
     actionsRef: (el: HTMLDivElement | null) => void;
     /** Where a screen's HeaderTitle goes; while filled, the route's title hides. */
     titleRef: (el: HTMLSpanElement | null) => void;
-    /** Beside a tab home's title: the seller's store picker. */
-    beside?: ReactNode;
 }
 
 /**
@@ -37,7 +34,6 @@ export function MobileHeader({
     onAccount,
     actionsRef,
     titleRef,
-    beside,
 }: MobileHeaderProps) {
     const t = useT();
     const updating = useAppUpdate().phase !== "idle";
@@ -77,12 +73,9 @@ export function MobileHeader({
                             <UpdateHeader />
                         ) : (
                             <div className="flex min-w-0 flex-1 items-baseline gap-2">
-                                <h1
-                                    className={`group min-w-0 truncate text-3xl font-extrabold tracking-tight text-gray-900 ${beside ? "shrink-0" : "flex-1"}`}
-                                >
+                                <h1 className="group min-w-0 flex-1 truncate text-3xl font-extrabold tracking-tight text-gray-900">
                                     {titleText}
                                 </h1>
-                                {beside}
                             </div>
                         )}
                         <div

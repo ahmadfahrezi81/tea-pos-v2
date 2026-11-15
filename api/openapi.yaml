@@ -2033,6 +2033,10 @@ components:
           type: integer
         sellerAvatar:
           type: string
+        sellerCups:
+          description: The holder's cups that day, all their sessions
+          format: int64
+          type: integer
         sellerId:
           format: uuid
           type: string

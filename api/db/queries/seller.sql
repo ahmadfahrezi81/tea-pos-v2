@@ -61,6 +61,12 @@ RETURNING id;
 INSERT INTO store_order_items (order_id, product_id, quantity, unit_price, total_price, tenant_id)
 VALUES (@order_id, @product_id, @quantity, @unit_price, @total_price, @tenant_id);
 
+-- name: SellerDayCups :one
+-- One person's cups on a day, for the gate's "taken by" card.
+SELECT COALESCE(SUM(i.quantity), 0)::bigint FROM store_orders o
+JOIN store_order_items i ON i.order_id = o.id
+WHERE o.daily_summary_id = @day_id AND o.tenant_id = @tenant_id AND o.user_id = @user_id;
+
 -- name: AddOrderToDay :exec
 -- In the database, not read and written back, so two phones never lose a sale.
 UPDATE store_daily_summaries

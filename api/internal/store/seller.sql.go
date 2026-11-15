@@ -865,6 +865,26 @@ func (q *Queries) LogStoreActivity(ctx context.Context, arg LogStoreActivityPara
 	return err
 }
 
+const sellerDayCups = `-- name: SellerDayCups :one
+SELECT COALESCE(SUM(i.quantity), 0)::bigint FROM store_orders o
+JOIN store_order_items i ON i.order_id = o.id
+WHERE o.daily_summary_id = $1 AND o.tenant_id = $2 AND o.user_id = $3
+`
+
+type SellerDayCupsParams struct {
+	DayID    pgtype.UUID
+	TenantID pgtype.UUID
+	UserID   pgtype.UUID
+}
+
+// One person's cups on a day, for the gate's "taken by" card.
+func (q *Queries) SellerDayCups(ctx context.Context, arg SellerDayCupsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, sellerDayCups, arg.DayID, arg.TenantID, arg.UserID)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const stampClaims = `-- name: StampClaims :exec
 UPDATE payroll_claims cl SET payout_id = p.id
 FROM payroll_payouts p

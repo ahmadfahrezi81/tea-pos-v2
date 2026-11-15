@@ -13,6 +13,7 @@
         "./FooterSlotContext": "./frame/FooterSlotContext.tsx",
         "./FormFooter": "./frame/FormFooter.tsx",
         "./HeaderActions": "./frame/HeaderActions.tsx",
+        "./StoreLabel": "./frame/StoreLabel.tsx",
         "./HomeScreen": "./screens/HomeScreen.tsx",
         "./LanguageScreen": "./screens/LanguageScreen.tsx",
         "./LoadFailed": "./screens/LoadFailed.tsx",

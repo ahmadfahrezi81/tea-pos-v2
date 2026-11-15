@@ -1,12 +1,15 @@
-import { formatCalendarDay, formatTime, isoWeek, localDate } from "@tea-pos/format";
+import { formatTime, isoWeek, localDate } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
+import { useMe } from "@tea-pos/api-client/me";
 import { EVENT } from "@tea-pos/shell/dayEvents";
+import { StoreLabel } from "@tea-pos/shell/StoreLabel";
 import { useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
 import { useDayMilestones, useGate } from "./home";
+import { useLookOnly } from "./lookOnly";
 
 const BUFFER = 60;
 const BAR = 900;
@@ -19,7 +22,7 @@ const minutesOf = (hhmm: string, fallback: number) => {
 /** The minute of the day in the stores' time zone. */
 const localMinutes = (at: number) => Math.floor(at / 60_000 + WIB) % (24 * 60);
 
-/** The top of POS and Manage, as v1: the greeting, the switch, and the day so far along its hours. */
+/** The top of POS and Manage: the store card, the switch; on Manage, the day so far along its hours. */
 export function HomeHeader() {
     const t = useT();
     const locale = useLocale();
@@ -29,6 +32,11 @@ export function HomeHeader() {
     const onManage = path.endsWith("/manage");
     const today = localDate();
     const { data: gate } = useGate();
+    const me = useMe().data;
+    const mine = gate?.gate === "open" && gate.sellerId === me?.user.id;
+    // POS and Manage only past the gate: the store theirs, or the owner looking.
+    const { looking } = useLookOnly(gate, mine);
+    const past = mine || looking;
     const { data } = useDayMilestones(gate?.dayId);
     const scroller = useRef<HTMLDivElement>(null);
     const [active, setActive] = useState<string | null>(null);
@@ -53,108 +61,110 @@ export function HomeHeader() {
     }, [progress]);
 
     const pill = (on: boolean) =>
-        `px-3.5 py-0.5 rounded-lg text-lg font-semibold transition-all duration-200 ${on ? "bg-white text-slate-950" : "text-slate-600"}`;
+        `px-3.5 py-1 rounded-lg text-center text-lg font-semibold transition-all duration-200 ${on ? "bg-white text-slate-950" : "text-slate-600"}`;
     const greeting = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
     return (
-        <div>
-            <div className="pb-3 flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                    <p className="text-xl font-bold text-gray-900 tracking-tight">
-                        {t(`home.greeting.${greeting}`)}
-                    </p>
-                    <p className="text-base text-gray-600 truncate">
-                        {t("earnings.week")} {isoWeek(today)} ·{" "}
-                        {formatCalendarDay(today, locale, "short")}
-                    </p>
+        <div className="space-y-3">
+            {/* The store as a label (a picker only with more than one), the greeting and the day; the POS and Manage switch under it, full width. */}
+            <div className="space-y-3">
+                <div className="overflow-hidden rounded-2xl bg-white">
+                    <StoreLabel
+                        detail={`${t(`home.greeting.${greeting}`)} · ${t("earnings.week")} ${isoWeek(today)}`}
+                    />
                 </div>
-                <div className="flex items-center bg-slate-200 rounded-xl p-1 shrink-0">
-                    <Link
-                        to="/$tenant/pos"
-                        params={{ tenant: slug }}
-                        replace
-                        className={pill(!onManage)}
-                    >
-                        {t("nav.pos")}
-                    </Link>
-                    <Link
-                        to="/$tenant/manage"
-                        params={{ tenant: slug }}
-                        replace
-                        className={pill(onManage)}
-                    >
-                        {t("nav.manage")}
-                    </Link>
-                </div>
+                {past && (
+                    <div className="grid grid-cols-2 bg-slate-200 rounded-xl p-1">
+                        <Link
+                            to="/$tenant/pos"
+                            params={{ tenant: slug }}
+                            replace
+                            className={pill(!onManage)}
+                        >
+                            {t("nav.pos")}
+                        </Link>
+                        <Link
+                            to="/$tenant/manage"
+                            params={{ tenant: slug }}
+                            replace
+                            className={pill(onManage)}
+                        >
+                            {t("nav.manage")}
+                        </Link>
+                    </div>
+                )}
             </div>
-            <div
-                ref={scroller}
-                onScroll={() => active && setActive(null)}
-                className="overflow-x-auto [&::-webkit-scrollbar]:hidden"
-            >
-                <div style={{ width: BAR }} className="relative px-4 pt-9 pb-4">
-                    <div className="relative flex items-center gap-1">
-                        {Array.from({ length: hours }, (_, i) => {
-                            const fill = Math.min(1, Math.max(0, progress * hours - i));
-                            return (
-                                <div
-                                    key={i}
-                                    className={`flex-1 h-4 rounded-full overflow-hidden ${i === 0 || i === hours - 1 ? "bg-gray-200/50" : "bg-gray-200"}`}
-                                >
-                                    {fill > 0 && (
-                                        <div
-                                            className="h-full bg-blue-600 rounded-full"
-                                            style={{ width: `${fill * 100}%` }}
-                                        />
-                                    )}
-                                </div>
-                            );
-                        })}
-                        {events.map((e) => {
-                            const look = EVENT[e.type];
-                            if (!look) return null;
-                            const at = place(localMinutes(Date.parse(e.at)));
-                            return (
-                                <div
-                                    key={e.id}
-                                    className="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
-                                    style={{ left: `${at * 100}%` }}
-                                >
-                                    {active === e.id && (
-                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 bg-gray-800 text-white text-[10px] font-medium px-2 py-0.5 rounded-md whitespace-nowrap">
-                                            {t(`manage.glance.${e.type}` as MessageKey)} ·{" "}
-                                            {formatTime(e.at, locale)}
-                                        </span>
-                                    )}
-                                    <button
-                                        onClick={() => setActive(active === e.id ? null : e.id)}
-                                        className={`w-10 h-10 rounded-lg flex items-center justify-center border-2 border-white shadow-sm ${look.color}`}
+            {/* The day along its hours: on Manage only (owner: not on the POS), and only past the gate. */}
+            {onManage && past && (
+                <div
+                    ref={scroller}
+                    onScroll={() => active && setActive(null)}
+                    className="overflow-x-auto [&::-webkit-scrollbar]:hidden"
+                >
+                    <div style={{ width: BAR }} className="relative px-4 pt-9 pb-4">
+                        <div className="relative flex items-center gap-1">
+                            {Array.from({ length: hours }, (_, i) => {
+                                const fill = Math.min(1, Math.max(0, progress * hours - i));
+                                return (
+                                    <div
+                                        key={i}
+                                        className={`flex-1 h-4 rounded-full overflow-hidden ${i === 0 || i === hours - 1 ? "bg-gray-200/50" : "bg-gray-200"}`}
                                     >
-                                        <look.icon
-                                            size={24}
-                                            strokeWidth={2}
-                                            className="text-white"
-                                        />
-                                    </button>
-                                </div>
-                            );
-                        })}
-                    </div>
-                    {/* Each hour where it starts, as v1; the first is the buffer before opening. */}
-                    <div className="relative mt-3 h-4">
-                        {Array.from({ length: hours }, (_, i) =>
-                            i === 0 ? null : (
-                                <span
-                                    key={i}
-                                    className="absolute -translate-x-1/2 text-[10px] text-gray-400 whitespace-nowrap"
-                                    style={{ left: `${(i / hours) * 100}%` }}
-                                >
-                                    {hourLabel(open + i * 60)}
-                                </span>
-                            ),
-                        )}
+                                        {fill > 0 && (
+                                            <div
+                                                className="h-full bg-blue-600 rounded-full"
+                                                style={{ width: `${fill * 100}%` }}
+                                            />
+                                        )}
+                                    </div>
+                                );
+                            })}
+                            {events.map((e) => {
+                                const look = EVENT[e.type];
+                                if (!look) return null;
+                                const at = place(localMinutes(Date.parse(e.at)));
+                                return (
+                                    <div
+                                        key={e.id}
+                                        className="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
+                                        style={{ left: `${at * 100}%` }}
+                                    >
+                                        {active === e.id && (
+                                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 bg-gray-800 text-white text-[10px] font-medium px-2 py-0.5 rounded-md whitespace-nowrap">
+                                                {t(`manage.glance.${e.type}` as MessageKey)} ·{" "}
+                                                {formatTime(e.at, locale)}
+                                            </span>
+                                        )}
+                                        <button
+                                            onClick={() => setActive(active === e.id ? null : e.id)}
+                                            className={`w-10 h-10 rounded-lg flex items-center justify-center border-2 border-white shadow-sm ${look.color}`}
+                                        >
+                                            <look.icon
+                                                size={24}
+                                                strokeWidth={2}
+                                                className="text-white"
+                                            />
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        {/* Each hour where it starts, as v1; the first is the buffer before opening. */}
+                        <div className="relative mt-3 h-4">
+                            {Array.from({ length: hours }, (_, i) =>
+                                i === 0 ? null : (
+                                    <span
+                                        key={i}
+                                        className="absolute -translate-x-1/2 text-[10px] text-gray-400 whitespace-nowrap"
+                                        style={{ left: `${(i / hours) * 100}%` }}
+                                    >
+                                        {hourLabel(open + i * 60)}
+                                    </span>
+                                ),
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }
