@@ -3,6 +3,7 @@ import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { useMe } from "@tea-pos/api-client/me";
 import { EVENT } from "@tea-pos/shell/dayEvents";
+import { PICKER_CARD } from "@tea-pos/ui/PickerButton";
 import { StoreLabel } from "@tea-pos/shell/StoreLabel";
 import { useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { Link, useLocation } from "@tanstack/react-router";
@@ -67,7 +68,7 @@ export function HomeHeader() {
         <div className="space-y-3">
             {/* The store as a label (a picker only with more than one), the greeting and the day; the POS and Manage switch under it, full width. */}
             <div className="space-y-3">
-                <div className="overflow-hidden rounded-2xl bg-white">
+                <div className={PICKER_CARD}>
                     <StoreLabel
                         detail={`${t(`home.greeting.${greeting}`)} · ${t("earnings.week")} ${isoWeek(today)}`}
                     />

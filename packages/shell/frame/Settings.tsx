@@ -78,10 +78,13 @@ export function SettingsRow({
         <Link to={to} search={search as never} className={className}>
             {inner}
         </Link>
-    ) : (
+    ) : onClick || !right ? (
         <button onClick={onClick} className={className}>
             {inner}
         </button>
+    ) : (
+        // Only a control on the right (a switch): the row is not a button around another.
+        <div className={className.replace("active:bg-gray-50", "")}>{inner}</div>
     );
     if (!below) return row;
     return (

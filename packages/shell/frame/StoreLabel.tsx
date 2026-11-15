@@ -43,17 +43,31 @@ export function StoreLabel({
         <>
             <PickerRow
                 label={name}
+                icon={Store}
                 brand
                 detail={
                     detail ??
                     (s?.openTime && s.closeTime ? `${s.openTime} – ${s.closeTime}` : undefined)
                 }
-                icon={Store}
                 onClick={pickable ? show : undefined}
             />
             {sheet}
         </>
     );
+}
+
+/** A store as a picker's option: a demo or closed one (shown only when chosen) says so. */
+export function storeOption(
+    s: { id: string; name: string; status: string },
+    t: ReturnType<typeof useT>,
+) {
+    const badge =
+        s.status === "fake"
+            ? t("shell.demo")
+            : s.status === "inactive"
+              ? t("shell.inactive")
+              : undefined;
+    return { id: s.id, name: s.name, badge };
 }
 
 /**
@@ -73,7 +87,7 @@ export function useStoreChoice(dateLabel: string): StoreChoice | undefined {
             ...(mode === "all" ? [{ id: null, name: t("shell.allStores") }] : []),
             ...state.stores
                 .filter((s) => mode === "all" || s.status !== "inactive")
-                .map((s) => ({ id: s.id, name: s.name })),
+                .map((s) => storeOption(s, t)),
         ],
         picked: state.store?.id ?? null,
         onPick: state.setStore,

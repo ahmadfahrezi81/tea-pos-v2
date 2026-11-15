@@ -4,11 +4,11 @@ import { ActionButton } from "@tea-pos/ui/ActionButton";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { DOT_GRID } from "@tea-pos/ui/dot-grid";
 import { Emoji, type EmojiName } from "@tea-pos/ui/Emoji";
-import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 
 import { useResumeStore, useTakeOver, type Gate } from "./home";
-import { LookAnyway, LookOnlyBanner, useLookOnly } from "./lookOnly";
+import { LookOnlyBanner, useLookOnly } from "./lookOnly";
 
 function GateIcon({ name, size = 100 }: { name: EmojiName; size?: number }) {
     return (
@@ -19,7 +19,7 @@ function GateIcon({ name, size = 100 }: { name: EmojiName; size?: number }) {
     );
 }
 
-/** The screen behind the gate when the store is the caller's; else the gate (and, for the owner, a way to look past it). */
+/** The screen behind the gate when the store is the caller's, or the owner looks past it (More); else the gate. */
 export function Gated({
     gate,
     mine,
@@ -30,36 +30,19 @@ export function Gated({
     children: ReactNode;
 }) {
     const look = useLookOnly(gate, mine);
-    const navigate = useNavigate();
-    const slug = useSlug();
-    const onManage = useLocation({ select: (l) => l.pathname.endsWith("/manage") });
     if (mine) return <>{children}</>;
     if (look.looking)
         return (
             <>
-                <LookOnlyBanner
-                    onClose={() => {
-                        look.stop();
-                        // Manage is not a screen of its own at the gate: back to POS.
-                        if (onManage)
-                            void navigate({
-                                to: "/$tenant/pos",
-                                params: { tenant: slug },
-                                replace: true,
-                            });
-                    }}
-                />
+                <LookOnlyBanner />
                 {children}
             </>
         );
     // The card takes the free height down to the tabs, as v1; no min-h-0, so a card taller than the
     // screen (the keyboard up, a short phone) still grows and the page scrolls.
     return (
-        <div className="flex flex-1 flex-col gap-2">
-            <div className="flex flex-1">
-                <StoreGate gate={gate} />
-            </div>
-            {look.offered && <LookAnyway onClick={look.start} />}
+        <div className="flex flex-1">
+            <StoreGate gate={gate} />
         </div>
     );
 }

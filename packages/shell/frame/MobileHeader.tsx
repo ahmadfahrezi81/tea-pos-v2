@@ -44,7 +44,7 @@ export function MobileHeader({
         </>
     );
     return (
-        <header className="shrink-0 bg-slate-100 px-4 pb-[19px] pt-[calc(0.75rem_+_env(safe-area-inset-top))]">
+        <header className="shrink-0 bg-slate-100 px-4 pb-[17px] pt-[calc(0.75rem_+_env(safe-area-inset-top))]">
             {isSubPage ? (
                 <div className="flex items-center gap-2">
                     <button

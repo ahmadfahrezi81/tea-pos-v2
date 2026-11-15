@@ -6,8 +6,8 @@
 .nav-progress {
     position: absolute;
     inset-inline: 16px;
-    /* In the header, centred in the 19px under the title: 8px, the bar, 8px. */
-    bottom: 8px;
+    /* In the header's 17px under the title: 8px, the bar, 6px; then the page's 6px. */
+    bottom: 6px;
     z-index: 10;
     height: 3px;
     border-radius: 9999px;
