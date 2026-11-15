@@ -1,46 +1,24 @@
 import { useT } from "@tea-pos/i18n/react";
-import { Switch } from "@tea-pos/ui/form/Switch";
 import { Sheet } from "@tea-pos/ui/Sheet";
-import { Check, Eye, EyeOff } from "lucide-react";
+import { Check } from "lucide-react";
 
 import { useApp } from "../session/AppContext";
 import { useTenant } from "../session/tenant";
 import { Badge } from "@tea-pos/ui/Badge";
 
-/** The old apps' store sheet: the eye switch hides demo and inactive stores (backoffice). */
+/** The old apps' store sheet: the open stores, and the chosen one with its badge. */
 export default function StoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
     const t = useT();
     const { stores: mode } = useApp();
     const state = useTenant();
     if (!state) return null;
-    const { tenant, stores, store, setStore, hideInactive, setHideInactive } = state;
-    const hideable = mode === "all" && tenant.stores.some((s) => s.status !== "active");
+    const { stores, store, setStore } = state;
     const options = [
         ...(mode === "all" ? [{ id: null, name: t("shell.allStores"), status: "active" }] : []),
         ...stores.filter((s) => mode === "all" || s.status !== "inactive"),
     ];
     return (
-        <Sheet
-            open={open}
-            onClose={onClose}
-            title={t("shell.pickStore")}
-            beside={
-                hideable && (
-                    <Switch
-                        on={hideInactive}
-                        onChange={setHideInactive}
-                        label={t("shell.hideInactiveStores")}
-                        icon={
-                            hideInactive ? (
-                                <EyeOff size={16} className="text-brand" />
-                            ) : (
-                                <Eye size={16} className="text-gray-400" />
-                            )
-                        }
-                    />
-                )
-            }
-        >
+        <Sheet open={open} onClose={onClose} title={t("shell.pickStore")}>
             <div className="space-y-3">
                 {options.map((option, i) => {
                     const picked = (store?.id ?? null) === option.id;

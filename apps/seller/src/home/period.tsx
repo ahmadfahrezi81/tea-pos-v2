@@ -71,6 +71,7 @@ export function DayBar() {
         <>
             <PickerButton
                 heading={store}
+                withStore={(choice?.options.length ?? 0) > 1}
                 label={preset ? preset.label : short}
                 detail={preset ? `${short} · ${week}` : week}
                 onClick={() => setOpen(true)}
@@ -110,8 +111,19 @@ export function MonthBar() {
         ...monthRange(m, today),
         label: i === 0 ? t("store.thisMonth") : name(m),
     }));
-    const days = (r: DateRange) =>
-        `${formatCalendarDay(r.from, locale, "day")} – ${formatCalendarDay(r.to, locale)}`;
+    // How far into the month: this one still running ("Day 15 of 30"), a past one whole ("31 days").
+    const days = (r: DateRange) => {
+        const span = `${formatCalendarDay(r.from, locale, "day")} – ${formatCalendarDay(r.to, locale)}`;
+        const total = new Date(
+            Date.UTC(Number(r.from.slice(0, 4)), Number(r.from.slice(5, 7)), 0),
+        ).getUTCDate();
+        const day = Number(r.to.slice(8, 10));
+        const how =
+            day < total
+                ? t("store.dayOf").replace("{n}", String(day)).replace("{m}", String(total))
+                : t("store.daysCount").replace("{n}", String(total));
+        return `${span} · ${how}`;
+    };
     const store = useTenant()?.store?.name;
     const choice = useStoreChoice(t("shell.month"));
     return (
@@ -119,6 +131,7 @@ export function MonthBar() {
             <PickerButton
                 label={presets.find((p) => p.key === range.month)?.label ?? name(range.month)}
                 heading={store}
+                withStore={(choice?.options.length ?? 0) > 1}
                 detail={days(range)}
                 onClick={() => setOpen(true)}
             />

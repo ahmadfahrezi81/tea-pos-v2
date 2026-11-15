@@ -11,13 +11,11 @@ type Store = Tenant["stores"][number];
 
 interface TenantState {
     tenant: Tenant;
-    /** The stores the picker offers (demo and inactive hidden in backoffice when asked). */
+    /** The stores the picker offers: open ones only, and the chosen one whatever it is. */
     stores: Store[];
     /** The chosen store; null is All stores (backoffice only). */
     store: Store | null;
     setStore: (id: string | null) => void;
-    hideInactive: boolean;
-    setHideInactive: (hide: boolean) => void;
     /** The user's flags, and the chosen store's (016b: rules on role, app, tenant, store). */
     flags: Record<string, boolean>;
 }
@@ -67,11 +65,8 @@ export function TenantProvider({ me, children }: { me: Me | undefined; children:
     const { tenant: slug } = useParams({ strict: false }) as { tenant?: string };
     const tenant = me?.tenants.find((t) => t.slug === slug);
     const key = tenant && me ? `tea-pos:store:${me.user.id}:${tenant.id}` : "";
-    const hideKey = "tea-pos:hide-inactive-stores";
 
     const saved = useSaved(key);
-    const hideSaved = useSaved(hideKey);
-    const hideInactive = mode === "all" && hideSaved === "1";
 
     if (!tenant) return <TenantContext value={null}>{children}</TenantContext>;
 
@@ -80,10 +75,6 @@ export function TenantProvider({ me, children }: { me: Me | undefined; children:
     let store: Store | null =
         tenant.stores.find((s) => s.id === saved && (mode === "all" || s.status !== "inactive")) ??
         null;
-    // Hidden: demo and inactive stores, except the one chosen (as the old apps).
-    const stores = hideInactive
-        ? tenant.stores.filter((s) => s.status === "active" || s.id === store?.id)
-        : tenant.stores;
     if (!store && mode === "one") {
         const open = usable.filter((s) => s.status === "active");
         store =
@@ -95,13 +86,14 @@ export function TenantProvider({ me, children }: { me: Me | undefined; children:
             null;
     }
 
+    // Demo stores are picked in My Stores, closed ones nowhere; the chosen one always shows.
+    const stores = tenant.stores.filter((s) => s.status === "active" || s.id === store?.id);
+
     const value: TenantState = {
         tenant,
         stores,
         store,
         setStore: (id) => write(key, id),
-        hideInactive,
-        setHideInactive: (hide) => write(hideKey, hide ? "1" : null),
         flags: { ...me?.flags, ...store?.flags },
     };
     return <TenantContext value={value}>{children}</TenantContext>;

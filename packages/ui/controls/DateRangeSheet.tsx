@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
+import { Badge } from "./Badge";
 import { RadioMark } from "./ChoiceList";
 import { MonthGrid } from "./MonthGrid";
 import { FIRST_MONTH, STEP_ARROW, stepIcon } from "./MonthStepper";
@@ -16,7 +17,8 @@ export type StoreChoice = {
     menuTitle: string;
     label: string;
     dateLabel: string;
-    options: { id: string | null; name: string }[];
+    /** `badge`: Demo or Inactive, on a store the picker shows only because it is the chosen one. */
+    options: { id: string | null; name: string; badge?: string }[];
     picked: string | null;
     onPick: (id: string | null) => void;
 };
@@ -157,7 +159,10 @@ export function DateRangeSheet({
                             }}
                             className={row}
                         >
-                            <span className="truncate">{o.name}</span>
+                            <span className="flex min-w-0 items-center gap-2">
+                                <span className="truncate">{o.name}</span>
+                                {o.badge && <Badge>{o.badge}</Badge>}
+                            </span>
                             <RadioMark on={o.id === store.picked} />
                         </button>
                     ))}

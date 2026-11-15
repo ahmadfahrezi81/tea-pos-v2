@@ -156,7 +156,9 @@
         "takenBy": "Session already taken by",
         "askCode": "Ask the current seller for their 2-digit code to take over.",
         "takeOver": "Take Over",
-        "lookAnyway": "Look anyway (owner)",
+        "ownerGroup": "Owner",
+        "lookSwitch": "Look past the POS gate",
+        "lookSwitchSub": "Look only, nothing saved",
         "lookOnly": "Look only: nothing here is saved"
     }
 }

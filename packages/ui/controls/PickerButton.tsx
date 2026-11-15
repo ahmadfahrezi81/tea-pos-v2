@@ -1,48 +1,50 @@
-import { CalendarDays, ChevronDown, type LucideIcon } from "lucide-react";
+import { CalendarDays, ChevronDown } from "lucide-react";
+import type { ComponentType } from "react";
 
 import { ICON } from "../lib/icon";
+import { StoreCalendarIcon } from "./StoreCalendarIcon";
+
+/** The white card a picker row sits in. */
+export const PICKER_CARD = "overflow-hidden rounded-2xl bg-white";
 
 /**
  * One row of a picker card: what is picked, large, and a line under it; its icon in a tinted box on
- * the right. With `onClick` the whole row is the button and a chevron says so; without, a plain label.
+ * the right. With `onClick` the whole row is the button and an up-down chevron after the text says so.
  */
 export function PickerRow({
     label,
     detail,
     onClick,
     icon: Icon = CalendarDays,
+    iconSize = 30,
     heading,
     brand = false,
 }: {
     label: string;
     detail?: string;
     onClick?: () => void;
-    icon?: LucideIcon;
-    /** A first line as large as the label: the screen's store, as much the heading as the date. */
+    icon?: ComponentType<{ size?: number; className?: string }>;
+    iconSize?: number;
+    /** The screen's store, after the date on the same line: as much the heading as the date. */
     heading?: string;
-    /** The label a store's name: the brand colour, the size it has beside a date. */
+    /** The label a store's name: the brand colour. */
     brand?: boolean;
 }) {
     const body = (
         <>
             <span className="flex-1 min-w-0">
-                {/* With a heading (the store), both share the line a little smaller: "Pagelaran · Thu 12 Nov"; a long store name gives way first. */}
-                <span className="flex items-center gap-1">
-                    {heading && (
-                        <>
-                            <span className="min-w-0 truncate text-[19px] leading-tight font-bold tracking-tight text-brand">
-                                {heading}
-                            </span>
-                            <span className="shrink-0 text-[19px] leading-tight font-bold text-gray-400">
-                                ·
-                            </span>
-                        </>
-                    )}
+                {/* With a heading (the store): "Today Pagelaran"; a long store name gives way first. */}
+                <span className="flex items-center gap-1.5">
                     <span
-                        className={`${heading ? "shrink-0 text-[19px]" : brand ? "truncate text-[19px]" : "truncate text-[22px]"} leading-tight font-bold tracking-tight ${brand ? "text-brand" : "text-gray-900"}`}
+                        className={`${heading ? "shrink-0" : "truncate"} text-[22px] leading-tight font-bold tracking-tight ${brand ? "text-brand" : "text-gray-900"}`}
                     >
                         {label}
                     </span>
+                    {heading && (
+                        <span className="min-w-0 truncate text-[22px] leading-tight font-bold tracking-tight text-brand">
+                            {heading}
+                        </span>
+                    )}
                     {onClick && (
                         <ChevronDown
                             size={ICON}
@@ -57,12 +59,13 @@ export function PickerRow({
                     </span>
                 )}
             </span>
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand/10">
-                <Icon size={ICON} className="text-brand" />
+            {/* As tall as the two lines beside it: 27.5 px heading + 20 px line. */}
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-[14px] bg-brand/10">
+                <Icon size={iconSize} className="text-brand" />
             </span>
         </>
     );
-    const row = "w-full flex items-center gap-2 px-3 py-2.5 text-left";
+    const row = "w-full flex items-center gap-3 px-4 py-3.5 text-left";
     return onClick ? (
         <button onClick={onClick} className={`${row} active:bg-gray-50`}>
             {body}
@@ -78,15 +81,25 @@ export function PickerButton({
     detail,
     onClick,
     heading,
+    withStore = false,
 }: {
     label: string;
     detail?: string;
     onClick: () => void;
     heading?: string;
+    /** The sheet picks the store too: the store-and-calendar icon, else the calendar. */
+    withStore?: boolean;
 }) {
     return (
-        <div className="overflow-hidden rounded-2xl bg-white">
-            <PickerRow label={label} detail={detail} onClick={onClick} heading={heading} />
+        <div className={PICKER_CARD}>
+            <PickerRow
+                label={label}
+                detail={detail}
+                onClick={onClick}
+                heading={heading}
+                icon={withStore ? StoreCalendarIcon : CalendarDays}
+                iconSize={withStore ? 40 : 30}
+            />
         </div>
     );
 }

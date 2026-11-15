@@ -1,6 +1,7 @@
 import { addDays, formatCalendarDay, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { useSetSearch } from "@tea-pos/shell/searchParam";
+import { storeOption } from "@tea-pos/shell/StoreLabel";
 import { useFirstMonth, useSlug, useTenant } from "@tea-pos/shell/tenant";
 import {
     DateRangeSheet,
@@ -104,6 +105,7 @@ export function RangeBar() {
         <>
             <PickerButton
                 heading={store.options.find((o) => o.id === store.picked)?.name}
+                withStore={store.options.length > 1}
                 label={label}
                 detail={detail}
                 onClick={() => setOpen(true)}
@@ -164,7 +166,7 @@ function useStoreChoice(): StoreChoice {
         dateLabel: t("shell.date"),
         options: [
             { id: null, name: t("shell.allStores") },
-            ...stores.map((s) => ({ id: s.id, name: s.name })),
+            ...stores.map((s) => storeOption(s, t)),
         ],
         picked: storeId === ALL ? null : storeId,
         onPick: pick,

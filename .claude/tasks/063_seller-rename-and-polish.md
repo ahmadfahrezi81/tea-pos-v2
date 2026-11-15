@@ -1,6 +1,6 @@
 # Task 063 — Small UI updates, new icons, tea-pos becomes tea-seller
 
-**Status: built 2026-11-15 on `feat/seller-rename-polish`: the small updates (A-G), the store and date picker in both apps, the new icons; the address rename postponed. PR open, waiting on the owner's review.**
+**Status: done 2026-11-15: #138, released in 2026.11.13. The address rename (3) postponed.**
 
 ## The goal
 Three pieces the owner wants together after the clean-up (2026-11-15): a few small UI updates, the new app icons the owner is designing, and the seller app's address renamed from tea-pos to tea-seller, to match its name (Tea-Seller since #135).
