@@ -1,6 +1,6 @@
 # Task 062 — Afternoon round: sessions, sign-in Back, names
 
-**Status: built 2026-11-08 on `fix/afternoon-round` (#135), waiting on the owner's review and merge.**
+**Status: done 2026-11-08: #135 merged, released as 2026.11.12. Item 4b (iOS keyboard) left: our side cleared.**
 
 ## The goal
 Three small items from the clean-up RFC's Afternoon round (items 2, 4a, 5): [RFC: Sunday clean-up](https://app.notion.com/p/41295a71540581f9b7f2d251dba69f4c).
