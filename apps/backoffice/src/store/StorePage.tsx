@@ -3,7 +3,7 @@ import { useT } from "@tea-pos/i18n/react";
 import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
 import { rowIcon, SettingsGroup, SettingsRow } from "@tea-pos/shell/Settings";
 import { useSlug } from "@tea-pos/shell/tenant";
-import { ChartNoAxesCombined, Info, ReceiptText } from "lucide-react";
+import { ChartNoAxesCombined, History, Info, ReceiptText } from "lucide-react";
 
 import { RangeBar, useRange } from "./range";
 import { RangePanel } from "./RangePanel";
@@ -74,6 +74,14 @@ export function StorePage() {
                     icon={single ? <Info {...rowIcon} /> : <ChartNoAxesCombined {...rowIcon} />}
                     label={t(single ? "store.details" : "store.dayByDay")}
                 />
+                {/* One day of one store only: its activity, as the seller's day menu has it. */}
+                {onlyDay && (
+                    <SettingsRow
+                        to={`/${slug}/store/${storeId}/analytics/days/${onlyDay.id}/activity`}
+                        icon={<History {...rowIcon} />}
+                        label={t("analytics.activity")}
+                    />
+                )}
             </SettingsGroup>
         </div>
     );

@@ -34,11 +34,12 @@ type StoreGate struct {
 	Cups           int64      `json:"cups"`
 	Expenses       int64      `json:"expenses"`
 	ExpectedCash   int64      `json:"expectedCash"`
-	// The session, while someone is selling; the code only for the one holding it.
+	// The session, while someone is selling; the code only for the one holding it and the owner.
 	SessionID    string     `json:"sessionId,omitempty" format:"uuid"`
 	SellerID     string     `json:"sellerId,omitempty" format:"uuid"`
 	SellerName   string     `json:"sellerName,omitempty"`
 	SellerAvatar string     `json:"sellerAvatar,omitempty"`
+	SellerCups   int64      `json:"sellerCups,omitempty" doc:"The holder's cups that day, all their sessions"`
 	StartedAt    *time.Time `json:"startedAt,omitempty"`
 	ClaimCode    string     `json:"claimCode,omitempty"`
 }

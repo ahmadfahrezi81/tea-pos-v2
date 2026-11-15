@@ -11,7 +11,7 @@ import { useState } from "react";
 import { Cart, type CartItem } from "./Cart";
 import { useCreateOrder, useGate, useProducts, type Product } from "./home";
 import { HomeHeader } from "./HomeHeader";
-import { StoreGate } from "./StoreGate";
+import { Gated } from "./StoreGate";
 
 /** The POS tab: the store's gate until it is the caller's, then the menu and the cart. */
 export function POS() {
@@ -27,9 +27,11 @@ export function POS() {
         );
     const mine = gate.gate === "open" && gate.sellerId === me?.user.id;
     return (
-        <div className="flex flex-col gap-4 min-h-full">
+        <div className="flex flex-col gap-3 min-h-full">
             <HomeHeader />
-            {mine ? <Menu /> : <StoreGate gate={gate} />}
+            <Gated gate={gate} mine={mine}>
+                <Menu />
+            </Gated>
         </div>
     );
 }
