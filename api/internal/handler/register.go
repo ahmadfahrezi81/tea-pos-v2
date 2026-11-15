@@ -72,6 +72,7 @@ func NewAPI(mux *http.ServeMux, d Deps) huma.API {
 	registerSeller(api, d)
 	registerMine(api, d)
 	registerUac(api, d)
+	registerChat(api, d)
 	registerTestLogin(api, d)
 	if d.Docs {
 		registerDocs(mux, api)

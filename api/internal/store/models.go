@@ -64,6 +64,43 @@ type AuthUser struct {
 	Email pgtype.Text
 }
 
+type ChatChannel struct {
+	ID            pgtype.UUID
+	TenantID      pgtype.UUID
+	Kind          string
+	StoreID       pgtype.UUID
+	UserID        pgtype.UUID
+	Name          pgtype.Text
+	CreatedBy     pgtype.UUID
+	LastMessageID pgtype.UUID
+	LastMessageAt pgtype.Timestamptz
+	CreatedAt     pgtype.Timestamptz
+}
+
+type ChatMessage struct {
+	ID           pgtype.UUID
+	TenantID     pgtype.UUID
+	ChannelID    pgtype.UUID
+	ThreadRootID pgtype.UUID
+	AuthorType   string
+	AuthorID     pgtype.UUID
+	EventType    pgtype.Text
+	Body         string
+	Metadata     []byte
+	ClientKey    pgtype.Text
+	EditedAt     pgtype.Timestamptz
+	DeletedAt    pgtype.Timestamptz
+	CreatedAt    pgtype.Timestamptz
+}
+
+type ChatRead struct {
+	UserID      pgtype.UUID
+	ChannelID   pgtype.UUID
+	LastReadAt  pgtype.Timestamptz
+	NotifyLevel string
+	UpdatedAt   pgtype.Timestamptz
+}
+
 type IdempotencyKey struct {
 	UserID      pgtype.UUID
 	Key         string

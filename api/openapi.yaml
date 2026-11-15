@@ -142,6 +142,130 @@ components:
         name:
           type: string
       type: object
+    ChatChannel:
+      additionalProperties: false
+      properties:
+        id:
+          format: uuid
+          type: string
+        kind:
+          enum:
+            - general
+            - store
+            - group
+            - admin
+            - personal
+          type: string
+        last:
+          $ref: "#/components/schemas/ChatPreview"
+        lastAt:
+          format: date-time
+          type: string
+        name:
+          type: string
+        readOnly:
+          description: "Nobody posts: Notifications, or a store no longer open"
+          type: boolean
+        unread:
+          description: "Stops at 100: show 99+"
+          format: int64
+          type: integer
+      required:
+        - id
+        - kind
+        - readOnly
+        - unread
+      type: object
+    ChatChannelOutputBody:
+      additionalProperties: false
+      properties:
+        id:
+          format: uuid
+          type: string
+        kind:
+          enum:
+            - general
+            - store
+            - group
+            - admin
+            - personal
+          type: string
+        last:
+          $ref: "#/components/schemas/ChatPreview"
+        lastAt:
+          format: date-time
+          type: string
+        members:
+          description: "Everyone in it, with how far each has read: Seen by"
+          items:
+            $ref: "#/components/schemas/ChatMember"
+          type: array
+        name:
+          type: string
+        readOnly:
+          description: "Nobody posts: Notifications, or a store no longer open"
+          type: boolean
+        unread:
+          description: "Stops at 100: show 99+"
+          format: int64
+          type: integer
+      required:
+        - members
+        - id
+        - kind
+        - readOnly
+        - unread
+      type: object
+    ChatChannelsOutputBody:
+      additionalProperties: false
+      properties:
+        channels:
+          description: The caller's channels, the newest message first
+          items:
+            $ref: "#/components/schemas/ChatChannel"
+          type: array
+      required:
+        - channels
+      type: object
+    ChatMember:
+      additionalProperties: false
+      properties:
+        avatar:
+          type: string
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        readAt:
+          description: "Read everything up to here; absent: never opened"
+          format: date-time
+          type: string
+      required:
+        - id
+        - name
+      type: object
+    ChatPreview:
+      additionalProperties: false
+      properties:
+        author:
+          type: string
+        body:
+          type: string
+        data:
+          additionalProperties: {}
+          description: A system message's numbers
+          type: object
+        deleted:
+          type: boolean
+        event:
+          description: A system message's kind, written in the reader's language
+          type: string
+        mine:
+          type: boolean
+      required:
+        - mine
+      type: object
     ClaimEligibleOutputBody:
       additionalProperties: false
       properties:
@@ -780,6 +904,7 @@ components:
             - bad_receipt
             - bad_request
             - blank_name
+            - channel_not_found
             - claim_done
             - claim_not_eligible
             - claim_not_found
@@ -945,6 +1070,9 @@ components:
       properties:
         backoffice:
           description: guest, admin, or '' for none
+          type: string
+        chat:
+          description: "member, admin, or '' for none: shown inside either app"
           type: string
         seller:
           description: member, or '' for none
@@ -2750,6 +2878,72 @@ paths:
         - me
       x-access:
         repeatable: true
+        signedIn: true
+  /tenants/{tenant}/chat/channels:
+    get:
+      operationId: listChatChannels
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatChannelsOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: The caller's channels, made first if missing
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/chat/channels/{id}:
+    get:
+      operationId: getChatChannel
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatChannelOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: One channel and its members, with how far each has read
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
         signedIn: true
   /tenants/{tenant}/days:
     get:

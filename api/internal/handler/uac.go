@@ -351,7 +351,7 @@ func setPerson(ctx context.Context, q *store.Queries, caller auth.Caller, p stor
 			return false, errOwnerKept
 		}
 	}
-	levels := map[string]string{"seller": c.Access.Seller, "backoffice": c.Access.Backoffice}
+	levels := map[string]string{"seller": c.Access.Seller, "backoffice": c.Access.Backoffice, auth.Chat: c.Access.Chat}
 	for app, level := range levels {
 		if level != "" && !slices.Contains(auth.Levels[app], auth.Level(level)) {
 			return false, errBadLevel
@@ -434,7 +434,10 @@ func uacPerson(p store.ListTenantPeopleRow) contract.UacPerson {
 		ID: p.ID.String(), Name: p.FullName, Email: p.Email, AvatarURL: p.AvatarUrl,
 		Phone: p.Phone, Since: since(p.CreatedAt),
 		Active: p.Status == "active", Owner: p.IsOwner,
-		Access:           contract.MeAccess{Seller: level("seller", p.SellerAccess), Backoffice: level("backoffice", p.BackofficeAccess)},
+		Access: contract.MeAccess{
+			Seller: level("seller", p.SellerAccess), Backoffice: level("backoffice", p.BackofficeAccess),
+			Chat: string(auth.ChatLevel(p.Status, p.IsOwner, p.ChatAccess)),
+		},
 		StoreIDs:         make([]string, len(p.StoreIds)),
 		CommissionTypeID: p.CommissionTypeID, CommissionName: p.CommissionName, CommissionRate: p.CommissionRate,
 		ClaimTypeIDs: make([]string, len(p.ClaimTypeIds)),

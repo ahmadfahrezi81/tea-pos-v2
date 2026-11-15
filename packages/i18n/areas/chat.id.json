@@ -1,0 +1,29 @@
+{
+    "chat": {
+        "general": "Umum",
+        "admin": "Admin",
+        "personal": "Notifikasi",
+        "you": "Kamu",
+        "photo": "Foto",
+        "deleted": "Pesan dihapus",
+        "noMessages": "Belum ada pesan",
+        "noChats": "Belum ada chat",
+        "noAccess": "Kamu belum punya akses",
+        "noAccessSub": "Minta kantor untuk mengaktifkan chat untukmu",
+        "message": "Pesan",
+        "send": "Kirim",
+        "newMessages": "Pesan baru",
+        "seenBy": "Dilihat {n}",
+        "seenByTitle": "Dilihat oleh",
+        "notYet": "Belum",
+        "notSent": "Gagal terkirim · Ketuk untuk coba lagi",
+        "retry": "Coba lagi",
+        "delete": "Hapus",
+        "readOnly": "Hanya aplikasi yang mengirim di sini",
+        "storeClosed": "Toko ini tutup: hanya baca",
+        "members": "Anggota",
+        "today": "Hari ini",
+        "yesterday": "Kemarin",
+        "tooLong": "Maksimal 4.000 karakter"
+    }
+}

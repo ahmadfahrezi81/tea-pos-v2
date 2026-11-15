@@ -24,7 +24,7 @@ export function RequestPage({ id }: { id: string }) {
     const approve = useApprove(id);
     const reject = useReject(id);
     const [change, setChange] = useState<Change>({
-        access: { seller: "member", backoffice: "" },
+        access: { seller: "member", backoffice: "", chat: "" },
         storeIds: [],
         active: true,
     });

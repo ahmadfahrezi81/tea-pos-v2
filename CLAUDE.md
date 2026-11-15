@@ -75,6 +75,8 @@ packages/shell/      the mobile shell, sign-in, boot and update screens, startAp
                      screens/, views/ (shared views: a day, an order), frame/ (header, footer, sheets; update/,
                      refresh/), session/ (tenant, session, app), lib/; package.json
                      exports each by name, so imports stay `@tea-pos/shell/<Name>`
+packages/chat/       chat's screens (its own app in the access model, shown inside seller and backoffice), loaded only when
+                     the Chats tab opens; the channels hook for the tab's count is in api-client/chat.ts
 packages/format/     dates and money for display, Intl only, in the store's time zone
 packages/edge/       the /api forwarder: drops /api, adds X-Edge-Secret and X-Client-IP
 packages/api-client/ generated types, the fetch client, React Query hooks, the query cache saved per user (query.ts)

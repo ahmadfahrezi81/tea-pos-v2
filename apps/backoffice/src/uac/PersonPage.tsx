@@ -39,7 +39,20 @@ import {
 } from "./uac";
 
 /** The levels each app offers (auth.Levels in Go); '' is no access. */
-const LEVELS = { seller: ["", "member"], backoffice: ["", "guest", "admin"] } as const;
+const LEVELS = {
+    seller: ["", "member"],
+    backoffice: ["", "guest", "admin"],
+    chat: ["", "member", "admin"],
+} as const;
+
+const APP_LABEL = { seller: "uac.seller", backoffice: "uac.office", chat: "uac.chat" } as const;
+
+// Chat's levels mean other things than the apps' own.
+const CHAT_HINTS: Record<string, MessageKey> = {
+    "": "uac.noneHint",
+    member: "uac.chatMemberHint",
+    admin: "uac.chatAdminHint",
+};
 
 const HINTS: Record<string, MessageKey> = {
     "": "uac.noneHint",
@@ -65,8 +78,8 @@ export function PersonPage({ userId }: { userId: string }) {
     const access = canWrite && !p.owner && p.active;
     // Their stores are for the owner alone to change.
     const storesOpen = canWrite && p.active && (!p.owner || owner);
-    const level = (app: "seller" | "backoffice") =>
-        `${t(app === "seller" ? "uac.seller" : "uac.office")}: ${t(`uac.${p.access[app] || "none"}` as MessageKey)}`;
+    const level = (app: keyof typeof LEVELS) =>
+        `${t(APP_LABEL[app])}: ${t(`uac.${p.access[app] || "none"}` as MessageKey)}`;
     const row = (
         part: Part,
         icon: ReactNode,
@@ -110,7 +123,7 @@ export function PersonPage({ userId }: { userId: string }) {
                     "apps",
                     <LayoutGrid {...rowIcon} />,
                     t("uac.apps"),
-                    `${level("seller")} · ${level("backoffice")}`,
+                    `${level("seller")} · ${level("backoffice")} · ${level("chat")}`,
                     access,
                 )}
                 {row(
@@ -454,16 +467,16 @@ function AppLevels({ change, set, disabled }: Parameters<Fields>[0]) {
     const t = useT();
     return (
         <div className="space-y-3">
-            {(["seller", "backoffice"] as const).map((app) => (
+            {(["seller", "backoffice", "chat"] as const).map((app) => (
                 <section key={app} className="space-y-1.5">
-                    <PanelLabel>{t(app === "seller" ? "uac.seller" : "uac.office")}</PanelLabel>
+                    <PanelLabel>{t(APP_LABEL[app])}</PanelLabel>
                     <ChoiceList
-                        value={change.access[app] as string}
+                        value={change.access[app] ?? ""}
                         onChange={(level) => set({ access: { ...change.access, [app]: level } })}
                         choices={LEVELS[app].map((level) => ({
                             value: level as string,
                             label: t(`uac.${level || "none"}` as MessageKey),
-                            sublabel: t(HINTS[level as string]!),
+                            sublabel: t((app === "chat" ? CHAT_HINTS : HINTS)[level as string]!),
                             disabled,
                         }))}
                     />

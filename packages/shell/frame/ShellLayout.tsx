@@ -14,7 +14,8 @@ import { avatar } from "@tea-pos/ui/avatarUrl";
 import { BootScreen } from "../screens/BootScreen";
 import { MobileShell } from "./MobileShell";
 import type { Tab } from "./routes";
-import { TenantProvider, useSlug } from "../session/tenant";
+import { TenantProvider, useSlug, useTenant } from "../session/tenant";
+import { unreadTotal, useAppBadge, useChatChannels } from "@tea-pos/api-client/chat";
 import { LATEST, seen } from "../lib/whatsNew";
 import { hideSplash } from "../lib/splash";
 import { useErrorToasts } from "./useErrorToasts";
@@ -30,6 +31,8 @@ export interface AppTab {
     also?: string[];
     /** Its other face inside part of the app (seller's POS shows as Manage in manage). */
     variant?: { path: string; labelKey: MessageKey; icon: LucideIcon };
+    /** Chats: shown only to someone with a chat level here, with the unread count on it. */
+    chat?: true;
 }
 
 /** The layout route every app's screens sit in, with the app's tabs. */
@@ -99,17 +102,24 @@ function Frame({
     const slug = useSlug();
     const navigate = useNavigate();
     const unseen = LATEST !== "" && seen() !== LATEST;
+    const hasChat = !!useTenant()?.tenant.access.chat;
+    const channels = useChatChannels(slug, hasChat && own.some((t) => t.chat));
+    const unread = hasChat ? unreadTotal(channels.data?.channels) : 0;
+    useAppBadge(unread);
     const root = slug ? `/${slug}` : "/";
     const under = (path: string) => (path ? `${root}/${path}` : root);
     const tabs: Tab[] = slug
         ? [
-              ...own.map((t) => ({
-                  path: under(t.path),
-                  labelKey: t.labelKey,
-                  icon: t.icon,
-                  matchPaths: [t.path, ...(t.also ?? [])].map(under),
-                  variant: t.variant && { ...t.variant, pathContains: under(t.variant.path) },
-              })),
+              ...own
+                  .filter((t) => !t.chat || hasChat)
+                  .map((t) => ({
+                      path: under(t.path),
+                      labelKey: t.labelKey,
+                      icon: t.icon,
+                      matchPaths: [t.path, ...(t.also ?? [])].map(under),
+                      variant: t.variant && { ...t.variant, pathContains: under(t.variant.path) },
+                      badge: t.chat ? unread : undefined,
+                  })),
               {
                   path: `${root}/more`,
                   labelKey: unseen ? "nav.moreNew" : "nav.more",

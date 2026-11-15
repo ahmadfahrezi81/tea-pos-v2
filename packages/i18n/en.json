@@ -157,6 +157,7 @@
         "outdated": "Outdated"
     },
     "errors": {
+        "channel_not_found": "That chat was not found",
         "account_inactive": "This account isn't active. Ask the owner.",
         "app_too_old": "This version is too old. Updating…",
         "bad_request": "Something in this form isn't right.",

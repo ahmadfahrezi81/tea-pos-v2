@@ -8,6 +8,6 @@ export const Route = createFileRoute("/_shell")(
         { path: "store", labelKey: "store.title", icon: Store },
         { path: "pay", labelKey: "nav.pay", icon: DollarSign },
         { path: "uac", labelKey: "nav.uac", icon: UsersRound },
-        { path: "chats", labelKey: "nav.chats", icon: MessagesSquare },
+        { path: "chats", labelKey: "nav.chats", icon: MessagesSquare, chat: true },
     ]),
 );

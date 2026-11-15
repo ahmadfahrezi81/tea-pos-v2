@@ -1,0 +1,29 @@
+{
+    "chat": {
+        "general": "General",
+        "admin": "Admin",
+        "personal": "Notifications",
+        "you": "You",
+        "photo": "Photo",
+        "deleted": "Message deleted",
+        "noMessages": "No messages yet",
+        "noChats": "No chats yet",
+        "noAccess": "You don't have access yet",
+        "noAccessSub": "Ask the office to turn chat on for you",
+        "message": "Message",
+        "send": "Send",
+        "newMessages": "New messages",
+        "seenBy": "Seen by {n}",
+        "seenByTitle": "Seen by",
+        "notYet": "Not yet",
+        "notSent": "Not sent · Tap to retry",
+        "retry": "Retry",
+        "delete": "Delete",
+        "readOnly": "Only the app posts here",
+        "storeClosed": "This store is closed: read only",
+        "members": "Members",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "tooLong": "At most 4,000 characters"
+    }
+}

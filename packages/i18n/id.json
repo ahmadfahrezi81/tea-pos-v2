@@ -157,6 +157,7 @@
         "outdated": "Perlu update"
     },
     "errors": {
+        "channel_not_found": "Chat itu tidak ditemukan",
         "account_inactive": "Akun ini tidak aktif. Hubungi pemilik.",
         "app_too_old": "Versi ini terlalu lama. Sedang update…",
         "bad_request": "Ada yang belum benar di formulir ini.",

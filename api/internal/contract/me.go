@@ -37,6 +37,7 @@ type MeTenant struct {
 type MeAccess struct {
 	Seller     string `json:"seller" doc:"member, or '' for none"`
 	Backoffice string `json:"backoffice" doc:"guest, admin, or '' for none"`
+	Chat       string `json:"chat" required:"false" doc:"member, admin, or '' for none: shown inside either app"`
 }
 
 type MeStore struct {
