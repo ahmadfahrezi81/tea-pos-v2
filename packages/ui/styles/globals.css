@@ -315,3 +315,8 @@ a,
         display: none;
     }
 }
+
+/* While typing the tab bar steps aside, as in native apps: the keyboard sits where it was (shell's keyboard.ts). */
+:root[data-keyboard] .tab-bar {
+    display: none;
+}

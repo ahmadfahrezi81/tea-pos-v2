@@ -20,7 +20,7 @@ import { ComeBackRefresh } from "./refresh/ComeBackRefresh";
 import { refreshGate } from "./refresh/refreshGate";
 import { isSubPage, type Tab } from "./routes";
 import { ScrollContext } from "./ScrollContext";
-import { useKeyboard } from "./keyboard";
+import { useKeyboardState } from "./keyboard";
 import { useStandaloneViewportHeight } from "./useStandaloneViewportHeight";
 
 /** Pull distance, after resistance, at which letting go refreshes. */
@@ -98,8 +98,7 @@ export function MobileShell({
     const lastRootTabRef = useRef<string>(homePath);
 
     useStandaloneViewportHeight();
-    const footerRef = useRef<HTMLElement>(null);
-    useKeyboard({ footer: footerRef, slot: footerSlotEl, scroller: scrollContainerRef });
+    useKeyboardState();
 
     const navigate = useCallback(
         (path: string) => {
@@ -380,8 +379,8 @@ export function MobileShell({
             <FooterSlotContext value={footerSlotEl}>
                 <HeaderSlotContext value={headerSlotEl}>
                     <HeaderTitleSlotContext value={titleSlotEl}>
-                        {/* svh in a tab (no resize as the URL bar moves); installed, the measured --shell-height. */}
-                        <div className="h-[100svh] [@media(display-mode:standalone)]:h-[var(--shell-height,100dvh)] flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+                        {/* svh in a tab (no resize as the URL bar moves); installed, the measured --shell-height. Less the dev server's fake keyboard. */}
+                        <div className="h-[calc(100svh-var(--fake-keyboard,0px))] [@media(display-mode:standalone)]:h-[calc(var(--shell-height,100dvh)-var(--fake-keyboard,0px))] flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
                             <MobileHeader
                                 title={title}
                                 isSubPage={currentIsSubPage}
@@ -444,18 +443,14 @@ export function MobileShell({
                                     className={`absolute inset-0 overflow-y-auto p-4 pt-1.5 ${scrollPaddingBottom} ${refreshable ? "overscroll-y-none" : ""}`}
                                 >
                                     {ready && <Outlet />}
-                                    {/* Room under the content for the keyboard and the bar riding on it. */}
-                                    <div aria-hidden className="h-[var(--keyboard-lift,0px)]" />
                                 </div>
                             </main>
 
                             {/* Page slot, route CTA, then tabs; white only when something is in it. */}
                             <footer
-                                ref={footerRef}
-                                className={`relative shrink-0 ${currentIsSubPage ? "pb-[calc(env(safe-area-inset-bottom)*0.75)]" : "pb-[env(safe-area-inset-bottom)]"} [&:has(>:not(:empty))]:bg-white [&:has(>.is-occupied)]:bg-white [&:has(>[role=status])]:bg-white`}
+                                className={`shrink-0 ${currentIsSubPage ? "pb-[calc(env(safe-area-inset-bottom)*0.75)]" : "pb-[env(safe-area-inset-bottom)]"} [&:has(>:not(:empty))]:bg-white [&:has(>.is-occupied)]:bg-white [&:has(>[role=status])]:bg-white`}
                             >
-                                {/* Rides on the keyboard (keyboard.ts); the tabs under it stay, covered. */}
-                                <div ref={setFooterSlotEl} className="keyboard-ride" />
+                                <div ref={setFooterSlotEl} />
                                 {footerCtaLabel && (
                                     <div className="bg-white border-t border-gray-200 px-4 py-3">
                                         <button

@@ -1,6 +1,6 @@
 # Task 072 — The keyboard: one way for every field
 
-**Status: approved 2026-11-16 (the tab bar covered, not hidden: the owner left it to me); first version built on `feat/keyboard`, to be tuned on the owner's phones.**
+**Status: first build failed on the owner's iPhone 2026-11-16 (PR #147); #146 and #147 reverted on `revert/keyboard`. Redesigned as an RFC: [RFC: The keyboard (v2)](https://app.notion.com/p/41a95a71540581fe9edfec6aaea46993), which supersedes the plans below; waiting on the owner's review.**
 
 ## The goal
 
@@ -55,3 +55,24 @@ Try each step on the iPhone (and an Android if one is at hand) over Wi-Fi, from 
 ## Not in this task
 
 Interactive dismiss by dragging (a suggestion above); the chat's own layout beyond its box riding the keyboard.
+
+## What went wrong (PR #147)
+
+- **It moved the page under the finger.** It lifted the bar and scrolled the content on the touch itself, before the keyboard existed: the tap then landed on whatever slid under it (a store's chat opened instead of the field).
+- **It guessed.** The keyboard's height was a guess (or last time's), not what the phone said; anything wrong in the guess moved the screen twice.
+- **It was built all at once and never seen on a phone** before the owner tried it: no measurement of what the iPhone actually reports, and when.
+
+## Second attempt
+
+**Rules:**
+1. Nothing moves until the phone says the keyboard is there; never a guess.
+2. Nothing moves while a finger is down.
+3. What moves follows the keyboard's real position as the phone reports it, one step at a time; no animation of our own racing it.
+4. Small: one behaviour per step, each tried on the phones before the next.
+
+**Steps:**
+0. **Revert** #146 and #147: back to how it was before (the owner: the first was better)
+1. **Measure first, change nothing:** a small test screen (More → a hidden "Keyboard test", staging only) with a field at the top, the middle and the bottom, and a live log of what the phone reports while the keyboard opens and closes (`visualViewport` height and offset, the page's scroll, Android's `virtualKeyboard`), every frame, with times; a Copy button. The owner opens it on the iPhone and an Android, taps each field, sends the log. The design comes from that data, not from guesses
+2. **The easiest win:** on Android the page already shrinks for the keyboard; only the tab bar floating on it is wrong: hide the tab bar while the keyboard is open (from the measured state). Tried, then next
+3. **The iPhone,** from what step 1 showed: either follow the keyboard's reported position frame by frame, or, if iOS reports too late to follow, keep its own pan and only stop what it breaks. Decided with the owner from the data
+4. **Every field** gets the result (search, opening code, forms, chat), checked one by one
