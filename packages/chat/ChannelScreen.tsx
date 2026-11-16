@@ -7,15 +7,18 @@ import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
 import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
 import { useSlug } from "@tea-pos/shell/tenant";
 import { Avatar } from "@tea-pos/ui/Avatar";
+import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { ImagePreview } from "@tea-pos/ui/ImagePreview";
 import { Sheet } from "@tea-pos/ui/Sheet";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+    Bell,
     Camera,
     CheckCheck,
     Clock,
     Image as ImageIcon,
+    MessagesSquare,
     Plus,
     SendHorizontal,
     X,
@@ -94,7 +97,12 @@ function Channel({ channelId }: { channelId: string }) {
             <HeaderTitle>{channelName(channel, t)}</HeaderTitle>
             {thread.data.next && <EarlierButton channelId={channelId} />}
             {items.length === 0 && waiting.length === 0 && (
-                <p className="py-10 text-center text-sm text-gray-500">{t("chat.noMessages")}</p>
+                <EmptyState
+                    title={t("chat.noMessages")}
+                    body={t(channel.readOnly ? "chat.noMessagesInbox" : "chat.noMessagesSub")}
+                    icon={channel.kind === "personal" ? Bell : MessagesSquare}
+                    className="py-16"
+                />
             )}
             {items.map((m, i) => (
                 <Fragment key={m.id}>

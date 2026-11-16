@@ -29,6 +29,8 @@
         "add": "Tambah",
         "camera": "Kamera",
         "gallery": "Galeri",
-        "messageTo": "Kirim pesan ke {name}"
+        "messageTo": "Kirim pesan ke {name}",
+        "noMessagesSub": "Sapa duluan untuk mulai ngobrol",
+        "noMessagesInbox": "Kabar untukmu akan muncul di sini"
     }
 }

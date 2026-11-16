@@ -29,6 +29,8 @@
         "add": "Add",
         "camera": "Camera",
         "gallery": "Gallery",
-        "messageTo": "Message {name}"
+        "messageTo": "Message {name}",
+        "noMessagesSub": "Say hi to start the conversation",
+        "noMessagesInbox": "Updates for you will show up here"
     }
 }

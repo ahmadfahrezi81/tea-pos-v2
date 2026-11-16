@@ -79,3 +79,9 @@ The owner's feedback on chat's screens (tasks 065-068), before the branch goes t
 **Said:** as WhatsApp: everything under one background, the time too. Asked whether bubbles suit replies: kept, since the RFC's replies are flat, inline quotes (WhatsApp's), not Slack threads; better for the sellers.
 
 **Done:** a message is one bubble: the name (violet, others' only), photos, the text, and the time on the last line's right; mine add ✓✓ once seen, "Seen by N" under my last one.
+
+### 13. An empty channel as every empty screen (Both, done)
+
+**Said:** no content is shown as the apps do: an icon in a circle, a title, a small line under it.
+
+**Done:** `EmptyState` in an empty channel: "No messages yet" / "Say hi to start the conversation"; Notifications: a bell, "Updates for you will show up here".
