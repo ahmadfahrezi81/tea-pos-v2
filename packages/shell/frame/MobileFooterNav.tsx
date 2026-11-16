@@ -11,7 +11,7 @@ interface MobileFooterNavProps {
 export function MobileFooterNav({ tabs, currentPath, onTabClick }: MobileFooterNavProps) {
     const t = useT();
     return (
-        <nav className="bg-white border-t border-gray-200">
+        <nav className="tab-bar bg-white border-t border-gray-200">
             <div className="flex p-1">
                 {tabs.map((tab) => {
                     const Icon = tab.icon;
