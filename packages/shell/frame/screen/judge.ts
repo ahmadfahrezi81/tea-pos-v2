@@ -7,6 +7,8 @@ import { SETTLE_MS, type Sample } from "./measure";
 
 /** Within this, two lengths are the same (rounding, a hairline). */
 const TOLERANCE = 1;
+/** The header nudged by this much is not seen (iOS 18 shifts it 2 px as a keyboard opens). */
+const HEADER_TOLERANCE = 3;
 /** A keyboard is at least this tall; less is a toolbar. */
 const MIN_KEYBOARD = 120;
 
@@ -57,7 +59,7 @@ export function judge(samples: Sample[], expect: Expect): Verdict {
         0,
         ...judged.map((s) => Math.abs(s.headerTop - first.headerTop)),
     );
-    if (expect.headerStill && headerMovedBy > TOLERANCE)
+    if (expect.headerStill && headerMovedBy > HEADER_TOLERANCE)
         problems.push(`the header moved ${headerMovedBy}px`);
 
     // Every kind of screen: a field being typed in is never under the keyboard.
