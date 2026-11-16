@@ -96,4 +96,4 @@ Chat's own keyboard ride beyond step 4; anything for Safari 27.3 (it needs nothi
 - **Both:** a field being typed in is never under the keyboard (a new check, `fieldBottom`), and nothing is left shifted after
 - A screen will say which it is on its route (`staticData.shell`), when the fixes come; app screen by default
 
-Also fixed in the lab: a case opened from low in the list started scrolled down; it now starts at the top, and the list comes back to where it was.
+Also fixed in the lab (the owner: back killed a running case, and a case opened scrolled down): each case is its own screen under the lab (`/screen-lab/<case>`), so it opens at the top like any new screen, back leaves it without a result and the list returns to where it was (the router's own scroll restore), and the results are kept outside the screens (and for the visit), so back and forth never loses them.
