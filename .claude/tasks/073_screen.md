@@ -1,6 +1,6 @@
 # Task 073 — The screen engine: the app's height and place, on every phone
 
-**Status: step 1 (the screen check panel) built on `feat/screen-check`, not pushed. Redesigned 2026-11-16 at the owner's ask: not only a panel but a tool that runs the tests (the Screen lab, below) on an accurate measuring engine; waiting on the owner's review.**
+**Status: Screen lab built 2026-11-16 on `feat/screen-check` (engine `frame/screen/measure.ts`, judge `judge.ts` with 6 unit tests, fake keyboards `fake.ts`: `?preview=keyboard` Android, `?preview=keyboard-ios` the iPhone's pan; More → Screen lab on staging, previews, dev). Seen locally: Android fake, chat's box passes (shrink); iPhone fake, the top field passes (cover) and chat's box fails (header moved 280 px), as on the owner's iPhone. Next: the owner runs it on the real phones. Send to PostHog left for later (needs a new event type in Go); Copy for now.**
 
 ## The goal
 

@@ -17,6 +17,7 @@ import { Route as ShellTenantIndexRouteImport } from './routes/_shell/$tenant/in
 import { Route as ShellTenantAppInfoRouteImport } from './routes/_shell/$tenant/app-info'
 import { Route as ShellTenantOrdersRouteImport } from './routes/_shell/$tenant/orders'
 import { Route as ShellTenantPosRouteImport } from './routes/_shell/$tenant/pos'
+import { Route as ShellTenantScreenLabRouteImport } from './routes/_shell/$tenant/screen-lab'
 import { Route as ShellTenantWhatsNewRouteImport } from './routes/_shell/$tenant/whats-new'
 import { Route as ShellTenantAccountIndexRouteImport } from './routes/_shell/$tenant/account/index'
 import { Route as ShellTenantAccountDetailsRouteImport } from './routes/_shell/$tenant/account/details'
@@ -75,6 +76,11 @@ const ShellTenantOrdersRoute = ShellTenantOrdersRouteImport.update({
 const ShellTenantPosRoute = ShellTenantPosRouteImport.update({
   id: '/pos',
   path: '/pos',
+  getParentRoute: () => ShellTenantRoute,
+} as any)
+const ShellTenantScreenLabRoute = ShellTenantScreenLabRouteImport.update({
+  id: '/screen-lab',
+  path: '/screen-lab',
   getParentRoute: () => ShellTenantRoute,
 } as any)
 const ShellTenantWhatsNewRoute = ShellTenantWhatsNewRouteImport.update({
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/$tenant/app-info': typeof ShellTenantAppInfoRoute
   '/$tenant/orders': typeof ShellTenantOrdersRoute
   '/$tenant/pos': typeof ShellTenantPosRoute
+  '/$tenant/screen-lab': typeof ShellTenantScreenLabRoute
   '/$tenant/whats-new': typeof ShellTenantWhatsNewRoute
   '/$tenant/': typeof ShellTenantIndexRoute
   '/$tenant/account/details': typeof ShellTenantAccountDetailsRoute
@@ -225,6 +232,7 @@ export interface FileRoutesByTo {
   '/$tenant/app-info': typeof ShellTenantAppInfoRoute
   '/$tenant/orders': typeof ShellTenantOrdersRoute
   '/$tenant/pos': typeof ShellTenantPosRoute
+  '/$tenant/screen-lab': typeof ShellTenantScreenLabRoute
   '/$tenant/whats-new': typeof ShellTenantWhatsNewRoute
   '/$tenant': typeof ShellTenantIndexRoute
   '/$tenant/account/details': typeof ShellTenantAccountDetailsRoute
@@ -256,6 +264,7 @@ export interface FileRoutesById {
   '/_shell/$tenant/app-info': typeof ShellTenantAppInfoRoute
   '/_shell/$tenant/orders': typeof ShellTenantOrdersRoute
   '/_shell/$tenant/pos': typeof ShellTenantPosRoute
+  '/_shell/$tenant/screen-lab': typeof ShellTenantScreenLabRoute
   '/_shell/$tenant/whats-new': typeof ShellTenantWhatsNewRoute
   '/_shell/$tenant/': typeof ShellTenantIndexRoute
   '/_shell/$tenant/account/details': typeof ShellTenantAccountDetailsRoute
@@ -287,6 +296,7 @@ export interface FileRouteTypes {
     | '/$tenant/app-info'
     | '/$tenant/orders'
     | '/$tenant/pos'
+    | '/$tenant/screen-lab'
     | '/$tenant/whats-new'
     | '/$tenant/'
     | '/$tenant/account/details'
@@ -315,6 +325,7 @@ export interface FileRouteTypes {
     | '/$tenant/app-info'
     | '/$tenant/orders'
     | '/$tenant/pos'
+    | '/$tenant/screen-lab'
     | '/$tenant/whats-new'
     | '/$tenant'
     | '/$tenant/account/details'
@@ -345,6 +356,7 @@ export interface FileRouteTypes {
     | '/_shell/$tenant/app-info'
     | '/_shell/$tenant/orders'
     | '/_shell/$tenant/pos'
+    | '/_shell/$tenant/screen-lab'
     | '/_shell/$tenant/whats-new'
     | '/_shell/$tenant/'
     | '/_shell/$tenant/account/details'
@@ -429,6 +441,13 @@ declare module '@tanstack/react-router' {
       path: '/pos'
       fullPath: '/$tenant/pos'
       preLoaderRoute: typeof ShellTenantPosRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/screen-lab': {
+      id: '/_shell/$tenant/screen-lab'
+      path: '/screen-lab'
+      fullPath: '/$tenant/screen-lab'
+      preLoaderRoute: typeof ShellTenantScreenLabRouteImport
       parentRoute: typeof ShellTenantRoute
     }
     '/_shell/$tenant/whats-new': {
@@ -578,6 +597,7 @@ interface ShellTenantRouteChildren {
   ShellTenantAppInfoRoute: typeof ShellTenantAppInfoRoute
   ShellTenantOrdersRoute: typeof ShellTenantOrdersRoute
   ShellTenantPosRoute: typeof ShellTenantPosRoute
+  ShellTenantScreenLabRoute: typeof ShellTenantScreenLabRoute
   ShellTenantWhatsNewRoute: typeof ShellTenantWhatsNewRoute
   ShellTenantIndexRoute: typeof ShellTenantIndexRoute
   ShellTenantAccountDetailsRoute: typeof ShellTenantAccountDetailsRoute
@@ -605,6 +625,7 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
   ShellTenantAppInfoRoute: ShellTenantAppInfoRoute,
   ShellTenantOrdersRoute: ShellTenantOrdersRoute,
   ShellTenantPosRoute: ShellTenantPosRoute,
+  ShellTenantScreenLabRoute: ShellTenantScreenLabRoute,
   ShellTenantWhatsNewRoute: ShellTenantWhatsNewRoute,
   ShellTenantIndexRoute: ShellTenantIndexRoute,
   ShellTenantAccountDetailsRoute: ShellTenantAccountDetailsRoute,

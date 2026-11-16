@@ -20,7 +20,7 @@ import { ComeBackRefresh } from "./refresh/ComeBackRefresh";
 import { refreshGate } from "./refresh/refreshGate";
 import { isSubPage, type Tab } from "./routes";
 import { ScrollContext } from "./ScrollContext";
-import { useKeyboardState } from "./keyboard";
+import { useKeyboardState } from "./screen/keyboard";
 import { useStandaloneViewportHeight } from "./useStandaloneViewportHeight";
 
 /** Pull distance, after resistance, at which letting go refreshes. */
