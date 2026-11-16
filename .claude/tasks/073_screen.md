@@ -1,6 +1,6 @@
 # Task 073 — The screen engine: the app's height and place, on every phone
 
-**Status: approved 2026-11-16 (the owner: check the design, then build); step 1 (the screen check) built and seen locally on `feat/screen-check`; no behaviour change.**
+**Status: step 1 (the screen check panel) built on `feat/screen-check`, not pushed. Redesigned 2026-11-16 at the owner's ask: not only a panel but a tool that runs the tests (the Screen lab, below) on an accurate measuring engine; waiting on the owner's review.**
 
 ## The goal
 
@@ -46,3 +46,45 @@ Step 2 on the iPhone (and an Android if at hand).
 ## Not in this task
 
 Chat's own keyboard ride beyond step 4; anything for Safari 27.3 (it needs nothing).
+
+## The Screen lab (the owner, 2026-11-16: an actual tool, not only debugging)
+
+**What it is:** a screen in both apps (More → Screen lab; staging and the dev server only, a flag in production) that runs each case for real on the phone it is opened on and says, for each, **passed or failed and why**, with the numbers to send. The panel of step 1 stays, as its live view.
+
+**What a web page can and cannot do:** it cannot open the keyboard, the photo picker or the camera by itself: a phone only opens them from a person's tap. So each case is one big button the owner taps; everything after the tap (measuring, judging, recording) is the lab's.
+
+**The cases** (each the real thing, not a stand-in):
+1. The keyboard from a field at the top (as search), in the middle, at the bottom (as chat's box), and in the shell's footer slot
+2. The keyboard closing: by Done, by tapping outside, by scrolling
+3. Moving from one field to another with the keyboard open
+4. The photo picker opened and cancelled; a photo chosen
+5. The camera opened and cancelled
+6. A bottom sheet opened and closed (ours)
+7. The app sent to the background and back (the lab says when to switch away)
+8. A rotation and back
+9. Sign-in cancelled and back (on the sign-in screen: the lab's check runs there through `?screen`)
+
+**What each case checks, the same rules for every phone:**
+- after it ends, the frame fills the visible screen exactly (within 1 px), its top at 0
+- the page itself is not left scrolled (`scrollY` 0, the visible area's offset 0)
+- the header never moved while it ran (where the header should stay)
+- how long the phone took to settle, and whether it settled at all
+- for the keyboard: the height the phone reported, when it started and ended, whether the page shrank (Android, Safari 27.3) or panned (the iPhone today)
+
+**The measuring engine** (`packages/shell/frame/screen.ts`, later used by the app itself, not only the lab):
+- **Samples every frame** (`requestAnimationFrame`) from the tap until nothing has changed for 300 ms, or 3 s: the whole movement, not one reading, so the start, the end and every step in between are known
+- **Reads every source the phone has, each for what it means:** the page's height (`innerHeight`, `clientHeight`), the visible area (`visualViewport` height, offset, scale), the page's scroll, the frame's real box on screen, `--shell-height`; Android's `virtualKeyboard` where it exists
+- **Never trusts a single event:** events only start a sampling run; the numbers come from the frames that follow, so a late, missing or doubled event cannot fool it
+- **Ignores what is not a layout change:** pinch zoom (scale above 1.01), a rotation in progress (width changing)
+- **Tested off the phone too:** the judging rules are plain functions over recorded samples, with unit tests from recorded runs (an iPhone's pan, Android's shrink, a picker that never gave the height back)
+
+**What comes out:** a report per phone: the phone and browser, installed or not, each case passed or failed with its numbers; Copy, and Send (to PostHog through `/api/events`, so each phone's run is kept and compared).
+
+**The fixes come after**, case by case, from the failures, and each fix is proven by the same case turning green on the iPhone and Android. Chat on the iPhone is case 1 (bottom) turning green.
+
+### Build order (replaces "The plan" above)
+
+1. The measuring engine and its unit tests (recorded runs)
+2. The Screen lab with the cases and the report; locally first (the fake keyboard for the keyboard cases), then staging for the owner's iPhone and an Android
+3. The owner runs it on both phones and sends the reports
+4. The fixes, one failure at a time, each turning its case green
