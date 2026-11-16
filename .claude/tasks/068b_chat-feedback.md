@@ -1,6 +1,6 @@
 # Task 068b — Feedback: Chat phase 1
 
-**Status: built 2026-11-16 (items 1-23), in the PR into staging; the owner tests photos and push there, on the phone.**
+**Status: items 1-23 merged into staging 2026-11-16 (PR #145); the owner tests on the phone; item 24 on `fix/chat-keyboard`.**
 
 ## The goal
 
@@ -149,3 +149,13 @@ The owner's feedback on chat's screens (tasks 065-068), before the branch goes t
 **Said:** "Message General" is too light; yes to darkening the search box and every list's second line too.
 
 **Done:** hints (the message box, `SearchBox`) `gray-400` → `gray-500`; `ListRow`'s second line (stores' hours, "Asked 2 days ago", pay types' codes) `gray-400` → `gray-600`, in every list of both apps.
+
+### 24. The keyboard pushes the whole screen up (Both, on the iPhone; built, to try on staging)
+
+**Said (on staging, phone):** typing a message slides everything up, the header too; in a chat the header stays and only the bottom rises. The search box does not do it.
+
+**Why:** Android already shrinks the page for the keyboard (`interactive-widget=resizes-content`); iOS ignores that and instead pans the whole page to show a field low on the screen. The search box sits at the top, so it never needed panning; the message box sits at the bottom.
+
+**Plan:** in the shell, while the iOS keyboard is open, the app's frame takes the visible area's height and follows it (`visualViewport` height and offset), so the header stays, the messages shrink, and the box sits on the keyboard, as on Android. Keyboard closed: nothing changes. Every screen gets it, so a form's fields behave the same.
+
+**Built:** `packages/shell/frame/useKeyboardViewport.ts` on the shell's frame (`MobileShell.tsx`). Only an iPhone can show it works: tried on staging.
