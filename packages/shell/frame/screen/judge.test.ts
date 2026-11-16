@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { judge, type Expect } from "./judge";
-import type { Sample } from "./measure";
+import { slidBeyondScroll, type Sample } from "./measure";
 
 const STILL: Expect = { headerStill: true, fills: true };
 
@@ -118,5 +118,22 @@ describe("judge", () => {
         const run = [rest(0), rest(300, { visible: 800 })];
         expect(judge(run, { headerStill: true, fills: false }).pass).toBe(true);
         expect(judge(run, STILL).pass).toBe(false);
+    });
+});
+
+describe("slidBeyondScroll", () => {
+    it("counts the iPhone's slide once when it reports it as both scroll and offset", () => {
+        // The owner's iPhone, a field in the middle: scrollY 36 and offset 36 are one slide.
+        expect(slidBeyondScroll(36, 36)).toBe(0);
+    });
+    it("keeps a slide of the visible area alone", () => {
+        expect(slidBeyondScroll(120, 0)).toBe(120);
+    });
+});
+
+describe("a 2 px nudge", () => {
+    it("is not a moved header", () => {
+        const run = [rest(0), rest(50, { focused: true, visible: 417, headerTop: -2 }), rest(900)];
+        expect(judge(run, STILL).pass).toBe(true);
     });
 });

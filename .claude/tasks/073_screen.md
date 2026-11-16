@@ -97,3 +97,13 @@ Chat's own keyboard ride beyond step 4; anything for Safari 27.3 (it needs nothi
 - A screen will say which it is on its route (`staticData.shell`), when the fixes come; app screen by default
 
 Also fixed in the lab (the owner: back killed a running case, and a case opened scrolled down): each case is its own screen under the lab (`/screen-lab/<case>`), so it opens at the top like any new screen, back leaves it without a result and the list returns to where it was (the router's own scroll restore), and the results are kept outside the screens (and for the visit), so back and forth never loses them.
+
+## First report, the owner's iPhone (2026-11-17)
+
+iOS 18.7, installed, 390×844, the app 797 px tall.
+
+- **Every interruption passed:** photo picker (cancelled and chosen), camera, our sheet, background, rotation: the app comes back filling the screen, nothing left shifted. The sign-in shift is not in the lab (sign-in is its own screen): to try with `?screen` there
+- **The keyboard:** a field at the top passes (the keyboard only covers). Any field the keyboard would cover makes iOS slide the page (`pan`): the middle (36 px), field to field (61 px), the bottom (380 px, the keyboard's height), the focus case (335 px, allowed there). The keyboard is 335-380 px (with or without the suggestions row)
+- **The lab's own mistakes, fixed:** (1) iOS reports one slide twice (as the page's scroll and the visible area's offset), so every slide read double (760 px for a 380 px keyboard): counted once now (`slidBeyondScroll`); (2) Finish judged before the keyboard had started closing, so the middle case "ended" with the keyboard still up: Finish now waits at least 0.8 s and until the screen is still; (3) a 2 px nudge iOS gives the header as a keyboard opens is not a moved header (3 px tolerance)
+- **iOS 18.7 changes the plan (the owner: it must last on older iPhones too; no one should need iOS 27):** `interactive-widget` comes with Safari 27.3, which only an iPhone on iOS 27.3 or later gets. This iPhone (and any staff iPhone left on an older iOS) never will, so the iPhone's slide must be handled by us after all: RFC step 6 (chat) and the forms' middle fields, not only "wait for Safari"
+- **The report now carries each run's frames** (`timeline`: t, page, visible, offset, scrollY, headerTop, fieldBottom; at most 80 a case): how the iPhone's slide unfolds frame by frame is what the chat fix (step 6) is designed from

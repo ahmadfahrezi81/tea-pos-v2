@@ -30,6 +30,16 @@ export interface Sample {
 
 type VirtualKeyboard = { boundingRect: DOMRect };
 
+/**
+ * How far the visible area slid that a box's own position does not already show. The iPhone
+ * (iOS 18, installed) reports one slide twice, as the page's scroll and as the visible area's
+ * offset, and a box's position already includes the scroll: subtracting both counted it twice
+ * (the owner's first report: the header "moved 760 px" for a 380 px keyboard).
+ */
+export function slidBeyondScroll(offsetTop: number, scrollY: number): number {
+    return Math.max(0, offsetTop - scrollY);
+}
+
 export function readSample(t: number): Sample {
     const root = document.documentElement;
     const vv = window.visualViewport;
@@ -39,7 +49,7 @@ export function readSample(t: number): Sample {
     const vk = (navigator as Navigator & { virtualKeyboard?: VirtualKeyboard }).virtualKeyboard;
     const el = document.activeElement;
     // Where things are on the glass: the iPhone's pan moves what is seen, not the page's boxes.
-    const slid = vv?.offsetTop ?? 0;
+    const slid = slidBeyondScroll(vv?.offsetTop ?? 0, window.scrollY);
     return {
         t: Math.round(t),
         page: root.clientHeight - fakeView.shrink,
@@ -111,13 +121,18 @@ export class Recorder {
         return this.samples;
     }
 
-    /** Resolves once nothing has changed for SETTLE_MS, or after `max` ms whatever happens. */
-    settled(max = 3000): Promise<void> {
-        const until = performance.now() + max;
+    /**
+     * Resolves once nothing has changed for SETTLE_MS, but not before `min` ms (a keyboard starts
+     * closing a moment after the tap), and after `max` ms whatever happens.
+     */
+    settled(min = 800, max = 3000): Promise<void> {
+        const from = performance.now();
+        const until = from + max;
         return new Promise((resolve) => {
             const check = () => {
                 const now = performance.now();
-                if (now - this.lastChange >= SETTLE_MS || now >= until) resolve();
+                const quiet = now - from >= min && now - this.lastChange >= SETTLE_MS;
+                if (quiet || now >= until) resolve();
                 else setTimeout(check, 50);
             };
             check();
