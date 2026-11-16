@@ -150,7 +150,7 @@ The owner's feedback on chat's screens (tasks 065-068), before the branch goes t
 
 **Done:** hints (the message box, `SearchBox`) `gray-400` → `gray-500`; `ListRow`'s second line (stores' hours, "Asked 2 days ago", pay types' codes) `gray-400` → `gray-600`, in every list of both apps.
 
-### 24. The keyboard pushes the whole screen up (Both, on the iPhone; built, to try on staging)
+### 24. The keyboard pushes the whole screen up (Both: moved to task 072)
 
 **Said (on staging, phone):** typing a message slides everything up, the header too; in a chat the header stays and only the bottom rises. The search box does not do it.
 
@@ -159,3 +159,5 @@ The owner's feedback on chat's screens (tasks 065-068), before the branch goes t
 **Plan:** in the shell, while the iOS keyboard is open, the app's frame takes the visible area's height and follows it (`visualViewport` height and offset), so the header stays, the messages shrink, and the box sits on the keyboard, as on Android. Keyboard closed: nothing changes. Every screen gets it, so a form's fields behave the same.
 
 **Built:** `packages/shell/frame/useKeyboardViewport.ts` on the shell's frame (`MobileShell.tsx`). Only an iPhone can show it works: tried on staging.
+
+**On staging (PR #146):** it still jumps, then flashes back: correcting the pan after iOS made it cannot be smooth. Redesigned for every field in `.claude/tasks/072_keyboard.md`.
