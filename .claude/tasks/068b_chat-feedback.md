@@ -85,3 +85,55 @@ The owner's feedback on chat's screens (tasks 065-068), before the branch goes t
 **Said:** no content is shown as the apps do: an icon in a circle, a title, a small line under it.
 
 **Done:** `EmptyState` in an empty channel: "No messages yet" / "Say hi to start the conversation"; Notifications: a bell, "Updates for you will show up here".
+
+### 14. A channel's info, from its header (Both, done)
+
+**Said:** as WhatsApp and Slack: tap a channel's header for its details: icon, name, who is in it. No Leave, and no notification setting: chat is the company's, not a choice.
+
+**Plan:** the header title taps through to `/chats/<channel>/info` (RFC screen 5, without its notification choices): the channel's icon in a circle, its name and one line on who is in it (everyone, this store's people, chat admins, only you), then Members with their photos. Notifications (yours alone) shows no members. Nothing new in Go: `GET /chat/channels/{id}` already returns the members. Everyone stays on all notifications; the RFC's per-channel levels are left out of the screens. A VIP badge on chat admins waits: members carry no level yet (Go).
+
+### 15. Activity beside Messages (Both, done: the screen; its content with Step 69)
+
+**Said:** chat needs a list of notifications, not only messages, as Slack's Activity: its own page, each item opening where it happened. The Chats tab split by the same switch as seller's POS / Manage (`packages/ui/form/Segmented.tsx`): Messages on the left, Activity on the right.
+
+**Decided:** the switch now (seller's POS / Manage look, `Segmented` size `lg`), kept in the address (`?view=activity`). Activity shows an empty state until Step 69 fills it (replies to me, mentions, reactions, the Notifications inbox's items); the Notifications channel leaves the Messages list (nothing writes to it before the system-events RFC).
+
+### 16. A search bar on Chats (Both, done)
+
+**Said:** one big search bar at the top of Chats, the same as UAC's People (`SearchBox`), without the filter button.
+
+**Decided:** channel names, on the phone (`?q=`), no Go. Message search stays under the RFC's Later.
+
+**Changed (owner, after trying it):** the header is WhatsApp's and Slack's: the channel's icon, its name, and under it how many are in it ("3 members"; Notifications: "Only you"; names were tried first, the owner chose the count); a tap opens the info as a sheet, not a page (lighter, and it stays in the channel).
+
+**Built (14-16):** `ChannelHeader` and `ChannelInfo` (a sheet) in `packages/chat/ChannelInfo.tsx`; `HeaderTitle` takes any content and an `onClick`; the Chats tab: `SearchBox` (`?q=`), then `Segmented size="lg"` (Messages / Activity, `?view=activity`), Activity an empty state; Notifications left out of Messages.
+
+### 17. Typing indicator (Both, done)
+
+**Said:** there is no typing indicator. The RFC parked it until someone missed it.
+
+**Done:** `POST /chat/channels/{id}/typing` (members only, refused where nobody posts, at most every 3 s, more dropped quietly): Go announces `chat_typing` with who (`Event.By`) on each other member's topic, nothing stored. An endpoint, not the socket as the RFC drew it: it reuses the access check, the limit and the permission test, and the hub stays a deliverer. The phone (`packages/chat/typing.ts`, `onLive` in `live.ts`) shows "Budi is typing…" just above the message box (as Slack: always in sight, the messages never move; first built under the messages), as a banner like the connection's (soft violet, centred), no dots: a small pencil that writes (`animate-write` in `motion.css`, transform only, still for reduced motion), the banner fading in, its violet carried behind the box's rounded corners for 5 s, gone when their message lands, its own component so the list does not re-render; the Chats list shows "typing…" in violet. Integration test `TestChatTyping`.
+
+### 18. Channel icons in a rounded square (Both, done)
+
+**Said:** the header's icon not a full circle, a rounded square; and the Chats list's icons need their background back, the same rounded square.
+
+**Done:** grey rounded squares (`rounded-xl`, the sheet's big one `rounded-2xl`), the icon black: item 2's "no background" now means no tint, not no shape.
+
+### 19. The unread count as a flat pill (Both, done)
+
+**Said:** not a circle: elongated and flat, as Slack and WhatsApp.
+
+**Done:** at least 28 px wide, 20 px tall, so even "1" is a pill.
+
+### 20. The count up, the time down (Both, taken back)
+
+**Said:** the count top right, by the name; the time on the message's line. Then taken back: with nothing unread the top right was empty and looked awkward.
+
+**Done:** back to the time beside the name and the count beside the message, in item 21's grid.
+
+### 21. The list's text: one grid, readable greys (Both, done)
+
+**Said:** the message is too light a grey on white, the time smaller and darker than it, and the two lines do not line up.
+
+**Done:** a channel row is one grid (name | time, message | count); the message and the time the same colour (`gray-600`, the message near black while unread), the same size (14 px), digits of equal width (`tabular-nums`; mono was tried and dropped: odd on words like "Yesterday", uneven on Android). The shared `ListRow` subtitle (`gray-400`) is unchanged: the owner's to decide for every list.

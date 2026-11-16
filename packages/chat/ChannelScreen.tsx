@@ -4,7 +4,6 @@ import { addDays, formatDate, formatTime, localDate } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
-import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
 import { useSlug } from "@tea-pos/shell/tenant";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
@@ -19,6 +18,7 @@ import {
     Clock,
     Image as ImageIcon,
     MessagesSquare,
+    PenLine,
     Plus,
     SendHorizontal,
     X,
@@ -32,7 +32,9 @@ import {
     useSyncExternalStore,
 } from "react";
 
+import { ChannelHeader } from "./ChannelInfo";
 import { channelName } from "./labels";
+import { doneTyping, sayTyping, stoppedTyping, useTyping } from "./typing";
 import { forget, retry, send, snapshot, subscribe, type Pending } from "./outbox";
 import { loadEarlier, useChannel, useThread, type ChatMessage } from "./queries";
 
@@ -73,6 +75,11 @@ function Channel({ channelId }: { channelId: string }) {
     const waiting = outbox.filter((p) => !sent.has(p.key));
 
     useMarkRead(slug, channelId, items.at(-1)?.at);
+    // Their message came: they have stopped typing.
+    const newest = items.at(-1);
+    useEffect(() => {
+        if (newest?.authorId) stoppedTyping(channelId, newest.authorId);
+    }, [channelId, newest?.id, newest?.authorId]);
     const bottom = useStickToBottom(items.length + waiting.length);
     const [seenOf, setSeenOf] = useState<ChatMessage | null>(null);
 
@@ -94,7 +101,7 @@ function Channel({ channelId }: { channelId: string }) {
 
     return (
         <div className="space-y-1 pb-2">
-            <HeaderTitle>{channelName(channel, t)}</HeaderTitle>
+            <ChannelHeader channel={channel} me={me} />
             {thread.data.next && <EarlierButton channelId={channelId} />}
             {items.length === 0 && waiting.length === 0 && (
                 <EmptyState
@@ -132,6 +139,7 @@ function Channel({ channelId }: { channelId: string }) {
                 name={channelName(channel, t)}
                 readOnly={channel.readOnly}
                 kind={channel.kind}
+                members={channel.members}
             />
             {seenOf && (
                 <SeenBy
@@ -353,11 +361,13 @@ function Composer({
     name,
     readOnly,
     kind,
+    members,
 }: {
     channelId: string;
     name: string;
     readOnly: boolean;
     kind: string;
+    members: Member[];
 }) {
     const t = useT();
     const slug = useSlug();
@@ -385,6 +395,7 @@ function Composer({
         photos.forEach((p) => URL.revokeObjectURL(p.url));
         setPhotos([]);
         setText("");
+        doneTyping(channelId);
         if (box.current) box.current.style.height = "";
     };
     const pick = (files: FileList | null) => {
@@ -396,8 +407,9 @@ function Composer({
     };
     return (
         <FooterSlot>
-            {/* The page's colour behind the corners: the footer under it is white. */}
-            <div className="chat bg-slate-200">
+            {/* The page's colour behind the corners (the typing banner's while it shows): the footer under it is white. */}
+            <div className="chat relative bg-slate-200 has-[[data-typing]]:bg-violet-100">
+                <Typing channelId={channelId} members={members} />
                 <div className="rounded-t-xl bg-white px-3 py-2">
                     {readOnly ? (
                         <p className="py-2 text-center text-sm text-gray-500">
@@ -473,6 +485,7 @@ function Composer({
                                     onBlur={() => setFocused(false)}
                                     onChange={(e) => {
                                         setText(e.target.value);
+                                        if (e.target.value.trim()) sayTyping(slug, channelId);
                                         // Grows with the text, up to about five lines.
                                         e.target.style.height = "auto";
                                         e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
@@ -612,6 +625,32 @@ function SeenBy({
                 )}
             </div>
         </Sheet>
+    );
+}
+
+/** "Budi is typing…" over the message box: its own component, so a typing event re-renders this line only. */
+function Typing({ channelId, members }: { channelId: string; members: Member[] }) {
+    const t = useT();
+    const names = useTyping(channelId)
+        .map((id) => members.find((m) => m.id === id)?.name.split(" ")[0])
+        .filter((n): n is string => !!n);
+    if (names.length === 0) return null;
+    const text =
+        names.length === 1
+            ? t("chat.typingOne").replace("{name}", names[0]!)
+            : names.length === 2
+              ? t("chat.typingTwo").replace("{a}", names[0]!).replace("{b}", names[1]!)
+              : t("chat.typingMany");
+    return (
+        // A banner over the box, as the connection's: always in sight, the messages never move for it.
+        <div
+            role="status"
+            data-typing
+            className="absolute inset-x-0 bottom-full flex animate-fade-in items-center justify-center gap-2 bg-violet-100 px-4 py-1.5 text-sm font-semibold text-violet-900"
+        >
+            <PenLine size={15} strokeWidth={2.5} className="animate-write" aria-hidden />
+            {text}
+        </div>
     );
 }
 

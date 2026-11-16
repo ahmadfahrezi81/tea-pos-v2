@@ -39,10 +39,14 @@ const chatPhotoTTL = 6 * time.Hour
 // chatLimit: about 30 messages a minute per person, so a stuck phone or a loop cannot flood a channel.
 var chatLimit = auth.NewLimiter(30, time.Minute)
 
+// typingLimit: a phone says it is typing at most every 3 seconds; more is dropped quietly.
+var typingLimit = auth.NewLimiter(30, time.Minute)
+
 // chatAccess: anyone with a chat level, from either app (RFC: Chat (v2)).
 var chatAccess = auth.App(auth.Chat, auth.Member)
 
 func registerChat(api huma.API, d Deps) {
+	registerChatTyping(api, d)
 	op := func(id, method, path, summary string) huma.Operation {
 		return huma.Operation{OperationID: id, Method: method, Path: "/tenants/{tenant}/chat" + path, Summary: summary, Tags: []string{"chat"}}
 	}
@@ -277,6 +281,43 @@ func registerChat(api huma.API, d Deps) {
 		})
 }
 
+// registerChatTyping: "Budi is typing", passed to the channel's other members through the hub,
+// never stored; a missed one is already stale.
+func registerChatTyping(api huma.API, d Deps) {
+	route(api, huma.Operation{
+		OperationID: "chatTyping", Method: http.MethodPost, Path: "/tenants/{tenant}/chat/channels/{id}/typing",
+		Summary: "The caller is typing in a channel: its other members are told, nothing is saved", Tags: []string{"chat"},
+		DefaultStatus: http.StatusNoContent,
+	}, chatAccess.Repeatable(),
+		func(ctx context.Context, in *contract.ChatTypingInput) (*struct{}, error) {
+			caller, _ := auth.CallerFrom(ctx)
+			if !typingLimit.Allow(caller.UserID.String()) {
+				return nil, nil
+			}
+			ch, err := chatChannel(ctx, d.Queries, caller, in.ID)
+			if err != nil {
+				return nil, err
+			}
+			if readOnly(ch.Kind, ch.StoreStatus) {
+				return nil, errChannelReadOnly
+			}
+			members, err := d.Queries.ListChatMembers(ctx, ch.ID)
+			if err != nil {
+				return nil, err
+			}
+			for _, m := range members {
+				if m.ID == caller.UserID {
+					continue
+				}
+				e := realtime.Event{Topic: realtime.UserTopic(m.ID.String()), Kind: chatTyping, ID: ch.ID.String(), By: caller.UserID.String()}
+				if err := realtime.Announce(ctx, d.Queries, e); err != nil {
+					return nil, err
+				}
+			}
+			return nil, nil
+		})
+}
+
 // chatChannel is one channel, only if the caller is in it.
 func chatChannel(ctx context.Context, q *store.Queries, caller auth.Caller, id string) (store.GetChatChannelRow, error) {
 	cid, err := uuid(id, errChannelNotFound)
@@ -325,6 +366,8 @@ func nano(t pgtype.Timestamptz) string {
 const (
 	chatChanged = "chat"
 	chatRead    = "chat_read"
+	// Shown for a few seconds, never refetched.
+	chatTyping = "chat_typing"
 )
 
 func announceChat(ctx context.Context, q *store.Queries, kind string, channel pgtype.UUID, users []pgtype.UUID) error {

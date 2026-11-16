@@ -31,6 +31,24 @@
         "gallery": "Galeri",
         "messageTo": "Kirim pesan ke {name}",
         "noMessagesSub": "Sapa duluan untuk mulai ngobrol",
-        "noMessagesInbox": "Kabar untukmu akan muncul di sini"
+        "noMessagesInbox": "Kabar untukmu akan muncul di sini",
+        "info": "Info",
+        "messages": "Pesan",
+        "activity": "Aktivitas",
+        "search": "Cari chat...",
+        "noMatch": "Chat tidak ditemukan",
+        "noActivity": "Belum ada aktivitas",
+        "noActivitySub": "Balasan, mention, dan kabar untukmu akan muncul di sini",
+        "whoGeneral": "Semua orang di perusahaan",
+        "whoStore": "Semua yang bekerja di toko ini",
+        "whoGroup": "Anggota dipilih admin chat",
+        "whoAdmin": "Khusus admin chat",
+        "whoPersonal": "Hanya kamu: kabar dari aplikasi",
+        "oneMember": "1 anggota",
+        "memberCount": "{n} anggota",
+        "typing": "mengetik…",
+        "typingOne": "{name} sedang mengetik…",
+        "typingTwo": "{a} dan {b} sedang mengetik…",
+        "typingMany": "Beberapa orang sedang mengetik…"
     }
 }

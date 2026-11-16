@@ -1,7 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useT } from "@tea-pos/i18n/react";
 import { CirclePlus, MoreHorizontal, Pencil, type LucideIcon } from "lucide-react";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 import { useAccess } from "../session/tenant";
@@ -13,15 +13,29 @@ import { ICON } from "@tea-pos/ui/icon";
 export const HeaderSlotContext = createContext<HTMLElement | null>(null);
 export const HeaderTitleSlotContext = createContext<HTMLElement | null>(null);
 
-/** A title from data (a store's name) in place of the route's, while the screen is on. */
-export function HeaderTitle({ children }: { children: string }) {
+/** A title from data (a store's name) in place of the route's, while the screen is on; with `onClick`, a button (a chat's info). */
+export function HeaderTitle({ children, onClick }: { children: ReactNode; onClick?: () => void }) {
     const target = useContext(HeaderTitleSlotContext);
     useEffect(() => {
         if (!target) return;
         target.classList.add("is-occupied");
         return () => target.classList.remove("is-occupied");
     }, [target]);
-    return target ? createPortal(children, target) : null;
+    if (!target) return null;
+    return createPortal(
+        onClick ? (
+            <button
+                type="button"
+                onClick={onClick}
+                className="block w-full min-w-0 text-left active:opacity-60"
+            >
+                {children}
+            </button>
+        ) : (
+            children
+        ),
+        target,
+    );
 }
 
 /** The fixed set: each kind is one icon with one meaning in every app. */

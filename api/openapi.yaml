@@ -3331,6 +3331,39 @@ paths:
         tenant: true
         repeatable: true
         signedIn: true
+  /tenants/{tenant}/chat/channels/{id}/typing:
+    post:
+      operationId: chatTyping
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "The caller is typing in a channel: its other members are told, nothing is saved"
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        repeatable: true
+        signedIn: true
   /tenants/{tenant}/days:
     get:
       operationId: listDays

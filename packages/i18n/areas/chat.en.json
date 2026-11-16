@@ -31,6 +31,24 @@
         "gallery": "Gallery",
         "messageTo": "Message {name}",
         "noMessagesSub": "Say hi to start the conversation",
-        "noMessagesInbox": "Updates for you will show up here"
+        "noMessagesInbox": "Updates for you will show up here",
+        "info": "Info",
+        "messages": "Messages",
+        "activity": "Activity",
+        "search": "Search chats...",
+        "noMatch": "No chats found",
+        "noActivity": "No activity yet",
+        "noActivitySub": "Replies, mentions and updates for you will show up here",
+        "whoGeneral": "Everyone in the company",
+        "whoStore": "Everyone who works at this store",
+        "whoGroup": "Members chosen by a chat admin",
+        "whoAdmin": "Chat admins only",
+        "whoPersonal": "Only you: updates from the app",
+        "oneMember": "1 member",
+        "memberCount": "{n} members",
+        "typing": "typing…",
+        "typingOne": "{name} is typing…",
+        "typingTwo": "{a} and {b} are typing…",
+        "typingMany": "Several people are typing…"
     }
 }

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -340,5 +341,45 @@ func TestPushSubscription(t *testing.T) {
 	}
 	if n := count(t, db, `SELECT count(*) FROM push_subscriptions`); n != 0 {
 		t.Fatalf("%d rows after off", n)
+	}
+}
+
+func TestChatTyping(t *testing.T) {
+	db := testkit.DB(t)
+	giveChat(t, db, testkit.SellerA, "member")
+	giveChat(t, db, testkit.AdminA, "admin")
+	url := testkit.NewRealtime(t, db)
+	a := testkit.NewAPI(t, db, "")
+	general := channelOf(t, a, testkit.SellerA, "seller", "general", "")
+	channelOf(t, a, testkit.AdminA, "backoffice", "general", "")
+
+	adminToken := a.SignIn(t, testkit.AdminA, "backoffice")
+	admin, _, err := dial(t, url, "backoffice", adminToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	subscribe(t, admin, "user:"+testkit.AdminA)
+	sellerToken := a.SignIn(t, testkit.SellerA, "seller")
+	seller, _, err := dial(t, url, "seller", sellerToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	subscribe(t, seller, "user:"+testkit.SellerA)
+
+	typing := func(app, token, channel string) *http.Response {
+		return a.Request(t, http.MethodPost, "/tenants/tenant-a/chat/channels/"+channel+"/typing", app, testkit.Session(token))
+	}
+	if resp := typing("seller", sellerToken, general); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("typing: %d", resp.StatusCode)
+	}
+	if m := next(t, admin, 2*time.Second); m["kind"] != "chat_typing" || m["id"] != general || m["by"] != testkit.SellerA {
+		t.Fatalf("the other member: %v", m)
+	}
+	if m := next(t, seller, 300*time.Millisecond); m != nil {
+		t.Fatalf("the typer heard themselves: %v", m)
+	}
+	inbox := channelOf(t, a, testkit.SellerA, "seller", "personal", "")
+	if resp := typing("seller", sellerToken, inbox); resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("inbox: %d", resp.StatusCode)
 	}
 }

@@ -112,3 +112,8 @@ type ReadChatInput struct {
 		At string `json:"at" format:"date-time" doc:"Everything up to this message's time is read; only ever moves forward"`
 	}
 }
+
+type ChatTypingInput struct {
+	Tenant string `path:"tenant"`
+	ID     string `path:"id" format:"uuid"`
+}
