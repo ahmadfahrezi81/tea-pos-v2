@@ -21,7 +21,7 @@ export function SearchBox({
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
-                className="flex-1 text-base text-gray-900 placeholder:text-gray-400 bg-transparent outline-none"
+                className="flex-1 text-base text-gray-900 placeholder:text-gray-500 bg-transparent outline-none"
             />
             {value && (
                 <button

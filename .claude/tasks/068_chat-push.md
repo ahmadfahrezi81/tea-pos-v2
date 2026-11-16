@@ -1,6 +1,6 @@
 # Task 068 — Chat: push notifications
 
-**Status: built 2026-11-15 on `feat/chat-phase-1` (local only, no push), approved by the owner with the RFC that night. Works once the VAPID keys below are in Infisical.**
+**Status: built 2026-11-15 on `feat/chat-phase-1` (in the PR into staging, 2026-11-16), approved by the owner with the RFC that night. VAPID keys in Infisical staging (2026-11-16).**
 
 ## The goal
 

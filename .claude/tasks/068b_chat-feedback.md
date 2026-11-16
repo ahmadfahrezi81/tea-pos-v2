@@ -1,6 +1,6 @@
 # Task 068b — Feedback: Chat phase 1
 
-**Status: open 2026-11-16. The owner tests `feat/chat-phase-1` locally (`scripts/local-db.sh`); each item is written here as said, then built one by one. No push, no PR until the owner says so.**
+**Status: built 2026-11-16 (items 1-23), in the PR into staging; the owner tests photos and push there, on the phone.**
 
 ## The goal
 
@@ -143,3 +143,9 @@ The owner's feedback on chat's screens (tasks 065-068), before the branch goes t
 **Said:** a badge beside chat admins' names, as Slack's VIP; called VIP (the admins are the family and the owner anyway).
 
 **Done:** `ChatMember.admin` from `ListChatMembers` (the owner, or chat level admin); a small "VIP" (the bubbles' violet, light grey letters) beside their name in the channel's info and on their messages (the name over others' bubbles; the owner looked for it there first).
+
+### 23. Readable greys, every app (Both, done)
+
+**Said:** "Message General" is too light; yes to darkening the search box and every list's second line too.
+
+**Done:** hints (the message box, `SearchBox`) `gray-400` → `gray-500`; `ListRow`'s second line (stores' hours, "Asked 2 days ago", pay types' codes) `gray-400` → `gray-600`, in every list of both apps.

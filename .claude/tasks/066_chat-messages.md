@@ -1,6 +1,6 @@
 # Task 066 — Chat: reading and posting
 
-**Status: built 2026-11-15 on `feat/chat-phase-1` (local only, no push), approved by the owner with the RFC that night.**
+**Status: built 2026-11-15 on `feat/chat-phase-1` (in the PR into staging, 2026-11-16), approved by the owner with the RFC that night.**
 
 ## The goal
 

@@ -504,7 +504,7 @@ function Composer({
                                         e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
                                     }}
                                     placeholder={t("chat.messageTo").replace("{name}", name)}
-                                    className={`block h-10 max-h-32 min-w-0 resize-none py-2.5 text-[16px] leading-5 text-gray-900 outline-none placeholder:text-gray-400 ${open ? "order-1 basis-full" : "order-2 flex-1"} px-1`}
+                                    className={`block h-10 max-h-32 min-w-0 resize-none py-2.5 text-[16px] leading-5 text-gray-900 outline-none placeholder:text-gray-500 ${open ? "order-1 basis-full" : "order-2 flex-1"} px-1`}
                                 />
                                 {open && (
                                     <button
