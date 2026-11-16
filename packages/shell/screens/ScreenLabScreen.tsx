@@ -17,6 +17,8 @@ interface Case {
     title: string;
     steps: string;
     control?: () => ReactNode;
+    /** A focus screen: the header may slide away to fit the field (a code at the bottom). */
+    focus?: boolean;
 }
 
 const field =
@@ -49,6 +51,27 @@ const CASES: Case[] = [
                     <input className={field} placeholder="Like chat's message box" />
                 </div>
             </FooterSlot>
+        ),
+    },
+    {
+        id: "keyboard-focus",
+        title: "Keyboard: a code at the bottom (focus screen)",
+        steps: "Tap the code field at the bottom, then tap Finish. The header may move here; the field must stay above the keyboard.",
+        focus: true,
+        control: () => (
+            <div className="flex min-h-[70vh] flex-col justify-end gap-3">
+                <input
+                    className={field}
+                    inputMode="numeric"
+                    placeholder="Like the store's opening code"
+                />
+                <button
+                    type="button"
+                    className="w-full rounded-xl bg-brand py-3 font-semibold text-white"
+                >
+                    Open the store
+                </button>
+            </div>
         ),
     },
     {
@@ -151,9 +174,14 @@ export function ScreenLabScreen() {
     const [results, setResults] = useState<Result[]>([]);
     const [copied, setCopied] = useState(false);
     const recorder = useRef<Recorder | null>(null);
+    const listAt = useRef(0);
 
     const start = (c: Case) => {
         recorder.current = new Recorder();
+        // A case starts at the top, as a new screen; the list keeps its place for after.
+        const scroller = document.getElementById("shell-scroll");
+        listAt.current = scroller?.scrollTop ?? 0;
+        scroller?.scrollTo({ top: 0 });
         recorder.current.start();
         setActive(c);
     };
@@ -164,13 +192,16 @@ export function ScreenLabScreen() {
         (document.activeElement as HTMLElement | null)?.blur?.();
         await r.settled();
         const samples = r.stop();
-        const verdict = judge(samples, { headerStill: true, fills: installed() });
+        const verdict = judge(samples, { headerStill: !active.focus, fills: installed() });
         setResults((all) => [
             { id: active.id, title: active.title, verdict, samples: samples.length },
             ...all.filter((x) => x.id !== active.id),
         ]);
         recorder.current = null;
         setActive(null);
+        requestAnimationFrame(() =>
+            document.getElementById("shell-scroll")?.scrollTo({ top: listAt.current }),
+        );
         setBusy(false);
     };
     const copy = () => {

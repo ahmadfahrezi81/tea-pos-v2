@@ -19,6 +19,7 @@ const rest = (t: number, over: Partial<Sample> = {}): Sample => ({
     headerTop: 0,
     keyboard: 0,
     focused: false,
+    fieldBottom: 0,
     ...over,
 });
 
@@ -74,6 +75,33 @@ describe("judge", () => {
         expect(v.pass).toBe(false);
         expect(v.problems).toContain("at the end the page is left scrolled 60px");
         expect(v.problems).toContain("at the end the app is 700px tall, the screen 760px");
+    });
+
+    it("fails a field left under the keyboard, on any kind of screen", () => {
+        const run = [
+            rest(0),
+            rest(50, { focused: true, visible: 470, fieldBottom: 700 }),
+            rest(800),
+        ];
+        const v = judge(run, { headerStill: false, fills: true });
+        expect(v.problems).toEqual(["the field was 230px under the keyboard"]);
+    });
+
+    it("lets a focus screen slide its header away to fit the field", () => {
+        const run = [
+            rest(0),
+            rest(60, {
+                focused: true,
+                visible: 470,
+                offset: 250,
+                headerTop: -250,
+                frameTop: -250,
+                fieldBottom: 440,
+            }),
+            rest(900),
+        ];
+        expect(judge(run, { headerStill: false, fills: true }).pass).toBe(true);
+        expect(judge(run, STILL).pass).toBe(false);
     });
 
     it("does not judge what a pinch zoom or a rotation does", () => {

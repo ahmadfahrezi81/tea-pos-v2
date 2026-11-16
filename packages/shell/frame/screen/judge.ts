@@ -11,7 +11,10 @@ const TOLERANCE = 1;
 const MIN_KEYBOARD = 120;
 
 export interface Expect {
-    /** The header must not move while the case runs. */
+    /**
+     * The header must not move while the case runs: an app screen (chat, search, a form). A
+     * focus screen (a code at the bottom of the screen) may slide it away to fit the field.
+     */
     headerStill: boolean;
     /** The app must fill the screen at the end: installed only (a tab's toolbars change it). */
     fills: boolean;
@@ -56,6 +59,15 @@ export function judge(samples: Sample[], expect: Expect): Verdict {
     );
     if (expect.headerStill && headerMovedBy > TOLERANCE)
         problems.push(`the header moved ${headerMovedBy}px`);
+
+    // Every kind of screen: a field being typed in is never under the keyboard.
+    const hidden = Math.max(
+        0,
+        ...judged
+            .filter((s) => s.focused && first.visible - s.visible >= MIN_KEYBOARD)
+            .map((s) => s.fieldBottom - s.visible),
+    );
+    if (hidden > TOLERANCE) problems.push(`the field was ${hidden}px under the keyboard`);
 
     // After the case: the app fills what is visible, from its top, and nothing is left slid.
     if (expect.fills && Math.abs(last.frameHeight - last.visible) > TOLERANCE)

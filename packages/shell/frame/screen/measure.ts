@@ -24,6 +24,8 @@ export interface Sample {
     /** Android's own report of the keyboard's height, where it gives one. */
     keyboard: number;
     focused: boolean;
+    /** The focused field's bottom, from the top of what is seen; 0 without one. */
+    fieldBottom: number;
 }
 
 type VirtualKeyboard = { boundingRect: DOMRect };
@@ -50,6 +52,10 @@ export function readSample(t: number): Sample {
         frameHeight: Math.round(frameBox?.height ?? 0),
         headerTop: Math.round((header?.top ?? 0) - slid),
         keyboard: Math.round(vk?.boundingRect.height ?? 0),
+        fieldBottom:
+            el instanceof HTMLElement && el !== document.body
+                ? Math.round(el.getBoundingClientRect().bottom - slid)
+                : 0,
         focused:
             el instanceof HTMLTextAreaElement ||
             (el instanceof HTMLInputElement && el.type !== "file" && el.type !== "button") ||
@@ -68,7 +74,8 @@ const same = (a: Sample, b: Sample) =>
     a.frameHeight === b.frameHeight &&
     a.headerTop === b.headerTop &&
     a.keyboard === b.keyboard &&
-    a.focused === b.focused;
+    a.focused === b.focused &&
+    a.fieldBottom === b.fieldBottom;
 
 /** Unchanged this long: the phone has settled. */
 export const SETTLE_MS = 300;
