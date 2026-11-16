@@ -718,5 +718,23 @@ function useStickToBottom(count: number) {
         if (first.current || near) end.current.scrollIntoView({ block: "end" });
         first.current = false;
     }, [count]);
+    // The page shrinking for the keyboard keeps the newest message in view, as chat apps do.
+    useEffect(() => {
+        const scroller = document.getElementById("shell-scroll");
+        if (!scroller) return;
+        let atBottom = true;
+        const onScroll = () => {
+            atBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 40;
+        };
+        const resized = new ResizeObserver(() => {
+            if (atBottom) scroller.scrollTop = scroller.scrollHeight;
+        });
+        scroller.addEventListener("scroll", onScroll, { passive: true });
+        resized.observe(scroller);
+        return () => {
+            scroller.removeEventListener("scroll", onScroll);
+            resized.disconnect();
+        };
+    }, []);
     return end;
 }
