@@ -4,6 +4,8 @@
    until its exit has played. */
 @theme {
     --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+    /* About the iPhone keyboard's own curve: a bar riding it arrives with it. */
+    --ease-keyboard: cubic-bezier(0.38, 0.7, 0.125, 1);
 
     /* A backdrop, a tab's content. */
     --animate-fade-in: fade-in 200ms ease-out both;
@@ -111,5 +113,19 @@
     /* A loop at 1 ms would flicker: it stands still instead. */
     .animate-write {
         animation: none !important;
+    }
+}
+
+/* The screen's bottom bar on the keyboard (shell's keyboard.ts): one movement, in step with it. */
+.keyboard-ride {
+    transform: translateY(calc(-1 * var(--keyboard-lift, 0px)));
+    transition: transform 250ms var(--ease-keyboard);
+}
+:root[data-keyboard-fast] .keyboard-ride {
+    transition-duration: 90ms;
+}
+@media (prefers-reduced-motion: reduce) {
+    .keyboard-ride {
+        transition: none;
     }
 }
