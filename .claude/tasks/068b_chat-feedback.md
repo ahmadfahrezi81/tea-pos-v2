@@ -137,3 +137,9 @@ The owner's feedback on chat's screens (tasks 065-068), before the branch goes t
 **Said:** the message is too light a grey on white, the time smaller and darker than it, and the two lines do not line up.
 
 **Done:** a channel row is one grid (name | time, message | count); the message and the time the same colour (`gray-600`, the message near black while unread), the same size (14 px), digits of equal width (`tabular-nums`; mono was tried and dropped: odd on words like "Yesterday", uneven on Android). The shared `ListRow` subtitle (`gray-400`) is unchanged: the owner's to decide for every list.
+
+### 22. A VIP badge on chat admins (Both, done)
+
+**Said:** a badge beside chat admins' names, as Slack's VIP; called VIP (the admins are the family and the owner anyway).
+
+**Done:** `ChatMember.admin` from `ListChatMembers` (the owner, or chat level admin); a small violet "VIP" beside their name in the channel's info. Not in the bubbles: one place first.

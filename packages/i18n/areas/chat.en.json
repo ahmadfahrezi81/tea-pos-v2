@@ -49,6 +49,7 @@
         "typing": "typing…",
         "typingOne": "{name} is typing…",
         "typingTwo": "{a} and {b} are typing…",
-        "typingMany": "Several people are typing…"
+        "typingMany": "Several people are typing…",
+        "vip": "VIP"
     }
 }

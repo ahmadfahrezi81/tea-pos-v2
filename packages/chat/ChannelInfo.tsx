@@ -3,6 +3,7 @@ import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
 import { Avatar } from "@tea-pos/ui/Avatar";
+import { Badge } from "@tea-pos/ui/Badge";
 import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 import { Sheet } from "@tea-pos/ui/Sheet";
 import { useState } from "react";
@@ -104,8 +105,11 @@ function ChannelInfo({
                                 className="flex items-center gap-3 border-b border-slate-100 py-2.5 last:border-b-0"
                             >
                                 <Avatar url={m.avatar} size={32} />
-                                <span className="flex-1 truncate text-[16px] text-gray-900">
-                                    {m.id === me ? `${m.name} (${t("chat.you")})` : m.name}
+                                <span className="flex min-w-0 flex-1 items-center gap-2">
+                                    <span className="truncate text-[16px] text-gray-900">
+                                        {m.id === me ? `${m.name} (${t("chat.you")})` : m.name}
+                                    </span>
+                                    {m.admin && <Badge tone="violet">{t("chat.vip")}</Badge>}
                                 </span>
                             </div>
                         ))}

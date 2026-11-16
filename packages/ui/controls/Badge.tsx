@@ -5,6 +5,8 @@ const TONE = {
     // The apps' brand colours: Tea-Seller blue, Tea-Office orange.
     blue: "bg-blue-100 text-blue-800",
     orange: "bg-orange-100 text-orange-800",
+    // Chat's.
+    violet: "bg-violet-100 text-violet-800",
 } as const;
 
 /** A small square-cornered tag on a row: an app and its level, a state. */

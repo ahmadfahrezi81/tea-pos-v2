@@ -230,6 +230,9 @@ components:
     ChatMember:
       additionalProperties: false
       properties:
+        admin:
+          description: "A chat admin (the owner, or chat level admin): the VIP badge"
+          type: boolean
         avatar:
           type: string
         id:

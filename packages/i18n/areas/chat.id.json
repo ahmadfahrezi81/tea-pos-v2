@@ -49,6 +49,7 @@
         "typing": "mengetik…",
         "typingOne": "{name} sedang mengetik…",
         "typingTwo": "{a} dan {b} sedang mengetik…",
-        "typingMany": "Beberapa orang sedang mengetik…"
+        "typingMany": "Beberapa orang sedang mengetik…",
+        "vip": "VIP"
     }
 }

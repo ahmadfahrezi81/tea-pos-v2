@@ -73,7 +73,8 @@ END;
 
 -- name: ListChatMembers :many
 -- Everyone in a channel, with how far they have read: Seen by, Not yet, and who to tell.
-SELECT u.id, u.full_name, coalesce(u.avatar_url, '')::text AS avatar_url, r.last_read_at
+SELECT u.id, u.full_name, coalesce(u.avatar_url, '')::text AS avatar_url, r.last_read_at,
+    coalesce(t.owner_id = a.user_id OR x.access = 'admin', false)::bool AS chat_admin
 FROM chat_channels c
 JOIN tenants t ON t.id = c.tenant_id
 JOIN user_tenant_assignments a ON a.tenant_id = c.tenant_id AND a.status = 'active'

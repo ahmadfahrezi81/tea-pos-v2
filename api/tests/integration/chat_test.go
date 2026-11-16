@@ -154,8 +154,22 @@ func TestChatMembers(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Admin A has chat but does not work Central: a store's chat is whoever works it.
-	if len(out.Body.Members) != 1 || out.Body.Members[0].Name != "Seller A" {
+	if len(out.Body.Members) != 1 || out.Body.Members[0].Name != "Seller A" || out.Body.Members[0].Admin {
 		t.Fatalf("members %+v", out.Body.Members)
+	}
+	// In General, the chat admin wears the badge and the member does not.
+	general := channelOf(t, a, testkit.SellerA, "seller", "general", "")
+	resp = a.Request(t, http.MethodGet, "/tenants/tenant-a/chat/channels/"+general, "seller", testkit.Session(a.SignIn(t, testkit.SellerA, "seller")))
+	out = contract.ChatChannelOutput{}
+	if err := json.NewDecoder(resp.Body).Decode(&out.Body); err != nil {
+		t.Fatal(err)
+	}
+	admins := map[string]bool{}
+	for _, m := range out.Body.Members {
+		admins[m.ID] = m.Admin
+	}
+	if !admins[testkit.AdminA] || admins[testkit.SellerA] {
+		t.Fatalf("admins %+v", admins)
 	}
 }
 

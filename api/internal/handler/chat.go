@@ -110,6 +110,7 @@ func registerChat(api huma.API, d Deps) {
 			for i, m := range members {
 				out.Body.Members[i] = contract.ChatMember{
 					ID: m.ID.String(), Name: m.FullName, Avatar: m.AvatarUrl, ReadAt: readAt(m.LastReadAt),
+					Admin: m.ChatAdmin,
 				}
 			}
 			return out, nil

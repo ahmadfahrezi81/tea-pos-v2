@@ -1303,6 +1303,8 @@ export interface components {
             channels: components["schemas"]["ChatChannel"][];
         };
         ChatMember: {
+            /** @description A chat admin (the owner, or chat level admin): the VIP badge */
+            admin?: boolean;
             avatar?: string;
             /** Format: uuid */
             id: string;

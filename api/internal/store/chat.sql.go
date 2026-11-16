@@ -285,7 +285,8 @@ func (q *Queries) ListChatChannels(ctx context.Context, arg ListChatChannelsPara
 }
 
 const listChatMembers = `-- name: ListChatMembers :many
-SELECT u.id, u.full_name, coalesce(u.avatar_url, '')::text AS avatar_url, r.last_read_at
+SELECT u.id, u.full_name, coalesce(u.avatar_url, '')::text AS avatar_url, r.last_read_at,
+    coalesce(t.owner_id = a.user_id OR x.access = 'admin', false)::bool AS chat_admin
 FROM chat_channels c
 JOIN tenants t ON t.id = c.tenant_id
 JOIN user_tenant_assignments a ON a.tenant_id = c.tenant_id AND a.status = 'active'
@@ -309,6 +310,7 @@ type ListChatMembersRow struct {
 	FullName   string
 	AvatarUrl  string
 	LastReadAt pgtype.Timestamptz
+	ChatAdmin  bool
 }
 
 // Everyone in a channel, with how far they have read: Seen by, Not yet, and who to tell.
@@ -326,6 +328,7 @@ func (q *Queries) ListChatMembers(ctx context.Context, channelID pgtype.UUID) ([
 			&i.FullName,
 			&i.AvatarUrl,
 			&i.LastReadAt,
+			&i.ChatAdmin,
 		); err != nil {
 			return nil, err
 		}
