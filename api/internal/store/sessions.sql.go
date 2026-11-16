@@ -76,7 +76,7 @@ func (q *Queries) DeleteUserSessions(ctx context.Context, userID pgtype.UUID) er
 
 const getSession = `-- name: GetSession :one
 SELECT s.id, s.user_id, s.app, s.last_seen_at, s.expires_at, u.role, u.status,
-    coalesce(ARRAY(SELECT DISTINCT x.app FROM user_app_access x WHERE x.user_id = u.id), '{}')::text[] AS apps
+    coalesce(ARRAY(SELECT DISTINCT x.app FROM user_app_access x WHERE x.user_id = u.id AND x.app <> 'chat'), '{}')::text[] AS apps
 FROM sessions s
 JOIN users u ON u.id = s.user_id
 WHERE s.token_hash = $1 AND s.expires_at > now()

@@ -26,7 +26,14 @@ export function MobileFooterNav({ tabs, currentPath, onTabClick }: MobileFooterN
                                     : "text-gray-600 hover:text-brand"
                             }`}
                         >
-                            <Icon size={26} strokeWidth={2.2} />
+                            <span className="relative">
+                                <Icon size={26} strokeWidth={2.2} />
+                                {!!tab.badge && (
+                                    <span className="absolute -top-1.5 left-4 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[11px] font-bold leading-[18px] text-center">
+                                        {tab.badge > 99 ? "99+" : tab.badge}
+                                    </span>
+                                )}
+                            </span>
                             <span className="text-[11px] font-medium tracking-wide">
                                 {t(tab.labelKey)}
                             </span>

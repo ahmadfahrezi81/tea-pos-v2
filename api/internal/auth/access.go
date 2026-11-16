@@ -81,6 +81,24 @@ const (
 var Levels = map[string][]Level{
 	"seller":     {Member},
 	"backoffice": {Guest, Admin},
+	"chat":       {Member, Admin},
+}
+
+// Chat is the app shown inside the others: its routes are reached from any app's session, with
+// the caller's chat level checked, not their level in the app around it.
+const Chat = "chat"
+
+// ChatLevel is someone's chat level in one tenant: the owner always an admin, an inactive member
+// none, else their chat row; never users.role, so nobody has chat until given it.
+func ChatLevel(status string, owner bool, access string) Level {
+	switch {
+	case status != "active":
+		return None
+	case owner:
+		return Admin
+	default:
+		return Level(access)
+	}
 }
 
 // AtLeast reports whether l reaches want.

@@ -21,6 +21,8 @@ type Event struct {
 	Topic string `json:"topic"`
 	Kind  string `json:"kind"`
 	ID    string `json:"id,omitempty"`
+	// By: who did it, when the phones show it without a refetch (someone typing).
+	By string `json:"by,omitempty"`
 }
 
 // Kinds this code sends.

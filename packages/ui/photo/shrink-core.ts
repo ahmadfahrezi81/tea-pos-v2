@@ -24,6 +24,7 @@ export async function shrinkCore(
     file: Blob,
     canvas: (w: number, h: number) => Canvas,
     crop = true,
+    maxSide = MAX_SIDE,
 ): Promise<Blob> {
     // "from-image" applies the photo's own rotation, so a portrait stays a portrait.
     const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
@@ -33,7 +34,7 @@ export async function shrinkCore(
         // A screenshot (a transfer receipt) keeps its full height: crop={false}.
         if (crop && sw / sh > MAX_ASPECT) sw = Math.round(sh * MAX_ASPECT);
         else if (crop && sw / sh < MIN_ASPECT) sh = Math.round(sw / MIN_ASPECT);
-        const scale = Math.min(1, MAX_SIDE / Math.max(sw, sh));
+        const scale = Math.min(1, maxSide / Math.max(sw, sh));
         const w = Math.round(sw * scale);
         const h = Math.round(sh * scale);
 

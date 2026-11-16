@@ -17,6 +17,7 @@ import (
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/files"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/handler"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/jobs"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/middleware"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/realtime"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
@@ -80,6 +81,7 @@ func NewAPIWith(t *testing.T, pool *pgxpool.Pool, o Options) *API {
 		TestLoginKey:   TestLoginKey,
 		Flags:          o.Flags,
 		Files:          files.NewStorage(o.StorageURL, "test-secret-key"),
+		Jobs:           inserter(t, pool),
 	})
 	srv := httptest.NewServer(middleware.Standard(mux, middleware.Options{RequestTimeout: 5 * time.Second, EdgeSecret: EdgeSecret, MinAppVersions: o.MinAppVersions}))
 	t.Cleanup(srv.Close)
@@ -160,4 +162,13 @@ func NewRealtime(t *testing.T, pool *pgxpool.Pool) string {
 	// LISTEN is set up a moment after start; announcements before it would be missed.
 	time.Sleep(200 * time.Millisecond)
 	return "ws" + strings.TrimPrefix(srv.URL, "http") + "/realtime"
+}
+
+func inserter(t *testing.T, pool *pgxpool.Pool) *jobs.Client {
+	t.Helper()
+	c, err := jobs.NewInserter(pool)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return c
 }

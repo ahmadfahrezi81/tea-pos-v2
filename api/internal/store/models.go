@@ -64,6 +64,52 @@ type AuthUser struct {
 	Email pgtype.Text
 }
 
+type ChatChannel struct {
+	ID            pgtype.UUID
+	TenantID      pgtype.UUID
+	Kind          string
+	StoreID       pgtype.UUID
+	UserID        pgtype.UUID
+	Name          pgtype.Text
+	CreatedBy     pgtype.UUID
+	LastMessageID pgtype.UUID
+	LastMessageAt pgtype.Timestamptz
+	CreatedAt     pgtype.Timestamptz
+}
+
+type ChatMessage struct {
+	ID           pgtype.UUID
+	TenantID     pgtype.UUID
+	ChannelID    pgtype.UUID
+	ThreadRootID pgtype.UUID
+	AuthorType   string
+	AuthorID     pgtype.UUID
+	EventType    pgtype.Text
+	Body         string
+	Metadata     []byte
+	ClientKey    pgtype.Text
+	EditedAt     pgtype.Timestamptz
+	DeletedAt    pgtype.Timestamptz
+	CreatedAt    pgtype.Timestamptz
+}
+
+type ChatMessagePhoto struct {
+	MessageID   pgtype.UUID
+	Position    int16
+	Path        string
+	PreviewPath string
+	Width       int32
+	Height      int32
+}
+
+type ChatRead struct {
+	UserID      pgtype.UUID
+	ChannelID   pgtype.UUID
+	LastReadAt  pgtype.Timestamptz
+	NotifyLevel string
+	UpdatedAt   pgtype.Timestamptz
+}
+
 type IdempotencyKey struct {
 	UserID      pgtype.UUID
 	Key         string
@@ -172,6 +218,17 @@ type PayrollUserInfo struct {
 	BankAccountHolder  pgtype.Text
 	CreatedAt          pgtype.Timestamptz
 	UpdatedAt          pgtype.Timestamptz
+}
+
+type PushSubscription struct {
+	ID         pgtype.UUID
+	UserID     pgtype.UUID
+	Endpoint   string
+	P256dh     string
+	Auth       string
+	UserAgent  string
+	CreatedAt  pgtype.Timestamptz
+	LastSeenAt pgtype.Timestamptz
 }
 
 type RiverRiverJob struct {

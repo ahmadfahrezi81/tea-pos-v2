@@ -20,6 +20,6 @@ export const Route = createFileRoute("/_shell")(
         },
         { path: "orders", labelKey: "nav.orders", icon: ReceiptText },
         { path: "analytics", labelKey: "nav.analytics", icon: ChartNoAxesCombined },
-        { path: "chats", labelKey: "nav.chats", icon: MessagesSquare },
+        { path: "chats", labelKey: "nav.chats", icon: MessagesSquare, chat: true },
     ]),
 );

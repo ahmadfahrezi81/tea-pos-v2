@@ -15,7 +15,7 @@ supabase migration new <name>   # migrations live only here; never name one by h
 
 Go, against the staging database: `cd api && infisical run --env=staging --path=/app -- go run ./cmd/api` (needs `infisical login` once).
 
-`pnpm backoffice` and `pnpm seller`: local Go and the app's Vite together, on the staging database (`scripts/dev.sh`; restart it after a Go change). Run both at once: the second reuses the first's Go. The API's reference: `http://localhost:5173/api/docs`, on a laptop only. `pnpm backoffice:prod` and `pnpm seller:prod`: the same on production's database (Go on 8081, staging's on 8080); Vite refuses every write but sign-in (`READ_ONLY`), so test saves on staging. Vite proxies `/api` to staging the way the Pages forwarder does, adding `EDGE_SECRET`. `pnpm bundle-size` (after `pnpm build`) checks each app's first screen against its budget in `scripts/bundle-size.mjs`; until v1 retires both budgets are 500 KB, so no step stops to trim; they come back down after the migration. `pnpm bench <url>` runs the RFC's benchmark (20× CPU, Slow 4G, signed in, medians of 3 reopens and 3 first visits); `pnpm bench --sign-in <url>` once per app first.
+`pnpm backoffice` and `pnpm seller`: local Go and the app's Vite together, on the staging database (`scripts/dev.sh`; restart it after a Go change). Run both at once: the second reuses the first's Go. The API's reference: `http://localhost:5173/api/docs`, on a laptop only. `pnpm backoffice:prod` and `pnpm seller:prod`: the same on production's database (Go on 8081, staging's on 8080); Vite refuses every write but sign-in (`READ_ONLY`), so test saves on staging. Vite proxies `/api` to staging the way the Pages forwarder does, adding `EDGE_SECRET`. `scripts/local-db.sh <app>`: the app and local Go on a local copy of staging (Postgres 17 on 5433, Go on 8090, the live updates hub on 8091) with this checkout's new migrations applied, for a feature whose tables staging lacks; staging is only read (`FRESH=1` copies it again). `pnpm bundle-size` (after `pnpm build`) checks each app's first screen against its budget in `scripts/bundle-size.mjs`; until v1 retires both budgets are 500 KB, so no step stops to trim; they come back down after the migration. `pnpm bench <url>` runs the RFC's benchmark (20× CPU, Slow 4G, signed in, medians of 3 reopens and 3 first visits); `pnpm bench --sign-in <url>` once per app first.
 
 Database:
 
@@ -68,13 +68,15 @@ apps/seller, backoffice  Vite apps, Pages projects tea-pos and tea-office. app.c
                      per app (name, brand colour, sign-in words, languages). src/routes: TanStack Router file
                      routes (routeTree.gen.ts generated). functions/api forwards /api to Railway
 packages/config/     the shared Vite setup (React Compiler, Tailwind, PWA, routes) and tsconfig for apps
-packages/ui/         components and the theme (styles/globals.css, incl. the 480px phone-width column) for every app:
+packages/ui/         components and the theme (styles/globals.css, incl. the 430px phone-width column) for every app:
                      layout/ (Panel, ListRow, Sheet, Drawer), feedback/ (EmptyState, Skeleton), controls/ (SearchBox, Badge,
                      Avatar), form/, chart/, photo/, lib/ (ICON, motion); styles/motion.css the shared animations
 packages/shell/      the mobile shell, sign-in, boot and update screens, startApp: what every app is built from;
                      screens/, views/ (shared views: a day, an order), frame/ (header, footer, sheets; update/,
                      refresh/), session/ (tenant, session, app), lib/; package.json
                      exports each by name, so imports stay `@tea-pos/shell/<Name>`
+packages/chat/       chat's screens (its own app in the access model, shown inside seller and backoffice), loaded only when
+                     the Chats tab opens; the channels hook for the tab's count is in api-client/chat.ts
 packages/format/     dates and money for display, Intl only, in the store's time zone
 packages/edge/       the /api forwarder: drops /api, adds X-Edge-Secret and X-Client-IP
 packages/api-client/ generated types, the fetch client, React Query hooks, the query cache saved per user (query.ts)

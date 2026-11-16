@@ -6,6 +6,7 @@
         ".": "./index.ts",
         "./query": "./query.ts",
         "./me": "./me.ts",
+        "./chat": "./chat.ts",
         "./status": "./status.ts",
         "./live": "./live.ts",
         "./files": "./files.ts",

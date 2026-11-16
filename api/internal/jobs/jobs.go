@@ -14,6 +14,7 @@ import (
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/domain"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/push"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/weather"
 )
@@ -40,6 +41,8 @@ func Insert(ctx context.Context, c *Client, tx pgx.Tx, args river.JobArgs) error
 type Deps struct {
 	Weather *weather.Fetcher
 	Queries *store.Queries
+	// Push sends chat's notifications; nil (no VAPID keys) sends none.
+	Push *push.Sender
 }
 
 // Schedule is one job on v2's cron, with when it runs in each environment; nil is never.
@@ -66,6 +69,7 @@ func NewWorker(pool *pgxpool.Pool, d Deps, env string, schedule bool) (*Client, 
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &WeatherWorker{Fetcher: d.Weather})
 	river.AddWorker(workers, &CleanupWorker{Queries: d.Queries})
+	river.AddWorker(workers, &ChatPushWorker{Queries: d.Queries, Push: d.Push})
 
 	var periodic []*river.PeriodicJob
 	for _, s := range Schedules {

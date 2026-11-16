@@ -12,6 +12,7 @@ import (
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/files"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/httpx"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/idem"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/jobs"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/telemetry"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/version"
@@ -38,6 +39,10 @@ type Deps struct {
 	Flags auth.Flags
 	// Files signs uploads and private reads in Supabase Storage.
 	Files *files.Storage
+	// Jobs queues background work inside a write's transaction; nil queues none.
+	Jobs *jobs.Client
+	// VapidPublicKey is what phones subscribe to push with; empty while push is off.
+	VapidPublicKey string
 }
 
 // NewAPI mounts the contract on mux, and on a laptop the reference (/docs).
@@ -72,6 +77,8 @@ func NewAPI(mux *http.ServeMux, d Deps) huma.API {
 	registerSeller(api, d)
 	registerMine(api, d)
 	registerUac(api, d)
+	registerChat(api, d)
+	registerPush(api, d)
 	registerTestLogin(api, d)
 	if d.Docs {
 		registerDocs(mux, api)

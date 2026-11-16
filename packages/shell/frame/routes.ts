@@ -44,4 +44,6 @@ export type Tab = {
         labelKey: MessageKey;
         icon: LucideIcon;
     };
+    /** A count on the tab (Chats' unread); none or 0 shows nothing. */
+    badge?: number;
 };

@@ -107,6 +107,11 @@
         "moreActions": "More actions",
         "maintenance": "Under Maintenance",
         "maintenanceSub": "We're making some updates to improve your experience. We'll be back shortly.",
+        "notifications": "Notifications",
+        "chatNotifications": "Chat notifications",
+        "onThisPhone": "On for this phone",
+        "offThisPhone": "Off for this phone",
+        "notificationsBlocked": "Blocked: allow notifications in the phone's settings",
         "allStores": "All Stores",
         "pickStore": "Select Store",
         "comingSoon": "{name} is coming soon",
@@ -157,6 +162,10 @@
         "outdated": "Outdated"
     },
     "errors": {
+        "channel_read_only": "Nobody can post in this chat",
+        "blank_message": "Write something first",
+        "chat_too_fast": "Too many messages. Wait a moment.",
+        "channel_not_found": "That chat was not found",
         "account_inactive": "This account isn't active. Ask the owner.",
         "app_too_old": "This version is too old. Updating…",
         "bad_request": "Something in this form isn't right.",

@@ -14,6 +14,7 @@ import (
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/config"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/files"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/handler"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/jobs"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/middleware"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/platform"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
@@ -54,16 +55,23 @@ func main() {
 	defer db.Close()
 
 	q := store.New(db)
+	inserter, err := jobs.NewInserter(db)
+	if err != nil {
+		slog.Error("jobs", "err", err)
+		os.Exit(1)
+	}
 	mux := http.NewServeMux()
 	handler.NewAPI(mux, handler.Deps{
-		Docs:         cfg.Env == "local",
-		DB:           db,
-		Queries:      q,
-		Sessions:     auth.NewSessions(q),
-		Supabase:     auth.NewSupabase(cfg.SupabaseURL, cfg.SupabaseKey),
-		TestLoginKey: cfg.TestLoginKey,
-		Telemetry:    tel,
-		Files:        files.NewStorage(cfg.SupabaseURL, cfg.SupabaseSecretKey),
+		Docs:           cfg.Env == "local",
+		DB:             db,
+		Queries:        q,
+		Sessions:       auth.NewSessions(q),
+		Supabase:       auth.NewSupabase(cfg.SupabaseURL, cfg.SupabaseKey),
+		TestLoginKey:   cfg.TestLoginKey,
+		Telemetry:      tel,
+		Files:          files.NewStorage(cfg.SupabaseURL, cfg.SupabaseSecretKey),
+		Jobs:           inserter,
+		VapidPublicKey: cfg.VapidPublicKey,
 	})
 
 	if err := platform.Serve(ctx, ":"+cfg.Port, middleware.Standard(mux, middleware.Options{RequestTimeout: cfg.RequestTimeout, EdgeSecret: cfg.EdgeSecret, MinAppVersions: cfg.MinAppVersions}), cfg.ShutdownTimeout); err != nil {

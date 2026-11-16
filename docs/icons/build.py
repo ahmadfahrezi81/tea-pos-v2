@@ -74,6 +74,16 @@ def master(g, transform):
     )
 
 
+def badge(icon, out):
+    """The notification badge Android shows in the status bar: the glyph alone, white on transparent."""
+    a = np.array(Image.open(icon).convert("RGB")).astype(int)
+    # The glyph is white; the background, a colour, is never near white in all three channels.
+    alpha = np.clip((a.min(axis=2) - 170) * 3, 0, 255).astype(np.uint8)
+    img = Image.new("RGBA", alpha.shape[::-1], (255, 255, 255, 0))
+    img.putalpha(Image.fromarray(alpha))
+    img.resize((96, 96), Image.LANCZOS).save(out)
+
+
 def main():
     glyphs = json.loads((HERE / "glyphs.json").read_text())
     for name, g in glyphs.items():
@@ -86,6 +96,7 @@ def main():
         icons = ROOT / app / "public" / "icons"
         for px in (512, 192):
             render(svg, px, icons / f"icon-{px}x{px}.png")
+        badge(icons / "icon-512x512.png", icons / "badge-96x96.png")
         print(f"{name}: {app}/public/icons")
 
 
