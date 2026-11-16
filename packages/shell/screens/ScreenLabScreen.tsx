@@ -6,7 +6,7 @@ import { FooterSlot } from "../frame/FooterSlotContext";
 import { HeaderTitle } from "../frame/HeaderActions";
 import { useSlug } from "../session/tenant";
 import { judge, type Verdict } from "../frame/screen/judge";
-import { Recorder } from "../frame/screen/measure";
+import { Recorder, type Sample } from "../frame/screen/measure";
 
 /**
  * The Screen lab (task 073): each case run for real on this phone and judged by the same rules
@@ -167,6 +167,20 @@ interface Result {
     title: string;
     verdict: Verdict;
     samples: number;
+    /** Every frame that changed, compact (TIMELINE's columns), for designing the fixes. */
+    timeline: number[][];
+}
+
+/** The timeline's columns, in the report once. */
+const TIMELINE = ["t", "page", "visible", "offset", "scrollY", "headerTop", "fieldBottom"];
+/** A run's frames, at most this many (evenly thinned past it). */
+const MAX_FRAMES = 80;
+
+function timelineOf(samples: Sample[]): number[][] {
+    const step = Math.max(1, Math.ceil(samples.length / MAX_FRAMES));
+    return samples
+        .filter((_, i) => i % step === 0 || i === samples.length - 1)
+        .map((s) => [s.t, s.page, s.visible, s.offset, s.scrollY, s.headerTop, s.fieldBottom]);
 }
 
 const installed = () => matchMedia("(display-mode: standalone)").matches;
@@ -212,7 +226,8 @@ export function ScreenLabScreen() {
             installed: installed(),
             screen: `${screen.width}x${screen.height} @${devicePixelRatio}`,
             at: new Date().toISOString(),
-            results: all.map((r) => ({ case: r.id, ...r.verdict })),
+            timelineColumns: TIMELINE,
+            results: all.map((r) => ({ case: r.id, ...r.verdict, timeline: r.timeline })),
         };
         void navigator.clipboard
             ?.writeText(JSON.stringify(report, null, 1))
@@ -309,7 +324,13 @@ export function ScreenLabCaseScreen({ caseId }: { caseId: string }) {
         const samples = r.stop();
         const verdict = judge(samples, { headerStill: !c.focus, fills: installed() });
         setResults([
-            { id: c.id, title: c.title, verdict, samples: samples.length },
+            {
+                id: c.id,
+                title: c.title,
+                verdict,
+                samples: samples.length,
+                timeline: timelineOf(samples),
+            },
             ...results.filter((x) => x.id !== c.id),
         ]);
         router.history.back();
