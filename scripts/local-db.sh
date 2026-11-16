@@ -55,4 +55,6 @@ if ! lsof -ti:"$GO_PORT" -sTCP:LISTEN >/dev/null; then
     (cd api && infisical run --silent --env=staging --path=/app -- \
         env DATABASE_URL="$URL" PORT="$GO_PORT" go run ./cmd/api) &
 fi
-API_ORIGIN="http://localhost:$GO_PORT" pnpm --filter "@tea-pos/$1" exec vite
+# Vite's proxy adds EDGE_SECRET, which Go needs on every request.
+infisical run --silent --env=staging --path=/app -- \
+    env API_ORIGIN="http://localhost:$GO_PORT" pnpm --filter "@tea-pos/$1" exec vite
