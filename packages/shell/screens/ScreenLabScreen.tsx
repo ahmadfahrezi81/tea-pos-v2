@@ -215,15 +215,16 @@ export function ScreenLabScreen() {
             <div className="rounded-2xl bg-white p-4 text-sm text-gray-700">
                 <p className="font-bold text-gray-900">Screen lab</p>
                 <p className="mt-1">
-                    Each case runs for real on this phone. Tap Start, do what it says, tap Finish.{" "}
+                    One case at a time: tap Start, do only what it says, tap Finish. When you are
+                    done, copy the report.{" "}
                     {installed()
                         ? "Installed app."
                         : "In a browser tab: install the app for the real test."}
                 </p>
                 {results.length > 0 && (
-                    <div className="mt-3 flex items-center gap-3">
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
                         <span className="font-semibold text-gray-900">
-                            {passed} of {results.length} passed
+                            {results.length} of {CASES.length} done · {passed} passed
                         </span>
                         <button
                             type="button"
@@ -231,6 +232,16 @@ export function ScreenLabScreen() {
                             className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white"
                         >
                             {copied ? "Copied" : "Copy the report"}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setResults([]);
+                                setCopied(false);
+                            }}
+                            className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-gray-900"
+                        >
+                            Reset
                         </button>
                     </div>
                 )}
@@ -240,6 +251,12 @@ export function ScreenLabScreen() {
                 return (
                     <div key={c.id} className="rounded-2xl bg-white p-4">
                         <div className="flex items-start gap-3">
+                            <span
+                                aria-hidden
+                                className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md text-xs font-bold text-white ${!r ? "ring-2 ring-slate-300" : r.verdict.pass ? "bg-green-600" : "bg-red-600"}`}
+                            >
+                                {r ? (r.verdict.pass ? "✓" : "✕") : ""}
+                            </span>
                             <div className="min-w-0 flex-1">
                                 <p className="font-semibold text-gray-900">{c.title}</p>
                                 {r && <Outcome r={r} />}
