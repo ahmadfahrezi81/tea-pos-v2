@@ -88,3 +88,12 @@ Chat's own keyboard ride beyond step 4; anything for Safari 27.3 (it needs nothi
 2. The Screen lab with the cases and the report; locally first (the fake keyboard for the keyboard cases), then staging for the owner's iPhone and an Android
 3. The owner runs it on both phones and sends the reports
 4. The fixes, one failure at a time, each turning its case green
+
+## Two kinds of screen (the owner, 2026-11-17, after the first run on the iPhone)
+
+- **App screens** (chat, search, forms in the app's frame): the header stays; the content and the bottom bar make room. The lab's keyboard cases at the top, middle, bottom and field to field judge this (`headerStill`)
+- **Focus screens** (a code at the bottom of a screen, as the store's opening code): fitting the field and its button above the keyboard matters more than the header, which may slide away. The lab's new "a code at the bottom" case judges this: the header may move, the field must not be under the keyboard
+- **Both:** a field being typed in is never under the keyboard (a new check, `fieldBottom`), and nothing is left shifted after
+- A screen will say which it is on its route (`staticData.shell`), when the fixes come; app screen by default
+
+Also fixed in the lab (the owner: back killed a running case, and a case opened scrolled down): each case is its own screen under the lab (`/screen-lab/<case>`), so it opens at the top like any new screen, back leaves it without a result and the list returns to where it was (the router's own scroll restore), and the results are kept outside the screens (and for the visit), so back and forth never loses them.

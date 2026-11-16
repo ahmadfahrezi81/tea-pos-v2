@@ -1,7 +1,10 @@
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { Sheet } from "@tea-pos/ui/Sheet";
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import { FooterSlot } from "../frame/FooterSlotContext";
+import { HeaderTitle } from "../frame/HeaderActions";
+import { useSlug } from "../session/tenant";
 import { judge, type Verdict } from "../frame/screen/judge";
 import { Recorder } from "../frame/screen/measure";
 
@@ -17,6 +20,8 @@ interface Case {
     title: string;
     steps: string;
     control?: () => ReactNode;
+    /** A focus screen: the header may slide away to fit the field (a code at the bottom). */
+    focus?: boolean;
 }
 
 const field =
@@ -49,6 +54,27 @@ const CASES: Case[] = [
                     <input className={field} placeholder="Like chat's message box" />
                 </div>
             </FooterSlot>
+        ),
+    },
+    {
+        id: "keyboard-focus",
+        title: "Keyboard: a code at the bottom (focus screen)",
+        steps: "Tap the code field at the bottom, then tap Finish. The header may move here; the field must stay above the keyboard.",
+        focus: true,
+        control: () => (
+            <div className="flex min-h-[70vh] flex-col justify-end gap-3">
+                <input
+                    className={field}
+                    inputMode="numeric"
+                    placeholder="Like the store's opening code"
+                />
+                <button
+                    type="button"
+                    className="w-full rounded-xl bg-brand py-3 font-semibold text-white"
+                >
+                    Open the store
+                </button>
+            </div>
         ),
     },
     {
@@ -145,86 +171,70 @@ interface Result {
 
 const installed = () => matchMedia("(display-mode: standalone)").matches;
 
-export function ScreenLabScreen() {
-    const [active, setActive] = useState<Case | null>(null);
-    const [busy, setBusy] = useState(false);
-    const [results, setResults] = useState<Result[]>([]);
-    const [copied, setCopied] = useState(false);
-    const recorder = useRef<Recorder | null>(null);
+// The results live outside the screens, so going back and forth keeps them; and in the visit's
+// storage, so a reload does too.
+const SAVED = "tea-pos:screen-lab";
+let results: Result[] = (() => {
+    try {
+        return JSON.parse(sessionStorage.getItem(SAVED) ?? "[]") as Result[];
+    } catch {
+        return [];
+    }
+})();
+const watchers = new Set<() => void>();
+function setResults(next: Result[]) {
+    results = next;
+    try {
+        sessionStorage.setItem(SAVED, JSON.stringify(next));
+    } catch {
+        // Kept until the page reloads.
+    }
+    watchers.forEach((w) => w());
+}
+const useResults = () =>
+    useSyncExternalStore(
+        (w) => {
+            watchers.add(w);
+            return () => void watchers.delete(w);
+        },
+        () => results,
+    );
 
-    const start = (c: Case) => {
-        recorder.current = new Recorder();
-        recorder.current.start();
-        setActive(c);
-    };
-    const finish = async () => {
-        const r = recorder.current;
-        if (!r || !active) return;
-        setBusy(true);
-        (document.activeElement as HTMLElement | null)?.blur?.();
-        await r.settled();
-        const samples = r.stop();
-        const verdict = judge(samples, { headerStill: true, fills: installed() });
-        setResults((all) => [
-            { id: active.id, title: active.title, verdict, samples: samples.length },
-            ...all.filter((x) => x.id !== active.id),
-        ]);
-        recorder.current = null;
-        setActive(null);
-        setBusy(false);
-    };
+/** The list: each case's mark, the totals, Copy the report and Reset. */
+export function ScreenLabScreen() {
+    const all = useResults();
+    const slug = useSlug();
+    const navigate = useNavigate();
+    const [copied, setCopied] = useState(false);
     const copy = () => {
         const report = {
             phone: navigator.userAgent,
             installed: installed(),
             screen: `${screen.width}x${screen.height} @${devicePixelRatio}`,
             at: new Date().toISOString(),
-            results: results.map((r) => ({ case: r.id, ...r.verdict })),
+            results: all.map((r) => ({ case: r.id, ...r.verdict })),
         };
         void navigator.clipboard
             ?.writeText(JSON.stringify(report, null, 1))
             .then(() => setCopied(true));
     };
 
-    if (active)
-        return (
-            <div className="space-y-4">
-                <div className="rounded-2xl bg-white p-4">
-                    <p className="font-bold text-gray-900">{active.title}</p>
-                    <p className="mt-1 text-sm text-gray-600">{active.steps}</p>
-                    <p className="mt-2 text-xs font-semibold text-red-600">
-                        ● Recording every frame
-                    </p>
-                </div>
-                {active.control?.()}
-                <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void finish()}
-                    className="w-full rounded-xl bg-gray-900 py-3 font-semibold text-white disabled:opacity-50"
-                >
-                    {busy ? "Waiting for the screen to settle…" : "Finish"}
-                </button>
-                <div className="h-[60vh]" aria-hidden />
-            </div>
-        );
-
-    const passed = results.filter((r) => r.verdict.pass).length;
+    const passed = all.filter((r) => r.verdict.pass).length;
     return (
         <div className="space-y-4 pb-8">
             <div className="rounded-2xl bg-white p-4 text-sm text-gray-700">
                 <p className="font-bold text-gray-900">Screen lab</p>
                 <p className="mt-1">
-                    One case at a time: tap Start, do only what it says, tap Finish. When you are
-                    done, copy the report.{" "}
+                    One case at a time: tap Start, do only what it says, tap Finish. Back leaves a
+                    case without a result. When you are done, copy the report.{" "}
                     {installed()
                         ? "Installed app."
                         : "In a browser tab: install the app for the real test."}
                 </p>
-                {results.length > 0 && (
+                {all.length > 0 && (
                     <div className="mt-3 flex flex-wrap items-center gap-3">
                         <span className="font-semibold text-gray-900">
-                            {results.length} of {CASES.length} done · {passed} passed
+                            {all.length} of {CASES.length} done · {passed} passed
                         </span>
                         <button
                             type="button"
@@ -247,7 +257,7 @@ export function ScreenLabScreen() {
                 )}
             </div>
             {CASES.map((c) => {
-                const r = results.find((x) => x.id === c.id);
+                const r = all.find((x) => x.id === c.id);
                 return (
                     <div key={c.id} className="rounded-2xl bg-white p-4">
                         <div className="flex items-start gap-3">
@@ -263,7 +273,7 @@ export function ScreenLabScreen() {
                             </div>
                             <button
                                 type="button"
-                                onClick={() => start(c)}
+                                onClick={() => void navigate({ to: `/${slug}/screen-lab/${c.id}` })}
                                 className="shrink-0 rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-gray-900"
                             >
                                 {r ? "Again" : "Start"}
@@ -272,6 +282,56 @@ export function ScreenLabScreen() {
                     </div>
                 );
             })}
+        </div>
+    );
+}
+
+/** One case, its own screen under the lab: it records from opening until Finish; back cancels. */
+export function ScreenLabCaseScreen({ caseId }: { caseId: string }) {
+    const router = useRouter();
+    const c = CASES.find((x) => x.id === caseId);
+    const [busy, setBusy] = useState(false);
+    const recorder = useRef<Recorder | null>(null);
+    useEffect(() => {
+        const r = new Recorder();
+        r.start();
+        recorder.current = r;
+        return () => void r.stop();
+    }, []);
+    if (!c) return <p className="p-4 text-gray-700">No such case.</p>;
+
+    const finish = async () => {
+        const r = recorder.current;
+        if (!r) return;
+        setBusy(true);
+        (document.activeElement as HTMLElement | null)?.blur?.();
+        await r.settled();
+        const samples = r.stop();
+        const verdict = judge(samples, { headerStill: !c.focus, fills: installed() });
+        setResults([
+            { id: c.id, title: c.title, verdict, samples: samples.length },
+            ...results.filter((x) => x.id !== c.id),
+        ]);
+        router.history.back();
+    };
+
+    return (
+        <div className="space-y-4">
+            <HeaderTitle>{c.title}</HeaderTitle>
+            <div className="rounded-2xl bg-white p-4">
+                <p className="text-sm text-gray-700">{c.steps}</p>
+                <p className="mt-2 text-xs font-semibold text-red-600">● Recording every frame</p>
+            </div>
+            {c.control?.()}
+            <button
+                type="button"
+                disabled={busy}
+                onClick={() => void finish()}
+                className="w-full rounded-xl bg-gray-900 py-3 font-semibold text-white disabled:opacity-50"
+            >
+                {busy ? "Waiting for the screen to settle…" : "Finish"}
+            </button>
+            <div className="h-[60vh]" aria-hidden />
         </div>
     );
 }

@@ -17,7 +17,6 @@ import { Route as ShellTenantIndexRouteImport } from './routes/_shell/$tenant/in
 import { Route as ShellTenantAppInfoRouteImport } from './routes/_shell/$tenant/app-info'
 import { Route as ShellTenantOrdersRouteImport } from './routes/_shell/$tenant/orders'
 import { Route as ShellTenantPosRouteImport } from './routes/_shell/$tenant/pos'
-import { Route as ShellTenantScreenLabRouteImport } from './routes/_shell/$tenant/screen-lab'
 import { Route as ShellTenantWhatsNewRouteImport } from './routes/_shell/$tenant/whats-new'
 import { Route as ShellTenantAccountIndexRouteImport } from './routes/_shell/$tenant/account/index'
 import { Route as ShellTenantAccountDetailsRouteImport } from './routes/_shell/$tenant/account/details'
@@ -30,6 +29,8 @@ import { Route as ShellTenantManageCloseRouteImport } from './routes/_shell/$ten
 import { Route as ShellTenantManageOpenRouteImport } from './routes/_shell/$tenant/manage/open'
 import { Route as ShellTenantMoreIndexRouteImport } from './routes/_shell/$tenant/more/index'
 import { Route as ShellTenantMoreStoresRouteImport } from './routes/_shell/$tenant/more/stores'
+import { Route as ShellTenantScreenLabIndexRouteImport } from './routes/_shell/$tenant/screen-lab/index'
+import { Route as ShellTenantScreenLabCaseRouteImport } from './routes/_shell/$tenant/screen-lab/$case'
 import { Route as ShellTenantManageExpenseIndexRouteImport } from './routes/_shell/$tenant/manage/expense/index'
 import { Route as ShellTenantManageExpenseAddRouteImport } from './routes/_shell/$tenant/manage/expense/add'
 import { Route as ShellTenantMoreClaimsIndexRouteImport } from './routes/_shell/$tenant/more/claims/index'
@@ -76,11 +77,6 @@ const ShellTenantOrdersRoute = ShellTenantOrdersRouteImport.update({
 const ShellTenantPosRoute = ShellTenantPosRouteImport.update({
   id: '/pos',
   path: '/pos',
-  getParentRoute: () => ShellTenantRoute,
-} as any)
-const ShellTenantScreenLabRoute = ShellTenantScreenLabRouteImport.update({
-  id: '/screen-lab',
-  path: '/screen-lab',
   getParentRoute: () => ShellTenantRoute,
 } as any)
 const ShellTenantWhatsNewRoute = ShellTenantWhatsNewRouteImport.update({
@@ -147,6 +143,18 @@ const ShellTenantMoreStoresRoute = ShellTenantMoreStoresRouteImport.update({
   path: '/more/stores',
   getParentRoute: () => ShellTenantRoute,
 } as any)
+const ShellTenantScreenLabIndexRoute =
+  ShellTenantScreenLabIndexRouteImport.update({
+    id: '/screen-lab/',
+    path: '/screen-lab/',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantScreenLabCaseRoute =
+  ShellTenantScreenLabCaseRouteImport.update({
+    id: '/screen-lab/$case',
+    path: '/screen-lab/$case',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
 const ShellTenantManageExpenseIndexRoute =
   ShellTenantManageExpenseIndexRouteImport.update({
     id: '/manage/expense/',
@@ -203,7 +211,6 @@ export interface FileRoutesByFullPath {
   '/$tenant/app-info': typeof ShellTenantAppInfoRoute
   '/$tenant/orders': typeof ShellTenantOrdersRoute
   '/$tenant/pos': typeof ShellTenantPosRoute
-  '/$tenant/screen-lab': typeof ShellTenantScreenLabRoute
   '/$tenant/whats-new': typeof ShellTenantWhatsNewRoute
   '/$tenant/': typeof ShellTenantIndexRoute
   '/$tenant/account/details': typeof ShellTenantAccountDetailsRoute
@@ -212,11 +219,13 @@ export interface FileRoutesByFullPath {
   '/$tenant/manage/close': typeof ShellTenantManageCloseRoute
   '/$tenant/manage/open': typeof ShellTenantManageOpenRoute
   '/$tenant/more/stores': typeof ShellTenantMoreStoresRoute
+  '/$tenant/screen-lab/$case': typeof ShellTenantScreenLabCaseRoute
   '/$tenant/account/': typeof ShellTenantAccountIndexRoute
   '/$tenant/analytics/': typeof ShellTenantAnalyticsIndexRoute
   '/$tenant/chats/': typeof ShellTenantChatsIndexRoute
   '/$tenant/manage/': typeof ShellTenantManageIndexRoute
   '/$tenant/more/': typeof ShellTenantMoreIndexRoute
+  '/$tenant/screen-lab/': typeof ShellTenantScreenLabIndexRoute
   '/$tenant/manage/expense/add': typeof ShellTenantManageExpenseAddRoute
   '/$tenant/more/claims/add': typeof ShellTenantMoreClaimsAddRoute
   '/$tenant/more/earnings/$payoutId': typeof ShellTenantMoreEarningsPayoutIdRoute
@@ -232,7 +241,6 @@ export interface FileRoutesByTo {
   '/$tenant/app-info': typeof ShellTenantAppInfoRoute
   '/$tenant/orders': typeof ShellTenantOrdersRoute
   '/$tenant/pos': typeof ShellTenantPosRoute
-  '/$tenant/screen-lab': typeof ShellTenantScreenLabRoute
   '/$tenant/whats-new': typeof ShellTenantWhatsNewRoute
   '/$tenant': typeof ShellTenantIndexRoute
   '/$tenant/account/details': typeof ShellTenantAccountDetailsRoute
@@ -241,11 +249,13 @@ export interface FileRoutesByTo {
   '/$tenant/manage/close': typeof ShellTenantManageCloseRoute
   '/$tenant/manage/open': typeof ShellTenantManageOpenRoute
   '/$tenant/more/stores': typeof ShellTenantMoreStoresRoute
+  '/$tenant/screen-lab/$case': typeof ShellTenantScreenLabCaseRoute
   '/$tenant/account': typeof ShellTenantAccountIndexRoute
   '/$tenant/analytics': typeof ShellTenantAnalyticsIndexRoute
   '/$tenant/chats': typeof ShellTenantChatsIndexRoute
   '/$tenant/manage': typeof ShellTenantManageIndexRoute
   '/$tenant/more': typeof ShellTenantMoreIndexRoute
+  '/$tenant/screen-lab': typeof ShellTenantScreenLabIndexRoute
   '/$tenant/manage/expense/add': typeof ShellTenantManageExpenseAddRoute
   '/$tenant/more/claims/add': typeof ShellTenantMoreClaimsAddRoute
   '/$tenant/more/earnings/$payoutId': typeof ShellTenantMoreEarningsPayoutIdRoute
@@ -264,7 +274,6 @@ export interface FileRoutesById {
   '/_shell/$tenant/app-info': typeof ShellTenantAppInfoRoute
   '/_shell/$tenant/orders': typeof ShellTenantOrdersRoute
   '/_shell/$tenant/pos': typeof ShellTenantPosRoute
-  '/_shell/$tenant/screen-lab': typeof ShellTenantScreenLabRoute
   '/_shell/$tenant/whats-new': typeof ShellTenantWhatsNewRoute
   '/_shell/$tenant/': typeof ShellTenantIndexRoute
   '/_shell/$tenant/account/details': typeof ShellTenantAccountDetailsRoute
@@ -273,11 +282,13 @@ export interface FileRoutesById {
   '/_shell/$tenant/manage/close': typeof ShellTenantManageCloseRoute
   '/_shell/$tenant/manage/open': typeof ShellTenantManageOpenRoute
   '/_shell/$tenant/more/stores': typeof ShellTenantMoreStoresRoute
+  '/_shell/$tenant/screen-lab/$case': typeof ShellTenantScreenLabCaseRoute
   '/_shell/$tenant/account/': typeof ShellTenantAccountIndexRoute
   '/_shell/$tenant/analytics/': typeof ShellTenantAnalyticsIndexRoute
   '/_shell/$tenant/chats/': typeof ShellTenantChatsIndexRoute
   '/_shell/$tenant/manage/': typeof ShellTenantManageIndexRoute
   '/_shell/$tenant/more/': typeof ShellTenantMoreIndexRoute
+  '/_shell/$tenant/screen-lab/': typeof ShellTenantScreenLabIndexRoute
   '/_shell/$tenant/manage/expense/add': typeof ShellTenantManageExpenseAddRoute
   '/_shell/$tenant/more/claims/add': typeof ShellTenantMoreClaimsAddRoute
   '/_shell/$tenant/more/earnings/$payoutId': typeof ShellTenantMoreEarningsPayoutIdRoute
@@ -296,7 +307,6 @@ export interface FileRouteTypes {
     | '/$tenant/app-info'
     | '/$tenant/orders'
     | '/$tenant/pos'
-    | '/$tenant/screen-lab'
     | '/$tenant/whats-new'
     | '/$tenant/'
     | '/$tenant/account/details'
@@ -305,11 +315,13 @@ export interface FileRouteTypes {
     | '/$tenant/manage/close'
     | '/$tenant/manage/open'
     | '/$tenant/more/stores'
+    | '/$tenant/screen-lab/$case'
     | '/$tenant/account/'
     | '/$tenant/analytics/'
     | '/$tenant/chats/'
     | '/$tenant/manage/'
     | '/$tenant/more/'
+    | '/$tenant/screen-lab/'
     | '/$tenant/manage/expense/add'
     | '/$tenant/more/claims/add'
     | '/$tenant/more/earnings/$payoutId'
@@ -325,7 +337,6 @@ export interface FileRouteTypes {
     | '/$tenant/app-info'
     | '/$tenant/orders'
     | '/$tenant/pos'
-    | '/$tenant/screen-lab'
     | '/$tenant/whats-new'
     | '/$tenant'
     | '/$tenant/account/details'
@@ -334,11 +345,13 @@ export interface FileRouteTypes {
     | '/$tenant/manage/close'
     | '/$tenant/manage/open'
     | '/$tenant/more/stores'
+    | '/$tenant/screen-lab/$case'
     | '/$tenant/account'
     | '/$tenant/analytics'
     | '/$tenant/chats'
     | '/$tenant/manage'
     | '/$tenant/more'
+    | '/$tenant/screen-lab'
     | '/$tenant/manage/expense/add'
     | '/$tenant/more/claims/add'
     | '/$tenant/more/earnings/$payoutId'
@@ -356,7 +369,6 @@ export interface FileRouteTypes {
     | '/_shell/$tenant/app-info'
     | '/_shell/$tenant/orders'
     | '/_shell/$tenant/pos'
-    | '/_shell/$tenant/screen-lab'
     | '/_shell/$tenant/whats-new'
     | '/_shell/$tenant/'
     | '/_shell/$tenant/account/details'
@@ -365,11 +377,13 @@ export interface FileRouteTypes {
     | '/_shell/$tenant/manage/close'
     | '/_shell/$tenant/manage/open'
     | '/_shell/$tenant/more/stores'
+    | '/_shell/$tenant/screen-lab/$case'
     | '/_shell/$tenant/account/'
     | '/_shell/$tenant/analytics/'
     | '/_shell/$tenant/chats/'
     | '/_shell/$tenant/manage/'
     | '/_shell/$tenant/more/'
+    | '/_shell/$tenant/screen-lab/'
     | '/_shell/$tenant/manage/expense/add'
     | '/_shell/$tenant/more/claims/add'
     | '/_shell/$tenant/more/earnings/$payoutId'
@@ -441,13 +455,6 @@ declare module '@tanstack/react-router' {
       path: '/pos'
       fullPath: '/$tenant/pos'
       preLoaderRoute: typeof ShellTenantPosRouteImport
-      parentRoute: typeof ShellTenantRoute
-    }
-    '/_shell/$tenant/screen-lab': {
-      id: '/_shell/$tenant/screen-lab'
-      path: '/screen-lab'
-      fullPath: '/$tenant/screen-lab'
-      preLoaderRoute: typeof ShellTenantScreenLabRouteImport
       parentRoute: typeof ShellTenantRoute
     }
     '/_shell/$tenant/whats-new': {
@@ -534,6 +541,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellTenantMoreStoresRouteImport
       parentRoute: typeof ShellTenantRoute
     }
+    '/_shell/$tenant/screen-lab/': {
+      id: '/_shell/$tenant/screen-lab/'
+      path: '/screen-lab'
+      fullPath: '/$tenant/screen-lab/'
+      preLoaderRoute: typeof ShellTenantScreenLabIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/screen-lab/$case': {
+      id: '/_shell/$tenant/screen-lab/$case'
+      path: '/screen-lab/$case'
+      fullPath: '/$tenant/screen-lab/$case'
+      preLoaderRoute: typeof ShellTenantScreenLabCaseRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
     '/_shell/$tenant/manage/expense/': {
       id: '/_shell/$tenant/manage/expense/'
       path: '/manage/expense'
@@ -597,7 +618,6 @@ interface ShellTenantRouteChildren {
   ShellTenantAppInfoRoute: typeof ShellTenantAppInfoRoute
   ShellTenantOrdersRoute: typeof ShellTenantOrdersRoute
   ShellTenantPosRoute: typeof ShellTenantPosRoute
-  ShellTenantScreenLabRoute: typeof ShellTenantScreenLabRoute
   ShellTenantWhatsNewRoute: typeof ShellTenantWhatsNewRoute
   ShellTenantIndexRoute: typeof ShellTenantIndexRoute
   ShellTenantAccountDetailsRoute: typeof ShellTenantAccountDetailsRoute
@@ -606,11 +626,13 @@ interface ShellTenantRouteChildren {
   ShellTenantManageCloseRoute: typeof ShellTenantManageCloseRoute
   ShellTenantManageOpenRoute: typeof ShellTenantManageOpenRoute
   ShellTenantMoreStoresRoute: typeof ShellTenantMoreStoresRoute
+  ShellTenantScreenLabCaseRoute: typeof ShellTenantScreenLabCaseRoute
   ShellTenantAccountIndexRoute: typeof ShellTenantAccountIndexRoute
   ShellTenantAnalyticsIndexRoute: typeof ShellTenantAnalyticsIndexRoute
   ShellTenantChatsIndexRoute: typeof ShellTenantChatsIndexRoute
   ShellTenantManageIndexRoute: typeof ShellTenantManageIndexRoute
   ShellTenantMoreIndexRoute: typeof ShellTenantMoreIndexRoute
+  ShellTenantScreenLabIndexRoute: typeof ShellTenantScreenLabIndexRoute
   ShellTenantManageExpenseAddRoute: typeof ShellTenantManageExpenseAddRoute
   ShellTenantMoreClaimsAddRoute: typeof ShellTenantMoreClaimsAddRoute
   ShellTenantMoreEarningsPayoutIdRoute: typeof ShellTenantMoreEarningsPayoutIdRoute
@@ -625,7 +647,6 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
   ShellTenantAppInfoRoute: ShellTenantAppInfoRoute,
   ShellTenantOrdersRoute: ShellTenantOrdersRoute,
   ShellTenantPosRoute: ShellTenantPosRoute,
-  ShellTenantScreenLabRoute: ShellTenantScreenLabRoute,
   ShellTenantWhatsNewRoute: ShellTenantWhatsNewRoute,
   ShellTenantIndexRoute: ShellTenantIndexRoute,
   ShellTenantAccountDetailsRoute: ShellTenantAccountDetailsRoute,
@@ -634,11 +655,13 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
   ShellTenantManageCloseRoute: ShellTenantManageCloseRoute,
   ShellTenantManageOpenRoute: ShellTenantManageOpenRoute,
   ShellTenantMoreStoresRoute: ShellTenantMoreStoresRoute,
+  ShellTenantScreenLabCaseRoute: ShellTenantScreenLabCaseRoute,
   ShellTenantAccountIndexRoute: ShellTenantAccountIndexRoute,
   ShellTenantAnalyticsIndexRoute: ShellTenantAnalyticsIndexRoute,
   ShellTenantChatsIndexRoute: ShellTenantChatsIndexRoute,
   ShellTenantManageIndexRoute: ShellTenantManageIndexRoute,
   ShellTenantMoreIndexRoute: ShellTenantMoreIndexRoute,
+  ShellTenantScreenLabIndexRoute: ShellTenantScreenLabIndexRoute,
   ShellTenantManageExpenseAddRoute: ShellTenantManageExpenseAddRoute,
   ShellTenantMoreClaimsAddRoute: ShellTenantMoreClaimsAddRoute,
   ShellTenantMoreEarningsPayoutIdRoute: ShellTenantMoreEarningsPayoutIdRoute,
