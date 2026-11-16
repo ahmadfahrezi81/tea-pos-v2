@@ -13,26 +13,28 @@
         "./FooterSlotContext": "./frame/FooterSlotContext.tsx",
         "./FormFooter": "./frame/FormFooter.tsx",
         "./HeaderActions": "./frame/HeaderActions.tsx",
-        "./StoreLabel": "./frame/StoreLabel.tsx",
         "./HomeScreen": "./screens/HomeScreen.tsx",
         "./LanguageScreen": "./screens/LanguageScreen.tsx",
         "./LoadFailed": "./screens/LoadFailed.tsx",
         "./MoreScreen": "./screens/MoreScreen.tsx",
         "./OrderCard": "./views/OrderCard.tsx",
         "./PersonalDetailsScreen": "./screens/PersonalDetailsScreen.tsx",
+        "./ScreenLabScreen": "./screens/ScreenLabScreen.tsx",
         "./searchParam": "./session/searchParam.ts",
         "./Sellers": "./views/Sellers.tsx",
         "./Settings": "./frame/Settings.tsx",
         "./ShellLayout": "./frame/ShellLayout.tsx",
         "./SignInScreen": "./screens/SignInScreen.tsx",
         "./StatusScreen": "./screens/StatusScreen.tsx",
+        "./StoreLabel": "./frame/StoreLabel.tsx",
         "./tenant": "./session/tenant.tsx",
         "./useApiMutation": "./session/useApiMutation.ts",
         "./WhatsNewScreen": "./screens/WhatsNewScreen.tsx"
     },
     "scripts": {
         "lint": "eslint .",
-        "typecheck": "tsc -p ."
+        "typecheck": "tsc -p .",
+        "test": "vitest run"
     },
     "peerDependencies": {
         "@tanstack/react-query": "^5",
@@ -49,7 +51,8 @@
         "react": "19.3.1",
         "react-dom": "19.3.1",
         "vite": "8.3.5",
-        "vite-plugin-pwa": "2.0.0"
+        "vite-plugin-pwa": "2.0.0",
+        "vitest": "5.0.5"
     },
     "dependencies": {
         "@tea-pos/api-client": "workspace:*",

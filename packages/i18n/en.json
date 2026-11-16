@@ -79,7 +79,8 @@
         "app": "App",
         "updateOffline": "No connection. Try again when you are online.",
         "updateIsLatest": "Latest",
-        "updateNow": "Update now"
+        "updateNow": "Update now",
+        "screenLab": "Screen lab"
     },
     "whatsNew": {
         "title": "What's New",

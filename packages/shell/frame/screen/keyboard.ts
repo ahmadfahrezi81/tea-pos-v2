@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 
+import { fakeView, onFakeChange } from "./fake";
+
 /**
  * Whether the keyboard is open, as the browser shows it: nothing here moves anything (RFC: The
  * keyboard (v2)). The browser does the work (`interactive-widget=resizes-content`: the page
@@ -32,23 +34,13 @@ function typing(): boolean {
     return el instanceof HTMLInputElement && !el.readOnly && !SKIP.has(el.type);
 }
 
-/** The dev server's fake keyboard (`?preview=keyboard`): how much of the page it takes. */
-let fake = 0;
-let measure = () => {};
-
-export function setFakeKeyboard(px: number) {
-    fake = px;
-    document.documentElement.style.setProperty("--fake-keyboard", `${px}px`);
-    measure();
-}
-
 export function useKeyboardState() {
     useEffect(() => {
         const root = document.documentElement;
         let width = 0;
         let full = 0;
         const run = () => {
-            const h = root.clientHeight - fake;
+            const h = root.clientHeight - fakeView.shrink;
             if (root.clientWidth !== width) {
                 width = root.clientWidth;
                 full = h;
@@ -59,7 +51,7 @@ export function useKeyboardState() {
             if (open) root.dataset.keyboard = "open";
             else delete root.dataset.keyboard;
         };
-        measure = run;
+        onFakeChange(run);
         // Focus moves before the page resizes, and the other way round: measure after either.
         const later = () => setTimeout(run, 0);
         run();
@@ -67,7 +59,7 @@ export function useKeyboardState() {
         document.addEventListener("focusin", later);
         document.addEventListener("focusout", later);
         return () => {
-            measure = () => {};
+            onFakeChange(() => {});
             window.removeEventListener("resize", run);
             document.removeEventListener("focusin", later);
             document.removeEventListener("focusout", later);

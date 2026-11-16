@@ -79,7 +79,8 @@
         "app": "Aplikasi",
         "updateOffline": "Tidak ada koneksi. Coba lagi saat online.",
         "updateIsLatest": "Latest",
-        "updateNow": "Update sekarang"
+        "updateNow": "Update sekarang",
+        "screenLab": "Screen lab"
     },
     "whatsNew": {
         "title": "Yang Baru",
