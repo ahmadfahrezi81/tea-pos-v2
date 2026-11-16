@@ -12,6 +12,7 @@ DIR="${LOCAL_DB_DIR:-$HOME/.tea-pos/local-db}"
 mkdir -p "$(dirname "$DIR")"
 PORT=5433
 GO_PORT=8090
+HUB_PORT=8091
 URL="postgres://postgres@localhost:$PORT/postgres?sslmode=disable"
 LOG="$DIR.log.d"
 mkdir -p "$LOG"
@@ -55,6 +56,11 @@ if ! lsof -ti:"$GO_PORT" -sTCP:LISTEN >/dev/null; then
     (cd api && infisical run --silent --env=staging --path=/app -- \
         env DATABASE_URL="$URL" PORT="$GO_PORT" go run ./cmd/api) &
 fi
+# The live updates' hub: it listens to this database's notifications, not staging's.
+if ! lsof -ti:"$HUB_PORT" -sTCP:LISTEN >/dev/null; then
+    (cd api && infisical run --silent --env=staging --path=/app -- \
+        env DATABASE_URL="$URL" PORT="$HUB_PORT" go run ./cmd/realtime) &
+fi
 # Vite's proxy adds EDGE_SECRET, which Go needs on every request.
 infisical run --silent --env=staging --path=/app -- \
-    env API_ORIGIN="http://localhost:$GO_PORT" pnpm --filter "@tea-pos/$1" exec vite
+    env API_ORIGIN="http://localhost:$GO_PORT" REALTIME_ORIGIN="http://localhost:$HUB_PORT" pnpm --filter "@tea-pos/$1" exec vite

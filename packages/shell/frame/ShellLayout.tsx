@@ -31,7 +31,7 @@ export interface AppTab {
     also?: string[];
     /** Its other face inside part of the app (seller's POS shows as Manage in manage). */
     variant?: { path: string; labelKey: MessageKey; icon: LucideIcon };
-    /** Chats: shown only to someone with a chat level here, with the unread count on it. */
+    /** Chats: the unread count on it for someone with a chat level; anyone else sees no access. */
     chat?: true;
 }
 
@@ -114,16 +114,14 @@ function Frame({
     const under = (path: string) => (path ? `${root}/${path}` : root);
     const tabs: Tab[] = slug
         ? [
-              ...own
-                  .filter((t) => !t.chat || hasChat)
-                  .map((t) => ({
-                      path: under(t.path),
-                      labelKey: t.labelKey,
-                      icon: t.icon,
-                      matchPaths: [t.path, ...(t.also ?? [])].map(under),
-                      variant: t.variant && { ...t.variant, pathContains: under(t.variant.path) },
-                      badge: t.chat ? unread : undefined,
-                  })),
+              ...own.map((t) => ({
+                  path: under(t.path),
+                  labelKey: t.labelKey,
+                  icon: t.icon,
+                  matchPaths: [t.path, ...(t.also ?? [])].map(under),
+                  variant: t.variant && { ...t.variant, pathContains: under(t.variant.path) },
+                  badge: t.chat ? unread : undefined,
+              })),
               {
                   path: `${root}/more`,
                   labelKey: unseen ? "nav.moreNew" : "nav.more",

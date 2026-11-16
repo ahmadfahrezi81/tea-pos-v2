@@ -4,12 +4,20 @@ import { useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
 import { useNavigate } from "@tanstack/react-router";
-import { MessagesSquare } from "lucide-react";
+import { Lock, MessagesSquare } from "lucide-react";
 
 import { channelName, KIND_ICON, listTime } from "./labels";
 
 /** The Chats tab: the caller's channels, the newest message first (RFC: Chat (v2), screen 1). */
 export default function ChatsScreen() {
+    return (
+        <div className="chat min-h-full">
+            <Chats />
+        </div>
+    );
+}
+
+function Chats() {
     const t = useT();
     const slug = useSlug();
     const hasChat = !!useTenant()?.tenant.access.chat;
@@ -44,8 +52,8 @@ function ChannelRow({ channel: c }: { channel: ChatChannel }) {
         <ListRow
             top
             leading={
-                <span className="flex size-10 items-center justify-center rounded-xl bg-brand/10">
-                    <Icon size={20} className="text-brand" />
+                <span className="flex size-10 items-center justify-center">
+                    <Icon size={20} className="text-gray-900" />
                 </span>
             }
             title={
@@ -85,8 +93,8 @@ function NoAccess() {
         <EmptyState
             title={t("chat.noAccess")}
             body={t("chat.noAccessSub")}
-            icon={MessagesSquare}
-            className="py-16"
+            icon={Lock}
+            className="min-h-full py-24"
         />
     );
 }

@@ -8,7 +8,7 @@
         "deleted": "Message deleted",
         "noMessages": "No messages yet",
         "noChats": "No chats yet",
-        "noAccess": "You don't have access yet",
+        "noAccess": "You don't have access to chat",
         "noAccessSub": "Ask the office to turn chat on for you",
         "message": "Message",
         "send": "Send",
@@ -25,6 +25,10 @@
         "today": "Today",
         "yesterday": "Yesterday",
         "earlier": "Earlier messages",
-        "tooLong": "At most 4,000 characters"
+        "tooLong": "At most 4,000 characters",
+        "add": "Add",
+        "camera": "Camera",
+        "gallery": "Gallery",
+        "messageTo": "Message {name}"
     }
 }

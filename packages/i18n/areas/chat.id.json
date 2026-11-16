@@ -8,7 +8,7 @@
         "deleted": "Pesan dihapus",
         "noMessages": "Belum ada pesan",
         "noChats": "Belum ada chat",
-        "noAccess": "Kamu belum punya akses",
+        "noAccess": "Kamu belum punya akses ke chat",
         "noAccessSub": "Minta kantor untuk mengaktifkan chat untukmu",
         "message": "Pesan",
         "send": "Kirim",
@@ -25,6 +25,10 @@
         "today": "Hari ini",
         "yesterday": "Kemarin",
         "earlier": "Pesan sebelumnya",
-        "tooLong": "Maksimal 4.000 karakter"
+        "tooLong": "Maksimal 4.000 karakter",
+        "add": "Tambah",
+        "camera": "Kamera",
+        "gallery": "Galeri",
+        "messageTo": "Kirim pesan ke {name}"
     }
 }

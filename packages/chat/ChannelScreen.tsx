@@ -11,7 +11,15 @@ import { ImagePreview } from "@tea-pos/ui/ImagePreview";
 import { Sheet } from "@tea-pos/ui/Sheet";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { useQueryClient } from "@tanstack/react-query";
-import { Camera, CheckCheck, Clock, SendHorizontal, X } from "lucide-react";
+import {
+    Camera,
+    CheckCheck,
+    Clock,
+    Image as ImageIcon,
+    Plus,
+    SendHorizontal,
+    X,
+} from "lucide-react";
 import {
     Fragment,
     useEffect,
@@ -33,6 +41,14 @@ const MAX_LENGTH = 4000;
 
 /** One channel: messages newest at the bottom, the box to write in (RFC: Chat (v2), screen 2). */
 export default function ChannelScreen({ channelId }: { channelId: string }) {
+    return (
+        <div className="chat">
+            <Channel channelId={channelId} />
+        </div>
+    );
+}
+
+function Channel({ channelId }: { channelId: string }) {
     const t = useT();
     const slug = useSlug();
     const me = useMe().data?.user.id ?? "";
@@ -103,7 +119,12 @@ export default function ChannelScreen({ channelId }: { channelId: string }) {
                 <Outgoing key={p.key} p={p} slug={slug} />
             ))}
             <div ref={bottom} />
-            <Composer channelId={channelId} readOnly={channel.readOnly} kind={channel.kind} />
+            <Composer
+                channelId={channelId}
+                name={channelName(channel, t)}
+                readOnly={channel.readOnly}
+                kind={channel.kind}
+            />
             {seenOf && (
                 <SeenBy
                     message={seenOf}
@@ -174,51 +195,64 @@ function Message({
                 </span>
             </div>
         );
-    const text = m.deleted ? (
-        <span className="italic text-gray-500">{t("chat.deleted")}</span>
-    ) : (
-        m.body
+    const time = formatTime(m.at, locale);
+    const ticks = mine && seen !== undefined && seen > 0;
+    // As WhatsApp: name, photos, text and time in one bubble; the time sits on the text's last line.
+    const stamp = (
+        <span
+            className={`flex items-center gap-0.5 text-[11px] leading-none ${mine ? "text-white/75" : "text-gray-500"}`}
+        >
+            {time}
+            {ticks && <CheckCheck size={14} strokeWidth={2.5} />}
+        </span>
+    );
+    const body = (m.body || m.deleted) && (
+        <p className="relative text-[15px] leading-5 whitespace-pre-wrap break-words">
+            {m.deleted ? (
+                <span className={`italic ${mine ? "text-white/80" : "text-gray-500"}`}>
+                    {t("chat.deleted")}
+                </span>
+            ) : (
+                m.body
+            )}
+            <span className={`inline-block ${ticks ? "w-16" : "w-11"}`} />
+            <span className="absolute right-0 bottom-0.5">{stamp}</span>
+        </p>
+    );
+    const photos =
+        !m.deleted && m.photos?.length ? (
+            <div className="-mx-2 mt-1 mb-1">
+                <Photos photos={m.photos} mine={mine} />
+            </div>
+        ) : null;
+    const bubble = (
+        <div
+            className={`max-w-[80%] rounded-2xl px-3 py-1.5 text-left ${mine ? "rounded-tr-md bg-brand text-white" : "rounded-tl-md bg-white text-gray-900"}`}
+        >
+            {!mine && !grouped && (
+                <p className="text-[13px] font-semibold leading-5 text-brand">{m.author}</p>
+            )}
+            {photos}
+            {body || <div className="flex justify-end pb-0.5">{stamp}</div>}
+        </div>
     );
     if (mine)
         return (
             <div className={`flex flex-col items-end gap-1 ${grouped ? "" : "pt-2"}`}>
-                {!m.deleted && m.photos?.length ? <Photos photos={m.photos} mine /> : null}
-                {(m.body || m.deleted) && (
-                    <button
-                        onClick={onSeen}
-                        className="max-w-[80%] rounded-2xl rounded-br-md bg-brand px-3 py-2 text-left text-[15px] text-white whitespace-pre-wrap break-words active:opacity-80"
-                    >
-                        {text}
+                <button onClick={onSeen} className="contents active:opacity-80">
+                    {bubble}
+                </button>
+                {seen !== undefined && seen > 0 && (
+                    <button onClick={onSeen} className="text-[11px] text-brand">
+                        {t("chat.seenBy").replace("{n}", String(seen))}
                     </button>
                 )}
-                <span className="mt-0.5 flex items-center gap-1 text-[11px] text-gray-500">
-                    {formatTime(m.at, locale)}
-                    {seen !== undefined && seen > 0 && (
-                        <button onClick={onSeen} className="flex items-center gap-1 text-brand">
-                            · {t("chat.seenBy").replace("{n}", String(seen))}
-                            <CheckCheck size={13} strokeWidth={2.5} />
-                        </button>
-                    )}
-                </span>
             </div>
         );
     return (
-        <div className={`flex items-end gap-2 ${grouped ? "" : "pt-2"}`}>
+        <div className={`flex items-start gap-2 ${grouped ? "" : "pt-2"}`}>
             <span className="w-8 shrink-0">{!grouped && <Avatar url={m.avatar} size={32} />}</span>
-            <div className="max-w-[78%]">
-                {!grouped && <p className="px-1 text-xs font-semibold text-gray-700">{m.author}</p>}
-                {!m.deleted && m.photos?.length ? (
-                    <div className="py-0.5">
-                        <Photos photos={m.photos} mine={false} />
-                    </div>
-                ) : null}
-                {(m.body || m.deleted) && (
-                    <div className="rounded-2xl rounded-bl-md bg-white px-3 py-2 text-[15px] text-gray-900 whitespace-pre-wrap break-words">
-                        {text}
-                    </div>
-                )}
-                <span className="px-1 text-[11px] text-gray-500">{formatTime(m.at, locale)}</span>
-            </div>
+            {bubble}
         </div>
     );
 }
@@ -308,10 +342,12 @@ const MAX_PHOTOS = 4;
 
 function Composer({
     channelId,
+    name,
     readOnly,
     kind,
 }: {
     channelId: string;
+    name: string;
     readOnly: boolean;
     kind: string;
 }) {
@@ -321,9 +357,14 @@ function Composer({
     const [text, setText] = useState("");
     const [photos, setPhotos] = useState<{ file: File; url: string }[]>([]);
     const box = useRef<HTMLTextAreaElement>(null);
-    const picker = useRef<HTMLInputElement>(null);
+    const camera = useRef<HTMLInputElement>(null);
+    const gallery = useRef<HTMLInputElement>(null);
+    const [adding, setAdding] = useState(false);
+    const [focused, setFocused] = useState(false);
     const body = text.trim();
     const ready = (body !== "" || photos.length > 0) && body.length <= MAX_LENGTH;
+    // As Slack: the box alone until tapped; then the tools under it, send on the right.
+    const open = focused || text !== "" || photos.length > 0;
     const submit = () => {
         if (!ready) return;
         send(
@@ -336,7 +377,7 @@ function Composer({
         photos.forEach((p) => URL.revokeObjectURL(p.url));
         setPhotos([]);
         setText("");
-        if (box.current) box.current.style.height = "auto";
+        if (box.current) box.current.style.height = "";
     };
     const pick = (files: FileList | null) => {
         const chosen = [...(files ?? [])].slice(0, MAX_PHOTOS - photos.length);
@@ -347,83 +388,131 @@ function Composer({
     };
     return (
         <FooterSlot>
-            <div className="bg-white border-t border-gray-200 px-3 py-2">
-                {readOnly ? (
-                    <p className="py-2 text-center text-sm text-gray-500">
-                        {t(kind === "personal" ? "chat.readOnly" : "chat.storeClosed")}
-                    </p>
-                ) : (
-                    <>
-                        {photos.length > 0 && (
-                            <div className="flex gap-2 pb-2">
-                                {photos.map((p) => (
-                                    <span key={p.url} className="relative size-16 shrink-0">
-                                        <img
-                                            src={p.url}
-                                            alt=""
-                                            className="size-16 rounded-xl object-cover"
-                                        />
-                                        <button
-                                            onClick={() => {
-                                                URL.revokeObjectURL(p.url);
-                                                setPhotos((now) =>
-                                                    now.filter((x) => x.url !== p.url),
-                                                );
-                                            }}
-                                            aria-label={t("chat.delete")}
-                                            className="absolute -right-1.5 -top-1.5 flex size-6 items-center justify-center rounded-full bg-gray-900 text-white"
-                                        >
-                                            <X size={14} strokeWidth={3} />
-                                        </button>
-                                    </span>
-                                ))}
+            {/* The page's colour behind the corners: the footer under it is white. */}
+            <div className="chat bg-slate-200">
+                <div className="rounded-t-xl bg-white px-3 py-2">
+                    {readOnly ? (
+                        <p className="py-2 text-center text-sm text-gray-500">
+                            {t(kind === "personal" ? "chat.readOnly" : "chat.storeClosed")}
+                        </p>
+                    ) : (
+                        <>
+                            {photos.length > 0 && (
+                                <div className="flex gap-2 pb-2">
+                                    {photos.map((p) => (
+                                        <span key={p.url} className="relative size-16 shrink-0">
+                                            <img
+                                                src={p.url}
+                                                alt=""
+                                                className="size-16 rounded-xl object-cover"
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    URL.revokeObjectURL(p.url);
+                                                    setPhotos((now) =>
+                                                        now.filter((x) => x.url !== p.url),
+                                                    );
+                                                }}
+                                                aria-label={t("chat.delete")}
+                                                className="absolute -right-1.5 -top-1.5 flex size-6 items-center justify-center rounded-full bg-gray-900 text-white"
+                                            >
+                                                <X size={14} strokeWidth={3} />
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                            <div
+                                className={`flex flex-wrap items-center ${open ? "gap-x-1" : "gap-x-2"}`}
+                            >
+                                <button
+                                    onPointerDown={(e) => e.preventDefault()}
+                                    onClick={() => setAdding(true)}
+                                    disabled={photos.length >= MAX_PHOTOS}
+                                    aria-label={t("chat.add")}
+                                    className={`flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-gray-700 disabled:opacity-40 active:opacity-60 ${open ? "order-2" : "order-1"}`}
+                                >
+                                    <Plus size={20} />
+                                </button>
+                                <input
+                                    ref={camera}
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    hidden
+                                    onChange={(e) => {
+                                        pick(e.target.files);
+                                        e.target.value = "";
+                                    }}
+                                />
+                                <input
+                                    ref={gallery}
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    hidden
+                                    onChange={(e) => {
+                                        pick(e.target.files);
+                                        e.target.value = "";
+                                    }}
+                                />
+                                <textarea
+                                    ref={box}
+                                    rows={1}
+                                    value={text}
+                                    maxLength={MAX_LENGTH}
+                                    onFocus={() => setFocused(true)}
+                                    onBlur={() => setFocused(false)}
+                                    onChange={(e) => {
+                                        setText(e.target.value);
+                                        // Grows with the text, up to about five lines.
+                                        e.target.style.height = "auto";
+                                        e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
+                                    }}
+                                    placeholder={t("chat.messageTo").replace("{name}", name)}
+                                    className={`block h-10 max-h-32 min-w-0 resize-none py-2.5 text-[16px] leading-5 text-gray-900 outline-none placeholder:text-gray-400 ${open ? "order-1 basis-full" : "order-2 flex-1"} px-1`}
+                                />
+                                {open && (
+                                    <button
+                                        onPointerDown={(e) => e.preventDefault()}
+                                        onClick={submit}
+                                        disabled={!ready}
+                                        aria-label={t("chat.send")}
+                                        className="order-3 ml-auto -mr-2 flex size-10 items-center justify-center text-brand disabled:text-gray-300 active:opacity-60"
+                                    >
+                                        <SendHorizontal size={22} />
+                                    </button>
+                                )}
                             </div>
-                        )}
-                        <div className="flex items-end gap-2">
-                            <button
-                                onClick={() => picker.current?.click()}
-                                disabled={photos.length >= MAX_PHOTOS}
-                                aria-label={t("chat.photo")}
-                                className="flex size-10 shrink-0 items-center justify-center rounded-full text-brand disabled:opacity-40 active:scale-95"
+                            <Sheet
+                                open={adding}
+                                onClose={() => setAdding(false)}
+                                title={t("chat.add")}
                             >
-                                <Camera size={24} />
-                            </button>
-                            <input
-                                ref={picker}
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                hidden
-                                onChange={(e) => {
-                                    pick(e.target.files);
-                                    e.target.value = "";
-                                }}
-                            />
-                            <textarea
-                                ref={box}
-                                rows={1}
-                                value={text}
-                                maxLength={MAX_LENGTH}
-                                onChange={(e) => {
-                                    setText(e.target.value);
-                                    // Grows with the text, up to about five lines.
-                                    e.target.style.height = "auto";
-                                    e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
-                                }}
-                                placeholder={t("chat.message")}
-                                className="flex-1 resize-none rounded-2xl bg-slate-100 px-3 py-2.5 text-[16px] leading-5 outline-none"
-                            />
-                            <button
-                                onClick={submit}
-                                disabled={!ready}
-                                aria-label={t("chat.send")}
-                                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand text-white disabled:opacity-40 active:scale-95"
-                            >
-                                <SendHorizontal size={20} />
-                            </button>
-                        </div>
-                    </>
-                )}
+                                <div className="chat space-y-2 pb-2">
+                                    {(
+                                        [
+                                            [camera, Camera, "chat.camera"],
+                                            [gallery, ImageIcon, "chat.gallery"],
+                                        ] as const
+                                    ).map(([input, Icon, key]) => (
+                                        <button
+                                            key={key}
+                                            onClick={() => {
+                                                setAdding(false);
+                                                input.current?.click();
+                                            }}
+                                            className="flex w-full items-center gap-3 rounded-2xl bg-slate-100 px-4 py-3.5 text-left text-[16px] font-medium text-gray-900 active:opacity-70"
+                                        >
+                                            <Icon size={22} className="text-brand" />
+                                            {t(key)}
+                                        </button>
+                                    ))}
+                                </div>
+                            </Sheet>
+                        </>
+                    )}
+                </div>
             </div>
         </FooterSlot>
     );

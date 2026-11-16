@@ -67,7 +67,7 @@ export function Drawer({
                 aria-hidden
                 className={`absolute inset-0 ${dim} ${leaving ? "animate-fade-out" : "animate-fade-in"}`}
             />
-            <div ref={wrapper} className="relative mx-auto w-full max-w-[480px]">
+            <div ref={wrapper} className="relative mx-auto w-full max-w-(--app-max-width)">
                 <div
                     role="dialog"
                     aria-label={label}
