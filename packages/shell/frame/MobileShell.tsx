@@ -20,7 +20,6 @@ import { ComeBackRefresh } from "./refresh/ComeBackRefresh";
 import { refreshGate } from "./refresh/refreshGate";
 import { isSubPage, type Tab } from "./routes";
 import { ScrollContext } from "./ScrollContext";
-import { useKeyboardViewport } from "./useKeyboardViewport";
 import { useStandaloneViewportHeight } from "./useStandaloneViewportHeight";
 
 /** Pull distance, after resistance, at which letting go refreshes. */
@@ -98,8 +97,6 @@ export function MobileShell({
     const lastRootTabRef = useRef<string>(homePath);
 
     useStandaloneViewportHeight();
-    const frameRef = useRef<HTMLDivElement>(null);
-    useKeyboardViewport(frameRef);
 
     const navigate = useCallback(
         (path: string) => {
@@ -381,10 +378,7 @@ export function MobileShell({
                 <HeaderSlotContext value={headerSlotEl}>
                     <HeaderTitleSlotContext value={titleSlotEl}>
                         {/* svh in a tab (no resize as the URL bar moves); installed, the measured --shell-height. */}
-                        <div
-                            ref={frameRef}
-                            className="h-[100svh] [@media(display-mode:standalone)]:h-[var(--shell-height,100dvh)] flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]"
-                        >
+                        <div className="h-[100svh] [@media(display-mode:standalone)]:h-[var(--shell-height,100dvh)] flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
                             <MobileHeader
                                 title={title}
                                 isSubPage={currentIsSubPage}
