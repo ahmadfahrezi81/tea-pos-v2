@@ -39,6 +39,17 @@ export function createAppRouter<TRouteTree extends AnyRoute>(routeTree: TRouteTr
     });
 }
 
+/** `?screen` in the address (any build) turns on the screen check for the visit (task 073). */
+function screenCheckWanted(): boolean {
+    try {
+        const key = "tea-pos:screen-check";
+        if (new URLSearchParams(location.search).has("screen")) sessionStorage.setItem(key, "1");
+        return sessionStorage.getItem(key) === "1";
+    } catch {
+        return false;
+    }
+}
+
 /** Loads the active language only, then draws the app. */
 export async function startApp(router: ReturnType<typeof createAppRouter>, app: AppConfig) {
     // A screen that is ready on first draw (sign-in, not found) lifts the splash at once.
@@ -47,6 +58,7 @@ export async function startApp(router: ReturnType<typeof createAppRouter>, app: 
         if (!router.state.matches.some((m) => m.staticData.holdsSplash)) hideSplash();
     });
     whenIdle(() => void import("../lib/events").then((m) => m.startEvents(router, APP_TAG)));
+    if (screenCheckWanted()) void import("../lib/screen-check").then((m) => m.startScreenCheck());
     whenIdle(
         () =>
             void import("@tea-pos/api-client/live").then((m) =>
