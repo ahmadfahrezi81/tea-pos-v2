@@ -109,7 +109,11 @@ function ChannelInfo({
                                     <span className="truncate text-[16px] text-gray-900">
                                         {m.id === me ? `${m.name} (${t("chat.you")})` : m.name}
                                     </span>
-                                    {m.admin && <Badge tone="violet">{t("chat.vip")}</Badge>}
+                                    {m.admin && (
+                                        <Badge tone="brand" size="sm">
+                                            {t("chat.vip")}
+                                        </Badge>
+                                    )}
                                 </span>
                             </div>
                         ))}

@@ -142,4 +142,4 @@ The owner's feedback on chat's screens (tasks 065-068), before the branch goes t
 
 **Said:** a badge beside chat admins' names, as Slack's VIP; called VIP (the admins are the family and the owner anyway).
 
-**Done:** `ChatMember.admin` from `ListChatMembers` (the owner, or chat level admin); a small violet "VIP" beside their name in the channel's info. Not in the bubbles: one place first.
+**Done:** `ChatMember.admin` from `ListChatMembers` (the owner, or chat level admin); a small "VIP" (the bubbles' violet, light grey letters) beside their name in the channel's info and on their messages (the name over others' bubbles; the owner looked for it there first).

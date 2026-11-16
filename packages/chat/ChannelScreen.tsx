@@ -6,6 +6,7 @@ import { useLocale, useT } from "@tea-pos/i18n/react";
 import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
 import { useSlug } from "@tea-pos/shell/tenant";
 import { Avatar } from "@tea-pos/ui/Avatar";
+import { Badge } from "@tea-pos/ui/Badge";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { ImagePreview } from "@tea-pos/ui/ImagePreview";
 import { Sheet } from "@tea-pos/ui/Sheet";
@@ -93,6 +94,7 @@ function Channel({ channelId }: { channelId: string }) {
         );
 
     const others = channel.members.filter((m) => m.id !== me);
+    const vips = new Set(channel.members.filter((m) => m.admin).map((m) => m.id));
     const lastMine = [...items].reverse().find((m) => m.authorId === me);
     const firstNew = items.find(
         // Never opened before: no line, everything is new.
@@ -127,6 +129,7 @@ function Channel({ channelId }: { channelId: string }) {
                         }
                         seen={m.id === lastMine?.id ? seenCount(others, m) : undefined}
                         onSeen={() => setSeenOf(m)}
+                        vip={!!m.authorId && vips.has(m.authorId)}
                     />
                 </Fragment>
             ))}
@@ -194,12 +197,15 @@ function Message({
     grouped,
     seen,
     onSeen,
+    vip,
 }: {
     m: ChatMessage;
     mine: boolean;
     grouped: boolean;
     seen?: number;
     onSeen: () => void;
+    /** A chat admin: the VIP badge beside the name. */
+    vip: boolean;
 }) {
     const t = useT();
     const locale = useLocale();
@@ -246,7 +252,14 @@ function Message({
             className={`max-w-[80%] rounded-2xl px-3 py-1.5 text-left ${mine ? "rounded-tr-md bg-brand text-white" : "rounded-tl-md bg-white text-gray-900"}`}
         >
             {!mine && !grouped && (
-                <p className="text-[13px] font-semibold leading-5 text-brand">{m.author}</p>
+                <p className="flex items-center gap-1.5 text-[14px] font-semibold leading-5 text-brand">
+                    {m.author}
+                    {vip && (
+                        <Badge tone="brand" size="sm">
+                            {t("chat.vip")}
+                        </Badge>
+                    )}
+                </p>
             )}
             {photos}
             {body || <div className="flex justify-end pb-0.5">{stamp}</div>}
