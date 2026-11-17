@@ -131,7 +131,9 @@ function Channel({ channelId }: { channelId: string }) {
         // As WhatsApp: a tap on the messages puts the keyboard away.
         <div
             className="space-y-1 pb-2"
-            onClick={() => {
+            onClick={(e) => {
+                // React passes clicks up from portals (the box, sheets): only the messages' own count.
+                if (!e.currentTarget.contains(e.target as Node)) return;
                 const a = document.activeElement;
                 if (a instanceof HTMLTextAreaElement) a.blur();
             }}
