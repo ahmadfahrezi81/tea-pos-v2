@@ -5,10 +5,19 @@ import { useSlug } from "@tea-pos/shell/tenant";
 import { Drawer, DrawerHandle } from "@tea-pos/ui/Drawer";
 import { toast } from "@tea-pos/ui/toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckCheck, Copy, CornerUpLeft, RotateCw, Trash2, type LucideIcon } from "lucide-react";
+import {
+    CheckCheck,
+    Copy,
+    CornerUpLeft,
+    Pencil,
+    RotateCw,
+    Trash2,
+    type LucideIcon,
+} from "lucide-react";
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
 import { threadKey, type ChatMessage, type Thread } from "./queries";
+import { EMOJI } from "./labels";
 
 /** How long a finger rests on a message before its menu opens. */
 const HOLD_MS = 450;
@@ -73,8 +82,11 @@ export function MessageMenu({
     channelId,
     canReply,
     canDelete,
+    canEdit,
     mine,
     onReply,
+    onEdit,
+    onReact,
     onSeen,
     onClose,
 }: {
@@ -82,8 +94,13 @@ export function MessageMenu({
     channelId: string;
     canReply: boolean;
     canDelete: boolean;
+    /** Mine, with text, sent less than 15 minutes ago. */
+    canEdit: boolean;
     mine: boolean;
     onReply: () => void;
+    onEdit: () => void;
+    /** Absent where nobody posts. */
+    onReact?: (emoji: string) => void;
     onSeen: () => void;
     onClose: () => void;
 }) {
@@ -137,6 +154,15 @@ export function MessageMenu({
                 close();
             },
         ]);
+    if (canEdit)
+        rows.push([
+            Pencil,
+            t("chat.edit"),
+            () => {
+                onEdit();
+                close();
+            },
+        ]);
     if (m.body)
         rows.push([
             Copy,
@@ -185,9 +211,46 @@ export function MessageMenu({
                 </div>
             ) : (
                 <div className="chat space-y-3 pt-2">
-                    <p className="line-clamp-3 rounded-xl bg-slate-100 px-3 py-2 text-[15px] text-gray-700 whitespace-pre-wrap break-words">
-                        {m.body || t("chat.photo")}
-                    </p>
+                    {onReact && (
+                        <div className="flex justify-between rounded-2xl bg-slate-100 px-2 py-1.5">
+                            {EMOJI.map((e) => {
+                                const on = !!m.reactions?.find((r) => r.emoji === e)?.mine;
+                                return (
+                                    <button
+                                        key={e}
+                                        onClick={() => {
+                                            onReact(e);
+                                            close();
+                                        }}
+                                        aria-pressed={on}
+                                        className={`flex size-11 items-center justify-center rounded-full text-[26px] active:scale-90 transition-transform ${on ? "bg-brand/15" : ""}`}
+                                    >
+                                        {e}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                    {/* The held message as it is: its photos, its text. */}
+                    <div className="rounded-xl bg-slate-100 p-1.5">
+                        {!!m.photos?.length && (
+                            <div className="flex gap-1">
+                                {m.photos.map((p, i) => (
+                                    <img
+                                        key={i}
+                                        src={p.previewUrl || undefined}
+                                        alt=""
+                                        className="size-20 rounded-lg bg-slate-200 object-cover"
+                                    />
+                                ))}
+                            </div>
+                        )}
+                        {m.body && (
+                            <p className="line-clamp-3 px-1.5 py-0.5 text-[15px] text-gray-700 whitespace-pre-wrap break-words">
+                                {m.body}
+                            </p>
+                        )}
+                    </div>
                     <div className="overflow-hidden rounded-2xl bg-slate-100">
                         {rows.map(([Icon, label, act, danger]) => (
                             <button

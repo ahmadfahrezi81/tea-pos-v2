@@ -130,13 +130,29 @@ function ActivityRow({ a }: { a: Activity }) {
                 </span>
                 <span className="flex min-w-0 items-center gap-1 text-[12px] leading-4 text-gray-600">
                     <span className="shrink-0">
-                        {t(a.toMe ? "chat.activityReplied" : "chat.activityPosted")}
+                        {t(
+                            a.mentionsMe
+                                ? "chat.activityMentioned"
+                                : a.toMe
+                                  ? "chat.activityReplied"
+                                  : "chat.activityPosted",
+                        )}
                     </span>
                     <Icon size={12} strokeWidth={2.5} className="shrink-0" />
                     <span className="truncate font-medium">{where}</span>
                 </span>
-                <span className="mt-0.5 line-clamp-3 text-[15px] leading-5 text-gray-900 whitespace-pre-wrap break-words">
-                    {text}
+                <span className="mt-0.5 flex items-start gap-3">
+                    <span className="min-w-0 flex-1 line-clamp-3 text-[15px] leading-5 text-gray-900 whitespace-pre-wrap break-words">
+                        {a.body || !a.photos?.length ? text : t("chat.photo")}
+                    </span>
+                    {/* A photo shows as itself, small, as the seller's activity log. */}
+                    {!a.deleted && !!a.photos?.length && (
+                        <img
+                            src={a.photos[0]!.previewUrl || undefined}
+                            alt=""
+                            className="size-11 shrink-0 rounded-lg bg-slate-200 object-cover"
+                        />
+                    )}
                 </span>
             </span>
         </button>

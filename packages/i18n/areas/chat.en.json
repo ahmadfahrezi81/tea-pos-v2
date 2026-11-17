@@ -25,7 +25,6 @@
         "today": "Today",
         "yesterday": "Yesterday",
         "earlier": "Earlier messages",
-        "tooLong": "At most 4,000 characters",
         "add": "Add",
         "camera": "Camera",
         "gallery": "Gallery",
@@ -57,10 +56,15 @@
         "replyingTo": "Replying to {name}",
         "deleteConfirm": "Delete this message?",
         "deleteSub": "It shows as deleted for everyone.",
-        "newCount": "{n} new",
         "latest": "Latest messages",
         "notSentShort": "Not sent",
         "activityPosted": "Posted in",
-        "activityReplied": "Replied to you in"
+        "activityReplied": "Replied to you in",
+        "edit": "Edit",
+        "edited": "edited",
+        "editing": "Edit message",
+        "everyone": "everyone",
+        "activityMentioned": "Mentioned you in",
+        "mention": "Mention someone"
     }
 }

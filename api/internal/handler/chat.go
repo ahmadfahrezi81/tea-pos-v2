@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -33,7 +34,12 @@ var (
 	errBadReadTime     = httpx.New(http.StatusBadRequest, "bad_request", "Not a time")
 	errMessageNotFound = httpx.New(http.StatusNotFound, "message_not_found", "That message was not found")
 	errNotYourMessage  = httpx.New(http.StatusForbidden, "not_your_message", "Only its author or a chat admin can delete it")
+	errNotAuthor       = httpx.New(http.StatusForbidden, "not_author", "Only its author can edit it")
+	errEditClosed      = httpx.New(http.StatusUnprocessableEntity, "edit_closed", "A message can be edited for 15 minutes")
 )
+
+// editWindow: a message can be edited this long after it is sent (RFC: Chat (v2)).
+const editWindow = 15 * time.Minute
 
 // chatPhotoTTL: a signed photo address works this long; the phone keeps it with the page it came in.
 const chatPhotoTTL = 6 * time.Hour
@@ -73,7 +79,7 @@ func registerChat(api huma.API, d Deps) {
 			out.Body.Channels = make([]contract.ChatChannel, len(rows))
 			for i, r := range rows {
 				c := contract.ChatChannel{
-					ID: r.ID.String(), Kind: r.Kind, Name: r.Name, Unread: int(r.Unread),
+					ID: r.ID.String(), Kind: r.Kind, Name: r.Name, Unread: int(r.Unread), Members: int(r.Members),
 					ReadOnly: readOnly(r.Kind, r.StoreStatus),
 				}
 				if r.LastMessageAt.Valid {
@@ -136,7 +142,7 @@ func registerChat(api huma.API, d Deps) {
 				for i, r := range rows {
 					out.Body.Items[i] = chatMessage(store.ListChatMessagesRow(r))
 				}
-				return out, attachPhotos(ctx, d, out.Body.Items)
+				return out, attachExtras(ctx, d, out.Body.Items, caller.UserID)
 			}
 			cursor, err := page.Decode(in.Cursor)
 			if err != nil {
@@ -152,7 +158,7 @@ func registerChat(api huma.API, d Deps) {
 			out.Body = page.Map(page.Rows(rows, in.Limit, func(r store.ListChatMessagesRow) page.Cursor {
 				return page.Cursor{At: r.CreatedAt.Time, ID: r.ID}
 			}), chatMessage)
-			return out, attachPhotos(ctx, d, out.Body.Items)
+			return out, attachExtras(ctx, d, out.Body.Items, caller.UserID)
 		})
 
 	route(api, huma.Operation{
@@ -280,15 +286,7 @@ func registerChat(api huma.API, d Deps) {
 			if err := d.Queries.DeleteChatMessage(ctx, m.ID); err != nil {
 				return nil, err
 			}
-			members, err := d.Queries.ListChatMembers(ctx, ch.ID)
-			if err != nil {
-				return nil, err
-			}
-			ids := make([]pgtype.UUID, len(members))
-			for i, x := range members {
-				ids[i] = x.ID
-			}
-			return nil, announceChat(ctx, d.Queries, chatChanged, ch.ID, ids)
+			return nil, announceMembers(ctx, d.Queries, ch.ID)
 		})
 
 	route(api, op("listChatActivity", http.MethodGet, "/activity", "Every message from others across the caller's channels, newest first; replies to them marked"), chatAccess,
@@ -317,8 +315,20 @@ func registerChat(api huma.API, d Deps) {
 						EditedAt: r.EditedAt, CreatedAt: r.CreatedAt,
 					}),
 					ChannelID: r.ChannelID.String(), ChannelKind: r.ChannelKind, ChannelName: r.ChannelName, Unread: r.Unread, ToMe: r.ToMe,
+					MentionsMe: r.MentionsMe,
 				}
 			})
+			// A photo shows as a small preview on its row, not the word Photo.
+			msgs := make([]contract.ChatMessage, len(out.Body.Items))
+			for i, x := range out.Body.Items {
+				msgs[i] = x.ChatMessage
+			}
+			if err := attachPhotos(ctx, d, msgs); err != nil {
+				return nil, err
+			}
+			for i := range out.Body.Items {
+				out.Body.Items[i].Photos = msgs[i].Photos
+			}
 			if in.Cursor == "" {
 				n, err := d.Queries.CountChatActivityUnread(ctx, store.CountChatActivityUnreadParams{
 					UserID: caller.UserID, TenantID: caller.TenantID, ChatVip: vip,
@@ -330,6 +340,86 @@ func registerChat(api huma.API, d Deps) {
 			}
 			return out, nil
 		})
+
+	route(api, huma.Operation{
+		OperationID: "editChatMessage", Method: http.MethodPatch, Path: "/tenants/{tenant}/chat/channels/{id}/messages/{message}",
+		Summary: "Edit one's own message within 15 minutes; never pushes", Tags: []string{"chat"},
+	}, chatAccess.Repeatable(),
+		func(ctx context.Context, in *contract.EditChatMessageInput) (*contract.ChatMessageOutput, error) {
+			caller, _ := auth.CallerFrom(ctx)
+			ch, err := chatChannel(ctx, d.Queries, caller, in.ID)
+			if err != nil {
+				return nil, err
+			}
+			if readOnly(ch.Kind, ch.StoreStatus) {
+				return nil, errChannelReadOnly
+			}
+			m, err := chatMessageIn(ctx, d.Queries, ch.ID, in.Msg)
+			if err != nil {
+				return nil, err
+			}
+			if m.DeletedAt.Valid {
+				return nil, errMessageNotFound
+			}
+			if m.AuthorID != caller.UserID {
+				return nil, errNotAuthor
+			}
+			if time.Since(m.CreatedAt.Time) > editWindow {
+				return nil, errEditClosed
+			}
+			body := strings.TrimSpace(in.Body.Body)
+			if body == "" {
+				return nil, errBlankMessage
+			}
+			if body != m.Body {
+				if err := d.Queries.EditChatMessage(ctx, store.EditChatMessageParams{Body: body, ID: m.ID}); err != nil {
+					return nil, err
+				}
+				if err := announceMembers(ctx, d.Queries, ch.ID); err != nil {
+					return nil, err
+				}
+			}
+			return &contract.ChatMessageOutput{Body: contract.ChatMessage{ID: m.ID.String(), Body: body, At: nano(m.CreatedAt), EditedAt: time.Now().UTC().Format(time.RFC3339Nano)}}, nil
+		})
+
+	react := func(add bool) func(context.Context, *contract.ChatReactionInput) (*struct{}, error) {
+		return func(ctx context.Context, in *contract.ChatReactionInput) (*struct{}, error) {
+			caller, _ := auth.CallerFrom(ctx)
+			ch, err := chatChannel(ctx, d.Queries, caller, in.ID)
+			if err != nil {
+				return nil, err
+			}
+			m, err := chatMessageIn(ctx, d.Queries, ch.ID, in.Msg)
+			if err != nil {
+				return nil, err
+			}
+			if m.DeletedAt.Valid {
+				return nil, errMessageNotFound
+			}
+			p := store.AddChatReactionParams{MessageID: m.ID, UserID: caller.UserID, Emoji: in.Emoji}
+			if add {
+				err = d.Queries.AddChatReaction(ctx, p)
+			} else {
+				err = d.Queries.RemoveChatReaction(ctx, store.RemoveChatReactionParams(p))
+			}
+			if err != nil {
+				return nil, err
+			}
+			if err := d.Queries.TouchChatMessage(ctx, m.ID); err != nil {
+				return nil, err
+			}
+			// Shows live; never pushes, never unread.
+			return nil, announceMembers(ctx, d.Queries, ch.ID)
+		}
+	}
+	route(api, huma.Operation{
+		OperationID: "addChatReaction", Method: http.MethodPut, Path: "/tenants/{tenant}/chat/channels/{id}/messages/{message}/reactions/{emoji}",
+		Summary: "React to a message with one of the six; twice is once", Tags: []string{"chat"}, DefaultStatus: http.StatusNoContent,
+	}, chatAccess.Repeatable(), react(true))
+	route(api, huma.Operation{
+		OperationID: "removeChatReaction", Method: http.MethodDelete, Path: "/tenants/{tenant}/chat/channels/{id}/messages/{message}/reactions/{emoji}",
+		Summary: "Take one's reaction back", Tags: []string{"chat"}, DefaultStatus: http.StatusNoContent,
+	}, chatAccess.Repeatable(), react(false))
 
 	route(api, huma.Operation{
 		OperationID: "readChat", Method: http.MethodPost, Path: "/tenants/{tenant}/chat/channels/{id}/read",
@@ -474,6 +564,19 @@ const (
 	chatTyping = "chat_typing"
 )
 
+// announceMembers tells everyone in a channel it changed.
+func announceMembers(ctx context.Context, q *store.Queries, channel pgtype.UUID) error {
+	members, err := q.ListChatMembers(ctx, channel)
+	if err != nil {
+		return err
+	}
+	ids := make([]pgtype.UUID, len(members))
+	for i, x := range members {
+		ids[i] = x.ID
+	}
+	return announceChat(ctx, q, chatChanged, channel, ids)
+}
+
 func announceChat(ctx context.Context, q *store.Queries, kind string, channel pgtype.UUID, users []pgtype.UUID) error {
 	for _, u := range users {
 		e := realtime.Event{Topic: realtime.UserTopic(u.String()), Kind: kind, ID: channel.String()}
@@ -505,6 +608,42 @@ func chatMessage(r store.ListChatMessagesRow) contract.ChatMessage {
 		m.Deleted, m.Body, m.ReplyTo = true, "", nil
 	}
 	return m
+}
+
+// attachExtras puts each message's photos and reactions on it.
+func attachExtras(ctx context.Context, d Deps, items []contract.ChatMessage, me pgtype.UUID) error {
+	if err := attachPhotos(ctx, d, items); err != nil {
+		return err
+	}
+	ids := make([]pgtype.UUID, 0, len(items))
+	at := map[string]int{}
+	for i, m := range items {
+		var id pgtype.UUID
+		if !m.Deleted && id.Scan(m.ID) == nil {
+			ids = append(ids, id)
+			at[m.ID] = i
+		}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	rows, err := d.Queries.ListChatReactions(ctx, ids)
+	if err != nil {
+		return err
+	}
+	for _, r := range rows {
+		m := &items[at[r.MessageID.String()]]
+		k := slices.IndexFunc(m.Reactions, func(x contract.ChatReaction) bool { return x.Emoji == r.Emoji })
+		if k < 0 {
+			m.Reactions = append(m.Reactions, contract.ChatReaction{Emoji: r.Emoji, Names: []string{}})
+			k = len(m.Reactions) - 1
+		}
+		m.Reactions[k].Names = append(m.Reactions[k].Names, r.Name)
+		if r.UserID == me {
+			m.Reactions[k].Mine = true
+		}
+	}
+	return nil
 }
 
 // attachPhotos puts each message's photos on it, every address signed in one batch.

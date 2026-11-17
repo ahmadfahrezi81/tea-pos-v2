@@ -108,6 +108,17 @@ func TestChatVIP(t *testing.T) {
 	giveChat(t, db, testkit.GuestA, "vip")
 	a := testkit.NewAPI(t, db, "")
 	vipChat := channelOf(t, a, testkit.GuestA, "seller", "admin", "")
+	// The list's count is the channel's own members: the VIP, not the member.
+	resp0 := a.Request(t, http.MethodGet, "/tenants/tenant-a/chat/channels/"+vipChat, "seller", testkit.Session(a.SignIn(t, testkit.GuestA, "seller")))
+	var vc contract.ChatChannelOutput
+	if err := json.NewDecoder(resp0.Body).Decode(&vc.Body); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range chatChannels(t, a, testkit.GuestA, "seller") {
+		if c.Kind == "admin" && (c.Members != len(vc.Body.Members) || c.Members == 0) {
+			t.Fatalf("VIP chat members: %d, its list %d", c.Members, len(vc.Body.Members))
+		}
+	}
 	general := channelOf(t, a, testkit.GuestA, "seller", "general", "")
 	if resp, _ := post(t, a, testkit.GuestA, "seller", vipChat, "hi VIPs", "key-00000001"); resp.StatusCode != http.StatusOK {
 		t.Fatalf("VIP posts in the VIP chat: %d", resp.StatusCode)

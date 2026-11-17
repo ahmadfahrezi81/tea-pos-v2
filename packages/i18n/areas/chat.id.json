@@ -25,7 +25,6 @@
         "today": "Hari ini",
         "yesterday": "Kemarin",
         "earlier": "Pesan sebelumnya",
-        "tooLong": "Maksimal 4.000 karakter",
         "add": "Tambah",
         "camera": "Kamera",
         "gallery": "Galeri",
@@ -57,10 +56,15 @@
         "replyingTo": "Membalas {name}",
         "deleteConfirm": "Hapus pesan ini?",
         "deleteSub": "Pesan ini akan terlihat terhapus untuk semua orang.",
-        "newCount": "{n} baru",
         "latest": "Pesan terbaru",
         "notSentShort": "Tidak terkirim",
         "activityPosted": "Dikirim di",
-        "activityReplied": "Membalas kamu di"
+        "activityReplied": "Membalas kamu di",
+        "edit": "Ubah",
+        "edited": "diubah",
+        "editing": "Ubah pesan",
+        "everyone": "semua orang",
+        "activityMentioned": "Menyebut kamu di",
+        "mention": "Sebut seseorang"
     }
 }

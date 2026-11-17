@@ -5,6 +5,7 @@ import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
 import { useSearchParam } from "@tea-pos/shell/searchParam";
+import { useApiMutation } from "@tea-pos/shell/useApiMutation";
 import { useSlug } from "@tea-pos/shell/tenant";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { Badge } from "@tea-pos/ui/Badge";
@@ -15,6 +16,7 @@ import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { useQueryClient } from "@tanstack/react-query";
 import {
     ArrowDown,
+    AtSign,
     Bell,
     Camera,
     CircleAlert,
@@ -30,18 +32,39 @@ import {
 import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import { ChannelHeader } from "./ChannelInfo";
+import wallpaper from "./wallpaper.svg?url";
 import { channelName } from "./labels";
 import { doneTyping, sayTyping, stoppedTyping, useTyping } from "./typing";
 import { forget, retry, send, snapshot, subscribe, type Pending } from "./outbox";
 import { FailedMenu, MessageMenu, useHold } from "./menu";
-import { useChannel, useThread, type ChatMessage } from "./queries";
+import { Reactions, toggleReaction } from "./reactions";
+import { threadKey, useChannel, useThread, type ChatMessage, type Thread } from "./queries";
 import { goToMessage, useChannelScroll, useEarlier } from "./scroll";
 
 type Member = { id: string; name: string; avatar?: string; readAt?: string };
 
 /** How often, at most, the phone says how far it has read. */
 const READ_EVERY_MS = 5000;
+/** A message can be edited this long after it is sent (Go's editWindow). */
+const EDIT_MS = 15 * 60 * 1000;
 const MAX_LENGTH = 4000;
+
+/**
+ * Behind a channel's messages, a faint doodle wallpaper as WhatsApp's (task 068d): a seamless
+ * tile of doodles spread by Poisson-disk sampling, its own small file that only a chat loads.
+ */
+function useWallpaper() {
+    useEffect(() => {
+        const main = document.querySelector<HTMLElement>("main");
+        if (!main) return;
+        main.style.backgroundImage = `url("${wallpaper}")`;
+        main.style.backgroundSize = "360px 360px";
+        return () => {
+            main.style.backgroundImage = "";
+            main.style.backgroundSize = "";
+        };
+    }, []);
+}
 
 /** One channel: messages newest at the bottom, the box to write in (RFC: Chat (v2), screen 2). */
 export default function ChannelScreen({ channelId }: { channelId: string }) {
@@ -53,9 +76,12 @@ export default function ChannelScreen({ channelId }: { channelId: string }) {
 }
 
 function Channel({ channelId }: { channelId: string }) {
+    useWallpaper();
     const t = useT();
     const slug = useSlug();
-    const me = useMe().data?.user.id ?? "";
+    const meUser = useMe().data?.user;
+    const me = meUser?.id ?? "";
+    const myName = meUser?.fullName ?? "";
     const channel = useChannel(slug, channelId).data;
     const thread = useThread(slug, channelId);
     const outbox = useSyncExternalStore(subscribe, snapshot).filter((p) => p.channel === channelId);
@@ -83,6 +109,9 @@ function Channel({ channelId }: { channelId: string }) {
     const [seenOf, setSeenOf] = useState<ChatMessage | null>(null);
     const [menuOf, setMenuOf] = useState<ChatMessage | null>(null);
     const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+    const [editing, setEditing] = useState<ChatMessage | null>(null);
+    // Whether the held message could still be edited when its menu opened (15 minutes).
+    const [editable, setEditable] = useState(false);
     const [sentHere, setSentHere] = useState(0);
     // Opened from Activity: at that message, once.
     const [jump] = useSearchParam("m");
@@ -172,16 +201,47 @@ function Channel({ channelId }: { channelId: string }) {
                         }
                         seen={m.id === lastMine?.id ? seenCount(others, m) : undefined}
                         onSeen={() => setSeenOf(m)}
-                        onHold={() => setMenuOf(m)}
+                        names={channel.members.map((x) => x.name)}
+                        onHold={() => {
+                            setMenuOf(m);
+                            setEditable(Date.now() - Date.parse(m.at) < EDIT_MS);
+                        }}
+                        onReact={
+                            channel.readOnly
+                                ? undefined
+                                : (e) =>
+                                      void toggleReaction(
+                                          queryClient,
+                                          slug,
+                                          channelId,
+                                          m,
+                                          e,
+                                          myName,
+                                          t("chat.notSentShort"),
+                                      )
+                        }
                         active={menuOf?.id === m.id}
                         onQuote={(id) => void goToMessage(queryClient, slug, channelId, id)}
                         vip={!!m.authorId && vips.has(m.authorId)}
                     />
                 </Fragment>
             ))}
-            {waiting.map((p) => (
-                <Outgoing key={p.key} p={p} slug={slug} />
-            ))}
+            {waiting.map((p, i) => {
+                const prev = i > 0 ? null : items.at(-1);
+                // Grouped as the sent one will be: after my own message the same day.
+                const grouped =
+                    i > 0 ||
+                    (!!prev && prev.authorId === me && localDate(prev.at) === localDate(p.at));
+                return (
+                    <Outgoing
+                        key={p.key}
+                        p={p}
+                        slug={slug}
+                        grouped={grouped}
+                        names={channel.members.map((x) => x.name)}
+                    />
+                );
+            })}
             <div ref={end} />
             <Composer
                 channelId={channelId}
@@ -191,8 +251,13 @@ function Channel({ channelId }: { channelId: string }) {
                 members={channel.members}
                 replyTo={replyTo}
                 onCancelReply={() => setReplyTo(null)}
+                editing={editing}
+                onCancelEdit={() => setEditing(null)}
+                canEveryone={!!channel.members.find((x) => x.id === me)?.vip}
+                me={me}
                 onSent={() => {
                     setReplyTo(null);
+                    setEditing(null);
                     setSentHere((n) => n + 1);
                 }}
                 down={away ? { fresh, go: toBottom } : undefined}
@@ -203,8 +268,32 @@ function Channel({ channelId }: { channelId: string }) {
                     channelId={channelId}
                     canReply={!channel.readOnly}
                     canDelete={!menuOf.event && (menuOf.authorId === me || iAmAdmin)}
+                    canEdit={
+                        !channel.readOnly && menuOf.authorId === me && !!menuOf.body && editable
+                    }
+                    onEdit={() => {
+                        setReplyTo(null);
+                        setEditing(menuOf);
+                        // In the tap itself, so the phone opens its keyboard.
+                        document.querySelector<HTMLTextAreaElement>("[data-chat-box]")?.focus();
+                    }}
+                    onReact={
+                        channel.readOnly
+                            ? undefined
+                            : (e) =>
+                                  void toggleReaction(
+                                      queryClient,
+                                      slug,
+                                      channelId,
+                                      menuOf,
+                                      e,
+                                      myName,
+                                      t("chat.notSentShort"),
+                                  )
+                    }
                     mine={menuOf.authorId === me && !menuOf.event}
                     onReply={() => {
+                        setEditing(null);
                         setReplyTo(menuOf);
                         // In the tap itself, so the phone opens its keyboard.
                         document.querySelector<HTMLTextAreaElement>("[data-chat-box]")?.focus();
@@ -311,6 +400,8 @@ function NewLine() {
  * the two curves run parallel. The corner nearest the sender is the tail.
  */
 const BUBBLE = "rounded-[10px] px-3 py-1.5";
+/** My bubbles: WhatsApp's light green with black text. */
+const MINE = "mine bg-[#d9fdd3] text-gray-900";
 const TAIL_MINE = "rounded-tr-[4px]";
 const TAIL_THEIRS = "rounded-tl-[4px]";
 /** 4 px in from the bubble's sides (12 − 8), and from its top when first (6 − 2). */
@@ -328,7 +419,9 @@ function Message({
     seen,
     onSeen,
     onHold,
+    onReact,
     onQuote,
+    names,
     active,
     vip,
 }: {
@@ -339,6 +432,10 @@ function Message({
     onSeen: () => void;
     /** Held down: the message's menu. */
     onHold: () => void;
+    /** A reaction tapped under it; absent where nobody posts. */
+    onReact?: (emoji: string) => void;
+    /** The channel's people, for their @mentions; mine is lit. */
+    names: string[];
     /** Its quote tapped: to the message it answers. */
     onQuote: (id: string) => void;
     /** Its menu is open: the row stays lit. */
@@ -361,23 +458,23 @@ function Message({
     const ticks = mine && seen !== undefined && seen > 0;
     // As WhatsApp: name, photos, text and time in one bubble; the time sits on the text's last line.
     const stamp = (
-        <span
-            className={`flex items-center gap-0.5 text-[11px] leading-none ${mine ? "text-white/75" : "text-gray-500"}`}
-        >
+        <span className="flex items-center gap-0.5 text-[11px] leading-none text-gray-500">
+            {m.editedAt && !m.deleted && <span>{t("chat.edited")}</span>}
             {time}
             {ticks && <CheckCheck size={14} strokeWidth={2.5} />}
         </span>
     );
+    // Room on the last line for the time (and "edited", and the ticks) so the text never runs under it.
+    // Mine always keep room for the clock or the ticks, so a sent bubble is as wide as it was sending.
+    const room = 2.75 + (mine ? 1.25 : 0) + (m.editedAt && !m.deleted ? 2.75 : 0);
     const body = (m.body || m.deleted) && (
         <p className="relative text-[15px] leading-5 whitespace-pre-wrap break-words">
             {m.deleted ? (
-                <span className={`italic ${mine ? "text-white/80" : "text-gray-500"}`}>
-                    {t("chat.deleted")}
-                </span>
+                <span className="italic text-gray-500">{t("chat.deleted")}</span>
             ) : (
-                m.body
+                withMentions(m.body, names)
             )}
-            <span className={`inline-block ${ticks ? "w-16" : "w-11"}`} />
+            <span className="inline-block" style={{ width: `${room}rem` }} />
             <span className="absolute right-0 bottom-0.5">{stamp}</span>
         </p>
     );
@@ -389,18 +486,14 @@ function Message({
                 e.stopPropagation();
                 onQuote(q.id);
             }}
-            className={`${INSET_X} ${mine || grouped ? `${INSET_TOP} ${mine ? TAIL_INNER_MINE : TAIL_INNER_THEIRS}` : "mt-0.5"} mb-1 flex w-[calc(100%+1rem)] min-w-40 overflow-hidden ${INNER} text-left text-[13px] leading-4 ${mine ? "bg-black/15" : "bg-slate-100"}`}
+            className={`${INSET_X} ${mine || grouped ? `${INSET_TOP} ${mine ? TAIL_INNER_MINE : TAIL_INNER_THEIRS}` : "mt-0.5"} mb-1 flex w-[calc(100%+1rem)] min-w-40 overflow-hidden ${INNER} text-left text-[13px] leading-4 ${mine ? "bg-black/5" : "bg-slate-100"}`}
         >
-            <span className={`w-1 shrink-0 ${mine ? "bg-white/80" : "bg-brand"}`} />
+            <span className="w-1 shrink-0 bg-brand" />
             <span className="min-w-0 flex-1 px-2 py-1">
-                <span
-                    className={`block truncate font-semibold ${mine ? "text-white" : "text-brand"}`}
-                >
+                <span className="block truncate font-semibold text-brand">
                     {q.author || t("chat.message")}
                 </span>
-                <span
-                    className={`line-clamp-2 ${mine ? "text-white/80" : "text-gray-600"} ${q.deleted ? "italic" : ""}`}
-                >
+                <span className={`line-clamp-2 text-gray-600 ${q.deleted ? "italic" : ""}`}>
                     {q.deleted ? t("chat.deleted") : q.body || t("chat.photo")}
                 </span>
             </span>
@@ -430,7 +523,7 @@ function Message({
         // The phone's own text menu stays off: holding a message opens ours.
         <div
             {...(m.deleted ? {} : hold)}
-            className={`max-w-[80%] select-none ${BUBBLE} text-left transition-transform duration-200 [-webkit-touch-callout:none] ${pressing ? "scale-[0.97]" : ""} ${mine ? `${TAIL_MINE} bg-brand text-white` : `${TAIL_THEIRS} bg-white text-gray-900`}`}
+            className={`max-w-[80%] select-none ${BUBBLE} text-left transition-transform duration-200 [-webkit-touch-callout:none] ${pressing ? "scale-[0.97]" : ""} ${mine ? `${TAIL_MINE} ${MINE}` : `${TAIL_THEIRS} bg-white text-gray-900`}`}
         >
             {!mine && !grouped && (
                 <p className="flex items-center gap-1.5 text-[14px] font-semibold leading-5 text-brand">
@@ -445,6 +538,10 @@ function Message({
             {!m.deleted && quote}
             {photos}
             {body || (!photos && <div className="flex justify-end pb-0.5">{stamp}</div>)}
+            {/* Reactions belong to the bubble: inside it, under the text. */}
+            {!m.deleted && !!m.reactions?.length && (
+                <Reactions reactions={m.reactions} onTint={mine} onToggle={(e) => onReact?.(e)} />
+            )}
         </div>
     );
     if (mine)
@@ -469,9 +566,41 @@ function Message({
             className={`-mx-4 flex items-start gap-2 px-4 transition-colors duration-200 ${grouped ? "" : "pt-2"} ${pressing || active ? "bg-brand/10" : ""}`}
         >
             <span className="w-8 shrink-0">{!grouped && <Avatar url={m.avatar} size={32} />}</span>
-            {bubble}
+            <div className="flex min-w-0 flex-1 flex-col items-start gap-1">{bubble}</div>
         </div>
     );
+}
+
+/**
+ * A message's text with its @mentions lit (RFC: mentions are highlighted on the phone only):
+ * `@` and a member's full name, or `@everyone`, as it looked typed in the box.
+ */
+function withMentions(text: string, names: string[]): ReactNode {
+    const all = [...new Set([...names, "everyone"])]
+        .filter(Boolean)
+        .sort((a, b) => b.length - a.length);
+    if (!text.includes("@") || all.length === 0) return text;
+    const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp(`@(${all.map(escape).join("|")})`, "g");
+    const out: ReactNode[] = [];
+    let last = 0;
+    for (const hit of text.matchAll(re)) {
+        const at = hit.index ?? 0;
+        if (at > last) out.push(text.slice(last, at));
+        const who = hit[1]!;
+        out.push(
+            <span
+                key={at}
+                // As WhatsApp: a mention is the name in the brand green.
+                className="text-brand"
+            >
+                @{who}
+            </span>,
+        );
+        last = at + hit[0].length;
+    }
+    if (last < text.length) out.push(text.slice(last));
+    return out;
 }
 
 /** A system message in the reader's language; an event this build does not know shows its body. */
@@ -480,16 +609,41 @@ function systemText(m: ChatMessage, t: (key: MessageKey) => string): string {
     return m.body || m.event || "";
 }
 
-function Outgoing({ p, slug }: { p: Pending; slug: string }) {
+/**
+ * A message on its way, drawn exactly as the sent one will be (task 068d: the swap crumpled
+ * it): the same bubble, its time inside with a clock, a photo in its own shape from the
+ * phone's copy. It rises in as it is added; the server's copy then replaces it unseen.
+ */
+function Outgoing({
+    p,
+    slug,
+    grouped,
+    names,
+}: {
+    p: Pending;
+    slug: string;
+    grouped: boolean;
+    names: string[];
+}) {
     const t = useT();
     const locale = useLocale();
     const queryClient = useQueryClient();
     const [menu, setMenu] = useState(false);
     const failed = p.state === "failed";
     const q = p.replyTo;
+    const stamp = (
+        <span className="flex items-center gap-0.5">
+            {formatTime(p.at, locale)}
+            {!failed && <Clock size={12} strokeWidth={2.5} />}
+        </span>
+    );
+    const one = p.photos.length === 1;
     return (
-        <div data-message-id={p.key} className="flex flex-col items-end gap-1 pt-2">
-            <div className="flex max-w-full items-center justify-end gap-2">
+        <div
+            data-message-id={p.key}
+            className={`-mx-4 flex animate-rise-in flex-col items-end gap-1 px-4 ${grouped ? "" : "pt-2"}`}
+        >
+            <div className="flex w-full items-center justify-end gap-2">
                 {failed && (
                     <button
                         onClick={() => setMenu(true)}
@@ -501,48 +655,60 @@ function Outgoing({ p, slug }: { p: Pending; slug: string }) {
                 )}
                 <div
                     onClick={() => failed && setMenu(true)}
-                    className={`max-w-[80%] ${BUBBLE} ${TAIL_MINE} bg-brand text-left text-[15px] text-white whitespace-pre-wrap break-words ${failed ? "" : "opacity-70"}`}
+                    className={`max-w-[80%] select-none ${BUBBLE} ${TAIL_MINE} ${MINE} text-left`}
                 >
                     {q && (
                         <span
-                            className={`${INSET_X} ${INSET_TOP} mb-1 flex min-w-40 overflow-hidden ${INNER} ${TAIL_INNER_MINE} bg-black/15 text-[13px] leading-4`}
+                            className={`${INSET_X} ${INSET_TOP} ${TAIL_INNER_MINE} mb-1 flex w-[calc(100%+1rem)] min-w-40 overflow-hidden ${INNER} bg-black/5 text-left text-[13px] leading-4`}
                         >
-                            <span className="w-1 shrink-0 bg-white/80" />
+                            <span className="w-1 shrink-0 bg-brand" />
                             <span className="min-w-0 flex-1 px-2 py-1">
-                                <span className="block truncate font-semibold text-white">
+                                <span className="block truncate font-semibold text-brand">
                                     {q.author || t("chat.message")}
                                 </span>
-                                <span className="line-clamp-2 text-white/80">
+                                <span className="line-clamp-2 text-gray-600">
                                     {q.body || t("chat.photo")}
                                 </span>
                             </span>
                         </span>
                     )}
                     {p.photos.length > 0 && (
-                        <span
-                            className={`${INSET_X} ${q ? "mt-0.5" : `${INSET_TOP} ${TAIL_INNER_MINE}`} ${p.body ? "mb-1" : "-mb-0.5"} grid gap-0.5 overflow-hidden ${INNER} ${p.photos.length === 1 ? "grid-cols-1 w-56" : "grid-cols-2 w-60"}`}
+                        <div
+                            className={`${INSET_X} ${q ? "mt-0.5" : INSET_TOP} ${p.body ? "mb-1" : "-mb-0.5"}`}
                         >
-                            {p.photos.map((ph) => (
-                                <img
-                                    key={ph.local}
-                                    src={ph.local}
-                                    alt=""
-                                    className={`block w-full rounded-[2px] object-cover aspect-square`}
-                                />
-                            ))}
-                        </span>
+                            <div
+                                className={`relative grid gap-0.5 overflow-hidden ${INNER} ${q ? "" : TAIL_INNER_MINE} ${one ? "grid-cols-1 w-56" : "grid-cols-2 w-60"}`}
+                            >
+                                {p.photos.map((ph) => (
+                                    <img
+                                        key={ph.local}
+                                        src={ph.local}
+                                        alt=""
+                                        className={`block w-full rounded-[2px] object-cover ${one ? "h-auto" : "aspect-square"}`}
+                                    />
+                                ))}
+                                {!p.body && (
+                                    <span className="pointer-events-none absolute right-0 bottom-0 flex h-8 items-end justify-end rounded-br-[6px] bg-linear-to-tl from-black/45 via-black/15 to-transparent px-2 pb-1.5 pl-8 text-[11px] leading-none text-white">
+                                        {stamp}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
                     )}
-                    {p.body}
+                    {p.body && (
+                        <p className="relative text-[15px] leading-5 whitespace-pre-wrap break-words">
+                            {withMentions(p.body, names)}
+                            <span className="inline-block" style={{ width: "4rem" }} />
+                            <span className="absolute right-0 bottom-0.5 text-[11px] leading-none text-gray-500">
+                                {stamp}
+                            </span>
+                        </p>
+                    )}
                 </div>
             </div>
-            {failed ? (
-                <span className="mt-0.5 text-[11px] font-semibold text-red-600">
+            {failed && (
+                <span className="text-[11px] font-semibold text-red-600">
                     {t("chat.notSentShort")}
-                </span>
-            ) : (
-                <span className="mt-0.5 flex items-center gap-1 text-[11px] text-gray-500">
-                    {formatTime(p.at, locale)}
-                    <Clock size={12} />
                 </span>
             )}
             {menu && (
@@ -568,6 +734,10 @@ function Composer({
     members,
     replyTo,
     onCancelReply,
+    editing,
+    onCancelEdit,
+    canEveryone,
+    me,
     onSent,
     down,
 }: {
@@ -579,6 +749,12 @@ function Composer({
     /** The message being answered: quoted over the box. */
     replyTo: ChatMessage | null;
     onCancelReply: () => void;
+    /** My message being edited: its text in the box, "Editing" over it. */
+    editing: ChatMessage | null;
+    onCancelEdit: () => void;
+    /** A VIP or an admin may @everyone. */
+    canEveryone: boolean;
+    me: string;
     onSent: () => void;
     /** Scrolled up: the arrow back to the newest, with how many came meanwhile. */
     down?: { fresh: number; go: () => void };
@@ -589,16 +765,94 @@ function Composer({
     const [text, setText] = useState("");
     const [photos, setPhotos] = useState<{ file: File; url: string }[]>([]);
     const box = useRef<HTMLTextAreaElement>(null);
+    const lit = useRef<HTMLDivElement>(null);
     const camera = useRef<HTMLInputElement>(null);
     const gallery = useRef<HTMLInputElement>(null);
     const [adding, setAdding] = useState(false);
-    const [focused, setFocused] = useState(false);
+    const [caret, setCaret] = useState(0);
+    // A message chosen for editing puts its text in the box, once.
+    const [shownEdit, setShownEdit] = useState<string | null>(null);
+    if ((editing?.id ?? null) !== shownEdit) {
+        setShownEdit(editing?.id ?? null);
+        setText(editing?.body ?? "");
+    }
     const body = text.trim();
-    const ready = (body !== "" || photos.length > 0) && body.length <= MAX_LENGTH;
-    // As Slack: the box alone until tapped; then the tools under it, send on the right.
-    const open = focused || text !== "" || photos.length > 0;
+    const ready = editing
+        ? body !== "" && body.length <= MAX_LENGTH
+        : (body !== "" || photos.length > 0) && body.length <= MAX_LENGTH;
+    // @ and what follows it, up to the caret: the names it could be.
+    const asked = /(?:^|\s)@([^@\n]{0,30})$/.exec(text.slice(0, caret))?.[1];
+    const suggestions: { name: string; avatar?: string }[] =
+        asked === undefined
+            ? []
+            : [
+                  ...members.filter((x) => x.id !== me),
+                  ...(canEveryone ? [{ name: "everyone", avatar: undefined }] : []),
+              ]
+                  .filter((x) => x.name.toLowerCase().includes(asked.toLowerCase()))
+                  .slice(0, 5);
+    const mention = (name: string) => {
+        const start = text.slice(0, caret).lastIndexOf("@");
+        const next = `${text.slice(0, start)}@${name} ${text.slice(caret)}`;
+        const at = start + name.length + 2;
+        setText(next);
+        setCaret(at);
+        requestAnimationFrame(() => box.current?.setSelectionRange(at, at));
+    };
+    // The @ button: an @ where the caret is (a space before it if needed), and the names show.
+    const atSign = () => {
+        const el = box.current;
+        if (!el) return;
+        el.focus();
+        const at = document.activeElement === el ? caret : text.length;
+        const before = text.slice(0, at);
+        const add = before === "" || /\s$/.test(before) ? "@" : " @";
+        const next = before + add + text.slice(at);
+        const to = at + add.length;
+        setText(next);
+        setCaret(to);
+        requestAnimationFrame(() => el.setSelectionRange(to, to));
+    };
+    // Shown at once; put back, with the reason, if Go refuses (useApiMutation shows it).
+    const saveEdit = useApiMutation(
+        async ({ m, text: next }: { m: ChatMessage; text: string }, headers) => {
+            const key = threadKey(slug, channelId);
+            const before = queryClient.getQueryData<Thread>(key);
+            queryClient.setQueryData<Thread>(key, (now) =>
+                now
+                    ? {
+                          ...now,
+                          items: now.items.map((x) =>
+                              x.id === m.id
+                                  ? { ...x, body: next, editedAt: new Date().toISOString() }
+                                  : x,
+                          ),
+                      }
+                    : now,
+            );
+            const { error } = await api.PATCH(
+                "/tenants/{tenant}/chat/channels/{id}/messages/{message}",
+                {
+                    params: { path: { tenant: slug, id: channelId, message: m.id } },
+                    body: { body: next },
+                    headers,
+                },
+            );
+            if (error) {
+                queryClient.setQueryData(key, before);
+                throw error;
+            }
+        },
+    );
     const submit = () => {
         if (!ready) return;
+        if (editing) {
+            if (body !== editing.body) saveEdit.mutate({ m: editing, text: body });
+            onSent();
+            setText("");
+            if (box.current) box.current.style.height = "";
+            return;
+        }
         send(
             queryClient,
             slug,
@@ -631,8 +885,32 @@ function Composer({
     return (
         <FooterSlot>
             {/* The page's colour behind the corners (the typing banner's while it shows): the footer under it is white. */}
-            <div className="chat relative bg-slate-200 has-[[data-typing]]:bg-violet-100 [&:has([data-typing])_[data-down]]:mb-12">
+            <div className="chat relative bg-slate-200 has-[[data-typing]]:bg-[#d9fdd3] [&:has([data-typing])_[data-down]]:mb-12">
                 <Typing channelId={channelId} members={members} />
+                {/* Names for an @, in a card above the bar (owner: not inside it). */}
+                {suggestions.length > 0 && (
+                    <div className="absolute inset-x-1 bottom-full z-20 mb-1 overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-black/5">
+                        {suggestions.map((x) => (
+                            <button
+                                key={x.name}
+                                onPointerDown={(e) => e.preventDefault()}
+                                onClick={() => mention(x.name)}
+                                className="flex w-full items-center gap-3 border-b border-slate-100 px-3 py-2 text-left last:border-b-0 active:bg-slate-100"
+                            >
+                                {x.name === "everyone" ? (
+                                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
+                                        <AtSign size={16} />
+                                    </span>
+                                ) : (
+                                    <Avatar url={x.avatar} size={32} />
+                                )}
+                                <span className="truncate text-[15px] text-gray-900">
+                                    {x.name === "everyone" ? `@${t("chat.everyone")}` : x.name}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                )}
                 {down && (
                     <button
                         data-down
@@ -655,6 +933,30 @@ function Composer({
                         </p>
                     ) : (
                         <>
+                            {editing && (
+                                <div className="-mx-1 mb-1.5 flex items-stretch overflow-hidden rounded-lg bg-slate-100">
+                                    <span className="w-1 shrink-0 bg-brand" />
+                                    <span className="min-w-0 flex-1 px-2 py-1 text-[13px] leading-4">
+                                        <span className="block truncate font-semibold text-brand">
+                                            {t("chat.editing")}
+                                        </span>
+                                        <span className="line-clamp-1 text-gray-600">
+                                            {editing.body}
+                                        </span>
+                                    </span>
+                                    <button
+                                        onPointerDown={(e) => e.preventDefault()}
+                                        onClick={() => {
+                                            onCancelEdit();
+                                            setText("");
+                                        }}
+                                        aria-label={t("common.close")}
+                                        className="px-2.5 text-gray-600 active:opacity-60"
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                </div>
+                            )}
                             {replyTo && (
                                 // As WhatsApp: slim, a line on its left, no box around it.
                                 <div className="-mx-1 mb-1.5 flex items-stretch overflow-hidden rounded-lg bg-slate-100">
@@ -705,18 +1007,47 @@ function Composer({
                                     ))}
                                 </div>
                             )}
-                            <div
-                                className={`flex flex-wrap items-center ${open ? "gap-x-1" : "gap-x-2"}`}
-                            >
-                                <button
-                                    onPointerDown={(e) => e.preventDefault()}
-                                    onClick={() => setAdding(true)}
-                                    disabled={photos.length >= MAX_PHOTOS}
-                                    aria-label={t("chat.add")}
-                                    className={`flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-gray-700 disabled:opacity-40 active:opacity-60 ${open ? "order-2" : "order-1"}`}
-                                >
-                                    <Plus size={20} />
-                                </button>
+                            <div>
+                                {/* As Slack, on two lines, always (task 068d: changing shape on a tap jumped):
+                                    the box, then its tools; the bar only grows with the text. */}
+                                {/* The box's own text is see-through; this copy under it draws the
+                                    same text with each @name lit (a textarea cannot colour part of
+                                    itself). Colour and background only, so every letter keeps its place. */}
+                                <div className="relative">
+                                    <div
+                                        ref={lit}
+                                        aria-hidden
+                                        className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words px-1 py-2.5 text-[16px] leading-5 text-gray-900"
+                                    >
+                                        {withMentions(
+                                            text,
+                                            members.map((x) => x.name),
+                                        )}
+                                        {"\u200b"}
+                                    </div>
+                                    <textarea
+                                        ref={box}
+                                        data-chat-box
+                                        rows={1}
+                                        value={text}
+                                        maxLength={MAX_LENGTH}
+                                        onSelect={(e) => setCaret(e.currentTarget.selectionStart)}
+                                        onScroll={(e) => {
+                                            if (lit.current)
+                                                lit.current.scrollTop = e.currentTarget.scrollTop;
+                                        }}
+                                        onChange={(e) => {
+                                            setText(e.target.value);
+                                            setCaret(e.target.selectionStart);
+                                            if (e.target.value.trim()) sayTyping(slug, channelId);
+                                            // Grows with the text, up to about five lines.
+                                            e.target.style.height = "auto";
+                                            e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
+                                        }}
+                                        placeholder={t("chat.messageTo").replace("{name}", name)}
+                                        className="relative block h-10 max-h-32 w-full resize-none bg-transparent px-1 py-2.5 text-[16px] leading-5 text-transparent caret-gray-900 outline-none placeholder:text-gray-500"
+                                    />
+                                </div>
                                 <input
                                     ref={camera}
                                     type="file"
@@ -739,35 +1070,38 @@ function Composer({
                                         e.target.value = "";
                                     }}
                                 />
-                                <textarea
-                                    ref={box}
-                                    data-chat-box
-                                    rows={1}
-                                    value={text}
-                                    maxLength={MAX_LENGTH}
-                                    onFocus={() => setFocused(true)}
-                                    onBlur={() => setFocused(false)}
-                                    onChange={(e) => {
-                                        setText(e.target.value);
-                                        if (e.target.value.trim()) sayTyping(slug, channelId);
-                                        // Grows with the text, up to about five lines.
-                                        e.target.style.height = "auto";
-                                        e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
-                                    }}
-                                    placeholder={t("chat.messageTo").replace("{name}", name)}
-                                    className={`block h-10 max-h-32 min-w-0 resize-none py-2.5 text-[16px] leading-5 text-gray-900 outline-none placeholder:text-gray-500 ${open ? "order-1 basis-full" : "order-2 flex-1"} px-1`}
-                                />
-                                {open && (
+                                <div className="flex items-center gap-1.5">
+                                    <button
+                                        onPointerDown={(e) => e.preventDefault()}
+                                        onClick={() => setAdding(true)}
+                                        disabled={photos.length >= MAX_PHOTOS || !!editing}
+                                        aria-label={t("chat.add")}
+                                        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-gray-700 disabled:opacity-40 active:opacity-60"
+                                    >
+                                        <Plus size={20} />
+                                    </button>
+                                    <button
+                                        onPointerDown={(e) => e.preventDefault()}
+                                        onClick={atSign}
+                                        aria-label={t("chat.mention")}
+                                        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-gray-700 active:opacity-60"
+                                    >
+                                        <AtSign size={19} />
+                                    </button>
                                     <button
                                         onPointerDown={(e) => e.preventDefault()}
                                         onClick={submit}
                                         disabled={!ready}
                                         aria-label={t("chat.send")}
-                                        className="order-3 ml-auto -mr-2 flex size-10 items-center justify-center text-brand disabled:text-gray-300 active:opacity-60"
+                                        className="ml-auto flex size-9 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand transition-colors active:opacity-70 disabled:bg-slate-100 disabled:text-gray-400"
                                     >
-                                        <SendHorizontal size={22} />
+                                        <SendHorizontal
+                                            size={21}
+                                            strokeWidth={2.5}
+                                            className="translate-x-[1.5px]"
+                                        />
                                     </button>
-                                )}
+                                </div>
                             </div>
                             <Sheet
                                 open={adding}
@@ -921,7 +1255,7 @@ function Typing({ channelId, members }: { channelId: string; members: Member[] }
         <div
             role="status"
             data-typing
-            className="absolute inset-x-0 bottom-full flex animate-fade-in items-center justify-center gap-2 bg-violet-100 px-4 py-1.5 text-sm font-semibold text-violet-900"
+            className="absolute inset-x-0 bottom-full flex animate-fade-in items-center justify-center gap-2 bg-[#d9fdd3] px-4 py-1.5 text-sm font-semibold text-[#0b5e48]"
         >
             <PenLine size={15} strokeWidth={2.5} className="animate-write" aria-hidden />
             {text}

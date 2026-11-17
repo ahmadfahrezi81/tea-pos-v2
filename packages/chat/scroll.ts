@@ -60,7 +60,7 @@ export function useChannelScroll({
                 s.scrollTop +=
                     el.getBoundingClientRect().top - s.getBoundingClientRect().top - ABOVE;
                 if (jumpTo) flash(el);
-            } else end.current.scrollIntoView({ block: "end" });
+            } else toEnd(s);
             return;
         }
         if (firstNew && !placed.current && !jumpTo && !awayRef.current) {
@@ -74,11 +74,11 @@ export function useChannelScroll({
         }
         if (sent > lastSent.current) {
             lastSent.current = sent;
-            end.current.scrollIntoView({ block: "end", behavior: "smooth" });
+            toEnd(s, true);
             return;
         }
         if (added <= 0 || added >= count) return;
-        if (!awayRef.current) end.current.scrollIntoView({ block: "end" });
+        if (!awayRef.current) toEnd(s);
         else setFresh((n) => n + added);
         // eslint-disable-next-line react-hooks/exhaustive-deps -- ids change with newest
     }, [newest, count, firstNew, jumpTo, sent]);
@@ -124,7 +124,8 @@ export function useChannelScroll({
 
     const toBottom = () => {
         setFresh(0);
-        end.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+        const s = scroller();
+        if (s) toEnd(s, true);
     };
     return { end, away, fresh, toBottom };
 }
@@ -170,6 +171,22 @@ export function useEarlier(
     }, [queryClient, tenant, channel, hasMore, busy]);
 
     return { top, busy };
+}
+
+/**
+ * To the very end of the content, padding included (task 068d: the arrow stopped short): the
+ * scroll area itself, not the last message into view; once a smooth scroll settles, anything
+ * that grew meanwhile (a photo loading) is made up at once.
+ */
+function toEnd(s: HTMLElement, smooth = false) {
+    if (!smooth) {
+        s.scrollTop = s.scrollHeight;
+        return;
+    }
+    s.scrollTo({ top: s.scrollHeight, behavior: "smooth" });
+    setTimeout(() => {
+        if (s.scrollHeight - s.scrollTop - s.clientHeight > 1) s.scrollTop = s.scrollHeight;
+    }, 450);
 }
 
 const messageEl = (id: string) =>

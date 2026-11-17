@@ -33,7 +33,15 @@ WHERE c.id = $1
   AND coalesce(r.notify_level, 'all') <> 'none'
   AND NOT (coalesce(r.notify_level, 'all') = 'humans' AND $3::bool)
   AND coalesce(r.last_read_at, '-infinity') < $4::timestamptz
-  AND coalesce(r.updated_at, '-infinity') < now() - interval '30 seconds'
+  -- One app per phone (task 068d): with Tea-POS and Tea-Office both subscribed on one phone (the
+  -- same user agent), only the app this person used last gets it.
+  AND NOT EXISTS (
+    SELECT 1 FROM push_subscriptions other
+    WHERE other.user_id = ps.user_id AND other.user_agent = ps.user_agent
+      AND other.app IS NOT NULL AND ps.app IS NOT NULL AND other.app <> ps.app
+      AND (SELECT max(s.last_seen_at) FROM sessions s WHERE s.user_id = ps.user_id AND s.app = other.app)
+        > coalesce((SELECT max(s.last_seen_at) FROM sessions s WHERE s.user_id = ps.user_id AND s.app = ps.app), '-infinity')
+  )
 `
 
 type ChatPushTargetsParams struct {
@@ -52,8 +60,8 @@ type ChatPushTargetsRow struct {
 }
 
 // Who a channel's newest message is pushed to: its members but the author, who want it (their
-// level), have not read it, and are not reading the channel right now (a read mark in the last
-// 30 seconds), with each of their phones.
+// level) and have not read it yet, with each of their phones (one app per phone), even with
+// the app open.
 func (q *Queries) ChatPushTargets(ctx context.Context, arg ChatPushTargetsParams) ([]ChatPushTargetsRow, error) {
 	rows, err := q.db.Query(ctx, chatPushTargets,
 		arg.ChannelID,
@@ -178,11 +186,11 @@ func (q *Queries) LatestChatMessage(ctx context.Context, channelID pgtype.UUID) 
 }
 
 const upsertPushSubscription = `-- name: UpsertPushSubscription :exec
-INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, user_agent)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, user_agent, app)
+VALUES ($1, $2, $3, $4, $5, $6)
 ON CONFLICT (endpoint) DO UPDATE
 SET user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth,
-    user_agent = excluded.user_agent, last_seen_at = now()
+    user_agent = excluded.user_agent, app = excluded.app, last_seen_at = now()
 `
 
 type UpsertPushSubscriptionParams struct {
@@ -191,6 +199,7 @@ type UpsertPushSubscriptionParams struct {
 	P256dh    string
 	Auth      string
 	UserAgent string
+	App       pgtype.Text
 }
 
 // A phone's subscription, asked again on every start: one row per endpoint, whoever holds it now.
@@ -201,6 +210,7 @@ func (q *Queries) UpsertPushSubscription(ctx context.Context, arg UpsertPushSubs
 		arg.P256dh,
 		arg.Auth,
 		arg.UserAgent,
+		arg.App,
 	)
 	return err
 }
