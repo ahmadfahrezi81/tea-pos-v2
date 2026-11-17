@@ -105,3 +105,13 @@ ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
 -- Each chat message is pushed once (task 068c): a push job claims the channel's newest message
 -- here before sending, so two jobs for the same burst never send it twice. Adds only.
 ALTER TABLE public.chat_channels ADD COLUMN IF NOT EXISTS last_pushed_message_id uuid;
+
+-- 20261117081419_chat_vip.sql
+-- Chat's VIP level (task 068c): a member with the VIP badge, in the VIP chat (the chat once
+-- called Admin); admin keeps managing chat. Only widens the check; v1 never reads it.
+ALTER TABLE public.user_app_access DROP CONSTRAINT user_app_access_check;
+ALTER TABLE public.user_app_access ADD CONSTRAINT user_app_access_check CHECK (
+    (app = 'seller' AND access = 'member')
+    OR (app = 'backoffice' AND access IN ('guest', 'admin'))
+    OR (app = 'chat' AND access IN ('member', 'vip', 'admin'))
+);

@@ -56,15 +56,15 @@ func registerChat(api huma.API, d Deps) {
 	route(api, op("listChatChannels", http.MethodGet, "/channels", "The caller's channels, made first if missing"), chatAccess,
 		func(ctx context.Context, _ *contract.TenantInput) (*contract.ChatChannelsOutput, error) {
 			caller, _ := auth.CallerFrom(ctx)
-			admin := caller.ChatLevel == auth.Admin
+			vip := caller.ChatLevel.AtLeast(auth.VIP)
 			// Made on demand, never seeded: nothing to keep in step with v1's stores and people.
 			if err := d.Queries.EnsureChatChannels(ctx, store.EnsureChatChannelsParams{
-				UserID: caller.UserID, ChatAdmin: admin, TenantID: caller.TenantID,
+				UserID: caller.UserID, ChatVip: vip, TenantID: caller.TenantID,
 			}); err != nil {
 				return nil, err
 			}
 			rows, err := d.Queries.ListChatChannels(ctx, store.ListChatChannelsParams{
-				UserID: caller.UserID, TenantID: caller.TenantID, ChatAdmin: admin,
+				UserID: caller.UserID, TenantID: caller.TenantID, ChatVip: vip,
 			})
 			if err != nil {
 				return nil, err
@@ -112,7 +112,7 @@ func registerChat(api huma.API, d Deps) {
 			for i, m := range members {
 				out.Body.Members[i] = contract.ChatMember{
 					ID: m.ID.String(), Name: m.FullName, Avatar: m.AvatarUrl, ReadAt: readAt(m.LastReadAt),
-					Admin: m.ChatAdmin,
+					Admin: m.ChatAdmin, VIP: m.ChatVip,
 				}
 			}
 			return out, nil
@@ -294,13 +294,13 @@ func registerChat(api huma.API, d Deps) {
 	route(api, op("listChatActivity", http.MethodGet, "/activity", "Every message from others across the caller's channels, newest first; replies to them marked"), chatAccess,
 		func(ctx context.Context, in *contract.ChatActivityInput) (*contract.ChatActivityOutput, error) {
 			caller, _ := auth.CallerFrom(ctx)
-			admin := caller.ChatLevel == auth.Admin
+			vip := caller.ChatLevel.AtLeast(auth.VIP)
 			cursor, err := page.Decode(in.Cursor)
 			if err != nil {
 				return nil, errBadCursor
 			}
 			rows, err := d.Queries.ListChatActivity(ctx, store.ListChatActivityParams{
-				UserID: caller.UserID, TenantID: caller.TenantID, ChatAdmin: admin,
+				UserID: caller.UserID, TenantID: caller.TenantID, ChatVip: vip,
 				CursorAt: pgtype.Timestamptz{Time: cursor.At, Valid: true}, CursorID: cursor.ID, Lim: int32(in.Limit + 1),
 			})
 			if err != nil {
@@ -321,7 +321,7 @@ func registerChat(api huma.API, d Deps) {
 			})
 			if in.Cursor == "" {
 				n, err := d.Queries.CountChatActivityUnread(ctx, store.CountChatActivityUnreadParams{
-					UserID: caller.UserID, TenantID: caller.TenantID, ChatAdmin: admin,
+					UserID: caller.UserID, TenantID: caller.TenantID, ChatVip: vip,
 				})
 				if err != nil {
 					return nil, err
@@ -416,7 +416,7 @@ func chatChannel(ctx context.Context, q *store.Queries, caller auth.Caller, id s
 		return store.GetChatChannelRow{}, err
 	}
 	ch, err := q.GetChatChannel(ctx, store.GetChatChannelParams{
-		ID: cid, TenantID: caller.TenantID, ChatAdmin: caller.ChatLevel == auth.Admin, UserID: caller.UserID,
+		ID: cid, TenantID: caller.TenantID, ChatVip: caller.ChatLevel.AtLeast(auth.VIP), UserID: caller.UserID,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ch, errChannelNotFound

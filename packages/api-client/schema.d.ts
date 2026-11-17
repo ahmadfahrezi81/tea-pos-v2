@@ -1380,7 +1380,7 @@ export interface components {
             channels: components["schemas"]["ChatChannel"][];
         };
         ChatMember: {
-            /** @description A chat admin (the owner, or chat level admin): the VIP badge */
+            /** @description A chat admin (the owner, or chat level admin): deletes anyone's message */
             admin?: boolean;
             avatar?: string;
             /** Format: uuid */
@@ -1391,6 +1391,8 @@ export interface components {
              * @description Read everything up to here; absent: never opened
              */
             readAt?: string;
+            /** @description A VIP or an admin: the VIP badge */
+            vip?: boolean;
         };
         ChatMessage: {
             /** Format: date-time */

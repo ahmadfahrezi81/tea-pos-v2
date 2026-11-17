@@ -123,7 +123,7 @@ function Channel({ channelId }: { channelId: string }) {
         );
 
     const others = channel.members.filter((m) => m.id !== me);
-    const vips = new Set(channel.members.filter((m) => m.admin).map((m) => m.id));
+    const vips = new Set(channel.members.filter((m) => m.vip).map((m) => m.id));
     const lastMine = [...items].reverse().find((m) => m.authorId === me);
     const iAmAdmin = !!channel.members.find((m) => m.id === me)?.admin;
 

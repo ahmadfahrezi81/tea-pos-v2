@@ -71,14 +71,14 @@ SELECT count(*)::int FROM (
 `
 
 type CountChatActivityUnreadParams struct {
-	UserID    pgtype.UUID
-	TenantID  pgtype.UUID
-	ChatAdmin bool
+	UserID   pgtype.UUID
+	TenantID pgtype.UUID
+	ChatVip  bool
 }
 
 // How many of ListChatActivity's are unread (stops at 100), for the Activity switch.
 func (q *Queries) CountChatActivityUnread(ctx context.Context, arg CountChatActivityUnreadParams) (int32, error) {
-	row := q.db.QueryRow(ctx, countChatActivityUnread, arg.UserID, arg.TenantID, arg.ChatAdmin)
+	row := q.db.QueryRow(ctx, countChatActivityUnread, arg.UserID, arg.TenantID, arg.ChatVip)
 	var column_1 int32
 	err := row.Scan(&column_1)
 	return column_1, err
@@ -117,18 +117,18 @@ ON CONFLICT DO NOTHING
 `
 
 type EnsureChatChannelsParams struct {
-	TenantID  pgtype.UUID
-	UserID    pgtype.UUID
-	ChatAdmin bool
+	TenantID pgtype.UUID
+	UserID   pgtype.UUID
+	ChatVip  bool
 }
 
 // Chat (RFC: Chat (v2)). Who is in a channel is decided here, the same way in every query:
 // an active member of the tenant with a chat level (the owner always), and by kind: everyone for
 // general, chat admins for admin, the person for personal, whoever works the store for a store's.
 // Makes whichever of the caller's channels do not exist yet: General, their Notifications, Admin
-// for a chat admin, one per store they work. Reads only, once they all exist.
+// for a VIP (or admin: the VIP chat, kind admin), one per store they work. Reads only, once they all exist.
 func (q *Queries) EnsureChatChannels(ctx context.Context, arg EnsureChatChannelsParams) error {
-	_, err := q.db.Exec(ctx, ensureChatChannels, arg.TenantID, arg.UserID, arg.ChatAdmin)
+	_, err := q.db.Exec(ctx, ensureChatChannels, arg.TenantID, arg.UserID, arg.ChatVip)
 	return err
 }
 
@@ -146,10 +146,10 @@ END
 `
 
 type GetChatChannelParams struct {
-	ID        pgtype.UUID
-	TenantID  pgtype.UUID
-	ChatAdmin bool
-	UserID    pgtype.UUID
+	ID       pgtype.UUID
+	TenantID pgtype.UUID
+	ChatVip  bool
+	UserID   pgtype.UUID
 }
 
 type GetChatChannelRow struct {
@@ -164,7 +164,7 @@ func (q *Queries) GetChatChannel(ctx context.Context, arg GetChatChannelParams) 
 	row := q.db.QueryRow(ctx, getChatChannel,
 		arg.ID,
 		arg.TenantID,
-		arg.ChatAdmin,
+		arg.ChatVip,
 		arg.UserID,
 	)
 	var i GetChatChannelRow
@@ -301,12 +301,12 @@ LIMIT $6
 `
 
 type ListChatActivityParams struct {
-	UserID    pgtype.UUID
-	TenantID  pgtype.UUID
-	ChatAdmin bool
-	CursorAt  pgtype.Timestamptz
-	CursorID  pgtype.UUID
-	Lim       int32
+	UserID   pgtype.UUID
+	TenantID pgtype.UUID
+	ChatVip  bool
+	CursorAt pgtype.Timestamptz
+	CursorID pgtype.UUID
+	Lim      int32
 }
 
 type ListChatActivityRow struct {
@@ -335,7 +335,7 @@ func (q *Queries) ListChatActivity(ctx context.Context, arg ListChatActivityPara
 	rows, err := q.db.Query(ctx, listChatActivity,
 		arg.UserID,
 		arg.TenantID,
-		arg.ChatAdmin,
+		arg.ChatVip,
 		arg.CursorAt,
 		arg.CursorID,
 		arg.Lim,
@@ -410,9 +410,9 @@ ORDER BY c.last_message_at DESC NULLS LAST, c.kind, 3
 `
 
 type ListChatChannelsParams struct {
-	UserID    pgtype.UUID
-	TenantID  pgtype.UUID
-	ChatAdmin bool
+	UserID   pgtype.UUID
+	TenantID pgtype.UUID
+	ChatVip  bool
 }
 
 type ListChatChannelsRow struct {
@@ -434,7 +434,7 @@ type ListChatChannelsRow struct {
 // The caller's channels, the newest message first: the name (a store's read live), the last
 // message, and how many unread (stops at 100: "99+").
 func (q *Queries) ListChatChannels(ctx context.Context, arg ListChatChannelsParams) ([]ListChatChannelsRow, error) {
-	rows, err := q.db.Query(ctx, listChatChannels, arg.UserID, arg.TenantID, arg.ChatAdmin)
+	rows, err := q.db.Query(ctx, listChatChannels, arg.UserID, arg.TenantID, arg.ChatVip)
 	if err != nil {
 		return nil, err
 	}
@@ -469,7 +469,8 @@ func (q *Queries) ListChatChannels(ctx context.Context, arg ListChatChannelsPara
 
 const listChatMembers = `-- name: ListChatMembers :many
 SELECT u.id, u.full_name, coalesce(u.avatar_url, '')::text AS avatar_url, r.last_read_at,
-    coalesce(t.owner_id = a.user_id OR x.access = 'admin', false)::bool AS chat_admin
+    coalesce(t.owner_id = a.user_id OR x.access = 'admin', false)::bool AS chat_admin,
+    coalesce(t.owner_id = a.user_id OR x.access IN ('vip', 'admin'), false)::bool AS chat_vip
 FROM chat_channels c
 JOIN tenants t ON t.id = c.tenant_id
 JOIN user_tenant_assignments a ON a.tenant_id = c.tenant_id AND a.status = 'active'
@@ -480,7 +481,7 @@ WHERE c.id = $1
   AND (t.owner_id = a.user_id OR x.access IS NOT NULL)
   AND CASE c.kind
     WHEN 'general' THEN true
-    WHEN 'admin' THEN t.owner_id = a.user_id OR x.access = 'admin'
+    WHEN 'admin' THEN t.owner_id = a.user_id OR x.access IN ('vip', 'admin')
     WHEN 'personal' THEN a.user_id = c.user_id
     WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = a.user_id)
     ELSE false
@@ -494,6 +495,7 @@ type ListChatMembersRow struct {
 	AvatarUrl  string
 	LastReadAt pgtype.Timestamptz
 	ChatAdmin  bool
+	ChatVip    bool
 }
 
 // Everyone in a channel, with how far they have read: Seen by, Not yet, and who to tell.
@@ -512,6 +514,7 @@ func (q *Queries) ListChatMembers(ctx context.Context, channelID pgtype.UUID) ([
 			&i.AvatarUrl,
 			&i.LastReadAt,
 			&i.ChatAdmin,
+			&i.ChatVip,
 		); err != nil {
 			return nil, err
 		}

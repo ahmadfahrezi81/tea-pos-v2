@@ -39,7 +39,14 @@ Steps 1 and 3-8 are the screen only; 2 and 9 are Go and the screen. All in one P
 Three identical notifications for one "Hi": each message queues a push job (River's once-per-10-s rule did not merge them), and three ran together, each sending the channel's newest message. Slide to reply was tried and dropped (owner: holding is enough on the web).
 
 - **Each message is pushed once:** `chat_channels.last_pushed_message_id` (new, nullable); a job claims the newest message before sending and stops if another job already did. New migration, adds only
-- Left for later: pushes arrive up to a minute late (the worker picks them up on its once-a-minute poll), and the iPhone shows each push on its own (it ignores the channel's tag)
+- **Pushes at once, not a minute late:** a job waited 10 s to merge a burst, and a waiting job is picked up only by the worker's once-a-minute poll. Now it runs as soon as it is queued (the worker hears the insert); while one waits or runs, the next message joins it, and it loops until nothing new is left
+- **Activity as Slack's:** every message from others; the photo with the chat's icon in its corner, "Posted in" / "Replied to you in", the message at the size it has in its chat, in black
+- The iPhone shows each push on its own (it ignores the channel's tag); only App Store apps get the face with the app icon in its corner
+
+## Chat VIP (owner, 2026-11-17)
+
+- **Levels: None, Member, VIP, Admin.** VIP is a member with the VIP badge, in the VIP chat (the chat once called Admin: the owner is the only admin, so an admins' chat was empty). Admin keeps deleting anyone's message (and groups, later). Migration widens `user_app_access`'s check; `auth.Levels` offers it; UAC lists it
+- **UAC's People list shows each person's chat level** beside Seller and Office (`Chat · VIP`)
 
 ## Not in this task
 

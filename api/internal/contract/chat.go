@@ -46,7 +46,8 @@ type ChatMember struct {
 	Name   string `json:"name"`
 	Avatar string `json:"avatar,omitempty"`
 	ReadAt string `json:"readAt,omitempty" format:"date-time" doc:"Read everything up to here; absent: never opened"`
-	Admin  bool   `json:"admin,omitempty" doc:"A chat admin (the owner, or chat level admin): the VIP badge"`
+	Admin  bool   `json:"admin,omitempty" doc:"A chat admin (the owner, or chat level admin): deletes anyone's message"`
+	VIP    bool   `json:"vip,omitempty" doc:"A VIP or an admin: the VIP badge"`
 }
 
 type ChatMessagesInput struct {

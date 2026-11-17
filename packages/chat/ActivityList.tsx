@@ -5,7 +5,7 @@ import { useLocale, useT } from "@tea-pos/i18n/react";
 import { useSlug } from "@tea-pos/shell/tenant";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
-import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
+import { ListCard, ListRowSkeleton } from "@tea-pos/ui/ListRow";
 import { LoadMore } from "@tea-pos/ui/LoadMore";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -95,50 +95,50 @@ function ActivityRow({ a }: { a: Activity }) {
     const where = channelName({ kind: a.channelKind, name: a.channelName }, t);
     const text = a.deleted ? t("chat.deleted") : a.body || a.event || t("chat.photo");
     return (
-        <ListRow
-            top
-            leading={
-                system ? (
-                    <span className="flex size-10 items-center justify-center rounded-full bg-slate-100">
-                        <Bell size={20} className="text-gray-900" />
-                    </span>
-                ) : (
-                    <Avatar url={a.avatar} size={40} />
-                )
-            }
-            // As Slack's: who, the time; where it was (and if it answered me); what they said.
-            title={
-                <span className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-0.5">
-                    <span
-                        className={`truncate text-gray-900 ${a.unread ? "font-semibold" : "font-medium"}`}
-                    >
-                        {system ? where : a.author}
-                    </span>
-                    <span className="flex items-center justify-end gap-1.5 text-sm font-normal text-gray-600 tabular-nums">
-                        {listTime(a.at, locale)}
-                        {a.unread && <span className="size-2 rounded-full bg-brand" />}
-                    </span>
-                    <span className="col-span-2 flex min-w-0 items-center gap-1 text-[13px] font-medium text-gray-600">
-                        <Icon size={13} className="shrink-0" />
-                        <span className="truncate">{where}</span>
-                        {a.toMe && (
-                            <span className="shrink-0 font-semibold text-brand">
-                                · {t("chat.activityReply")}
-                            </span>
-                        )}
-                    </span>
-                    <span
-                        className={`col-span-2 line-clamp-2 text-sm font-normal ${a.unread ? "text-gray-900" : "text-gray-600"}`}
-                    >
-                        {text}
-                    </span>
-                </span>
-            }
+        // As Slack's: the person with where it came from in the photo's corner; where it was
+        // posted; the message at the size it has in its chat.
+        <button
             onClick={() =>
                 // Each app types its own routes' search; chat is shared by both.
                 void navigate({ to: `/${slug}/chats/${a.channelId}`, search: { m: a.id } as never })
             }
-            trailing={false}
-        />
+            className="group flex w-full items-start gap-3 text-left active:opacity-70"
+        >
+            <span className="relative mt-3 shrink-0">
+                {system ? (
+                    <span className="flex size-9 items-center justify-center rounded-full bg-slate-100">
+                        <Bell size={18} className="text-gray-900" />
+                    </span>
+                ) : (
+                    <Avatar url={a.avatar} size={36} />
+                )}
+                <span className="absolute -right-1 -bottom-1 flex size-[18px] items-center justify-center rounded-full bg-white ring-2 ring-white">
+                    <Icon size={12} strokeWidth={2.5} className="text-gray-900" />
+                </span>
+            </span>
+            <span className="min-w-0 flex-1 border-b-2 border-slate-100 py-3 group-last:border-b-0">
+                <span className="flex items-center gap-2">
+                    <span
+                        className={`min-w-0 flex-1 truncate text-[14px] leading-5 text-gray-900 ${a.unread ? "font-bold" : "font-semibold"}`}
+                    >
+                        {system ? where : a.author}
+                    </span>
+                    <span className="shrink-0 text-[12px] leading-4 text-gray-600 tabular-nums">
+                        {listTime(a.at, locale)}
+                    </span>
+                    {a.unread && <span className="size-2 shrink-0 rounded-full bg-brand" />}
+                </span>
+                <span className="flex min-w-0 items-center gap-1 text-[12px] leading-4 text-gray-600">
+                    <span className="shrink-0">
+                        {t(a.toMe ? "chat.activityReplied" : "chat.activityPosted")}
+                    </span>
+                    <Icon size={12} strokeWidth={2.5} className="shrink-0" />
+                    <span className="truncate font-medium">{where}</span>
+                </span>
+                <span className="mt-0.5 line-clamp-3 text-[15px] leading-5 text-gray-900 whitespace-pre-wrap break-words">
+                    {text}
+                </span>
+            </span>
+        </button>
     );
 }

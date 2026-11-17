@@ -339,6 +339,20 @@ func TestChatPushQueuedOncePerBurst(t *testing.T) {
 	if n != 1 {
 		t.Fatalf("%d push jobs, want 1", n)
 	}
+	// Once it has run, the next message gets a job of its own at once.
+	if _, err := db.Exec(context.Background(),
+		`UPDATE river.river_job SET state = 'completed', finalized_at = now() WHERE kind = 'chat_push'`); err != nil {
+		t.Fatal(err)
+	}
+	post(t, a, testkit.SellerA, "seller", general, "three", "key-00000003")
+	var available int
+	if err := db.QueryRow(context.Background(),
+		`SELECT count(*) FROM river.river_job WHERE kind = 'chat_push' AND state = 'available' AND scheduled_at <= now()`).Scan(&available); err != nil {
+		t.Fatal(err)
+	}
+	if available != 1 {
+		t.Fatalf("%d push jobs ready after the first ran, want 1", available)
+	}
 }
 
 // Two push jobs for one burst (River's 10 s rule is a time bucket, so messages either side of
