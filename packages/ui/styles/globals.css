@@ -83,7 +83,7 @@ body {
 
 /* Chat is its own app inside seller and backoffice: its own colour, WhatsApp's green (owner, 2026-11-17). */
 .chat {
-    --accent-primary: #00a884;
+    --accent-primary: #008069;
 }
 
 :root {
