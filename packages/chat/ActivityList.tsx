@@ -11,7 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
 
-import { channelName, listTime } from "./labels";
+import { channelName, KIND_ICON, listTime } from "./labels";
 
 type Activity = components["schemas"]["ChatActivity"];
 
@@ -34,9 +34,8 @@ export function useActivityUnread(tenant: string) {
 }
 
 /**
- * Activity, as Slack's (task 068c): everything about me across every channel, newest first,
- * without opening them: replies to my messages and my Notifications. A tap opens the channel
- * at that message.
+ * Activity, as Slack's (task 068c): every message from someone else across my channels, newest
+ * first, without opening them; a reply to me is marked. A tap opens the channel at that message.
  */
 export function ActivityList() {
     const t = useT();
@@ -91,44 +90,47 @@ function ActivityRow({ a }: { a: Activity }) {
     const locale = useLocale();
     const slug = useSlug();
     const navigate = useNavigate();
-    const inbox = a.channelKind === "personal";
+    const system = !a.authorId;
+    const Icon = KIND_ICON[a.channelKind];
     const where = channelName({ kind: a.channelKind, name: a.channelName }, t);
-    const title = inbox ? where : `${a.author ?? ""} ${t("chat.activityReply")}`;
-    const text = a.body || a.event || t("chat.photo");
+    const text = a.deleted ? t("chat.deleted") : a.body || a.event || t("chat.photo");
     return (
         <ListRow
             top
             leading={
-                inbox ? (
-                    <span className="flex size-10 items-center justify-center rounded-xl bg-slate-100">
+                system ? (
+                    <span className="flex size-10 items-center justify-center rounded-full bg-slate-100">
                         <Bell size={20} className="text-gray-900" />
                     </span>
                 ) : (
                     <Avatar url={a.avatar} size={40} />
                 )
             }
+            // As Slack's: who, the time; where it was (and if it answered me); what they said.
             title={
                 <span className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-0.5">
                     <span
                         className={`truncate text-gray-900 ${a.unread ? "font-semibold" : "font-medium"}`}
                     >
-                        {title}
+                        {system ? where : a.author}
                     </span>
-                    <span className="text-right text-sm font-normal text-gray-600 tabular-nums">
+                    <span className="flex items-center justify-end gap-1.5 text-sm font-normal text-gray-600 tabular-nums">
                         {listTime(a.at, locale)}
+                        {a.unread && <span className="size-2 rounded-full bg-brand" />}
                     </span>
-                    <span
-                        className={`line-clamp-2 text-sm font-normal ${a.unread ? "text-gray-900" : "text-gray-600"}`}
-                    >
-                        {!inbox && (
-                            <span className="font-medium text-brand">
-                                {t("chat.activityIn").replace("{name}", where)} ·{" "}
+                    <span className="col-span-2 flex min-w-0 items-center gap-1 text-[13px] font-medium text-gray-600">
+                        <Icon size={13} className="shrink-0" />
+                        <span className="truncate">{where}</span>
+                        {a.toMe && (
+                            <span className="shrink-0 font-semibold text-brand">
+                                · {t("chat.activityReply")}
                             </span>
                         )}
-                        {text}
                     </span>
-                    <span className="flex h-5 justify-end">
-                        {a.unread && <span className="mt-1.5 size-2.5 rounded-full bg-brand" />}
+                    <span
+                        className={`col-span-2 line-clamp-2 text-sm font-normal ${a.unread ? "text-gray-900" : "text-gray-600"}`}
+                    >
+                        {text}
                     </span>
                 </span>
             }

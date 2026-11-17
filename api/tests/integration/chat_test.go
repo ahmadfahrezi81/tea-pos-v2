@@ -5,14 +5,18 @@ package integration
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"sort"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/tests/testkit"
 )
 
@@ -334,6 +338,27 @@ func TestChatPushQueuedOncePerBurst(t *testing.T) {
 	}
 	if n != 1 {
 		t.Fatalf("%d push jobs, want 1", n)
+	}
+}
+
+// Two push jobs for one burst (River's 10 s rule is a time bucket, so messages either side of
+// its edge get one each): only the first to claim the newest message sends it.
+func TestChatPushClaimedOnce(t *testing.T) {
+	db := testkit.DB(t)
+	giveChat(t, db, testkit.SellerA, "member")
+	a := testkit.NewAPI(t, db, "")
+	general := channelOf(t, a, testkit.SellerA, "seller", "general", "")
+	_, m := post(t, a, testkit.SellerA, "seller", general, "hi", "key-00000001")
+	q := store.New(db)
+	var ch, msg pgtype.UUID
+	_ = ch.Scan(general)
+	_ = msg.Scan(m.ID)
+	ctx := context.Background()
+	if _, err := q.ClaimChatPush(ctx, store.ClaimChatPushParams{MessageID: msg, ChannelID: ch}); err != nil {
+		t.Fatalf("first claim: %v", err)
+	}
+	if _, err := q.ClaimChatPush(ctx, store.ClaimChatPushParams{MessageID: msg, ChannelID: ch}); !errors.Is(err, pgx.ErrNoRows) {
+		t.Fatalf("second claim: %v, want no rows", err)
 	}
 }
 

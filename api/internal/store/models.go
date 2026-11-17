@@ -65,16 +65,17 @@ type AuthUser struct {
 }
 
 type ChatChannel struct {
-	ID            pgtype.UUID
-	TenantID      pgtype.UUID
-	Kind          string
-	StoreID       pgtype.UUID
-	UserID        pgtype.UUID
-	Name          pgtype.Text
-	CreatedBy     pgtype.UUID
-	LastMessageID pgtype.UUID
-	LastMessageAt pgtype.Timestamptz
-	CreatedAt     pgtype.Timestamptz
+	ID                  pgtype.UUID
+	TenantID            pgtype.UUID
+	Kind                string
+	StoreID             pgtype.UUID
+	UserID              pgtype.UUID
+	Name                pgtype.Text
+	CreatedBy           pgtype.UUID
+	LastMessageID       pgtype.UUID
+	LastMessageAt       pgtype.Timestamptz
+	CreatedAt           pgtype.Timestamptz
+	LastPushedMessageID pgtype.UUID
 }
 
 type ChatMessage struct {

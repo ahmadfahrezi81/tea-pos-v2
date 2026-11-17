@@ -59,10 +59,6 @@ SELECT count(*)::int FROM (
     WHERE c.tenant_id = $2 AND m.deleted_at IS NULL
       AND m.author_id IS DISTINCT FROM $1
       AND m.created_at > coalesce(cr.last_read_at, '-infinity')
-      AND (
-        (c.kind = 'personal' AND c.user_id = $1)
-        OR m.thread_root_id IN (SELECT mine.id FROM chat_messages mine WHERE mine.author_id = $1)
-      )
       AND CASE c.kind
         WHEN 'general' THEN true
         WHEN 'admin' THEN $3::bool
@@ -282,18 +278,16 @@ SELECT m.id, m.author_type, m.author_id, coalesce(u.full_name, '')::text AS auth
     coalesce(u.avatar_url, '')::text AS author_avatar, m.event_type, m.body, m.metadata, m.client_key,
     m.edited_at, m.deleted_at, m.created_at,
     c.id AS channel_id, c.kind AS channel_kind, coalesce(s.name, c.name, '')::text AS channel_name,
-    (m.created_at > coalesce(cr.last_read_at, '-infinity'))::bool AS unread
+    (m.created_at > coalesce(cr.last_read_at, '-infinity'))::bool AS unread,
+    coalesce(rt.author_id = $1, false)::bool AS to_me
 FROM chat_messages m
 JOIN chat_channels c ON c.id = m.channel_id
 LEFT JOIN stores s ON s.id = c.store_id
 LEFT JOIN users u ON u.id = m.author_id
+LEFT JOIN chat_messages rt ON rt.id = m.thread_root_id
 LEFT JOIN chat_reads cr ON cr.channel_id = c.id AND cr.user_id = $1
 WHERE c.tenant_id = $2 AND m.deleted_at IS NULL
   AND m.author_id IS DISTINCT FROM $1
-  AND (
-    (c.kind = 'personal' AND c.user_id = $1)
-    OR m.thread_root_id IN (SELECT mine.id FROM chat_messages mine WHERE mine.author_id = $1)
-  )
   AND CASE c.kind
     WHEN 'general' THEN true
     WHEN 'admin' THEN $3::bool
@@ -332,10 +326,11 @@ type ListChatActivityRow struct {
 	ChannelKind  string
 	ChannelName  string
 	Unread       bool
+	ToMe         bool
 }
 
-// Everything about the caller across their channels, newest first: someone's reply to one of
-// their messages, and their own inbox (Notifications). Unread past their read mark.
+// Activity, as Slack's: every message from someone else across the caller's channels, newest
+// first, without opening them; a reply to one of theirs is marked. Unread past their read mark.
 func (q *Queries) ListChatActivity(ctx context.Context, arg ListChatActivityParams) ([]ListChatActivityRow, error) {
 	rows, err := q.db.Query(ctx, listChatActivity,
 		arg.UserID,
@@ -369,6 +364,7 @@ func (q *Queries) ListChatActivity(ctx context.Context, arg ListChatActivityPara
 			&i.ChannelKind,
 			&i.ChannelName,
 			&i.Unread,
+			&i.ToMe,
 		); err != nil {
 			return nil, err
 		}

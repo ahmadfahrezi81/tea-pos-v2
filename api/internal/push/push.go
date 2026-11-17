@@ -38,6 +38,8 @@ type Message struct {
 	Body  string `json:"body"`
 	Tag   string `json:"tag"`
 	URL   string `json:"url"`
+	// Icon: the sender's photo where the phone shows one (Android); else the app's icon.
+	Icon string `json:"icon,omitempty"`
 }
 
 // ErrGone: the phone dropped this subscription (404 or 410); delete it.

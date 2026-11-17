@@ -176,24 +176,22 @@ WHERE m.id = @id AND m.channel_id = @channel_id;
 UPDATE chat_messages SET deleted_at = now() WHERE id = @id AND deleted_at IS NULL;
 
 -- name: ListChatActivity :many
--- Everything about the caller across their channels, newest first: someone's reply to one of
--- their messages, and their own inbox (Notifications). Unread past their read mark.
+-- Activity, as Slack's: every message from someone else across the caller's channels, newest
+-- first, without opening them; a reply to one of theirs is marked. Unread past their read mark.
 SELECT m.id, m.author_type, m.author_id, coalesce(u.full_name, '')::text AS author_name,
     coalesce(u.avatar_url, '')::text AS author_avatar, m.event_type, m.body, m.metadata, m.client_key,
     m.edited_at, m.deleted_at, m.created_at,
     c.id AS channel_id, c.kind AS channel_kind, coalesce(s.name, c.name, '')::text AS channel_name,
-    (m.created_at > coalesce(cr.last_read_at, '-infinity'))::bool AS unread
+    (m.created_at > coalesce(cr.last_read_at, '-infinity'))::bool AS unread,
+    coalesce(rt.author_id = @user_id, false)::bool AS to_me
 FROM chat_messages m
 JOIN chat_channels c ON c.id = m.channel_id
 LEFT JOIN stores s ON s.id = c.store_id
 LEFT JOIN users u ON u.id = m.author_id
+LEFT JOIN chat_messages rt ON rt.id = m.thread_root_id
 LEFT JOIN chat_reads cr ON cr.channel_id = c.id AND cr.user_id = @user_id
 WHERE c.tenant_id = @tenant_id AND m.deleted_at IS NULL
   AND m.author_id IS DISTINCT FROM @user_id
-  AND (
-    (c.kind = 'personal' AND c.user_id = @user_id)
-    OR m.thread_root_id IN (SELECT mine.id FROM chat_messages mine WHERE mine.author_id = @user_id)
-  )
   AND CASE c.kind
     WHEN 'general' THEN true
     WHEN 'admin' THEN @chat_admin::bool
@@ -215,10 +213,6 @@ SELECT count(*)::int FROM (
     WHERE c.tenant_id = @tenant_id AND m.deleted_at IS NULL
       AND m.author_id IS DISTINCT FROM @user_id
       AND m.created_at > coalesce(cr.last_read_at, '-infinity')
-      AND (
-        (c.kind = 'personal' AND c.user_id = @user_id)
-        OR m.thread_root_id IN (SELECT mine.id FROM chat_messages mine WHERE mine.author_id = @user_id)
-      )
       AND CASE c.kind
         WHEN 'general' THEN true
         WHEN 'admin' THEN @chat_admin::bool

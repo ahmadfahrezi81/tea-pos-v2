@@ -196,6 +196,9 @@ components:
         replyTo:
           $ref: "#/components/schemas/ChatQuote"
           description: The message this one answers, quoted above it
+        toMe:
+          description: A reply to one of the caller's messages
+          type: boolean
         unread:
           type: boolean
       required:
@@ -3277,7 +3280,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
           description: Error
-      summary: "Everything about the caller across their channels: replies to them, their inbox"
+      summary: Every message from others across the caller's channels, newest first; replies to them marked
       tags:
         - chat
       x-access:
