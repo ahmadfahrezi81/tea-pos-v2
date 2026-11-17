@@ -27,7 +27,7 @@ import {
     SendHorizontal,
     X,
 } from "lucide-react";
-import { Fragment, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import { ChannelHeader } from "./ChannelInfo";
 import { channelName } from "./labels";
@@ -305,6 +305,22 @@ function NewLine() {
     );
 }
 
+/**
+ * One geometry for every bubble, as WhatsApp: the bubble is 10 px round with 12 px of side
+ * padding; what sits inside it (a quote, photos) is 4 px in on every side and 6 px round, so
+ * the two curves run parallel. The corner nearest the sender is the tail.
+ */
+const BUBBLE = "rounded-[10px] px-3 py-1.5";
+const TAIL_MINE = "rounded-tr-[4px]";
+const TAIL_THEIRS = "rounded-tl-[4px]";
+/** 4 px in from the bubble's sides (12 − 8), and from its top when first (6 − 2). */
+const INSET_X = "-mx-2";
+const INSET_TOP = "-mt-0.5";
+const INNER = "rounded-[6px]";
+/** Under the tail's 4 px corner, an inner corner of 2 px. */
+const TAIL_INNER_MINE = "rounded-tr-[2px]";
+const TAIL_INNER_THEIRS = "rounded-tl-[2px]";
+
 function Message({
     m,
     mine,
@@ -373,7 +389,7 @@ function Message({
                 e.stopPropagation();
                 onQuote(q.id);
             }}
-            className={`-mx-2 ${mine || grouped ? "-mt-0.5" : "mt-0.5"} mb-1 flex w-[calc(100%+1rem)] min-w-40 overflow-hidden rounded-lg text-left text-[13px] leading-4 ${mine ? "bg-black/15" : "bg-slate-100"}`}
+            className={`${INSET_X} ${mine || grouped ? `${INSET_TOP} ${mine ? TAIL_INNER_MINE : TAIL_INNER_THEIRS}` : "mt-0.5"} mb-1 flex w-[calc(100%+1rem)] min-w-40 overflow-hidden ${INNER} text-left text-[13px] leading-4 ${mine ? "bg-black/15" : "bg-slate-100"}`}
         >
             <span className={`w-1 shrink-0 ${mine ? "bg-white/80" : "bg-brand"}`} />
             <span className="min-w-0 flex-1 px-2 py-1">
@@ -390,17 +406,31 @@ function Message({
             </span>
         </button>
     );
+    const first = mine || grouped;
     const photos =
         !m.deleted && m.photos?.length ? (
-            <div className="-mx-2 mt-1 mb-1">
-                <Photos photos={m.photos} mine={mine} />
+            <div
+                className={`${INSET_X} ${first && !quote ? INSET_TOP : "mt-0.5"} ${body ? "mb-1" : "-mb-0.5"}`}
+            >
+                <Photos
+                    photos={m.photos}
+                    corner={first && !quote ? (mine ? TAIL_INNER_MINE : TAIL_INNER_THEIRS) : ""}
+                    stamp={
+                        body ? undefined : (
+                            <span className="flex items-center gap-0.5">
+                                {time}
+                                {ticks && <CheckCheck size={14} strokeWidth={2.5} />}
+                            </span>
+                        )
+                    }
+                />
             </div>
         ) : null;
     const bubble = (
         // The phone's own text menu stays off: holding a message opens ours.
         <div
             {...(m.deleted ? {} : hold)}
-            className={`max-w-[80%] select-none rounded-2xl px-3 py-1.5 text-left transition-transform duration-200 [-webkit-touch-callout:none] ${pressing ? "scale-[0.97]" : ""} ${mine ? "rounded-tr-md bg-brand text-white" : "rounded-tl-md bg-white text-gray-900"}`}
+            className={`max-w-[80%] select-none ${BUBBLE} text-left transition-transform duration-200 [-webkit-touch-callout:none] ${pressing ? "scale-[0.97]" : ""} ${mine ? `${TAIL_MINE} bg-brand text-white` : `${TAIL_THEIRS} bg-white text-gray-900`}`}
         >
             {!mine && !grouped && (
                 <p className="flex items-center gap-1.5 text-[14px] font-semibold leading-5 text-brand">
@@ -414,7 +444,7 @@ function Message({
             )}
             {!m.deleted && quote}
             {photos}
-            {body || <div className="flex justify-end pb-0.5">{stamp}</div>}
+            {body || (!photos && <div className="flex justify-end pb-0.5">{stamp}</div>)}
         </div>
     );
     if (mine)
@@ -471,40 +501,38 @@ function Outgoing({ p, slug }: { p: Pending; slug: string }) {
                 )}
                 <div
                     onClick={() => failed && setMenu(true)}
-                    className={`flex max-w-[80%] flex-col items-end gap-1 ${failed ? "" : "opacity-70"}`}
+                    className={`max-w-[80%] ${BUBBLE} ${TAIL_MINE} bg-brand text-left text-[15px] text-white whitespace-pre-wrap break-words ${failed ? "" : "opacity-70"}`}
                 >
+                    {q && (
+                        <span
+                            className={`${INSET_X} ${INSET_TOP} mb-1 flex min-w-40 overflow-hidden ${INNER} ${TAIL_INNER_MINE} bg-black/15 text-[13px] leading-4`}
+                        >
+                            <span className="w-1 shrink-0 bg-white/80" />
+                            <span className="min-w-0 flex-1 px-2 py-1">
+                                <span className="block truncate font-semibold text-white">
+                                    {q.author || t("chat.message")}
+                                </span>
+                                <span className="line-clamp-2 text-white/80">
+                                    {q.body || t("chat.photo")}
+                                </span>
+                            </span>
+                        </span>
+                    )}
                     {p.photos.length > 0 && (
-                        <div
-                            className={`grid gap-1 ${p.photos.length === 1 ? "grid-cols-1 w-56" : "grid-cols-2 w-60"}`}
+                        <span
+                            className={`${INSET_X} ${q ? "mt-0.5" : `${INSET_TOP} ${TAIL_INNER_MINE}`} ${p.body ? "mb-1" : "-mb-0.5"} grid gap-0.5 overflow-hidden ${INNER} ${p.photos.length === 1 ? "grid-cols-1 w-56" : "grid-cols-2 w-60"}`}
                         >
                             {p.photos.map((ph) => (
                                 <img
                                     key={ph.local}
                                     src={ph.local}
                                     alt=""
-                                    className="block w-full rounded-xl object-cover aspect-square"
+                                    className={`block w-full rounded-[2px] object-cover aspect-square`}
                                 />
                             ))}
-                        </div>
+                        </span>
                     )}
-                    {(p.body || q) && (
-                        <div className="rounded-2xl rounded-br-md bg-brand px-3 py-1.5 text-left text-[15px] text-white whitespace-pre-wrap break-words">
-                            {q && (
-                                <span className="-mx-2 -mt-0.5 mb-1 flex min-w-40 overflow-hidden rounded-lg bg-black/15 text-[13px] leading-4">
-                                    <span className="w-1 shrink-0 bg-white/80" />
-                                    <span className="min-w-0 flex-1 px-2 py-1">
-                                        <span className="block truncate font-semibold text-white">
-                                            {q.author || t("chat.message")}
-                                        </span>
-                                        <span className="line-clamp-2 text-white/80">
-                                            {q.body || t("chat.photo")}
-                                        </span>
-                                    </span>
-                                </span>
-                            )}
-                            {p.body}
-                        </div>
-                    )}
+                    {p.body}
                 </div>
             </div>
             {failed ? (
@@ -778,10 +806,14 @@ function Composer({
 /** A message's photos: previews only, the space kept before they load; a tap opens the full one. */
 function Photos({
     photos,
-    mine,
+    stamp,
+    corner = "",
 }: {
     photos: { url: string; previewUrl: string; width: number; height: number }[];
-    mine: boolean;
+    /** The corner under the bubble's tail, when the photos come first. */
+    corner?: string;
+    /** Photos with no text: the time sits on the last one, as WhatsApp. */
+    stamp?: ReactNode;
 }) {
     const t = useT();
     const [open, setOpen] = useState<string | null>(null);
@@ -789,13 +821,13 @@ function Photos({
     return (
         <>
             <div
-                className={`grid gap-1 ${one ? "grid-cols-1 w-56" : "grid-cols-2 w-60"} ${mine ? "ml-auto" : ""}`}
+                className={`relative grid gap-0.5 overflow-hidden ${INNER} ${corner} ${one ? "grid-cols-1 w-56" : "grid-cols-2 w-60"}`}
             >
                 {photos.map((p, i) => (
                     <button
                         key={i}
                         onClick={() => p.url && setOpen(p.url)}
-                        className="overflow-hidden rounded-xl bg-slate-200"
+                        className={`overflow-hidden rounded-[2px] bg-slate-200`}
                     >
                         <img
                             src={p.previewUrl || undefined}
@@ -809,6 +841,13 @@ function Photos({
                         />
                     </button>
                 ))}
+                {stamp && (
+                    <span
+                        className={`pointer-events-none absolute right-0 bottom-0 flex h-8 items-end justify-end rounded-br-[6px] bg-linear-to-tl from-black/45 via-black/15 to-transparent px-2 pb-1.5 pl-8 text-[11px] leading-none text-white`}
+                    >
+                        {stamp}
+                    </span>
+                )}
             </div>
             {open && (
                 <ImagePreview
