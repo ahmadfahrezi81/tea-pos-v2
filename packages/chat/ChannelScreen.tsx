@@ -32,6 +32,7 @@ import {
 import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import { ChannelHeader } from "./ChannelInfo";
+import wallpaper from "./wallpaper.svg?url";
 import { channelName } from "./labels";
 import { doneTyping, sayTyping, stoppedTyping, useTyping } from "./typing";
 import { forget, retry, send, snapshot, subscribe, type Pending } from "./outbox";
@@ -48,6 +49,23 @@ const READ_EVERY_MS = 5000;
 const EDIT_MS = 15 * 60 * 1000;
 const MAX_LENGTH = 4000;
 
+/**
+ * Behind a channel's messages, a faint doodle wallpaper as WhatsApp's (task 068d): a seamless
+ * tile of doodles spread by Poisson-disk sampling, its own small file that only a chat loads.
+ */
+function useWallpaper() {
+    useEffect(() => {
+        const main = document.querySelector<HTMLElement>("main");
+        if (!main) return;
+        main.style.backgroundImage = `url("${wallpaper}")`;
+        main.style.backgroundSize = "360px 360px";
+        return () => {
+            main.style.backgroundImage = "";
+            main.style.backgroundSize = "";
+        };
+    }, []);
+}
+
 /** One channel: messages newest at the bottom, the box to write in (RFC: Chat (v2), screen 2). */
 export default function ChannelScreen({ channelId }: { channelId: string }) {
     return (
@@ -58,6 +76,7 @@ export default function ChannelScreen({ channelId }: { channelId: string }) {
 }
 
 function Channel({ channelId }: { channelId: string }) {
+    useWallpaper();
     const t = useT();
     const slug = useSlug();
     const meUser = useMe().data?.user;
@@ -140,7 +159,6 @@ function Channel({ channelId }: { channelId: string }) {
     return (
         // As WhatsApp: a tap on the messages puts the keyboard away.
         <div
-            data-chat-channel
             className="space-y-1 pb-2"
             onClick={(e) => {
                 // React passes clicks up from portals (the box, sheets): only the messages' own count.
