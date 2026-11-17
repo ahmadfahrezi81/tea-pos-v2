@@ -23,20 +23,25 @@ export function useHold(onHold: () => void) {
     const timer = useRef(0);
     const start = useRef<{ x: number; y: number } | null>(null);
     const fired = useRef(false);
+    // A finger resting on it: the message sinks a little, so it shows it can be held.
+    const [pressing, setPressing] = useState(false);
     const cancel = () => {
         clearTimeout(timer.current);
         start.current = null;
+        setPressing(false);
     };
     const fire = () => {
         fired.current = true;
+        setPressing(false);
         navigator.vibrate?.(15);
         onHold();
     };
-    return {
+    const handlers = {
         onPointerDown: (e: ReactPointerEvent) => {
             if (e.button !== 0) return;
             fired.current = false;
             start.current = { x: e.clientX, y: e.clientY };
+            setPressing(true);
             timer.current = window.setTimeout(fire, HOLD_MS);
         },
         onPointerMove: (e: ReactPointerEvent) => {
@@ -59,6 +64,7 @@ export function useHold(onHold: () => void) {
             e.stopPropagation();
         },
     };
+    return { handlers, pressing };
 }
 
 /** What a held message offers (RFC: Chat (v2), screen 6): reply, copy, Seen by, delete. */

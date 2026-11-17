@@ -139,6 +139,7 @@ function Channel({ channelId }: { channelId: string }) {
             }}
         >
             <ChannelHeader channel={channel} me={me} />
+            <FloatingDay />
             {thread.data.next && (
                 <div
                     ref={earlierTop}
@@ -172,6 +173,7 @@ function Channel({ channelId }: { channelId: string }) {
                         seen={m.id === lastMine?.id ? seenCount(others, m) : undefined}
                         onSeen={() => setSeenOf(m)}
                         onHold={() => setMenuOf(m)}
+                        active={menuOf?.id === m.id}
                         onQuote={(id) => void goToMessage(queryClient, slug, channelId, id)}
                         vip={!!m.authorId && vips.has(m.authorId)}
                     />
@@ -226,24 +228,68 @@ function seenCount(others: Member[], m: ChatMessage): number {
     return others.filter((o) => (o.readAt ?? "") >= m.at).length;
 }
 
+function dayLabel(at: string, t: ReturnType<typeof useT>, locale: ReturnType<typeof useLocale>) {
+    const day = localDate(at);
+    const today = localDate();
+    if (day === today) return t("chat.today");
+    if (day === addDays(today, -1)) return t("chat.yesterday");
+    return formatDate(at, locale);
+}
+
 function DayLine({ at }: { at: string }) {
     const t = useT();
     const locale = useLocale();
-    const day = localDate(at);
-    const today = localDate();
-    const yesterday = addDays(today, -1);
-    const label =
-        day === today
-            ? t("chat.today")
-            : day === yesterday
-              ? t("chat.yesterday")
-              : formatDate(at, locale);
-    // Stays at the top while its day's messages scroll under it; the next day's covers it.
     return (
-        <div className="sticky top-1 z-10 flex justify-center py-2">
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-600 shadow-sm">
-                {label}
+        <div data-day className="flex justify-center py-2">
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-600">
+                {dayLabel(at, t, locale)}
             </span>
+        </div>
+    );
+}
+
+/**
+ * As WhatsApp: while scrolling, the day of the messages at the top floats over them, and fades
+ * a moment after the scrolling stops; hidden where that day's own line is already in sight.
+ */
+function FloatingDay() {
+    const t = useT();
+    const locale = useLocale();
+    const [at, setAt] = useState("");
+    const [shown, setShown] = useState(false);
+    useEffect(() => {
+        const s = document.getElementById("shell-scroll");
+        if (!s) return;
+        let timer = 0;
+        const onScroll = () => {
+            const top = s.getBoundingClientRect().top;
+            const lineAtTop = [...s.querySelectorAll("[data-day]")].some((d) => {
+                const r = d.getBoundingClientRect();
+                return r.bottom > top && r.top < top + 48;
+            });
+            const first = [...s.querySelectorAll<HTMLElement>("[data-at]")].find(
+                (r) => r.getBoundingClientRect().bottom > top + 8,
+            );
+            setAt(first?.dataset.at ?? "");
+            setShown(!!first && !lineAtTop);
+            clearTimeout(timer);
+            timer = window.setTimeout(() => setShown(false), 1000);
+        };
+        s.addEventListener("scroll", onScroll, { passive: true });
+        return () => {
+            s.removeEventListener("scroll", onScroll);
+            clearTimeout(timer);
+        };
+    }, []);
+    return (
+        <div className="pointer-events-none sticky top-0 z-10 h-0">
+            <div
+                className={`flex justify-center pt-1 transition-opacity duration-300 ${shown && at ? "opacity-100" : "opacity-0"}`}
+            >
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-600 shadow-sm">
+                    {at && dayLabel(at, t, locale)}
+                </span>
+            </div>
         </div>
     );
 }
@@ -267,6 +313,7 @@ function Message({
     onSeen,
     onHold,
     onQuote,
+    active,
     vip,
 }: {
     m: ChatMessage;
@@ -278,12 +325,14 @@ function Message({
     onHold: () => void;
     /** Its quote tapped: to the message it answers. */
     onQuote: (id: string) => void;
+    /** Its menu is open: the row stays lit. */
+    active: boolean;
     /** A chat admin: the VIP badge beside the name. */
     vip: boolean;
 }) {
     const t = useT();
     const locale = useLocale();
-    const hold = useHold(onHold);
+    const { handlers: hold, pressing } = useHold(onHold);
     if (m.event)
         return (
             <div className="flex justify-center py-1">
@@ -317,21 +366,23 @@ function Message({
         </p>
     );
     const q = m.replyTo;
+    // As WhatsApp: a flat block with a bar on its left, never a box inside a box.
     const quote = q && (
         <button
             onClick={(e) => {
                 e.stopPropagation();
                 onQuote(q.id);
             }}
-            className={`mt-1 mb-1 block w-full rounded-lg border-l-4 px-2 py-1 text-left text-[13px] leading-[18px] ${mine ? "border-white/70 bg-white/15" : "border-brand bg-slate-100"}`}
+            className={`-mx-1.5 mt-1 mb-1 flex w-[calc(100%+0.75rem)] min-w-40 overflow-hidden text-left text-[13px] leading-[18px] ${mine ? "bg-white" : "bg-slate-100"}`}
         >
-            <span className={`block truncate font-semibold ${mine ? "" : "text-brand"}`}>
-                {q.author || t("chat.message")}
-            </span>
-            <span
-                className={`line-clamp-2 ${q.deleted ? "italic" : ""} ${mine ? "text-white/85" : "text-gray-600"}`}
-            >
-                {q.deleted ? t("chat.deleted") : q.body || t("chat.photo")}
+            <span className="w-1 shrink-0 bg-brand" />
+            <span className="min-w-0 flex-1 px-2 py-1">
+                <span className="block truncate font-semibold text-brand">
+                    {q.author || t("chat.message")}
+                </span>
+                <span className={`line-clamp-2 text-gray-700 ${q.deleted ? "italic" : ""}`}>
+                    {q.deleted ? t("chat.deleted") : q.body || t("chat.photo")}
+                </span>
             </span>
         </button>
     );
@@ -345,7 +396,7 @@ function Message({
         // The phone's own text menu stays off: holding a message opens ours.
         <div
             {...(m.deleted ? {} : hold)}
-            className={`max-w-[80%] select-none rounded-2xl px-3 py-1.5 text-left [-webkit-touch-callout:none] ${mine ? "rounded-tr-md bg-brand text-white" : "rounded-tl-md bg-white text-gray-900"}`}
+            className={`max-w-[80%] select-none rounded-2xl px-3 py-1.5 text-left transition-transform duration-200 [-webkit-touch-callout:none] ${pressing ? "scale-[0.97]" : ""} ${mine ? "rounded-tr-md bg-brand text-white" : "rounded-tl-md bg-white text-gray-900"}`}
         >
             {!mine && !grouped && (
                 <p className="flex items-center gap-1.5 text-[14px] font-semibold leading-5 text-brand">
@@ -366,7 +417,8 @@ function Message({
         return (
             <div
                 data-message-id={m.id}
-                className={`-mx-4 flex flex-col items-end gap-1 px-4 ${grouped ? "" : "pt-2"}`}
+                data-at={m.at}
+                className={`-mx-4 flex flex-col items-end gap-1 px-4 transition-colors duration-200 ${grouped ? "" : "pt-2"} ${pressing || active ? "bg-brand/10" : ""}`}
             >
                 {bubble}
                 {seen !== undefined && seen > 0 && (
@@ -379,7 +431,8 @@ function Message({
     return (
         <div
             data-message-id={m.id}
-            className={`-mx-4 flex items-start gap-2 px-4 ${grouped ? "" : "pt-2"}`}
+            data-at={m.at}
+            className={`-mx-4 flex items-start gap-2 px-4 transition-colors duration-200 ${grouped ? "" : "pt-2"} ${pressing || active ? "bg-brand/10" : ""}`}
         >
             <span className="w-8 shrink-0">{!grouped && <Avatar url={m.avatar} size={32} />}</span>
             {bubble}
@@ -433,12 +486,15 @@ function Outgoing({ p, slug }: { p: Pending; slug: string }) {
                     {(p.body || q) && (
                         <div className="rounded-2xl rounded-br-md bg-brand px-3 py-2 text-left text-[15px] text-white whitespace-pre-wrap break-words">
                             {q && (
-                                <span className="mb-1 block rounded-lg border-l-4 border-white/70 bg-white/15 px-2 py-1 text-[13px] leading-[18px]">
-                                    <span className="block truncate font-semibold">
-                                        {q.author || t("chat.message")}
-                                    </span>
-                                    <span className="line-clamp-2 text-white/85">
-                                        {q.body || t("chat.photo")}
+                                <span className="-mx-1.5 mb-1 flex min-w-40 overflow-hidden bg-white text-[13px] leading-[18px]">
+                                    <span className="w-1 shrink-0 bg-brand" />
+                                    <span className="min-w-0 flex-1 px-2 py-1">
+                                        <span className="block truncate font-semibold text-brand">
+                                            {q.author || t("chat.message")}
+                                        </span>
+                                        <span className="line-clamp-2 text-gray-700">
+                                            {q.body || t("chat.photo")}
+                                        </span>
                                     </span>
                                 </span>
                             )}
@@ -560,7 +616,7 @@ function Composer({
                         )}
                     </button>
                 )}
-                <div className="rounded-t-xl bg-white px-3 py-2">
+                <div className="overflow-hidden rounded-t-xl bg-white px-3 py-2">
                     {readOnly ? (
                         <p className="py-2 text-center text-sm text-gray-500">
                             {t(kind === "personal" ? "chat.readOnly" : "chat.storeClosed")}
@@ -568,8 +624,10 @@ function Composer({
                     ) : (
                         <>
                             {replyTo && (
-                                <div className="mb-2 flex items-start gap-2 rounded-lg border-l-4 border-brand bg-slate-100 px-2 py-1.5">
-                                    <span className="min-w-0 flex-1 text-[13px] leading-[18px]">
+                                // As WhatsApp: a flat strip across the bar's top, a line on its left.
+                                <div className="-mx-3 -mt-2 mb-2 flex items-stretch border-b border-slate-100 bg-slate-50">
+                                    <span className="w-1 shrink-0 bg-brand" />
+                                    <span className="min-w-0 flex-1 px-3 py-2 text-[13px] leading-[18px]">
                                         <span className="block truncate font-semibold text-brand">
                                             {t("chat.replyingTo").replace(
                                                 "{name}",
@@ -584,7 +642,7 @@ function Composer({
                                         onPointerDown={(e) => e.preventDefault()}
                                         onClick={onCancelReply}
                                         aria-label={t("common.close")}
-                                        className="-mr-1 p-1 text-gray-600 active:opacity-60"
+                                        className="px-3 text-gray-600 active:opacity-60"
                                     >
                                         <X size={18} />
                                     </button>
