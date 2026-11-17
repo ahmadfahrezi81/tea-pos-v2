@@ -74,6 +74,7 @@ const (
 	None   Level = ""
 	Guest  Level = "guest"  // look only
 	Member Level = "member" // use it
+	VIP    Level = "vip"    // chat: a member with the VIP badge, in the VIP chat
 	Admin  Level = "admin"  // manage it
 )
 
@@ -81,7 +82,7 @@ const (
 var Levels = map[string][]Level{
 	"seller":     {Member},
 	"backoffice": {Guest, Admin},
-	"chat":       {Member, Admin},
+	"chat":       {Member, VIP, Admin},
 }
 
 // Chat is the app shown inside the others: its routes are reached from any app's session, with
@@ -104,7 +105,7 @@ func ChatLevel(status string, owner bool, access string) Level {
 // AtLeast reports whether l reaches want.
 func (l Level) AtLeast(want Level) bool { return rank(l) >= rank(want) }
 
-func rank(l Level) int { return slices.Index([]Level{None, Guest, Member, Admin}, l) }
+func rank(l Level) int { return slices.Index([]Level{None, Guest, Member, VIP, Admin}, l) }
 
 // roleLevels is users.role read as levels, for anyone without a level row yet: everyone before
 // the backfill, and people v1 adds while it runs. Goes when v1 retires.

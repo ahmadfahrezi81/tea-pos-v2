@@ -43,6 +43,11 @@ Three identical notifications for one "Hi": each message queues a push job (Rive
 - **Activity as Slack's:** every message from others; the photo with the chat's icon in its corner, "Posted in" / "Replied to you in", the message at the size it has in its chat, in black
 - The iPhone shows each push on its own (it ignores the channel's tag); only App Store apps get the face with the app icon in its corner
 
+## Chat VIP (owner, 2026-11-17)
+
+- **Levels: None, Member, VIP, Admin.** VIP is a member with the VIP badge, in the VIP chat (the chat once called Admin: the owner is the only admin, so an admins' chat was empty). Admin keeps deleting anyone's message (and groups, later). Migration widens `user_app_access`'s check; `auth.Levels` offers it; UAC lists it
+- **UAC's People list shows each person's chat level** beside Seller and Office (`Chat · VIP`)
+
 ## Not in this task
 
 Reactions, editing a sent message, voice notes, mentions, search inside a chat (chat phase 2). Scroll assist inside sheets (task 073's leftovers).

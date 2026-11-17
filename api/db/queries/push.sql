@@ -44,7 +44,7 @@ WHERE c.id = @channel_id
   AND (t.owner_id = a.user_id OR x.access IS NOT NULL)
   AND CASE c.kind
     WHEN 'general' THEN true
-    WHEN 'admin' THEN t.owner_id = a.user_id OR x.access = 'admin'
+    WHEN 'admin' THEN t.owner_id = a.user_id OR x.access IN ('vip', 'admin')
     WHEN 'personal' THEN a.user_id = c.user_id
     WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = a.user_id)
     ELSE false

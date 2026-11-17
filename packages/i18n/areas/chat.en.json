@@ -1,7 +1,7 @@
 {
     "chat": {
         "general": "General",
-        "admin": "Admin",
+        "admin": "VIP",
         "personal": "Notifications",
         "you": "You",
         "photo": "Photo",
@@ -42,7 +42,7 @@
         "whoGeneral": "Everyone in the company",
         "whoStore": "Everyone who works at this store",
         "whoGroup": "Members chosen by a chat admin",
-        "whoAdmin": "Chat admins only",
+        "whoAdmin": "VIPs and admins only",
         "whoPersonal": "Only you: updates from the app",
         "oneMember": "1 member",
         "memberCount": "{n} members",
@@ -60,7 +60,7 @@
         "newCount": "{n} new",
         "latest": "Latest messages",
         "notSentShort": "Not sent",
-        "activityPosted": "Posted in {name}",
-        "activityReplied": "Replied to you in {name}"
+        "activityPosted": "Posted in",
+        "activityReplied": "Replied to you in"
     }
 }

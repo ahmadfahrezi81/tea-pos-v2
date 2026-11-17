@@ -118,7 +118,7 @@ func chatTitle(kind, name, lang string) string {
 		}
 		return "Umum"
 	case "admin":
-		return "Admin"
+		return "VIP"
 	default:
 		if en {
 			return "Notifications"

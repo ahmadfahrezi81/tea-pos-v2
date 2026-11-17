@@ -119,24 +119,23 @@ function ActivityRow({ a }: { a: Activity }) {
             <span className="min-w-0 flex-1 border-b-2 border-slate-100 py-3 group-last:border-b-0">
                 <span className="flex items-center gap-2">
                     <span
-                        className={`min-w-0 flex-1 truncate text-[12px] leading-4 ${a.unread ? "font-semibold text-gray-900" : "text-gray-600"}`}
+                        className={`min-w-0 flex-1 truncate text-[14px] leading-5 text-gray-900 ${a.unread ? "font-bold" : "font-semibold"}`}
                     >
-                        {t(a.toMe ? "chat.activityReplied" : "chat.activityPosted").replace(
-                            "{name}",
-                            where,
-                        )}
+                        {system ? where : a.author}
                     </span>
                     <span className="shrink-0 text-[12px] leading-4 text-gray-600 tabular-nums">
                         {listTime(a.at, locale)}
                     </span>
                     {a.unread && <span className="size-2 shrink-0 rounded-full bg-brand" />}
                 </span>
-                {!system && (
-                    <span className="mt-0.5 block truncate text-[14px] font-semibold leading-5 text-gray-900">
-                        {a.author}
+                <span className="flex min-w-0 items-center gap-1 text-[12px] leading-4 text-gray-600">
+                    <span className="shrink-0">
+                        {t(a.toMe ? "chat.activityReplied" : "chat.activityPosted")}
                     </span>
-                )}
-                <span className="line-clamp-3 text-[15px] leading-5 text-gray-900 whitespace-pre-wrap break-words">
+                    <Icon size={12} strokeWidth={2.5} className="shrink-0" />
+                    <span className="truncate font-medium">{where}</span>
+                </span>
+                <span className="mt-0.5 line-clamp-3 text-[15px] leading-5 text-gray-900 whitespace-pre-wrap break-words">
                     {text}
                 </span>
             </span>

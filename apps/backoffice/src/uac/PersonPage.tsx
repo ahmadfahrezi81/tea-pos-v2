@@ -42,7 +42,7 @@ import {
 const LEVELS = {
     seller: ["", "member"],
     backoffice: ["", "guest", "admin"],
-    chat: ["", "member", "admin"],
+    chat: ["", "member", "vip", "admin"],
 } as const;
 
 const APP_LABEL = { seller: "uac.seller", backoffice: "uac.office", chat: "uac.chat" } as const;
@@ -51,6 +51,7 @@ const APP_LABEL = { seller: "uac.seller", backoffice: "uac.office", chat: "uac.c
 const CHAT_HINTS: Record<string, MessageKey> = {
     "": "uac.noneHint",
     member: "uac.chatMemberHint",
+    vip: "uac.chatVipHint",
     admin: "uac.chatAdminHint",
 };
 

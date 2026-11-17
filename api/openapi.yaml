@@ -315,7 +315,7 @@ components:
       additionalProperties: false
       properties:
         admin:
-          description: "A chat admin (the owner, or chat level admin): the VIP badge"
+          description: "A chat admin (the owner, or chat level admin): deletes anyone's message"
           type: boolean
         avatar:
           type: string
@@ -328,6 +328,9 @@ components:
           description: "Read everything up to here; absent: never opened"
           format: date-time
           type: string
+        vip:
+          description: "A VIP or an admin: the VIP badge"
+          type: boolean
       required:
         - id
         - name

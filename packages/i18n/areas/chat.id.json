@@ -1,7 +1,7 @@
 {
     "chat": {
         "general": "Umum",
-        "admin": "Admin",
+        "admin": "VIP",
         "personal": "Notifikasi",
         "you": "Kamu",
         "photo": "Foto",
@@ -42,7 +42,7 @@
         "whoGeneral": "Semua orang di perusahaan",
         "whoStore": "Semua yang bekerja di toko ini",
         "whoGroup": "Anggota dipilih admin chat",
-        "whoAdmin": "Khusus admin chat",
+        "whoAdmin": "Khusus VIP dan admin",
         "whoPersonal": "Hanya kamu: kabar dari aplikasi",
         "oneMember": "1 anggota",
         "memberCount": "{n} anggota",
@@ -60,7 +60,7 @@
         "newCount": "{n} baru",
         "latest": "Pesan terbaru",
         "notSentShort": "Tidak terkirim",
-        "activityPosted": "Dikirim di {name}",
-        "activityReplied": "Membalas kamu di {name}"
+        "activityPosted": "Dikirim di",
+        "activityReplied": "Membalas kamu di"
     }
 }

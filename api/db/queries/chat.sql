@@ -4,11 +4,11 @@
 
 -- name: EnsureChatChannels :exec
 -- Makes whichever of the caller's channels do not exist yet: General, their Notifications, Admin
--- for a chat admin, one per store they work. Reads only, once they all exist.
+-- for a VIP (or admin: the VIP chat, kind admin), one per store they work. Reads only, once they all exist.
 WITH want AS (
     SELECT 'general'::text AS kind, NULL::uuid AS store_id, NULL::uuid AS user_id
     UNION ALL SELECT 'personal', NULL, @user_id::uuid
-    UNION ALL SELECT 'admin', NULL, NULL WHERE @chat_admin::bool
+    UNION ALL SELECT 'admin', NULL, NULL WHERE @chat_vip::bool
     UNION ALL
     SELECT 'store', s.id, NULL
     FROM user_store_assignments sa JOIN stores s ON s.id = sa.store_id
@@ -51,7 +51,7 @@ LEFT JOIN chat_messages m ON m.id = c.last_message_id
 LEFT JOIN users au ON au.id = m.author_id
 WHERE c.tenant_id = @tenant_id AND CASE c.kind
     WHEN 'general' THEN true
-    WHEN 'admin' THEN @chat_admin::bool
+    WHEN 'admin' THEN @chat_vip::bool
     WHEN 'personal' THEN c.user_id = @user_id
     WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = @user_id)
     ELSE false
@@ -65,7 +65,7 @@ FROM chat_channels c
 LEFT JOIN stores s ON s.id = c.store_id
 WHERE c.id = @id AND c.tenant_id = @tenant_id AND CASE c.kind
     WHEN 'general' THEN true
-    WHEN 'admin' THEN @chat_admin::bool
+    WHEN 'admin' THEN @chat_vip::bool
     WHEN 'personal' THEN c.user_id = @user_id
     WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = @user_id)
     ELSE false
@@ -74,7 +74,8 @@ END;
 -- name: ListChatMembers :many
 -- Everyone in a channel, with how far they have read: Seen by, Not yet, and who to tell.
 SELECT u.id, u.full_name, coalesce(u.avatar_url, '')::text AS avatar_url, r.last_read_at,
-    coalesce(t.owner_id = a.user_id OR x.access = 'admin', false)::bool AS chat_admin
+    coalesce(t.owner_id = a.user_id OR x.access = 'admin', false)::bool AS chat_admin,
+    coalesce(t.owner_id = a.user_id OR x.access IN ('vip', 'admin'), false)::bool AS chat_vip
 FROM chat_channels c
 JOIN tenants t ON t.id = c.tenant_id
 JOIN user_tenant_assignments a ON a.tenant_id = c.tenant_id AND a.status = 'active'
@@ -85,7 +86,7 @@ WHERE c.id = @channel_id
   AND (t.owner_id = a.user_id OR x.access IS NOT NULL)
   AND CASE c.kind
     WHEN 'general' THEN true
-    WHEN 'admin' THEN t.owner_id = a.user_id OR x.access = 'admin'
+    WHEN 'admin' THEN t.owner_id = a.user_id OR x.access IN ('vip', 'admin')
     WHEN 'personal' THEN a.user_id = c.user_id
     WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = a.user_id)
     ELSE false
@@ -194,7 +195,7 @@ WHERE c.tenant_id = @tenant_id AND m.deleted_at IS NULL
   AND m.author_id IS DISTINCT FROM @user_id
   AND CASE c.kind
     WHEN 'general' THEN true
-    WHEN 'admin' THEN @chat_admin::bool
+    WHEN 'admin' THEN @chat_vip::bool
     WHEN 'personal' THEN c.user_id = @user_id
     WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = @user_id)
     ELSE false
@@ -215,7 +216,7 @@ SELECT count(*)::int FROM (
       AND m.created_at > coalesce(cr.last_read_at, '-infinity')
       AND CASE c.kind
         WHEN 'general' THEN true
-        WHEN 'admin' THEN @chat_admin::bool
+        WHEN 'admin' THEN @chat_vip::bool
         WHEN 'personal' THEN c.user_id = @user_id
         WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = @user_id)
         ELSE false

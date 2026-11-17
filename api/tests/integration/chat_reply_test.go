@@ -99,3 +99,34 @@ func TestChatReplyDeleteAndActivity(t *testing.T) {
 		t.Fatalf("since: %+v", since)
 	}
 }
+
+// A VIP is a member with the badge who is in the VIP chat (kind admin); deleting someone
+// else's message stays an admin's.
+func TestChatVIP(t *testing.T) {
+	db := testkit.DB(t)
+	giveChat(t, db, testkit.SellerA, "member")
+	giveChat(t, db, testkit.GuestA, "vip")
+	a := testkit.NewAPI(t, db, "")
+	vipChat := channelOf(t, a, testkit.GuestA, "seller", "admin", "")
+	general := channelOf(t, a, testkit.GuestA, "seller", "general", "")
+	if resp, _ := post(t, a, testkit.GuestA, "seller", vipChat, "hi VIPs", "key-00000001"); resp.StatusCode != http.StatusOK {
+		t.Fatalf("VIP posts in the VIP chat: %d", resp.StatusCode)
+	}
+	resp := a.Request(t, http.MethodGet, "/tenants/tenant-a/chat/channels/"+general, "seller", testkit.Session(a.SignIn(t, testkit.SellerA, "seller")))
+	var ch contract.ChatChannelOutput
+	if err := json.NewDecoder(resp.Body).Decode(&ch.Body); err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range ch.Body.Members {
+		if m.Name == "Guest A" && (!m.VIP || m.Admin) {
+			t.Fatalf("guest: %+v", m)
+		}
+		if m.Name == "Seller A" && m.VIP {
+			t.Fatalf("seller: %+v", m)
+		}
+	}
+	_, msg := post(t, a, testkit.SellerA, "seller", general, "mine", "key-00000002")
+	if resp := deleteMessage(t, a, testkit.GuestA, "seller", general, msg.ID); resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("VIP deletes another's: %d", resp.StatusCode)
+	}
+}

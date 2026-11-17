@@ -1,7 +1,7 @@
 import type { ChatChannel } from "@tea-pos/api-client/chat";
 import { formatDate, formatTime, localDate } from "@tea-pos/format";
 import type { Locale, MessageKey } from "@tea-pos/i18n";
-import { Bell, Globe, Hash, ShieldCheck, Users, type LucideIcon } from "lucide-react";
+import { Bell, Crown, Globe, Hash, Users, type LucideIcon } from "lucide-react";
 
 type Kind = ChatChannel["kind"];
 
@@ -20,7 +20,7 @@ export const KIND_ICON: Record<Kind, LucideIcon> = {
     general: Globe,
     store: Hash,
     group: Users,
-    admin: ShieldCheck,
+    admin: Crown,
     personal: Bell,
 };
 

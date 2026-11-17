@@ -9,7 +9,7 @@
         "backoffice": "Backoffice",
         "chat": "Chat",
         "chatMemberHint": "Reads and posts in their chats",
-        "chatAdminHint": "Every chat, the Admin chat, deletes any message",
+        "chatAdminHint": "Every chat, the VIP chat, deletes any message",
         "none": "None",
         "member": "Member",
         "guest": "Guest",
@@ -92,6 +92,8 @@
         "logoutOneTitle": "Log out {device}?",
         "logoutOneBody": "{name} is signed out of {app} on this device. They can sign in again.",
         "logoutEverywhere": "Log out everywhere",
-        "sessionEnded": "{device} is logged out."
+        "sessionEnded": "{device} is logged out.",
+        "vip": "VIP",
+        "chatVipHint": "The VIP badge and the VIP chat"
     }
 }
