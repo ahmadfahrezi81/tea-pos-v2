@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
-import { fakeUnslide, fakeView, onFakeChange } from "./fake";
+import { relocate, type Assisted, type Field } from "./assist";
+import { fakeMode, fakeUnslide, fakeView, onFakeChange } from "./fake";
 
 /**
  * The keyboard (RFC: The keyboard (v2), task 073). Two kinds of phone:
@@ -12,7 +13,8 @@ import { fakeUnslide, fakeView, onFakeChange } from "./fake";
  *   In the same event that reports the keyboard, before the frame is drawn, the app's frame takes
  *   the visible height (`data-keyboard-fit`) and the document's scroll goes back to 0, so the
  *   header stays and the bottom box sits on the keyboard; a field the smaller frame would hide is
- *   scrolled into view inside the content
+ *   scrolled into view inside the content. Before that, the moment a field gets focus, scroll
+ *   assist (assist.ts) keeps iOS from moving its window at all
  */
 
 /** Less than this is a toolbar, not a keyboard. */
@@ -43,6 +45,37 @@ function typing(): boolean {
     return el instanceof HTMLInputElement && !el.readOnly && !SKIP.has(el.type);
 }
 
+/** What this phone does with the keyboard, learned on its first one, and the keyboard's height. */
+const MEMORY = "tea-pos:keyboard";
+interface Memory {
+    covers?: boolean;
+    /** The keyboard's height by the screen's width (turned or not). */
+    height?: Record<string, number>;
+}
+const memory: Memory = (() => {
+    try {
+        return JSON.parse(localStorage.getItem(MEMORY) ?? "{}") as Memory;
+    } catch {
+        return {};
+    }
+})();
+function remember() {
+    // The dev server's fake keyboards teach nothing about the laptop.
+    if (fakeMode) return;
+    try {
+        localStorage.setItem(MEMORY, JSON.stringify(memory));
+    } catch {
+        // Learned again next time.
+    }
+}
+
+const iPhone = () =>
+    /iP(hone|od|ad)/.test(navigator.userAgent) ||
+    (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+
+/** The keyboard covers the page rather than shrinking it: before the first one, any iPhone. */
+const covers = () => (fakeMode ? fakeMode === "ios" : (memory.covers ?? iPhone()));
+
 const frameEl = () => document.querySelector<HTMLElement>(".shell-frame");
 
 /** The document never scrolls in the app: only its content does. */
@@ -54,9 +87,11 @@ function unslide() {
     fakeUnslide();
 }
 
-/** Scrolls the focused field into view inside the content, for a frame `height` tall. */
-function reveal(height: number, after: number) {
-    const field = document.activeElement;
+/**
+ * Scrolls a field (the focused one, or scroll assist's copy of it) into view inside the content,
+ * for a frame `height` tall. Whether it scrolled.
+ */
+function reveal(height: number, after: number, field: Element | null = document.activeElement) {
     const frame = frameEl();
     const scroller =
         field instanceof HTMLElement ? field.closest<HTMLElement>("#shell-scroll") : null;
@@ -78,7 +113,9 @@ function reveal(height: number, after: number) {
         scroller.scrollTo({ top: target, behavior: "smooth" });
         return true;
     };
-    if (!go() && after) setTimeout(go, after);
+    const now = go();
+    if (!now && after) setTimeout(go, after);
+    return now;
 }
 
 export function useKeyboardState() {
@@ -91,6 +128,9 @@ export function useKeyboardState() {
         let fitted = 0;
         let field: Element | null = null;
         let closing: ReturnType<typeof setTimeout> | undefined;
+        let assisted: Assisted | null = null;
+        let assistTimer: ReturnType<typeof setTimeout> | undefined;
+        let keyboardSeen = false;
 
         const visible = () => (vv?.height ?? window.innerHeight) - fakeView.covered;
 
@@ -103,7 +143,7 @@ export function useKeyboardState() {
             if (fitted !== height) root.style.setProperty("--keyboard-fit", `${height}px`);
             fitted = height;
             unslide();
-            if (opening || moved) reveal(height, opening ? FIT_MS + 50 : 0);
+            if ((opening || moved) && !assisted) reveal(height, opening ? FIT_MS + 50 : 0);
         };
 
         const unfit = () => {
@@ -137,8 +177,67 @@ export function useKeyboardState() {
             const covered = on && !shrank && !zoomed && seen - v > MIN_KEYBOARD;
             if (shrank || covered) root.dataset.keyboard = "open";
             else delete root.dataset.keyboard;
-            if (covered) fit(v);
-            else unfit();
+            if (shrank && memory.covers !== false) {
+                memory.covers = false;
+                remember();
+            }
+            if (covered) {
+                const kb = seen - v;
+                if (memory.covers !== true || memory.height?.[width] !== kb) {
+                    memory.covers = true;
+                    memory.height = { ...memory.height, [width]: kb };
+                    remember();
+                }
+                fit(v);
+                // The keyboard is up: the real field comes back once the frame has followed it.
+                if (assisted && !keyboardSeen) {
+                    keyboardSeen = true;
+                    clearTimeout(assistTimer);
+                    assistTimer = setTimeout(finishAssist, FIT_MS + 50);
+                }
+            } else if (!assisted) unfit();
+        };
+
+        /** The content scrolls the copy into view, then the real field takes its place. */
+        const finishAssist = () => {
+            clearTimeout(assistTimer);
+            const a = assisted;
+            if (!a) return;
+            const scrolled = fitted ? reveal(fitted, 0, a.clone) : false;
+            assistTimer = setTimeout(() => endAssist(a), scrolled ? 300 : 0);
+        };
+        const endAssist = (a: Assisted | null = assisted) => {
+            if (!a || a !== assisted) return;
+            clearTimeout(assistTimer);
+            assisted = null;
+            a.restore();
+            run();
+        };
+
+        // Scroll assist: in the focus event itself, before iOS reveals the field.
+        const onFocusIn = (e: FocusEvent) => {
+            const el = e.target;
+            endAssist();
+            if (!covers() || (vv?.scale ?? 1) > 1.01) return;
+            if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
+            if (el.readOnly || (el instanceof HTMLInputElement && SKIP.has(el.type))) return;
+            const frame = frameEl();
+            if (!frame?.contains(el) || !el.parentElement) return;
+            const open = root.dataset.keyboardFit === "open" && fitted > 0;
+            const kb = memory.height?.[root.clientWidth] ?? Math.round(seen * 0.45);
+            const after = open ? fitted : seen - kb;
+            const r = el.getBoundingClientRect();
+            // iOS leaves a field alone when it is no lower than the middle of what stays visible.
+            if ((r.top + r.bottom) / 2 <= after / 2 + 1) return;
+            const top = frame.querySelector("header")?.getBoundingClientRect().bottom ?? 0;
+            assisted = relocate(el as Field, top + 8 - r.top, !iPhone());
+            keyboardSeen = open;
+            // The frame starts making room now, with the keyboard; its real height follows.
+            if (!open) fit(after);
+            assistTimer = setTimeout(finishAssist, open ? 50 : 1000);
+        };
+        const onFocusOut = (e: FocusEvent) => {
+            if (assisted && e.target === assisted.field) endAssist();
         };
         const onScroll = () => {
             if (root.dataset.keyboardFit) unslide();
@@ -152,9 +251,14 @@ export function useKeyboardState() {
         vv?.addEventListener("resize", run);
         vv?.addEventListener("scroll", run);
         window.addEventListener("scroll", onScroll, { passive: true });
+        document.addEventListener("focusin", onFocusIn, true);
+        document.addEventListener("focusout", onFocusOut, true);
         document.addEventListener("focusin", later);
         document.addEventListener("focusout", later);
         return () => {
+            endAssist();
+            document.removeEventListener("focusin", onFocusIn, true);
+            document.removeEventListener("focusout", onFocusOut, true);
             onFakeChange(() => {});
             clearTimeout(closing);
             window.removeEventListener("resize", run);

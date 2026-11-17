@@ -48,6 +48,11 @@ export function readSample(t: number): Sample {
     const header = frame?.querySelector("header")?.getBoundingClientRect();
     const vk = (navigator as Navigator & { virtualKeyboard?: VirtualKeyboard }).virtualKeyboard;
     const el = document.activeElement;
+    // While scroll assist has moved the field away, its copy is what is seen.
+    const shown =
+        el instanceof HTMLElement && "keyboardAssist" in el.dataset
+            ? (el.parentElement?.querySelector("[data-keyboard-copy]") ?? el)
+            : el;
     // Where things are on the glass: the iPhone's pan moves what is seen, not the page's boxes.
     const slid = slidBeyondScroll(vv?.offsetTop ?? 0, window.scrollY);
     return {
@@ -63,8 +68,8 @@ export function readSample(t: number): Sample {
         headerTop: Math.round((header?.top ?? 0) - slid),
         keyboard: Math.round(vk?.boundingRect.height ?? 0),
         fieldBottom:
-            el instanceof HTMLElement && el !== document.body
-                ? Math.round(el.getBoundingClientRect().bottom - slid)
+            shown instanceof HTMLElement && shown !== document.body
+                ? Math.round(shown.getBoundingClientRect().bottom - slid)
                 : 0,
         focused:
             el instanceof HTMLTextAreaElement ||

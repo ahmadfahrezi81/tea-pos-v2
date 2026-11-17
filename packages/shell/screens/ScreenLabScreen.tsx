@@ -31,13 +31,13 @@ const CASES: Case[] = [
     {
         id: "keyboard-top",
         title: "Keyboard: a field at the top",
-        steps: "Tap the field, type a little, then tap Finish.",
+        steps: "Tap the field, type a little, then tap what you saw.",
         control: () => <input className={field} placeholder="Like a search box" />,
     },
     {
         id: "keyboard-middle",
         title: "Keyboard: a field in the middle",
-        steps: "Scroll so the field is in the middle of the screen, tap it, then tap Finish.",
+        steps: "Scroll so the field is in the middle of the screen, tap it, then tap what you saw.",
         control: () => (
             <div className="pt-[35vh]">
                 <input className={field} placeholder="A form's field" />
@@ -47,7 +47,7 @@ const CASES: Case[] = [
     {
         id: "keyboard-bottom",
         title: "Keyboard: the box at the bottom (as chat)",
-        steps: "Tap the box at the bottom, type a little, then tap Finish.",
+        steps: "Tap the box at the bottom, type a little, then tap what you saw.",
         control: () => (
             <FooterSlot>
                 <div className="bg-white px-3 py-2">
@@ -59,7 +59,7 @@ const CASES: Case[] = [
     {
         id: "keyboard-focus",
         title: "Keyboard: a code at the bottom (focus screen)",
-        steps: "Tap the code field at the bottom, then tap Finish. The header may move here; the field must stay above the keyboard.",
+        steps: "Tap the code field at the bottom, then tap what you saw. The header may move here; the field must stay above the keyboard.",
         focus: true,
         control: () => (
             <div className="flex min-h-[70vh] flex-col justify-end gap-3">
@@ -80,7 +80,7 @@ const CASES: Case[] = [
     {
         id: "keyboard-switch",
         title: "Keyboard: one field to the next",
-        steps: "Tap the first field, then the second, then tap Finish.",
+        steps: "Tap the first field, then the second, then tap what you saw.",
         control: () => (
             <div className="space-y-3">
                 <input className={field} placeholder="First" />
@@ -91,42 +91,42 @@ const CASES: Case[] = [
     {
         id: "keyboard-close",
         title: "Keyboard: closing it",
-        steps: "Tap the field, then close the keyboard (Done, or tap outside, or scroll), then tap Finish.",
+        steps: "Tap the field, then close the keyboard (Done, or tap outside, or scroll), then tap what you saw.",
         control: () => <input className={field} placeholder="Open, then close" />,
     },
     {
         id: "photo-cancel",
         title: "Photo picker, cancelled",
-        steps: "Tap Choose a photo, cancel it, then tap Finish.",
+        steps: "Tap Choose a photo, cancel it, then tap what you saw.",
         control: () => <PickButton label="Choose a photo" />,
     },
     {
         id: "photo-chosen",
         title: "Photo picker, a photo chosen",
-        steps: "Tap Choose a photo, pick one, then tap Finish.",
+        steps: "Tap Choose a photo, pick one, then tap what you saw.",
         control: () => <PickButton label="Choose a photo" />,
     },
     {
         id: "camera",
         title: "Camera, cancelled",
-        steps: "Tap Open the camera, cancel it, then tap Finish.",
+        steps: "Tap Open the camera, cancel it, then tap what you saw.",
         control: () => <PickButton label="Open the camera" camera />,
     },
     {
         id: "sheet",
         title: "Our bottom sheet",
-        steps: "Tap Open the sheet, close it, then tap Finish.",
+        steps: "Tap Open the sheet, close it, then tap what you saw.",
         control: () => <SheetButton />,
     },
     {
         id: "background",
         title: "To the background and back",
-        steps: "Go to the home screen, wait a few seconds, come back, then tap Finish.",
+        steps: "Go to the home screen, wait a few seconds, come back, then tap what you saw.",
     },
     {
         id: "rotate",
         title: "Rotate and back",
-        steps: "Turn the phone sideways, then upright again, then tap Finish.",
+        steps: "Turn the phone sideways, then upright again, then tap what you saw.",
     },
 ];
 
@@ -166,6 +166,8 @@ interface Result {
     id: string;
     title: string;
     verdict: Verdict;
+    /** What the owner saw: the page cannot see iOS's quickest moves. */
+    seen: "still" | "moved";
     samples: number;
     /** Every frame that changed, compact (TIMELINE's columns), for designing the fixes. */
     timeline: number[][];
@@ -227,7 +229,12 @@ export function ScreenLabScreen() {
             screen: `${screen.width}x${screen.height} @${devicePixelRatio}`,
             at: new Date().toISOString(),
             timelineColumns: TIMELINE,
-            results: all.map((r) => ({ case: r.id, ...r.verdict, timeline: r.timeline })),
+            results: all.map((r) => ({
+                case: r.id,
+                seen: r.seen,
+                ...r.verdict,
+                timeline: r.timeline,
+            })),
         };
         void navigator.clipboard
             ?.writeText(JSON.stringify(report, null, 1))
@@ -240,8 +247,9 @@ export function ScreenLabScreen() {
             <div className="rounded-2xl bg-white p-4 text-sm text-gray-700">
                 <p className="font-bold text-gray-900">Screen lab</p>
                 <p className="mt-1">
-                    One case at a time: tap Start, do only what it says, tap Finish. Back leaves a
-                    case without a result. When you are done, copy the report.{" "}
+                    One case at a time: tap Start, do only what it says, then say whether you saw
+                    the screen move. Back leaves a case without a result. When you are done, copy
+                    the report.{" "}
                     {installed()
                         ? "Installed app."
                         : "In a browser tab: install the app for the real test."}
@@ -315,19 +323,28 @@ export function ScreenLabCaseScreen({ caseId }: { caseId: string }) {
     }, []);
     if (!c) return <p className="p-4 text-gray-700">No such case.</p>;
 
-    const finish = async () => {
+    const finish = async (seen: Result["seen"]) => {
         const r = recorder.current;
         if (!r) return;
         setBusy(true);
         (document.activeElement as HTMLElement | null)?.blur?.();
         await r.settled();
         const samples = r.stop();
-        const verdict = judge(samples, { headerStill: !c.focus, fills: installed() });
+        const judged = judge(samples, { headerStill: !c.focus, fills: installed() });
+        const verdict =
+            seen === "moved"
+                ? {
+                      ...judged,
+                      pass: false,
+                      problems: [...judged.problems, "you saw the screen move"],
+                  }
+                : judged;
         setResults([
             {
                 id: c.id,
                 title: c.title,
                 verdict,
+                seen,
                 samples: samples.length,
                 timeline: timelineOf(samples),
             },
@@ -344,14 +361,28 @@ export function ScreenLabCaseScreen({ caseId }: { caseId: string }) {
                 <p className="mt-2 text-xs font-semibold text-red-600">● Recording every frame</p>
             </div>
             {c.control?.()}
-            <button
-                type="button"
-                disabled={busy}
-                onClick={() => void finish()}
-                className="w-full rounded-xl bg-gray-900 py-3 font-semibold text-white disabled:opacity-50"
-            >
-                {busy ? "Waiting for the screen to settle…" : "Finish"}
-            </button>
+            {busy ? (
+                <p className="rounded-xl bg-slate-100 py-3 text-center font-semibold text-gray-900">
+                    Waiting for the screen to settle…
+                </p>
+            ) : (
+                <div className="grid grid-cols-2 gap-3">
+                    <button
+                        type="button"
+                        onClick={() => void finish("still")}
+                        className="rounded-xl bg-gray-900 py-3 font-semibold text-white"
+                    >
+                        It stayed still
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => void finish("moved")}
+                        className="rounded-xl bg-red-600 py-3 font-semibold text-white"
+                    >
+                        I saw it move
+                    </button>
+                </div>
+            )}
             <div className="h-[60vh]" aria-hidden />
         </div>
     );

@@ -127,3 +127,20 @@ The timelines show how iOS 18.7 (installed) makes room: in the first frame after
 **Done when:** on the owner's iPhone the lab's keyboard cases show the header moved 0 (within 3 px) and no field under the keyboard; locally the fake iPhone and fake Android pass.
 
 **Third report (2026-11-17, after #152):** the bottom box, top field, close and the code pass; the header stays. The middle field and field to field still flash for one frame: iOS now pans the visible area (`offsetTop` 134 and 61, `scrollY` 0) to centre a field below the middle (it lands its bottom at 232 px every time), and the next frame it is back. The fix only reset the page's scroll, so the pan was never undone before it was drawn. Now `scrollTo(0, 0)` also runs when the visible area is panned (not when zoomed), from the same visualViewport scroll event, before the frame is drawn.
+
+## Fourth report and the proven fix: scroll assist (2026-11-17)
+
+**Status: in progress (the owner: try it; a shell redesign is fine if it comes to that).**
+
+After #152 and #153 the lab passed the bottom box, but the owner saw it move up, vanish and come back: iOS moves its window outside the page, too fast for the page's numbers to show. The middle field (95 px) and field to field (61 px) still moved. iOS moves a field it is focusing to the middle of what stays visible (its centre to half the visible height) whenever it is lower than that, and does it before the page hears of the keyboard. Correcting afterwards cannot work.
+
+**The fix is Ionic's "scroll assist"** (in Ionic since about 2016, `@ionic/core` `utils/input-shims/hacks/scroll-assist.ts`, read for this): the instant a field gets focus, before iOS reveals it, the real field moves off the screen (`translate3d(-9999px, …) scale(0)`) and a plain copy takes its place, so iOS has nothing to move. The app makes room and scrolls its own content, then the real field comes back where the copy was. Ours (`frame/screen/keyboard.ts`):
+- Only where the keyboard covers the page (learned on the first keyboard, kept in the phone's storage; before that, any iPhone): never on Android where the page shrinks
+- Only for a field iOS would move (its centre below the middle of what will stay visible) inside the app's frame; not in sheets yet
+- The keyboard's height is remembered from the last time, so the frame starts shrinking at the tap, with the keyboard
+- The copy shows what is typed meanwhile; the real field comes back once the keyboard is up and the content has scrolled (about 0.7 s)
+- The fit (#152) and undoing a slide (#153) stay as the safety net
+
+**The lab:** Finish becomes two buttons, "It stayed still" and "I saw it move": the owner's eye is part of the verdict (seeing it move fails the case), since the page cannot see iOS's quickest moves. The fake iPhone now also centres a field as iOS does.
+
+**Done when:** on the owner's iPhone every keyboard case passes by the numbers and by eye.
