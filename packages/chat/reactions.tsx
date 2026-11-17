@@ -72,12 +72,10 @@ function removeOnce(names: string[], name: string) {
 /** One emoji under a bubble: a tap adds or takes back mine; held, who used it. */
 function Chip({
     r,
-    onTint,
     onToggle,
     onWho,
 }: {
     r: Reaction;
-    onTint: boolean;
     onToggle: (emoji: string) => void;
     onWho: (r: Reaction) => void;
 }) {
@@ -94,13 +92,9 @@ function Chip({
             handlers.onContextMenu(e);
         },
     };
-    const look = onTint
-        ? r.mine
-            ? "bg-white text-brand ring-1 ring-brand/30"
-            : "bg-white/70 text-gray-700"
-        : r.mine
-          ? "bg-brand/10 text-brand ring-1 ring-brand/30"
-          : "bg-slate-100 text-gray-700";
+    const look = r.mine
+        ? "bg-brand/10 text-brand ring-1 ring-brand/30"
+        : "bg-slate-100 text-gray-700";
     return (
         <button
             {...own}
@@ -118,12 +112,9 @@ function Chip({
 /** Inside a bubble, under its text: each emoji and how many; mine lit; a tap adds or takes back mine. */
 export function Reactions({
     reactions,
-    onTint,
     onToggle,
 }: {
     reactions: Reaction[];
-    /** Inside my tinted bubble. */
-    onTint: boolean;
     onToggle: (emoji: string) => void;
 }) {
     const [who, setWho] = useState<Reaction | null>(null);
@@ -131,7 +122,7 @@ export function Reactions({
         <>
             <span className="mt-1 mb-0.5 flex flex-wrap gap-1">
                 {reactions.map((r) => (
-                    <Chip key={r.emoji} r={r} onTint={onTint} onToggle={onToggle} onWho={setWho} />
+                    <Chip key={r.emoji} r={r} onToggle={onToggle} onWho={setWho} />
                 ))}
             </span>
             {who && (

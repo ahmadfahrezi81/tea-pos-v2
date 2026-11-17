@@ -59,4 +59,11 @@ Score each 1-5 (5 = feels like WhatsApp), with a note when it is not 5.
 
 **Done 2026-11-17:** 10 the bar keeps one shape whether tapped or not: the box, then a tools row always shown (+, @, send) as Slack, the owner keeping the second line for @ and tools to come (checked: 96 px focused and not); the @ button types an @ and opens the names; 11 the sending bubble is drawn as the sent one and rises in; my bubbles always keep room for the clock or ticks (checked: 210×32 sending and sent, the swap unseen). A photo's swap uses the same layout (not tried: the browser here cannot pick a file).
 
-**Look (owner, 2026-11-17, many small rounds):** chat's colour is now WhatsApp's: green (`#008069`) for its accents in place of 068b's violet, my bubbles WhatsApp's light green (`#d9fdd3`) with black text, others' white; a mention is the name in green, no pill, in the box as in bubbles; reactions inside the bubble; the bar on two lines always (box, then +, @, send in a light round button); a faint doodle wallpaper (`packages/chat/wallpaper.svg`, a seamless tile of 45 doodles by Poisson-disk sampling, loaded only in a chat).
+**Look (owner, 2026-11-17, many small rounds):** chat's colour is now WhatsApp's: green (`#2b6a56`) for its accents in place of 068b's violet, my bubbles WhatsApp's light green (`#d9fdd3`) with black text, others' white; a mention is the name in green, no pill, in the box as in bubbles; reactions inside the bubble; the bar on two lines always (box, then +, @, send in a light round button); no wallpaper (tried, then dropped for its size).
+
+## Owner's feedback after #158 (2026-11-17)
+
+1. **Mentions bold, in the darker green** (as the author's name): bold in bubbles; in the box a thin stroke instead of weight, so no letter moves from the caret
+2. **The wallpaper too sparse** ("one image floating" while scrolling): a denser one was 17 KB, so the owner dropped the wallpaper; the plain background stays
+3. **The green darker and calmer:** `#2b6a56` (a forest green, less saturated) in place of `#008069`
+4. **Everything on the left, every bubble white** (owner: a lot of automated and long content to come, Slack's way): each person's photo and name start their run, mine too; a bubble is as wide as its content, up to the whole row; mine are told by my name, not a side or a colour. Nothing to tune in a bubble colour any more

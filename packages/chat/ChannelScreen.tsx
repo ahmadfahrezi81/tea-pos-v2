@@ -32,11 +32,11 @@ import {
 import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import { ChannelHeader } from "./ChannelInfo";
-import wallpaper from "./wallpaper.svg?url";
 import { channelName } from "./labels";
 import { doneTyping, sayTyping, stoppedTyping, useTyping } from "./typing";
 import { forget, retry, send, snapshot, subscribe, type Pending } from "./outbox";
 import { FailedMenu, MessageMenu, useHold } from "./menu";
+import { withMentions } from "./mentions";
 import { Reactions, toggleReaction } from "./reactions";
 import { threadKey, useChannel, useThread, type ChatMessage, type Thread } from "./queries";
 import { goToMessage, useChannelScroll, useEarlier } from "./scroll";
@@ -49,23 +49,6 @@ const READ_EVERY_MS = 5000;
 const EDIT_MS = 15 * 60 * 1000;
 const MAX_LENGTH = 4000;
 
-/**
- * Behind a channel's messages, a faint doodle wallpaper as WhatsApp's (task 068d): a seamless
- * tile of doodles spread by Poisson-disk sampling, its own small file that only a chat loads.
- */
-function useWallpaper() {
-    useEffect(() => {
-        const main = document.querySelector<HTMLElement>("main");
-        if (!main) return;
-        main.style.backgroundImage = `url("${wallpaper}")`;
-        main.style.backgroundSize = "360px 360px";
-        return () => {
-            main.style.backgroundImage = "";
-            main.style.backgroundSize = "";
-        };
-    }, []);
-}
-
 /** One channel: messages newest at the bottom, the box to write in (RFC: Chat (v2), screen 2). */
 export default function ChannelScreen({ channelId }: { channelId: string }) {
     return (
@@ -76,7 +59,6 @@ export default function ChannelScreen({ channelId }: { channelId: string }) {
 }
 
 function Channel({ channelId }: { channelId: string }) {
-    useWallpaper();
     const t = useT();
     const slug = useSlug();
     const meUser = useMe().data?.user;
@@ -239,6 +221,8 @@ function Channel({ channelId }: { channelId: string }) {
                         slug={slug}
                         grouped={grouped}
                         names={channel.members.map((x) => x.name)}
+                        me={{ name: myName, avatar: meUser?.avatarUrl }}
+                        vip={vips.has(me)}
                     />
                 );
             })}
@@ -266,6 +250,7 @@ function Channel({ channelId }: { channelId: string }) {
                 <MessageMenu
                     m={menuOf}
                     channelId={channelId}
+                    names={channel.members.map((x) => x.name)}
                     canReply={!channel.readOnly}
                     canDelete={!menuOf.event && (menuOf.authorId === me || iAmAdmin)}
                     canEdit={
@@ -395,22 +380,18 @@ function NewLine() {
 }
 
 /**
- * One geometry for every bubble, as WhatsApp: the bubble is 10 px round with 12 px of side
- * padding; what sits inside it (a quote, photos) is 4 px in on every side and 6 px round, so
- * the two curves run parallel. The corner nearest the sender is the tail.
+ * One geometry for every bubble: 10 px round with 12 px of side padding; what sits inside it (a
+ * quote, photos) is 4 px in on every side and 6 px round, so the two curves run parallel.
+ * Everyone's on the left, white, as wide as their content up to the full row (owner: long
+ * automated content to come); the corner by the sender's photo is the tail.
  */
-const BUBBLE = "rounded-[10px] px-3 py-1.5";
-/** My bubbles: WhatsApp's light green with black text. */
-const MINE = "mine bg-[#d9fdd3] text-gray-900";
-const TAIL_MINE = "rounded-tr-[4px]";
-const TAIL_THEIRS = "rounded-tl-[4px]";
+const BUBBLE = "rounded-[10px] rounded-tl-[4px] bg-white px-3 py-1.5 text-gray-900";
 /** 4 px in from the bubble's sides (12 − 8), and from its top when first (6 − 2). */
 const INSET_X = "-mx-2";
 const INSET_TOP = "-mt-0.5";
 const INNER = "rounded-[6px]";
 /** Under the tail's 4 px corner, an inner corner of 2 px. */
-const TAIL_INNER_MINE = "rounded-tr-[2px]";
-const TAIL_INNER_THEIRS = "rounded-tl-[2px]";
+const TAIL_INNER = "rounded-tl-[2px]";
 
 function Message({
     m,
@@ -486,7 +467,7 @@ function Message({
                 e.stopPropagation();
                 onQuote(q.id);
             }}
-            className={`${INSET_X} ${mine || grouped ? `${INSET_TOP} ${mine ? TAIL_INNER_MINE : TAIL_INNER_THEIRS}` : "mt-0.5"} mb-1 flex w-[calc(100%+1rem)] min-w-40 overflow-hidden ${INNER} text-left text-[13px] leading-4 ${mine ? "bg-black/5" : "bg-slate-100"}`}
+            className={`${INSET_X} ${grouped ? `${INSET_TOP} ${TAIL_INNER}` : "mt-0.5"} mb-1 flex w-[calc(100%+1rem)] min-w-40 overflow-hidden ${INNER} bg-slate-100 text-left text-[13px] leading-4`}
         >
             <span className="w-1 shrink-0 bg-brand" />
             <span className="min-w-0 flex-1 px-2 py-1">
@@ -499,7 +480,7 @@ function Message({
             </span>
         </button>
     );
-    const first = mine || grouped;
+    const first = grouped;
     const photos =
         !m.deleted && m.photos?.length ? (
             <div
@@ -507,7 +488,7 @@ function Message({
             >
                 <Photos
                     photos={m.photos}
-                    corner={first && !quote ? (mine ? TAIL_INNER_MINE : TAIL_INNER_THEIRS) : ""}
+                    corner={first && !quote ? TAIL_INNER : ""}
                     stamp={
                         body ? undefined : (
                             <span className="flex items-center gap-0.5">
@@ -523,9 +504,9 @@ function Message({
         // The phone's own text menu stays off: holding a message opens ours.
         <div
             {...(m.deleted ? {} : hold)}
-            className={`max-w-[80%] select-none ${BUBBLE} text-left transition-transform duration-200 [-webkit-touch-callout:none] ${pressing ? "scale-[0.97]" : ""} ${mine ? `${TAIL_MINE} ${MINE}` : `${TAIL_THEIRS} bg-white text-gray-900`}`}
+            className={`max-w-full select-none ${BUBBLE} text-left transition-transform duration-200 [-webkit-touch-callout:none] ${pressing ? "scale-[0.97]" : ""}`}
         >
-            {!mine && !grouped && (
+            {!grouped && (
                 <p className="flex items-center gap-1.5 text-[14px] font-semibold leading-5 text-brand">
                     {m.author}
                     {vip && (
@@ -540,25 +521,10 @@ function Message({
             {body || (!photos && <div className="flex justify-end pb-0.5">{stamp}</div>)}
             {/* Reactions belong to the bubble: inside it, under the text. */}
             {!m.deleted && !!m.reactions?.length && (
-                <Reactions reactions={m.reactions} onTint={mine} onToggle={(e) => onReact?.(e)} />
+                <Reactions reactions={m.reactions} onToggle={(e) => onReact?.(e)} />
             )}
         </div>
     );
-    if (mine)
-        return (
-            <div
-                data-message-id={m.id}
-                data-at={m.at}
-                className={`-mx-4 flex flex-col items-end gap-1 px-4 transition-colors duration-200 ${grouped ? "" : "pt-2"} ${pressing || active ? "bg-brand/10" : ""}`}
-            >
-                {bubble}
-                {seen !== undefined && seen > 0 && (
-                    <button onClick={onSeen} className="text-[11px] text-brand">
-                        {t("chat.seenBy").replace("{n}", String(seen))}
-                    </button>
-                )}
-            </div>
-        );
     return (
         <div
             data-message-id={m.id}
@@ -566,41 +532,16 @@ function Message({
             className={`-mx-4 flex items-start gap-2 px-4 transition-colors duration-200 ${grouped ? "" : "pt-2"} ${pressing || active ? "bg-brand/10" : ""}`}
         >
             <span className="w-8 shrink-0">{!grouped && <Avatar url={m.avatar} size={32} />}</span>
-            <div className="flex min-w-0 flex-1 flex-col items-start gap-1">{bubble}</div>
+            <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+                {bubble}
+                {mine && seen !== undefined && seen > 0 && (
+                    <button onClick={onSeen} className="text-[11px] text-brand">
+                        {t("chat.seenBy").replace("{n}", String(seen))}
+                    </button>
+                )}
+            </div>
         </div>
     );
-}
-
-/**
- * A message's text with its @mentions lit (RFC: mentions are highlighted on the phone only):
- * `@` and a member's full name, or `@everyone`, as it looked typed in the box.
- */
-function withMentions(text: string, names: string[]): ReactNode {
-    const all = [...new Set([...names, "everyone"])]
-        .filter(Boolean)
-        .sort((a, b) => b.length - a.length);
-    if (!text.includes("@") || all.length === 0) return text;
-    const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const re = new RegExp(`@(${all.map(escape).join("|")})`, "g");
-    const out: ReactNode[] = [];
-    let last = 0;
-    for (const hit of text.matchAll(re)) {
-        const at = hit.index ?? 0;
-        if (at > last) out.push(text.slice(last, at));
-        const who = hit[1]!;
-        out.push(
-            <span
-                key={at}
-                // As WhatsApp: a mention is the name in the brand green.
-                className="text-brand"
-            >
-                @{who}
-            </span>,
-        );
-        last = at + hit[0].length;
-    }
-    if (last < text.length) out.push(text.slice(last));
-    return out;
 }
 
 /** A system message in the reader's language; an event this build does not know shows its body. */
@@ -611,19 +552,24 @@ function systemText(m: ChatMessage, t: (key: MessageKey) => string): string {
 
 /**
  * A message on its way, drawn exactly as the sent one will be (task 068d: the swap crumpled
- * it): the same bubble, its time inside with a clock, a photo in its own shape from the
- * phone's copy. It rises in as it is added; the server's copy then replaces it unseen.
+ * it): the same row and bubble, the time inside with a clock, a photo in its own shape from
+ * the phone's copy. It rises in as it is added; the server's copy then replaces it unseen.
  */
 function Outgoing({
     p,
     slug,
     grouped,
     names,
+    me,
+    vip,
 }: {
     p: Pending;
     slug: string;
     grouped: boolean;
     names: string[];
+    /** My name and photo, as the sent one shows them. */
+    me: { name: string; avatar?: string };
+    vip: boolean;
 }) {
     const t = useT();
     const locale = useLocale();
@@ -641,76 +587,89 @@ function Outgoing({
     return (
         <div
             data-message-id={p.key}
-            className={`-mx-4 flex animate-rise-in flex-col items-end gap-1 px-4 ${grouped ? "" : "pt-2"}`}
+            className={`-mx-4 flex animate-rise-in items-start gap-2 px-4 ${grouped ? "" : "pt-2"}`}
         >
-            <div className="flex w-full items-center justify-end gap-2">
-                {failed && (
-                    <button
-                        onClick={() => setMenu(true)}
-                        aria-label={t("chat.notSentShort")}
-                        className="shrink-0 text-red-600 active:opacity-60"
+            <span className="w-8 shrink-0">{!grouped && <Avatar url={me.avatar} size={32} />}</span>
+            <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+                <div className="flex max-w-full items-center gap-2">
+                    <div
+                        onClick={() => failed && setMenu(true)}
+                        className={`max-w-full min-w-0 select-none ${BUBBLE} text-left`}
                     >
-                        <CircleAlert size={22} />
-                    </button>
-                )}
-                <div
-                    onClick={() => failed && setMenu(true)}
-                    className={`max-w-[80%] select-none ${BUBBLE} ${TAIL_MINE} ${MINE} text-left`}
-                >
-                    {q && (
-                        <span
-                            className={`${INSET_X} ${INSET_TOP} ${TAIL_INNER_MINE} mb-1 flex w-[calc(100%+1rem)] min-w-40 overflow-hidden ${INNER} bg-black/5 text-left text-[13px] leading-4`}
-                        >
-                            <span className="w-1 shrink-0 bg-brand" />
-                            <span className="min-w-0 flex-1 px-2 py-1">
-                                <span className="block truncate font-semibold text-brand">
-                                    {q.author || t("chat.message")}
-                                </span>
-                                <span className="line-clamp-2 text-gray-600">
-                                    {q.body || t("chat.photo")}
-                                </span>
-                            </span>
-                        </span>
-                    )}
-                    {p.photos.length > 0 && (
-                        <div
-                            className={`${INSET_X} ${q ? "mt-0.5" : INSET_TOP} ${p.body ? "mb-1" : "-mb-0.5"}`}
-                        >
-                            <div
-                                className={`relative grid gap-0.5 overflow-hidden ${INNER} ${q ? "" : TAIL_INNER_MINE} ${one ? "grid-cols-1 w-56" : "grid-cols-2 w-60"}`}
-                            >
-                                {p.photos.map((ph) => (
-                                    <img
-                                        key={ph.local}
-                                        src={ph.local}
-                                        alt=""
-                                        className={`block w-full rounded-[2px] object-cover ${one ? "h-auto" : "aspect-square"}`}
-                                    />
-                                ))}
-                                {!p.body && (
-                                    <span className="pointer-events-none absolute right-0 bottom-0 flex h-8 items-end justify-end rounded-br-[6px] bg-linear-to-tl from-black/45 via-black/15 to-transparent px-2 pb-1.5 pl-8 text-[11px] leading-none text-white">
-                                        {stamp}
-                                    </span>
+                        {!grouped && (
+                            <p className="flex items-center gap-1.5 text-[14px] font-semibold leading-5 text-brand">
+                                {me.name}
+                                {vip && (
+                                    <Badge tone="brand" size="sm">
+                                        {t("chat.vip")}
+                                    </Badge>
                                 )}
-                            </div>
-                        </div>
-                    )}
-                    {p.body && (
-                        <p className="relative text-[15px] leading-5 whitespace-pre-wrap break-words">
-                            {withMentions(p.body, names)}
-                            <span className="inline-block" style={{ width: "4rem" }} />
-                            <span className="absolute right-0 bottom-0.5 text-[11px] leading-none text-gray-500">
-                                {stamp}
+                            </p>
+                        )}
+                        {q && (
+                            <span
+                                className={`${INSET_X} ${grouped ? `${INSET_TOP} ${TAIL_INNER}` : "mt-0.5"} mb-1 flex w-[calc(100%+1rem)] min-w-40 overflow-hidden ${INNER} bg-slate-100 text-left text-[13px] leading-4`}
+                            >
+                                <span className="w-1 shrink-0 bg-brand" />
+                                <span className="min-w-0 flex-1 px-2 py-1">
+                                    <span className="block truncate font-semibold text-brand">
+                                        {q.author || t("chat.message")}
+                                    </span>
+                                    <span className="line-clamp-2 text-gray-600">
+                                        {q.body || t("chat.photo")}
+                                    </span>
+                                </span>
                             </span>
-                        </p>
+                        )}
+                        {p.photos.length > 0 && (
+                            <div
+                                className={`${INSET_X} ${grouped && !q ? INSET_TOP : "mt-0.5"} ${p.body ? "mb-1" : "-mb-0.5"}`}
+                            >
+                                <div
+                                    className={`relative grid gap-0.5 overflow-hidden ${INNER} ${grouped && !q ? TAIL_INNER : ""} ${one ? "grid-cols-1 w-56" : "grid-cols-2 w-60"}`}
+                                >
+                                    {p.photos.map((ph) => (
+                                        <img
+                                            key={ph.local}
+                                            src={ph.local}
+                                            alt=""
+                                            className={`block w-full rounded-[2px] object-cover ${one ? "h-auto" : "aspect-square"}`}
+                                        />
+                                    ))}
+                                    {!p.body && (
+                                        <span className="pointer-events-none absolute right-0 bottom-0 flex h-8 items-end justify-end rounded-br-[6px] bg-linear-to-tl from-black/45 via-black/15 to-transparent px-2 pb-1.5 pl-8 text-[11px] leading-none text-white">
+                                            {stamp}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                        {p.body && (
+                            <p className="relative text-[15px] leading-5 whitespace-pre-wrap break-words">
+                                {withMentions(p.body, names)}
+                                <span className="inline-block" style={{ width: "4rem" }} />
+                                <span className="absolute right-0 bottom-0.5 text-[11px] leading-none text-gray-500">
+                                    {stamp}
+                                </span>
+                            </p>
+                        )}
+                    </div>
+                    {failed && (
+                        <button
+                            onClick={() => setMenu(true)}
+                            aria-label={t("chat.notSentShort")}
+                            className="shrink-0 text-red-600 active:opacity-60"
+                        >
+                            <CircleAlert size={22} />
+                        </button>
                     )}
                 </div>
+                {failed && (
+                    <span className="text-[11px] font-semibold text-red-600">
+                        {t("chat.notSentShort")}
+                    </span>
+                )}
             </div>
-            {failed && (
-                <span className="text-[11px] font-semibold text-red-600">
-                    {t("chat.notSentShort")}
-                </span>
-            )}
             {menu && (
                 <FailedMenu
                     onRetry={() => retry(queryClient, slug, p.key)}
@@ -885,7 +844,7 @@ function Composer({
     return (
         <FooterSlot>
             {/* The page's colour behind the corners (the typing banner's while it shows): the footer under it is white. */}
-            <div className="chat relative bg-slate-200 has-[[data-typing]]:bg-[#d9fdd3] [&:has([data-typing])_[data-down]]:mb-12">
+            <div className="chat relative bg-slate-200 has-[[data-typing]]:bg-[color-mix(in_oklab,var(--accent-primary)_12%,white)] [&:has([data-typing])_[data-down]]:mb-12">
                 <Typing channelId={channelId} members={members} />
                 {/* Names for an @, in a card above the bar (owner: not inside it). */}
                 {suggestions.length > 0 && (
@@ -1022,6 +981,7 @@ function Composer({
                                         {withMentions(
                                             text,
                                             members.map((x) => x.name),
+                                            true,
                                         )}
                                         {"\u200b"}
                                     </div>
@@ -1255,7 +1215,7 @@ function Typing({ channelId, members }: { channelId: string; members: Member[] }
         <div
             role="status"
             data-typing
-            className="absolute inset-x-0 bottom-full flex animate-fade-in items-center justify-center gap-2 bg-[#d9fdd3] px-4 py-1.5 text-sm font-semibold text-[#0b5e48]"
+            className="absolute inset-x-0 bottom-full flex animate-fade-in items-center justify-center gap-2 bg-[color-mix(in_oklab,var(--accent-primary)_12%,white)] px-4 py-1.5 text-sm font-semibold text-brand"
         >
             <PenLine size={15} strokeWidth={2.5} className="animate-write" aria-hidden />
             {text}
