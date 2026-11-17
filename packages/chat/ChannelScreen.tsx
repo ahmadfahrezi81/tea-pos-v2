@@ -591,8 +591,8 @@ function withMentions(text: string, names: string[], myName: string, mine: boole
         out.push(
             <span
                 key={at}
-                // As Slack: a mention sits on a highlight; in my purple bubble the quote's darker purple.
-                className={`rounded px-1 font-semibold [box-decoration-break:clone] ${mine ? "bg-black/20 text-white" : me ? "bg-brand/15 text-brand" : "bg-brand/10 text-brand"}`}
+                // As Slack: a mention sits on a light highlight in the brand colour, as typed in the box.
+                className={`rounded px-1 font-semibold [box-decoration-break:clone] ${mine ? "bg-violet-100 text-brand" : me ? "bg-brand/15 text-brand" : "bg-brand/10 text-brand"}`}
             >
                 @{who}
             </span>,
