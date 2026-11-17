@@ -207,9 +207,23 @@ function Channel({ channelId }: { channelId: string }) {
                     />
                 </Fragment>
             ))}
-            {waiting.map((p) => (
-                <Outgoing key={p.key} p={p} slug={slug} />
-            ))}
+            {waiting.map((p, i) => {
+                const prev = i > 0 ? null : items.at(-1);
+                // Grouped as the sent one will be: after my own message the same day.
+                const grouped =
+                    i > 0 ||
+                    (!!prev && prev.authorId === me && localDate(prev.at) === localDate(p.at));
+                return (
+                    <Outgoing
+                        key={p.key}
+                        p={p}
+                        slug={slug}
+                        grouped={grouped}
+                        names={channel.members.map((x) => x.name)}
+                        myName={myName}
+                    />
+                );
+            })}
             <div ref={end} />
             <Composer
                 channelId={channelId}
@@ -435,7 +449,8 @@ function Message({
         </span>
     );
     // Room on the last line for the time (and "edited", and the ticks) so the text never runs under it.
-    const room = 2.75 + (ticks ? 1.25 : 0) + (m.editedAt && !m.deleted ? 2.75 : 0);
+    // Mine always keep room for the clock or the ticks, so a sent bubble is as wide as it was sending.
+    const room = 2.75 + (mine ? 1.25 : 0) + (m.editedAt && !m.deleted ? 2.75 : 0);
     const body = (m.body || m.deleted) && (
         <p className="relative text-[15px] leading-5 whitespace-pre-wrap break-words">
             {m.deleted ? (
@@ -593,16 +608,43 @@ function systemText(m: ChatMessage, t: (key: MessageKey) => string): string {
     return m.body || m.event || "";
 }
 
-function Outgoing({ p, slug }: { p: Pending; slug: string }) {
+/**
+ * A message on its way, drawn exactly as the sent one will be (task 068d: the swap crumpled
+ * it): the same bubble, its time inside with a clock, a photo in its own shape from the
+ * phone's copy. It rises in as it is added; the server's copy then replaces it unseen.
+ */
+function Outgoing({
+    p,
+    slug,
+    grouped,
+    names,
+    myName,
+}: {
+    p: Pending;
+    slug: string;
+    grouped: boolean;
+    names: string[];
+    myName: string;
+}) {
     const t = useT();
     const locale = useLocale();
     const queryClient = useQueryClient();
     const [menu, setMenu] = useState(false);
     const failed = p.state === "failed";
     const q = p.replyTo;
+    const stamp = (
+        <span className="flex items-center gap-0.5">
+            {formatTime(p.at, locale)}
+            {!failed && <Clock size={12} strokeWidth={2.5} />}
+        </span>
+    );
+    const one = p.photos.length === 1;
     return (
-        <div data-message-id={p.key} className="flex flex-col items-end gap-1 pt-2">
-            <div className="flex max-w-full items-center justify-end gap-2">
+        <div
+            data-message-id={p.key}
+            className={`-mx-4 flex animate-rise-in flex-col items-end gap-1 px-4 ${grouped ? "" : "pt-2"}`}
+        >
+            <div className="flex w-full items-center justify-end gap-2">
                 {failed && (
                     <button
                         onClick={() => setMenu(true)}
@@ -614,11 +656,11 @@ function Outgoing({ p, slug }: { p: Pending; slug: string }) {
                 )}
                 <div
                     onClick={() => failed && setMenu(true)}
-                    className={`max-w-[80%] ${BUBBLE} ${TAIL_MINE} bg-brand text-left text-[15px] text-white whitespace-pre-wrap break-words ${failed ? "" : "opacity-70"}`}
+                    className={`max-w-[80%] select-none ${BUBBLE} ${TAIL_MINE} bg-brand text-left text-white`}
                 >
                     {q && (
                         <span
-                            className={`${INSET_X} ${INSET_TOP} mb-1 flex min-w-40 overflow-hidden ${INNER} ${TAIL_INNER_MINE} bg-black/15 text-[13px] leading-4`}
+                            className={`${INSET_X} ${INSET_TOP} ${TAIL_INNER_MINE} mb-1 flex w-[calc(100%+1rem)] min-w-40 overflow-hidden ${INNER} bg-black/15 text-left text-[13px] leading-4`}
                         >
                             <span className="w-1 shrink-0 bg-white/80" />
                             <span className="min-w-0 flex-1 px-2 py-1">
@@ -632,30 +674,42 @@ function Outgoing({ p, slug }: { p: Pending; slug: string }) {
                         </span>
                     )}
                     {p.photos.length > 0 && (
-                        <span
-                            className={`${INSET_X} ${q ? "mt-0.5" : `${INSET_TOP} ${TAIL_INNER_MINE}`} ${p.body ? "mb-1" : "-mb-0.5"} grid gap-0.5 overflow-hidden ${INNER} ${p.photos.length === 1 ? "grid-cols-1 w-56" : "grid-cols-2 w-60"}`}
+                        <div
+                            className={`${INSET_X} ${q ? "mt-0.5" : INSET_TOP} ${p.body ? "mb-1" : "-mb-0.5"}`}
                         >
-                            {p.photos.map((ph) => (
-                                <img
-                                    key={ph.local}
-                                    src={ph.local}
-                                    alt=""
-                                    className={`block w-full rounded-[2px] object-cover aspect-square`}
-                                />
-                            ))}
-                        </span>
+                            <div
+                                className={`relative grid gap-0.5 overflow-hidden ${INNER} ${q ? "" : TAIL_INNER_MINE} ${one ? "grid-cols-1 w-56" : "grid-cols-2 w-60"}`}
+                            >
+                                {p.photos.map((ph) => (
+                                    <img
+                                        key={ph.local}
+                                        src={ph.local}
+                                        alt=""
+                                        className={`block w-full rounded-[2px] object-cover ${one ? "h-auto" : "aspect-square"}`}
+                                    />
+                                ))}
+                                {!p.body && (
+                                    <span className="pointer-events-none absolute right-0 bottom-0 flex h-8 items-end justify-end rounded-br-[6px] bg-linear-to-tl from-black/45 via-black/15 to-transparent px-2 pb-1.5 pl-8 text-[11px] leading-none text-white">
+                                        {stamp}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
                     )}
-                    {p.body}
+                    {p.body && (
+                        <p className="relative text-[15px] leading-5 whitespace-pre-wrap break-words">
+                            {withMentions(p.body, names, myName, true)}
+                            <span className="inline-block" style={{ width: "4rem" }} />
+                            <span className="absolute right-0 bottom-0.5 text-[11px] leading-none text-white/75">
+                                {stamp}
+                            </span>
+                        </p>
+                    )}
                 </div>
             </div>
-            {failed ? (
-                <span className="mt-0.5 text-[11px] font-semibold text-red-600">
+            {failed && (
+                <span className="text-[11px] font-semibold text-red-600">
                     {t("chat.notSentShort")}
-                </span>
-            ) : (
-                <span className="mt-0.5 flex items-center gap-1 text-[11px] text-gray-500">
-                    {formatTime(p.at, locale)}
-                    <Clock size={12} />
                 </span>
             )}
             {menu && (
@@ -715,7 +769,6 @@ function Composer({
     const camera = useRef<HTMLInputElement>(null);
     const gallery = useRef<HTMLInputElement>(null);
     const [adding, setAdding] = useState(false);
-    const [focused, setFocused] = useState(false);
     const [caret, setCaret] = useState(0);
     // A message chosen for editing puts its text in the box, once.
     const [shownEdit, setShownEdit] = useState<string | null>(null);
@@ -746,8 +799,6 @@ function Composer({
         setCaret(at);
         requestAnimationFrame(() => box.current?.setSelectionRange(at, at));
     };
-    // As Slack: the box alone until tapped; then the tools under it, send on the right.
-    const open = focused || text !== "" || photos.length > 0;
     // Shown at once; put back, with the reason, if Go refuses (useApiMutation shows it).
     const saveEdit = useApiMutation(
         async ({ m, text: next }: { m: ChatMessage; text: string }, headers) => {
@@ -934,14 +985,15 @@ function Composer({
                                 </div>
                             )}
                             <div
-                                className={`flex flex-wrap items-center ${open ? "gap-x-1" : "gap-x-2"}`}
+                                // One row that never changes shape (task 068d: tapping it jumped): +, the box, send.
+                                className="flex items-end gap-x-1.5"
                             >
                                 <button
                                     onPointerDown={(e) => e.preventDefault()}
                                     onClick={() => setAdding(true)}
                                     disabled={photos.length >= MAX_PHOTOS || !!editing}
                                     aria-label={t("chat.add")}
-                                    className={`flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-gray-700 disabled:opacity-40 active:opacity-60 ${open ? "order-2" : "order-1"}`}
+                                    className="mb-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-gray-700 disabled:opacity-40 active:opacity-60"
                                 >
                                     <Plus size={20} />
                                 </button>
@@ -973,8 +1025,6 @@ function Composer({
                                     rows={1}
                                     value={text}
                                     maxLength={MAX_LENGTH}
-                                    onFocus={() => setFocused(true)}
-                                    onBlur={() => setFocused(false)}
                                     onSelect={(e) => setCaret(e.currentTarget.selectionStart)}
                                     onChange={(e) => {
                                         setText(e.target.value);
@@ -985,19 +1035,19 @@ function Composer({
                                         e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
                                     }}
                                     placeholder={t("chat.messageTo").replace("{name}", name)}
-                                    className={`block h-10 max-h-32 min-w-0 resize-none py-2.5 text-[16px] leading-5 text-gray-900 outline-none placeholder:text-gray-500 ${open ? "order-1 basis-full" : "order-2 flex-1"} px-1`}
+                                    className="block h-10 max-h-32 min-w-0 flex-1 resize-none px-1 py-2.5 text-[16px] leading-5 text-gray-900 outline-none placeholder:text-gray-500"
                                 />
-                                {open && (
+                                {
                                     <button
                                         onPointerDown={(e) => e.preventDefault()}
                                         onClick={submit}
                                         disabled={!ready}
                                         aria-label={t("chat.send")}
-                                        className="order-3 ml-auto -mr-2 flex size-10 items-center justify-center text-brand disabled:text-gray-300 active:opacity-60"
+                                        className="-mr-1.5 flex size-10 shrink-0 items-center justify-center text-brand disabled:text-gray-300 active:opacity-60"
                                     >
                                         <SendHorizontal size={22} />
                                     </button>
-                                )}
+                                }
                             </div>
                             <Sheet
                                 open={adding}
