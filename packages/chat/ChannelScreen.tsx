@@ -564,7 +564,7 @@ function Message({
 
 /**
  * A message's text with its @mentions lit (RFC: mentions are highlighted on the phone only):
- * `@` and a member's full name, or `@everyone`; a mention of me stands out more.
+ * `@` and a member's full name, or `@everyone`, as it looked typed in the box.
  */
 function withMentions(text: string, names: string[], myName: string, mine: boolean): ReactNode {
     const all = [...new Set([...names, "everyone"])]
@@ -579,7 +579,6 @@ function withMentions(text: string, names: string[], myName: string, mine: boole
         const at = hit.index ?? 0;
         if (at > last) out.push(text.slice(last, at));
         const who = hit[1]!;
-        const me = who === myName || who === "everyone";
         out.push(
             <span
                 key={at}
