@@ -47,7 +47,10 @@ const frameEl = () => document.querySelector<HTMLElement>(".shell-frame");
 
 /** The document never scrolls in the app: only its content does. */
 function unslide() {
-    if (window.scrollY !== 0 || window.scrollX !== 0) window.scrollTo(0, 0);
+    const vv = window.visualViewport;
+    // iOS also pans the visible area to centre a field below the middle (offset, not scroll).
+    const panned = !!vv && vv.scale <= 1.01 && vv.offsetTop > 1;
+    if (window.scrollY !== 0 || window.scrollX !== 0 || panned) window.scrollTo(0, 0);
     fakeUnslide();
 }
 
