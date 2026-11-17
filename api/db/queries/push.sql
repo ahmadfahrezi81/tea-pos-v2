@@ -30,8 +30,8 @@ LIMIT 1;
 
 -- name: ChatPushTargets :many
 -- Who a channel's newest message is pushed to: its members but the author, who want it (their
--- level), have not read it, and are not reading the channel right now (a read mark in the last
--- 30 seconds), with each of their phones (one app per phone).
+-- level) and have not read it yet, with each of their phones (one app per phone). Even with the
+-- app open (owner, 2026-11-17): a "reading it now" rule hid replies after one's own message.
 SELECT u.id AS user_id, u.preferred_language, ps.endpoint, ps.p256dh, ps.auth
 FROM chat_channels c
 JOIN tenants t ON t.id = c.tenant_id
@@ -53,7 +53,6 @@ WHERE c.id = @channel_id
   AND coalesce(r.notify_level, 'all') <> 'none'
   AND NOT (coalesce(r.notify_level, 'all') = 'humans' AND @system::bool)
   AND coalesce(r.last_read_at, '-infinity') < @at::timestamptz
-  AND coalesce(r.updated_at, '-infinity') < now() - interval '30 seconds'
   -- One app per phone (task 068d): with Tea-POS and Tea-Office both subscribed on one phone (the
   -- same user agent), only the app this person used last gets it.
   AND NOT EXISTS (

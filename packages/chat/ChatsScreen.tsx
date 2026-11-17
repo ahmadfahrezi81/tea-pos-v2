@@ -119,10 +119,16 @@ function ChannelRow({ channel: c }: { channel: ChatChannel }) {
                     <span className="text-right text-sm font-normal text-gray-600 tabular-nums">
                         {c.lastAt ? listTime(c.lastAt, locale) : ""}
                     </span>
+                    {/* A group chat: who is in it, not its last message (that is the chat's or Activity's). */}
                     <span
-                        className={`truncate text-sm font-normal ${typing ? "text-brand" : c.unread ? "text-gray-900" : "text-gray-600"}`}
+                        className={`truncate text-sm font-normal ${typing ? "text-brand" : "text-gray-600"}`}
                     >
-                        {typing ? t("chat.typing") : preview(c, t)}
+                        {typing
+                            ? t("chat.typing")
+                            : t(c.members === 1 ? "chat.oneMember" : "chat.memberCount").replace(
+                                  "{n}",
+                                  String(c.members ?? 0),
+                              )}
                     </span>
                     <span className="flex h-5 justify-end">
                         {c.unread > 0 && (
@@ -137,15 +143,6 @@ function ChannelRow({ channel: c }: { channel: ChatChannel }) {
             trailing={false}
         />
     );
-}
-
-/** The last message on one line: who, then what. */
-function preview(c: ChatChannel, t: ReturnType<typeof useT>): string | undefined {
-    const last = c.last;
-    if (!last) return t("chat.noMessages");
-    const what = last.deleted ? t("chat.deleted") : last.body || t("chat.photo");
-    if (last.event) return what;
-    return `${last.mine ? t("chat.you") : last.author}: ${what}`;
 }
 
 /** Someone on chat None who reached the address anyway; the tab itself is hidden for them. */

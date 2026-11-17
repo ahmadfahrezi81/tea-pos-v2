@@ -1370,6 +1370,11 @@ export interface components {
             last?: components["schemas"]["ChatPreview"];
             /** Format: date-time */
             lastAt?: string;
+            /**
+             * Format: int64
+             * @description How many are in it (the list; absent on one channel's own read)
+             */
+            members?: number;
             name?: string;
             /** @description Nobody posts: Notifications, or a store no longer open */
             readOnly: boolean;

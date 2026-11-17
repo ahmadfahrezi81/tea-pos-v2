@@ -255,6 +255,10 @@ components:
         lastAt:
           format: date-time
           type: string
+        members:
+          description: How many are in it (the list; absent on one channel's own read)
+          format: int64
+          type: integer
         name:
           type: string
         readOnly:

@@ -33,7 +33,6 @@ WHERE c.id = $1
   AND coalesce(r.notify_level, 'all') <> 'none'
   AND NOT (coalesce(r.notify_level, 'all') = 'humans' AND $3::bool)
   AND coalesce(r.last_read_at, '-infinity') < $4::timestamptz
-  AND coalesce(r.updated_at, '-infinity') < now() - interval '30 seconds'
   -- One app per phone (task 068d): with Tea-POS and Tea-Office both subscribed on one phone (the
   -- same user agent), only the app this person used last gets it.
   AND NOT EXISTS (
@@ -61,8 +60,8 @@ type ChatPushTargetsRow struct {
 }
 
 // Who a channel's newest message is pushed to: its members but the author, who want it (their
-// level), have not read it, and are not reading the channel right now (a read mark in the last
-// 30 seconds), with each of their phones (one app per phone).
+// level) and have not read it yet, with each of their phones (one app per phone). Even with the
+// app open (owner, 2026-11-17): a "reading it now" rule hid replies after one's own message.
 func (q *Queries) ChatPushTargets(ctx context.Context, arg ChatPushTargetsParams) ([]ChatPushTargetsRow, error) {
 	rows, err := q.db.Query(ctx, chatPushTargets,
 		arg.ChannelID,

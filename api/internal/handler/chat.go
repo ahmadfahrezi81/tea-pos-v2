@@ -79,7 +79,7 @@ func registerChat(api huma.API, d Deps) {
 			out.Body.Channels = make([]contract.ChatChannel, len(rows))
 			for i, r := range rows {
 				c := contract.ChatChannel{
-					ID: r.ID.String(), Kind: r.Kind, Name: r.Name, Unread: int(r.Unread),
+					ID: r.ID.String(), Kind: r.Kind, Name: r.Name, Unread: int(r.Unread), Members: int(r.Members),
 					ReadOnly: readOnly(r.Kind, r.StoreStatus),
 				}
 				if r.LastMessageAt.Valid {
@@ -318,6 +318,17 @@ func registerChat(api huma.API, d Deps) {
 					MentionsMe: r.MentionsMe,
 				}
 			})
+			// A photo shows as a small preview on its row, not the word Photo.
+			msgs := make([]contract.ChatMessage, len(out.Body.Items))
+			for i, x := range out.Body.Items {
+				msgs[i] = x.ChatMessage
+			}
+			if err := attachPhotos(ctx, d, msgs); err != nil {
+				return nil, err
+			}
+			for i := range out.Body.Items {
+				out.Body.Items[i].Photos = msgs[i].Photos
+			}
 			if in.Cursor == "" {
 				n, err := d.Queries.CountChatActivityUnread(ctx, store.CountChatActivityUnreadParams{
 					UserID: caller.UserID, TenantID: caller.TenantID, ChatVip: vip,

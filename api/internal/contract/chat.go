@@ -17,6 +17,7 @@ type ChatChannel struct {
 	LastAt   string       `json:"lastAt,omitempty" format:"date-time"`
 	Last     *ChatPreview `json:"last,omitempty"`
 	Unread   int          `json:"unread" doc:"Stops at 100: show 99+"`
+	Members  int          `json:"members,omitempty" doc:"How many are in it (the list; absent on one channel's own read)"`
 }
 
 // ChatPreview is a channel's last message, one line on the list.

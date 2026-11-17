@@ -231,9 +231,26 @@ export function MessageMenu({
                             })}
                         </div>
                     )}
-                    <p className="line-clamp-3 rounded-xl bg-slate-100 px-3 py-2 text-[15px] text-gray-700 whitespace-pre-wrap break-words">
-                        {m.body || t("chat.photo")}
-                    </p>
+                    {/* The held message as it is: its photos, its text. */}
+                    <div className="rounded-xl bg-slate-100 p-1.5">
+                        {!!m.photos?.length && (
+                            <div className="flex gap-1">
+                                {m.photos.map((p, i) => (
+                                    <img
+                                        key={i}
+                                        src={p.previewUrl || undefined}
+                                        alt=""
+                                        className="size-20 rounded-lg bg-slate-200 object-cover"
+                                    />
+                                ))}
+                            </div>
+                        )}
+                        {m.body && (
+                            <p className="line-clamp-3 px-1.5 py-0.5 text-[15px] text-gray-700 whitespace-pre-wrap break-words">
+                                {m.body}
+                            </p>
+                        )}
+                    </div>
                     <div className="overflow-hidden rounded-2xl bg-slate-100">
                         {rows.map(([Icon, label, act, danger]) => (
                             <button

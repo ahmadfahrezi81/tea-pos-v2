@@ -42,7 +42,20 @@ SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name,
         WHERE x.channel_id = c.id AND x.created_at > coalesce(r.last_read_at, '-infinity')
           AND x.deleted_at IS NULL AND x.author_id IS DISTINCT FROM @user_id
         LIMIT 100
-    ) unread)::int AS unread
+    ) unread)::int AS unread,
+    -- Who is in it, the same rule as ListChatMembers: the line under its name.
+    (SELECT count(*) FROM user_tenant_assignments ma
+        LEFT JOIN user_app_access mx ON mx.tenant_id = ma.tenant_id AND mx.user_id = ma.user_id AND mx.app = 'chat'
+        WHERE ma.tenant_id = c.tenant_id AND ma.status = 'active'
+          AND (t.owner_id = ma.user_id OR mx.access IS NOT NULL)
+          AND CASE c.kind
+            WHEN 'general' THEN true
+            WHEN 'admin' THEN t.owner_id = ma.user_id OR mx.access IN ('vip', 'admin')
+            WHEN 'personal' THEN ma.user_id = c.user_id
+            WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = ma.user_id)
+            ELSE false
+          END
+    )::int AS members
 FROM chat_channels c
 JOIN tenants t ON t.id = c.tenant_id
 LEFT JOIN stores s ON s.id = c.store_id

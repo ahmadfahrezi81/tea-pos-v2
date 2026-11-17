@@ -85,8 +85,8 @@ func (w *ChatPushWorker) pushNewest(ctx context.Context, channel pgtype.UUID, ch
 	}
 	for _, t := range targets {
 		msg := push.Message{
-			Title: chatTitle(m.Kind, m.ChannelName, t.PreferredLanguage),
-			Body:  chatBody(m, t.PreferredLanguage),
+			Title: pushTitle(m, t.PreferredLanguage),
+			Body:  pushBody(m, t.PreferredLanguage),
 			Tag:   channelID,
 			URL:   "/" + m.Slug + "/chats/" + channelID,
 			Icon:  m.AuthorAvatar,
@@ -127,8 +127,17 @@ func chatTitle(kind, name, lang string) string {
 	}
 }
 
-// chatBody is who wrote what, short enough for a lock screen.
-func chatBody(m store.LatestChatMessageRow, lang string) string {
+// pushTitle is who wrote it, as WhatsApp and Slack; the app's own messages are titled by their chat.
+func pushTitle(m store.LatestChatMessageRow, lang string) string {
+	if m.AuthorName != "" {
+		return m.AuthorName
+	}
+	return chatTitle(m.Kind, m.ChannelName, lang)
+}
+
+// pushBody is the chat (#General, #a store) on its first line, the message under it, short
+// enough for a lock screen. A web notification has only a title and a text.
+func pushBody(m store.LatestChatMessageRow, lang string) string {
 	text := m.Body
 	if text == "" && m.Photos > 0 {
 		text = "📷 Foto"
@@ -139,8 +148,8 @@ func chatBody(m store.LatestChatMessageRow, lang string) string {
 	if utf8.RuneCountInString(text) > 180 {
 		text = string([]rune(text)[:180]) + "…"
 	}
-	if m.AuthorName != "" {
-		return m.AuthorName + ": " + text
+	if m.AuthorName == "" {
+		return text
 	}
-	return text
+	return "#" + chatTitle(m.Kind, m.ChannelName, lang) + "\n" + text
 }
