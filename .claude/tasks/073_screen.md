@@ -125,3 +125,5 @@ The timelines show how iOS 18.7 (installed) makes room: in the first frame after
 **The judge:** a field counts as under the keyboard only when it stays there 300 ms or more (the keyboard's own slide). The code case failed on one 16 ms frame before iOS moved it.
 
 **Done when:** on the owner's iPhone the lab's keyboard cases show the header moved 0 (within 3 px) and no field under the keyboard; locally the fake iPhone and fake Android pass.
+
+**Third report (2026-11-17, after #152):** the bottom box, top field, close and the code pass; the header stays. The middle field and field to field still flash for one frame: iOS now pans the visible area (`offsetTop` 134 and 61, `scrollY` 0) to centre a field below the middle (it lands its bottom at 232 px every time), and the next frame it is back. The fix only reset the page's scroll, so the pan was never undone before it was drawn. Now `scrollTo(0, 0)` also runs when the visible area is panned (not when zoomed), from the same visualViewport scroll event, before the frame is drawn.
