@@ -603,6 +603,28 @@ function withMentions(text: string, names: string[], myName: string, mine: boole
     return out;
 }
 
+/** The box's text with each @name in the brand colour on a light highlight, letters unmoved. */
+function litMentions(text: string, names: string[]): ReactNode {
+    const all = [...new Set(names)].filter(Boolean).sort((a, b) => b.length - a.length);
+    if (!text.includes("@") || all.length === 0) return text;
+    const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp(`@(${all.map(escape).join("|")})`, "g");
+    const out: ReactNode[] = [];
+    let last = 0;
+    for (const hit of text.matchAll(re)) {
+        const at = hit.index ?? 0;
+        if (at > last) out.push(text.slice(last, at));
+        out.push(
+            <span key={at} className="rounded-sm bg-brand/15 text-brand">
+                {hit[0]}
+            </span>,
+        );
+        last = at + hit[0].length;
+    }
+    if (last < text.length) out.push(text.slice(last));
+    return out;
+}
+
 /** A system message in the reader's language; an event this build does not know shows its body. */
 function systemText(m: ChatMessage, t: (key: MessageKey) => string): string {
     void t;
@@ -767,6 +789,7 @@ function Composer({
     const [text, setText] = useState("");
     const [photos, setPhotos] = useState<{ file: File; url: string }[]>([]);
     const box = useRef<HTMLTextAreaElement>(null);
+    const lit = useRef<HTMLDivElement>(null);
     const camera = useRef<HTMLInputElement>(null);
     const gallery = useRef<HTMLInputElement>(null);
     const [adding, setAdding] = useState(false);
@@ -1011,24 +1034,44 @@ function Composer({
                             <div>
                                 {/* As Slack, on two lines, always (task 068d: changing shape on a tap jumped):
                                     the box, then its tools; the bar only grows with the text. */}
-                                <textarea
-                                    ref={box}
-                                    data-chat-box
-                                    rows={1}
-                                    value={text}
-                                    maxLength={MAX_LENGTH}
-                                    onSelect={(e) => setCaret(e.currentTarget.selectionStart)}
-                                    onChange={(e) => {
-                                        setText(e.target.value);
-                                        setCaret(e.target.selectionStart);
-                                        if (e.target.value.trim()) sayTyping(slug, channelId);
-                                        // Grows with the text, up to about five lines.
-                                        e.target.style.height = "auto";
-                                        e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
-                                    }}
-                                    placeholder={t("chat.messageTo").replace("{name}", name)}
-                                    className="block h-10 max-h-32 w-full resize-none px-1 py-2.5 text-[16px] leading-5 text-gray-900 outline-none placeholder:text-gray-500"
-                                />
+                                {/* The box's own text is see-through; this copy under it draws the
+                                    same text with each @name lit (a textarea cannot colour part of
+                                    itself). Colour and background only, so every letter keeps its place. */}
+                                <div className="relative">
+                                    <div
+                                        ref={lit}
+                                        aria-hidden
+                                        className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words px-1 py-2.5 text-[16px] leading-5 text-gray-900"
+                                    >
+                                        {litMentions(text, [
+                                            ...members.map((x) => x.name),
+                                            ...(canEveryone ? ["everyone"] : []),
+                                        ])}
+                                        {"\u200b"}
+                                    </div>
+                                    <textarea
+                                        ref={box}
+                                        data-chat-box
+                                        rows={1}
+                                        value={text}
+                                        maxLength={MAX_LENGTH}
+                                        onSelect={(e) => setCaret(e.currentTarget.selectionStart)}
+                                        onScroll={(e) => {
+                                            if (lit.current)
+                                                lit.current.scrollTop = e.currentTarget.scrollTop;
+                                        }}
+                                        onChange={(e) => {
+                                            setText(e.target.value);
+                                            setCaret(e.target.selectionStart);
+                                            if (e.target.value.trim()) sayTyping(slug, channelId);
+                                            // Grows with the text, up to about five lines.
+                                            e.target.style.height = "auto";
+                                            e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
+                                        }}
+                                        placeholder={t("chat.messageTo").replace("{name}", name)}
+                                        className="relative block h-10 max-h-32 w-full resize-none bg-transparent px-1 py-2.5 text-[16px] leading-5 text-transparent caret-gray-900 outline-none placeholder:text-gray-500"
+                                    />
+                                </div>
                                 <input
                                     ref={camera}
                                     type="file"
