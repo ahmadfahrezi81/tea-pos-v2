@@ -74,7 +74,10 @@ export function useChannelScroll({
         const s = scroller();
         if (!s) return;
         let atBottom = true;
+        let height = s.clientHeight;
         const onScroll = () => {
+            // Mid-resize (the keyboard sliding) says nothing about where the reader is.
+            if (s.clientHeight !== height) return;
             const gap = s.scrollHeight - s.scrollTop - s.clientHeight;
             atBottom = gap < 40;
             const far = gap > AWAY_PX;
@@ -86,6 +89,7 @@ export function useChannelScroll({
         };
         // The page shrinking for the keyboard keeps the newest message in view, as chat apps do.
         const resized = new ResizeObserver(() => {
+            height = s.clientHeight;
             if (atBottom) s.scrollTop = s.scrollHeight;
         });
         s.addEventListener("scroll", onScroll, { passive: true });

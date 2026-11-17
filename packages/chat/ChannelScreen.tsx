@@ -373,14 +373,18 @@ function Message({
                 e.stopPropagation();
                 onQuote(q.id);
             }}
-            className={`-mx-1.5 mt-1 mb-1 flex w-[calc(100%+0.75rem)] min-w-40 overflow-hidden text-left text-[13px] leading-[18px] ${mine ? "bg-white" : "bg-slate-100"}`}
+            className={`-mx-2 mt-0.5 mb-1 flex w-[calc(100%+1rem)] min-w-40 overflow-hidden rounded-lg text-left text-[13px] leading-4 ${mine ? "bg-black/15" : "bg-slate-100"}`}
         >
-            <span className="w-1 shrink-0 bg-brand" />
+            <span className={`w-1 shrink-0 ${mine ? "bg-white/80" : "bg-brand"}`} />
             <span className="min-w-0 flex-1 px-2 py-1">
-                <span className="block truncate font-semibold text-brand">
+                <span
+                    className={`block truncate font-semibold ${mine ? "text-white" : "text-brand"}`}
+                >
                     {q.author || t("chat.message")}
                 </span>
-                <span className={`line-clamp-2 text-gray-700 ${q.deleted ? "italic" : ""}`}>
+                <span
+                    className={`line-clamp-2 ${mine ? "text-white/80" : "text-gray-600"} ${q.deleted ? "italic" : ""}`}
+                >
                     {q.deleted ? t("chat.deleted") : q.body || t("chat.photo")}
                 </span>
             </span>
@@ -484,15 +488,15 @@ function Outgoing({ p, slug }: { p: Pending; slug: string }) {
                         </div>
                     )}
                     {(p.body || q) && (
-                        <div className="rounded-2xl rounded-br-md bg-brand px-3 py-2 text-left text-[15px] text-white whitespace-pre-wrap break-words">
+                        <div className="rounded-2xl rounded-br-md bg-brand px-3 py-1.5 text-left text-[15px] text-white whitespace-pre-wrap break-words">
                             {q && (
-                                <span className="-mx-1.5 mb-1 flex min-w-40 overflow-hidden bg-white text-[13px] leading-[18px]">
-                                    <span className="w-1 shrink-0 bg-brand" />
+                                <span className="-mx-2 mb-1 flex min-w-40 overflow-hidden rounded-lg bg-black/15 text-[13px] leading-4">
+                                    <span className="w-1 shrink-0 bg-white/80" />
                                     <span className="min-w-0 flex-1 px-2 py-1">
-                                        <span className="block truncate font-semibold text-brand">
+                                        <span className="block truncate font-semibold text-white">
                                             {q.author || t("chat.message")}
                                         </span>
-                                        <span className="line-clamp-2 text-gray-700">
+                                        <span className="line-clamp-2 text-white/80">
                                             {q.body || t("chat.photo")}
                                         </span>
                                     </span>
@@ -624,10 +628,10 @@ function Composer({
                     ) : (
                         <>
                             {replyTo && (
-                                // As WhatsApp: a flat strip across the bar's top, a line on its left.
-                                <div className="-mx-3 -mt-2 mb-2 flex items-stretch border-b border-slate-100 bg-slate-50">
+                                // As WhatsApp: slim, a line on its left, no box around it.
+                                <div className="-mx-1 mb-1.5 flex items-stretch overflow-hidden rounded-lg bg-slate-100">
                                     <span className="w-1 shrink-0 bg-brand" />
-                                    <span className="min-w-0 flex-1 px-3 py-2 text-[13px] leading-[18px]">
+                                    <span className="min-w-0 flex-1 px-2 py-1 text-[13px] leading-4">
                                         <span className="block truncate font-semibold text-brand">
                                             {t("chat.replyingTo").replace(
                                                 "{name}",
@@ -642,7 +646,7 @@ function Composer({
                                         onPointerDown={(e) => e.preventDefault()}
                                         onClick={onCancelReply}
                                         aria-label={t("common.close")}
-                                        className="px-3 text-gray-600 active:opacity-60"
+                                        className="px-2.5 text-gray-600 active:opacity-60"
                                     >
                                         <X size={18} />
                                     </button>
