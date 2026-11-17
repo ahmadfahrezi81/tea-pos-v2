@@ -320,3 +320,16 @@ a,
 :root[data-keyboard] .tab-bar {
     display: none;
 }
+
+/* Where the keyboard covers the page (the iPhone before Safari 27.3), the frame takes the visible height, sliding with the keyboard. */
+:root[data-keyboard-fit] .shell-frame {
+    transition: height 250ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+:root[data-keyboard-fit="open"] .shell-frame {
+    height: var(--keyboard-fit);
+}
+@media (prefers-reduced-motion: reduce) {
+    :root[data-keyboard-fit] .shell-frame {
+        transition: none;
+    }
+}

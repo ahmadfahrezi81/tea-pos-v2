@@ -11,6 +11,8 @@ const TOLERANCE = 1;
 const HEADER_TOLERANCE = 3;
 /** A keyboard is at least this tall; less is a toolbar. */
 const MIN_KEYBOARD = 120;
+/** A field under the keyboard for less than this is the keyboard still sliding in, not hidden. */
+const HIDDEN_MS = 300;
 
 export interface Expect {
     /**
@@ -62,13 +64,29 @@ export function judge(samples: Sample[], expect: Expect): Verdict {
     if (expect.headerStill && headerMovedBy > HEADER_TOLERANCE)
         problems.push(`the header moved ${headerMovedBy}px`);
 
-    // Every kind of screen: a field being typed in is never under the keyboard.
-    const hidden = Math.max(
-        0,
-        ...judged
-            .filter((s) => s.focused && first.visible - s.visible >= MIN_KEYBOARD)
-            .map((s) => s.fieldBottom - s.visible),
-    );
+    // Every kind of screen: a field being typed in is never under the keyboard, past its slide.
+    let hidden = 0;
+    let since = -1;
+    let worst = 0;
+    for (let i = 0; i < judged.length; i++) {
+        const s = judged[i]!;
+        const under =
+            s.focused && first.visible - s.visible >= MIN_KEYBOARD ? s.fieldBottom - s.visible : 0;
+        if (under > TOLERANCE) {
+            if (since < 0) since = s.t;
+            worst = Math.max(worst, under);
+        }
+        // How long it stayed: until the next frame shows it, or the run ends.
+        const ends = under <= TOLERANCE || i === judged.length - 1;
+        if (since >= 0 && ends) {
+            const until = under <= TOLERANCE ? s.t : last.t;
+            if (until - since >= HIDDEN_MS) hidden = Math.max(hidden, worst);
+            if (under <= TOLERANCE) {
+                since = -1;
+                worst = 0;
+            }
+        }
+    }
     if (hidden > TOLERANCE) problems.push(`the field was ${hidden}px under the keyboard`);
 
     // After the case: the app fills what is visible, from its top, and nothing is left slid.
