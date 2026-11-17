@@ -5,7 +5,7 @@
  *
  * - Android (`resizes-content`): the page shrinks by the keyboard's height; nothing pans
  * - iPhone: the page keeps its size, the keyboard covers its bottom, and at focus the whole page
- *   slides up just enough to show a field the keyboard would cover (iOS scrolls the document); the
+ *   slides up to bring a field lower than the middle of what stays visible to that middle; the
  *   shell's keyboard fit puts it back in the same moment, as on the phone (`fakeUnslide`)
  *
  * The measuring engine reads these numbers as it would read the phone's (`fakeView`). A fake,
@@ -48,7 +48,11 @@ const typable = (el: Element | null) =>
     el instanceof HTMLTextAreaElement ||
     (el instanceof HTMLInputElement && !SKIP.includes(el.type));
 
+/** Which fake runs, if any: the shell's keyboard reads it as it would learn it on the phone. */
+export let fakeMode: FakeMode | null = null;
+
 export function startFakeKeyboard(mode: FakeMode) {
+    fakeMode = mode;
     const root = document.documentElement;
     const pad = document.createElement("div");
     pad.setAttribute("aria-hidden", "true");
@@ -86,12 +90,14 @@ export function startFakeKeyboard(mode: FakeMode) {
         } else {
             fakeView.shrink = 0;
             root.style.removeProperty("--fake-keyboard");
-            // iOS slides the page only as far as needed to show the field above the keyboard.
             document.body.style.transform = "";
-            const bottom = field?.getBoundingClientRect().bottom ?? 0;
-            fakeView.pan = field
-                ? Math.max(0, Math.round(bottom + 8 - (window.innerHeight - height)))
-                : 0;
+            // As iOS: a field lower than the middle of what stays visible is moved to that middle.
+            const r = field?.getBoundingClientRect();
+            const centre = r ? (r.top + r.bottom) / 2 : 0;
+            fakeView.pan =
+                r && r.width > 0
+                    ? Math.max(0, Math.round(centre - (window.innerHeight - height) / 2))
+                    : 0;
             document.body.style.transform = fakeView.pan ? `translateY(${-fakeView.pan}px)` : "";
         }
         onChange();
