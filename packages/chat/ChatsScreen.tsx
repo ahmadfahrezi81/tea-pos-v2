@@ -95,11 +95,11 @@ function Channels({ search }: { search: string }) {
 
 function ChannelRow({ channel: c }: { channel: ChatChannel }) {
     const t = useT();
-    const locale = useLocale();
     const slug = useSlug();
     const navigate = useNavigate();
     const Icon = KIND_ICON[c.kind];
     const typing = useTyping(c.id).length > 0;
+    const locale = useLocale();
     return (
         <ListRow
             top
@@ -116,20 +116,7 @@ function ChannelRow({ channel: c }: { channel: ChatChannel }) {
                     >
                         {channelName(c, t)}
                     </span>
-                    <span className="text-right text-sm font-normal text-gray-600 tabular-nums">
-                        {c.lastAt ? listTime(c.lastAt, locale) : ""}
-                    </span>
-                    {/* A group chat: who is in it, not its last message (that is the chat's or Activity's). */}
-                    <span
-                        className={`truncate text-sm font-normal ${typing ? "text-brand" : "text-gray-600"}`}
-                    >
-                        {typing
-                            ? t("chat.typing")
-                            : t(c.members === 1 ? "chat.oneMember" : "chat.memberCount").replace(
-                                  "{n}",
-                                  String(c.members ?? 0),
-                              )}
-                    </span>
+                    {/* Top right: how many are unread, not the time (a group is opened, not scanned). */}
                     <span className="flex h-5 justify-end">
                         {c.unread > 0 && (
                             <span className="min-w-7 h-5 px-2 rounded-full bg-brand text-white text-xs font-bold leading-5 text-center">
@@ -137,6 +124,21 @@ function ChannelRow({ channel: c }: { channel: ChatChannel }) {
                             </span>
                         )}
                     </span>
+                    {/* A group chat: who is in it, not its last message (that is the chat's or Activity's). */}
+                    <span
+                        className={`truncate text-sm font-normal ${typing ? "text-brand" : "text-gray-600"}`}
+                    >
+                        {typing
+                            ? t("chat.typing")
+                            : [
+                                  t(
+                                      c.members === 1 ? "chat.oneMember" : "chat.memberCount",
+                                  ).replace("{n}", String(c.members ?? 0)),
+                                  // When it was last active, beside who is in it.
+                                  ...(c.lastAt ? [listTime(c.lastAt, locale)] : []),
+                              ].join(" · ")}
+                    </span>
+                    <span />
                 </span>
             }
             onClick={() => void navigate({ to: `/${slug}/chats/${c.id}` })}
