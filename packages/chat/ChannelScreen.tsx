@@ -575,7 +575,7 @@ function Message({
  * A message's text with its @mentions lit (RFC: mentions are highlighted on the phone only):
  * `@` and a member's full name, or `@everyone`, as it looked typed in the box.
  */
-function withMentions(text: string, names: string[]): ReactNode {
+function withMentions(text: string, names: string[], inBox = false): ReactNode {
     const all = [...new Set([...names, "everyone"])]
         .filter(Boolean)
         .sort((a, b) => b.length - a.length);
@@ -591,8 +591,13 @@ function withMentions(text: string, names: string[]): ReactNode {
         out.push(
             <span
                 key={at}
-                // As WhatsApp: a mention is the name in the brand green.
-                className="text-brand"
+                // The name in the brand green, bold. In the box a stroke instead of weight, so
+                // no letter moves away from the caret.
+                className={
+                    inBox
+                        ? "text-brand [-webkit-text-stroke:0.45px_currentColor]"
+                        : "font-semibold text-brand"
+                }
             >
                 @{who}
             </span>,
@@ -1022,6 +1027,7 @@ function Composer({
                                         {withMentions(
                                             text,
                                             members.map((x) => x.name),
+                                            true,
                                         )}
                                         {"\u200b"}
                                     </div>
