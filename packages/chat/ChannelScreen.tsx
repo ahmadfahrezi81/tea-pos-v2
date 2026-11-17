@@ -373,7 +373,7 @@ function Message({
                 e.stopPropagation();
                 onQuote(q.id);
             }}
-            className={`-mx-2 mt-0.5 mb-1 flex w-[calc(100%+1rem)] min-w-40 overflow-hidden rounded-lg text-left text-[13px] leading-4 ${mine ? "bg-black/15" : "bg-slate-100"}`}
+            className={`-mx-2 ${mine || grouped ? "-mt-0.5" : "mt-0.5"} mb-1 flex w-[calc(100%+1rem)] min-w-40 overflow-hidden rounded-lg text-left text-[13px] leading-4 ${mine ? "bg-black/15" : "bg-slate-100"}`}
         >
             <span className={`w-1 shrink-0 ${mine ? "bg-white/80" : "bg-brand"}`} />
             <span className="min-w-0 flex-1 px-2 py-1">
@@ -490,7 +490,7 @@ function Outgoing({ p, slug }: { p: Pending; slug: string }) {
                     {(p.body || q) && (
                         <div className="rounded-2xl rounded-br-md bg-brand px-3 py-1.5 text-left text-[15px] text-white whitespace-pre-wrap break-words">
                             {q && (
-                                <span className="-mx-2 mb-1 flex min-w-40 overflow-hidden rounded-lg bg-black/15 text-[13px] leading-4">
+                                <span className="-mx-2 -mt-0.5 mb-1 flex min-w-40 overflow-hidden rounded-lg bg-black/15 text-[13px] leading-4">
                                     <span className="w-1 shrink-0 bg-white/80" />
                                     <span className="min-w-0 flex-1 px-2 py-1">
                                         <span className="block truncate font-semibold text-white">
