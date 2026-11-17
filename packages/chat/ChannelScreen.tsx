@@ -890,7 +890,7 @@ function Composer({
                 <Typing channelId={channelId} members={members} />
                 {/* Names for an @, in a card above the bar (owner: not inside it). */}
                 {suggestions.length > 0 && (
-                    <div className="absolute inset-x-3 bottom-full z-20 mb-2 overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-black/5">
+                    <div className="absolute inset-x-1 bottom-full z-20 mb-1 overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-black/5">
                         {suggestions.map((x) => (
                             <button
                                 key={x.name}
