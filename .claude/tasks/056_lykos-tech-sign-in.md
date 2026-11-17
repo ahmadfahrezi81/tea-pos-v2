@@ -1,6 +1,6 @@
 # Task 056 — The apps say who runs them, and stay out of Google
 
-**Status: approved 2026-11-04, in progress.**
+**Status: done 2026-11-04, PR #98; release 2026.11.3.**
 
 ## The goal
 

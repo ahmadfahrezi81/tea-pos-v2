@@ -1,6 +1,6 @@
 # Task 014c — `pnpm bench`: the same benchmark every time
 
-**Status: built 2026-10-23 (approved the same day), in PR #27 with the snippet. Checked on a local production build of backoffice against local Go with the fixture admin's session: signed out it stops with the `--sign-in` hint; two runs of 5 agree (reopen ready 0.44 s both times, first visit 3.48 s both times); 20× measured as 20.1× with a busy loop. Its numbers come out lower than by hand, most likely because recording a DevTools trace itself slows a 20× page, so its rows start a new series in the Benchmark log rather than continue the old one. Waits on the owner's `--sign-in` on staging for the first real row.**
+**Status: done 2026-10-23, PR #27; release 2026.10.4.**
 
 ## The goal
 

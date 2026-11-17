@@ -1,6 +1,6 @@
 # Task 020 — Pay setup: the Pay tab, staff, commission and claim types, the pay schedule
 
-**Status: built 2026-10-25 overnight, merged to staging when green (owner, 2026-10-25: build Steps 20-24 without review; decisions in `overnight-log.md`). Checked: unit tests for the pay windows (each against v1's own function's output); integration tests for every endpoint (a write sent twice saved once, another tenant's user and a switched-off type refused, eligibility replaced whole, the period's totals with a non-seller left out); typecheck, lint, bundle.**
+**Status: done 2026-10-24, PR #43 (decisions in `overnight-log.md`).**
 
 ## The goal
 

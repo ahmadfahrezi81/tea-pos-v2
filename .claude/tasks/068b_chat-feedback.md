@@ -1,6 +1,6 @@
 # Task 068b — Feedback: Chat phase 1
 
-**Status: items 1-23 merged into staging 2026-11-16 (PR #145); the owner tests on the phone; item 24 on `fix/chat-keyboard`.**
+**Status: done on staging 2026-11-16: items 1-23 in PR #145; item 24 (the keyboard) became the keyboard RFC, tasks 072 and 073. Polish continues in task 068c.**
 
 ## The goal
 

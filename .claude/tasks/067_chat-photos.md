@@ -1,6 +1,6 @@
 # Task 067 — Chat: photos
 
-**Status: built 2026-11-15 on `feat/chat-phase-1` (in the PR into staging, 2026-11-16), approved by the owner with the RFC that night. Bucket `chat-photos` made on staging (2026-11-16).**
+**Status: done on staging 2026-11-16, PR #145; not released yet. Production's `chat-photos` bucket still to make before the release.**
 
 ## The goal
 

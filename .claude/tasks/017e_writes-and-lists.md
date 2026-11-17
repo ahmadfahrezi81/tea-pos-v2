@@ -1,6 +1,6 @@
 # Task 017e — Writes and lists: saved once, errors in words, lists that page
 
-**Status: built 2026-10-24, not committed. Checked locally: a write sent twice runs once with the same answer (the second marked replayed), ten at once run once, another user's same key is theirs, a key reused for another body is refused (409), none at all too (400), a 500 is not kept; every write route declares Idempotent or Repeatable (the permission test); every error code is in the contract and the typecheck names a code without a translation (tried by removing one); paging 95 rows while rows are added sees each once, since returns only the newer ones. The worker drops keys after 24 hours.**
+**Status: done 2026-10-24, PR #40.**
 
 ## The goal
 

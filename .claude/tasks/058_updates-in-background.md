@@ -1,6 +1,6 @@
 # Task 058 — Every update downloads behind the header
 
-**Status: built 2026-11-07, checked locally, reviewed by the owner; PR into staging, then the owner checks on phones.**
+**Status: done 2026-11-06, PR #113; release 2026.11.6.**
 
 ## The goal
 

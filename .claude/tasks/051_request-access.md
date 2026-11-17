@@ -1,6 +1,6 @@
 # Task 051 — Request access
 
-**Status: built 2026-10-28, not committed; waiting on the owner's review.**
+**Status: done 2026-10-28, PR #50; release 2026.10.6.**
 
 ## The goal
 

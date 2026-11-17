@@ -1,6 +1,6 @@
 # Task 010 — The contract
 
-**Status: built 2026-10-21, uncommitted, waiting on the owner's code review. `/health` served through Huma, unchanged; `openapi.yaml` and `schema.d.ts` generated and checked by `generate:check`; a bad request gives 400 `bad_request` with details, an unexpected error 500 `internal` with no internals, an unknown route 404 `route_not_found` (added: the mux's own 404 was plain text). Lint, typecheck and format pass.**
+**Status: done 2026-10-21, PR #13.**
 
 ## The goal
 

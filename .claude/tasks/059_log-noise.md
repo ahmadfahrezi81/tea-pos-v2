@@ -1,6 +1,6 @@
 # Task 059 — Production's log says what happened
 
-**Status: approved 2026-11-06, in progress.**
+**Status: done 2026-11-08, PRs #103, #104, #127; release 2026.11.10.**
 
 ## The goal
 

@@ -1,6 +1,6 @@
 # Task 073 — The screen engine: the app's height and place, on every phone
 
-**Status: Screen lab built 2026-11-16 on `feat/screen-check` (engine `frame/screen/measure.ts`, judge `judge.ts` with 6 unit tests, fake keyboards `fake.ts`: `?preview=keyboard` Android, `?preview=keyboard-ios` the iPhone's pan; More → Screen lab on staging, previews, dev). Seen locally: Android fake, chat's box passes (shrink); iPhone fake, the top field passes (cover) and chat's box fails (header moved 280 px), as on the owner's iPhone. Next: the owner runs it on the real phones. Send to PostHog left for later (needs a new event type in Go); Copy for now.**
+**Status: done on staging 2026-11-17, PRs #149-#154: the Screen lab, the iPhone's keyboard fit and scroll assist; every case stayed still on the owner's iPhone (iOS 18.7). Left: scroll assist inside sheets, the `?screen` check for sign-in, the lab's report to PostHog, Android on a borrowed phone.**
 
 ## The goal
 
@@ -130,7 +130,7 @@ The timelines show how iOS 18.7 (installed) makes room: in the first frame after
 
 ## Fourth report and the proven fix: scroll assist (2026-11-17)
 
-**Status: in progress (the owner: try it; a shell redesign is fine if it comes to that).**
+**Status: done 2026-11-17 (#154). The owner's iPhone (iOS 18.7, installed): top, middle, bottom, field to field and closing pass, and the owner saw the screen stay still on every case. The code field (focus case) sat 55 px under the keyboard for about 350 ms before the content scrolled it up; the owner saw it as still. Android still to be tried on a borrowed phone.**
 
 After #152 and #153 the lab passed the bottom box, but the owner saw it move up, vanish and come back: iOS moves its window outside the page, too fast for the page's numbers to show. The middle field (95 px) and field to field (61 px) still moved. iOS moves a field it is focusing to the middle of what stays visible (its centre to half the visible height) whenever it is lower than that, and does it before the page hears of the keyboard. Correcting afterwards cannot work.
 
