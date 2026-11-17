@@ -107,3 +107,21 @@ iOS 18.7, installed, 390×844, the app 797 px tall.
 - **The lab's own mistakes, fixed:** (1) iOS reports one slide twice (as the page's scroll and the visible area's offset), so every slide read double (760 px for a 380 px keyboard): counted once now (`slidBeyondScroll`); (2) Finish judged before the keyboard had started closing, so the middle case "ended" with the keyboard still up: Finish now waits at least 0.8 s and until the screen is still; (3) a 2 px nudge iOS gives the header as a keyboard opens is not a moved header (3 px tolerance)
 - **iOS 18.7 changes the plan (the owner: it must last on older iPhones too; no one should need iOS 27):** `interactive-widget` comes with Safari 27.3, which only an iPhone on iOS 27.3 or later gets. This iPhone (and any staff iPhone left on an older iOS) never will, so the iPhone's slide must be handled by us after all: RFC step 6 (chat) and the forms' middle fields, not only "wait for Safari"
 - **The report now carries each run's frames** (`timeline`: t, page, visible, offset, scrollY, headerTop, fieldBottom; at most 80 a case): how the iPhone's slide unfolds frame by frame is what the chat fix (step 6) is designed from
+
+## Second report and the iPhone fix (2026-11-17)
+
+**Status: in progress (the owner: build it; Android to be tried later on a borrowed phone).**
+
+The timelines show how iOS 18.7 (installed) makes room: in the first frame after the tap the visible height drops by the keyboard (797 to 417) **and the document scrolls** (`scrollY`) just far enough to show the field (bottom box 380, middle 111, field to field 61, the code 335); the visible area's offset stays 0. Then the keyboard slides in over about 250 ms. #146 corrected the offset, which never moves here, after the scroll was drawn: the jump then flash.
+
+**The fix (`frame/screen/keyboard.ts`), for any phone whose page does not shrink with the keyboard:**
+- In the same event that reports it (visualViewport resize or scroll, the page's scroll, before the frame is drawn): the app's frame takes the visible height (`data-keyboard-fit`, `--keyboard-fit`) and the document's scroll goes back to 0. The bottom box is then already above the keyboard and the header never moves
+- The frame's height follows the keyboard over 250 ms (none with reduced motion), opening and closing
+- A field inside the content the smaller frame would hide is scrolled into view inside `#shell-scroll`, never by moving the page
+- Where the page shrinks by itself (Android with `resizes-content`, Safari 27.3, an old Chrome that resizes) nothing of this runs: only the tab bar steps aside, as today. An Android browser that only covers (no shrink) gets the same fix as the iPhone
+- Zoomed in: nothing
+- The fake iPhone keyboard slides the page at focus as iOS does, so the fix is tried locally the same way
+
+**The judge:** a field counts as under the keyboard only when it stays there 300 ms or more (the keyboard's own slide). The code case failed on one 16 ms frame before iOS moved it.
+
+**Done when:** on the owner's iPhone the lab's keyboard cases show the header moved 0 (within 3 px) and no field under the keyboard; locally the fake iPhone and fake Android pass.

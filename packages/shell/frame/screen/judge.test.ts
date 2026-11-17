@@ -87,6 +87,30 @@ describe("judge", () => {
         expect(v.problems).toEqual(["the field was 230px under the keyboard"]);
     });
 
+    it("does not count a field under the keyboard for one frame (iOS moves it the next)", () => {
+        const run = [
+            rest(0),
+            rest(4086, { focused: true, visible: 462, fieldBottom: 736 }),
+            rest(4102, { focused: true, visible: 462, fieldBottom: 440, scrollY: 335 }),
+            rest(5000),
+        ];
+        const v = judge(run, { headerStill: false, fills: true });
+        expect(v.problems).toEqual([]);
+    });
+
+    it("passes the iPhone fit: the frame slides up with the keyboard, the header stays", () => {
+        const run = [
+            rest(0),
+            rest(16, { focused: true, visible: 417, frameHeight: 700, fieldBottom: 690 }),
+            rest(130, { focused: true, visible: 417, frameHeight: 520, fieldBottom: 510 }),
+            rest(260, { focused: true, visible: 417, frameHeight: 417, fieldBottom: 405 }),
+            rest(1200),
+        ];
+        const v = judge(run, STILL);
+        expect(v.pass).toBe(true);
+        expect(v.facts.keyboard).toBe("cover");
+    });
+
     it("lets a focus screen slide its header away to fit the field", () => {
         const run = [
             rest(0),

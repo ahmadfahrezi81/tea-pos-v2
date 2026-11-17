@@ -4,8 +4,9 @@
  * does what its phone does, as far as a page can show it:
  *
  * - Android (`resizes-content`): the page shrinks by the keyboard's height; nothing pans
- * - iPhone: the page keeps its size, the keyboard covers its bottom, and the whole page slides
- *   up just enough to show a field the keyboard would cover (the "pan")
+ * - iPhone: the page keeps its size, the keyboard covers its bottom, and at focus the whole page
+ *   slides up just enough to show a field the keyboard would cover (iOS scrolls the document); the
+ *   shell's keyboard fit puts it back in the same moment, as on the phone (`fakeUnslide`)
  *
  * The measuring engine reads these numbers as it would read the phone's (`fakeView`). A fake,
  * not the phone: timing and the keyboard's exact height are the real phone's to confirm.
@@ -30,6 +31,13 @@ const SKIP = [
 /** What the fake takes away: the page's height (Android), the visible height and the slide (both). */
 export const fakeView = { shrink: 0, covered: 0, pan: 0 };
 let onChange = () => {};
+
+/** The shell puts the page back, as `scrollTo(0, 0)` does on the phone. */
+export function fakeUnslide() {
+    if (!fakeView.pan) return;
+    fakeView.pan = 0;
+    document.body.style.transform = "";
+}
 
 /** The shell's keyboard state listens, to measure again. */
 export function onFakeChange(listener: () => void) {

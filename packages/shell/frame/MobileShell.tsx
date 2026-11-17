@@ -380,7 +380,7 @@ export function MobileShell({
                 <HeaderSlotContext value={headerSlotEl}>
                     <HeaderTitleSlotContext value={titleSlotEl}>
                         {/* svh in a tab (no resize as the URL bar moves); installed, the measured --shell-height. Less the dev server's fake keyboard. */}
-                        <div className="h-[calc(100svh-var(--fake-keyboard,0px))] [@media(display-mode:standalone)]:h-[calc(var(--shell-height,100dvh)-var(--fake-keyboard,0px))] flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+                        <div className="shell-frame h-[calc(100svh-var(--fake-keyboard,0px))] [@media(display-mode:standalone)]:h-[calc(var(--shell-height,100dvh)-var(--fake-keyboard,0px))] flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
                             <MobileHeader
                                 title={title}
                                 isSubPage={currentIsSubPage}
