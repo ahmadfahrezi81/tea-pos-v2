@@ -38,3 +38,35 @@ Steps 1 and 3-8 are the screen only; 2 and 9 are Go and the screen. All in one P
 ## Not in this task
 
 Reactions, editing a sent message, voice notes, mentions, search inside a chat (chat phase 2). Scroll assist inside sheets (task 073's leftovers).
+
+## Phone test (owner, on staging)
+
+Score each 1-5 (5 = feels like WhatsApp), with a note when it is not 5. iPhone first; Android when borrowed.
+
+| # | Try | What should happen | Score | Note |
+| --- | --- | --- | --- | --- |
+| 1 | Tap your own photo | Only the photo opens; no Seen by | | |
+| 2 | Tap a message | Nothing happens | | |
+| 3 | Hold a message | It sinks a little and its row lights up; the menu opens (Android vibrates) | | |
+| 4 | Menu on your own message | Reply, Copy, Seen by, Delete | | |
+| 5 | Menu on someone else's | Reply, Copy (Delete too as a chat admin) | | |
+| 6 | Copy | "Copied"; pastes elsewhere | | |
+| 7 | Seen by from the menu | The Seen by sheet | | |
+| 8 | Delete | Confirm, then "Message deleted"; the other phone sees it too | | |
+| 9 | Reply from the menu | "Replying to …" strip over the box, keyboard opens, header still | | |
+| 10 | Slide a message right | Follows the finger, arrow fills in; let go past it: reply as 9; short slide: nothing | | |
+| 11 | Send the reply | The quote shows in the bubble, even gaps and corners | | |
+| 12 | Tap a quote | Scrolls to the original and lights it up | | |
+| 13 | ✕ on the reply strip | The strip goes, the keyboard stays | | |
+| 14 | Type, then tap + | The keyboard closes and the Camera / Gallery sheet shows | | |
+| 15 | Send a photo with no text | The time sits on the photo, 4 px border all round | | |
+| 16 | Send while typing | The keyboard stays open | | |
+| 17 | Tap the messages while typing | The keyboard closes | | |
+| 18 | Open the box in a chat at its newest | The newest stays in view as the keyboard slides up | | |
+| 19 | Scroll up in a long chat | The down arrow shows; a new message adds a count instead of pulling you down; tap: back to the newest | | |
+| 20 | Scroll through days | The day floats at the top while scrolling, fades a second after | | |
+| 21 | Scroll to the top of a long chat | Older messages load by themselves, nothing jumps | | |
+| 22 | Open a chat with unread messages | It opens at "New messages", not the bottom | | |
+| 23 | Someone replies to you | Activity shows it with a count on the switch; tap: the chat at that message | | |
+| 24 | Send with no signal | A red !; tap: Retry or Delete | | |
+| 25 | Overall feel | | | |
