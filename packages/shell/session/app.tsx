@@ -31,8 +31,9 @@ export function createAppRouter<TRouteTree extends AnyRoute>(routeTree: TRouteTr
     return createRouter({
         routeTree,
         context: { queryClient },
-        // Per history entry: back returns to where you were, a new screen starts at the top.
-        scrollRestoration: true,
+        // Per history entry: back returns to where you were, a new screen starts at the top. A
+        // chat places itself (its first unread, else its newest): the router's reset would undo it.
+        scrollRestoration: ({ location }) => !/\/chats\/[^/]+$/.test(location.pathname),
         scrollToTopSelectors: ["#shell-scroll"],
         // events.ts loads after the first screen, off the startup path.
         defaultOnCatch: (error) => void import("../lib/events").then((m) => m.reportError(error)),

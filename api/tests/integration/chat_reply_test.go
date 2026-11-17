@@ -67,12 +67,13 @@ func TestChatReplyDeleteAndActivity(t *testing.T) {
 		t.Fatalf("other channel: %d", resp.StatusCode)
 	}
 
-	// Seller A sees Guest A's reply in Activity, unread; Guest A does not see their own.
+	// Activity is everyone else's messages: Seller A sees Guest A's reply, marked as to them and
+	// unread; Guest A sees Seller A's message, not their own.
 	act := activity(t, a, testkit.SellerA, "seller")
-	if len(act.Body.Items) != 1 || act.Body.Items[0].ID != answer.ID || !act.Body.Items[0].Unread || act.Body.Unread != 1 || act.Body.Items[0].ChannelID != general {
+	if len(act.Body.Items) != 1 || act.Body.Items[0].ID != answer.ID || !act.Body.Items[0].Unread || !act.Body.Items[0].ToMe || act.Body.Unread != 1 || act.Body.Items[0].ChannelID != general {
 		t.Fatalf("activity: %+v", act.Body)
 	}
-	if act := activity(t, a, testkit.GuestA, "seller"); len(act.Body.Items) != 0 {
+	if act := activity(t, a, testkit.GuestA, "seller"); len(act.Body.Items) != 1 || act.Body.Items[0].ID != root.ID || act.Body.Items[0].ToMe {
 		t.Fatalf("guest's activity: %+v", act.Body.Items)
 	}
 

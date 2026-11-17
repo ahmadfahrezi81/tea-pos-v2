@@ -199,7 +199,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Everything about the caller across their channels: replies to them, their inbox */
+        /** Every message from others across the caller's channels, newest first; replies to them marked */
         get: operations["listChatActivity"];
         put?: never;
         post?: never;
@@ -1326,6 +1326,8 @@ export interface components {
             photos?: components["schemas"]["ChatPhoto"][] | null;
             /** @description The message this one answers, quoted above it */
             replyTo?: components["schemas"]["ChatQuote"];
+            /** @description A reply to one of the caller's messages */
+            toMe?: boolean;
             unread: boolean;
         };
         ChatActivityOutputBody: {

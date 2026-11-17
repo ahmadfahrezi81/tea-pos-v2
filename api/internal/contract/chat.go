@@ -131,13 +131,14 @@ type ChatActivityOutput struct {
 	}
 }
 
-// ChatActivity is one message about the caller: a reply to theirs, or their inbox's.
+// ChatActivity is one message from someone else in the caller's channels (Activity).
 type ChatActivity struct {
 	ChatMessage
 	ChannelID   string `json:"channelId" format:"uuid"`
 	ChannelKind string `json:"channelKind" enum:"general,store,group,admin,personal"`
 	ChannelName string `json:"channelName,omitempty"`
 	Unread      bool   `json:"unread"`
+	ToMe        bool   `json:"toMe,omitempty" doc:"A reply to one of the caller's messages"`
 }
 
 type ChatMessageOutput struct {

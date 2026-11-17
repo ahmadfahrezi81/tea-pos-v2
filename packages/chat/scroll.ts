@@ -33,6 +33,9 @@ export function useChannelScroll({
 }) {
     const end = useRef<HTMLDivElement>(null);
     const opened = useRef(false);
+    // The New messages line the reader was put at; one that appears later (the saved copy
+    // showed first, the unread arrived after) is gone to once, instead of the bottom.
+    const placed = useRef<string | undefined>(undefined);
     const lastNewest = useRef<string | undefined>(undefined);
     const newest = ids.at(-1);
     const count = ids.length;
@@ -52,12 +55,22 @@ export function useChannelScroll({
             opened.current = true;
             const at = jumpTo ?? firstNew;
             const el = at ? messageEl(at) : null;
+            placed.current = firstNew;
             if (el) {
                 s.scrollTop +=
                     el.getBoundingClientRect().top - s.getBoundingClientRect().top - ABOVE;
                 if (jumpTo) flash(el);
             } else end.current.scrollIntoView({ block: "end" });
             return;
+        }
+        if (firstNew && !placed.current && !jumpTo && !awayRef.current) {
+            const el = messageEl(firstNew);
+            placed.current = firstNew;
+            if (el) {
+                s.scrollTop +=
+                    el.getBoundingClientRect().top - s.getBoundingClientRect().top - ABOVE;
+                return;
+            }
         }
         if (sent > lastSent.current) {
             lastSent.current = sent;
@@ -87,8 +100,17 @@ export function useChannelScroll({
             }
             if (atBottom) setFresh(0);
         };
+        // Where the reader is now: a channel opened at its first unread is not at the bottom.
+        onScroll();
         // The page shrinking for the keyboard keeps the newest message in view, as chat apps do.
+        let observed = false;
         const resized = new ResizeObserver(() => {
+            // The first call only reports the size it started at: nothing moved.
+            if (!observed) {
+                observed = true;
+                height = s.clientHeight;
+                return;
+            }
             height = s.clientHeight;
             if (atBottom) s.scrollTop = s.scrollHeight;
         });

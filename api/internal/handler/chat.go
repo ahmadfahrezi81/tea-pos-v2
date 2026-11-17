@@ -291,7 +291,7 @@ func registerChat(api huma.API, d Deps) {
 			return nil, announceChat(ctx, d.Queries, chatChanged, ch.ID, ids)
 		})
 
-	route(api, op("listChatActivity", http.MethodGet, "/activity", "Everything about the caller across their channels: replies to them, their inbox"), chatAccess,
+	route(api, op("listChatActivity", http.MethodGet, "/activity", "Every message from others across the caller's channels, newest first; replies to them marked"), chatAccess,
 		func(ctx context.Context, in *contract.ChatActivityInput) (*contract.ChatActivityOutput, error) {
 			caller, _ := auth.CallerFrom(ctx)
 			admin := caller.ChatLevel == auth.Admin
@@ -316,7 +316,7 @@ func registerChat(api huma.API, d Deps) {
 						AuthorAvatar: r.AuthorAvatar, EventType: r.EventType, Body: r.Body, Metadata: r.Metadata,
 						EditedAt: r.EditedAt, CreatedAt: r.CreatedAt,
 					}),
-					ChannelID: r.ChannelID.String(), ChannelKind: r.ChannelKind, ChannelName: r.ChannelName, Unread: r.Unread,
+					ChannelID: r.ChannelID.String(), ChannelKind: r.ChannelKind, ChannelName: r.ChannelName, Unread: r.Unread, ToMe: r.ToMe,
 				}
 			})
 			if in.Cursor == "" {
