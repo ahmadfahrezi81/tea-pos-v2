@@ -783,14 +783,14 @@ function Composer({
         : (body !== "" || photos.length > 0) && body.length <= MAX_LENGTH;
     // @ and what follows it, up to the caret: the names it could be.
     const asked = /(?:^|\s)@([^@\n]{0,30})$/.exec(text.slice(0, caret))?.[1];
-    const suggestions =
+    const suggestions: { name: string; avatar?: string }[] =
         asked === undefined
             ? []
             : [
-                  ...members.filter((x) => x.id !== me).map((x) => x.name),
-                  ...(canEveryone ? ["everyone"] : []),
+                  ...members.filter((x) => x.id !== me),
+                  ...(canEveryone ? [{ name: "everyone", avatar: undefined }] : []),
               ]
-                  .filter((n) => n.toLowerCase().includes(asked.toLowerCase()))
+                  .filter((x) => x.name.toLowerCase().includes(asked.toLowerCase()))
                   .slice(0, 5);
     const mention = (name: string) => {
         const start = text.slice(0, caret).lastIndexOf("@");
@@ -888,6 +888,30 @@ function Composer({
             {/* The page's colour behind the corners (the typing banner's while it shows): the footer under it is white. */}
             <div className="chat relative bg-slate-200 has-[[data-typing]]:bg-violet-100 [&:has([data-typing])_[data-down]]:mb-12">
                 <Typing channelId={channelId} members={members} />
+                {/* Names for an @, in a card above the bar (owner: not inside it). */}
+                {suggestions.length > 0 && (
+                    <div className="absolute inset-x-3 bottom-full z-20 mb-2 overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-black/5">
+                        {suggestions.map((x) => (
+                            <button
+                                key={x.name}
+                                onPointerDown={(e) => e.preventDefault()}
+                                onClick={() => mention(x.name)}
+                                className="flex w-full items-center gap-3 border-b border-slate-100 px-3 py-2 text-left last:border-b-0 active:bg-slate-100"
+                            >
+                                {x.name === "everyone" ? (
+                                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
+                                        <AtSign size={16} />
+                                    </span>
+                                ) : (
+                                    <Avatar url={x.avatar} size={32} />
+                                )}
+                                <span className="truncate text-[15px] text-gray-900">
+                                    {x.name === "everyone" ? `@${t("chat.everyone")}` : x.name}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                )}
                 {down && (
                     <button
                         data-down
@@ -932,21 +956,6 @@ function Composer({
                                     >
                                         <X size={18} />
                                     </button>
-                                </div>
-                            )}
-                            {suggestions.length > 0 && (
-                                <div className="-mx-1 mb-1.5 overflow-hidden rounded-lg bg-slate-100">
-                                    {suggestions.map((n) => (
-                                        <button
-                                            key={n}
-                                            onPointerDown={(e) => e.preventDefault()}
-                                            onClick={() => mention(n)}
-                                            className="block w-full truncate border-b border-white px-3 py-2 text-left text-[15px] text-gray-900 last:border-b-0 active:bg-slate-200"
-                                        >
-                                            <span className="font-semibold text-brand">@</span>
-                                            {n === "everyone" ? t("chat.everyone") : n}
-                                        </button>
-                                    ))}
                                 </div>
                             )}
                             {replyTo && (
