@@ -12,19 +12,28 @@ import { threadKey, type ChatMessage, type Thread } from "./queries";
 
 /** How long a finger rests on a message before its menu opens. */
 const HOLD_MS = 450;
-/** A finger that moves this far is scrolling, not holding. */
+/** A finger that moves this far is scrolling or sliding, not holding. */
 const SLOP = 10;
+/** Slid this far right, letting go replies (as WhatsApp). */
+export const SWIPE_REPLY = 56;
+/** It follows the finger no further than this. */
+const SWIPE_MAX = 72;
 
 /**
- * A long press (or a right click) opens a message's menu; the tap that ends a hold does nothing
- * else (a photo under the finger does not open). The phone's own text menu is kept off.
+ * A message under a finger, as WhatsApp: held still, its menu opens (a right click too); slid
+ * right, it follows the finger and letting go past SWIPE_REPLY replies; up or down is the list's
+ * scroll. The tap that ends a hold or a slide does nothing else (a photo under it does not open).
+ * The phone's own text menu is kept off.
  */
-export function useHold(onHold: () => void) {
+export function useHold(onHold: () => void, onSwipe?: () => void) {
     const timer = useRef(0);
     const start = useRef<{ x: number; y: number } | null>(null);
     const fired = useRef(false);
+    const sliding = useRef(false);
+    const passed = useRef(false);
     // A finger resting on it: the message sinks a little, so it shows it can be held.
     const [pressing, setPressing] = useState(false);
+    const [dx, setDx] = useState(0);
     const cancel = () => {
         clearTimeout(timer.current);
         start.current = null;
@@ -36,23 +45,66 @@ export function useHold(onHold: () => void) {
         navigator.vibrate?.(15);
         onHold();
     };
+    const endSlide = () => {
+        if (!sliding.current) return;
+        sliding.current = false;
+        // Ends the gesture: the click that follows is swallowed.
+        fired.current = true;
+        if (passed.current) onSwipe?.();
+        passed.current = false;
+        setDx(0);
+    };
     const handlers = {
         onPointerDown: (e: ReactPointerEvent) => {
             if (e.button !== 0) return;
             fired.current = false;
+            sliding.current = false;
+            passed.current = false;
             start.current = { x: e.clientX, y: e.clientY };
             setPressing(true);
             timer.current = window.setTimeout(fire, HOLD_MS);
         },
         onPointerMove: (e: ReactPointerEvent) => {
             const s = start.current;
-            if (s && Math.hypot(e.clientX - s.x, e.clientY - s.y) > SLOP) cancel();
+            if (!s) return;
+            const x = e.clientX - s.x;
+            const y = e.clientY - s.y;
+            if (!sliding.current) {
+                if (Math.hypot(x, y) <= SLOP) return;
+                clearTimeout(timer.current);
+                setPressing(false);
+                // Sideways and to the right: a reply; anything else is the list's.
+                if (!onSwipe || x <= Math.abs(y)) {
+                    start.current = null;
+                    return;
+                }
+                sliding.current = true;
+                try {
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                } catch {
+                    // A pointer already gone: the slide still ends on its pointerup.
+                }
+            }
+            // Past the most it goes, it barely moves: it feels held by a spring.
+            const d = Math.max(0, x - SLOP);
+            const shown = d < SWIPE_MAX ? d : SWIPE_MAX + (d - SWIPE_MAX) * 0.15;
+            const past = shown >= SWIPE_REPLY;
+            if (past && !passed.current) navigator.vibrate?.(10);
+            passed.current = past;
+            setDx(shown);
         },
-        onPointerUp: cancel,
-        onPointerCancel: cancel,
+        onPointerUp: () => {
+            endSlide();
+            cancel();
+        },
+        onPointerCancel: () => {
+            passed.current = false;
+            endSlide();
+            cancel();
+        },
         onContextMenu: (e: React.MouseEvent) => {
             e.preventDefault();
-            if (!fired.current) {
+            if (!fired.current && !sliding.current) {
                 cancel();
                 fire();
             }
@@ -64,7 +116,7 @@ export function useHold(onHold: () => void) {
             e.stopPropagation();
         },
     };
-    return { handlers, pressing };
+    return { handlers, pressing, dx };
 }
 
 /** What a held message offers (RFC: Chat (v2), screen 6): reply, copy, Seen by, delete. */

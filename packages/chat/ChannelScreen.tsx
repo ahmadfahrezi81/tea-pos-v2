@@ -18,6 +18,7 @@ import {
     Bell,
     Camera,
     CircleAlert,
+    CornerUpLeft,
     CheckCheck,
     Clock,
     Image as ImageIcon,
@@ -27,13 +28,21 @@ import {
     SendHorizontal,
     X,
 } from "lucide-react";
-import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import {
+    Fragment,
+    useEffect,
+    useRef,
+    useState,
+    useSyncExternalStore,
+    type CSSProperties,
+    type ReactNode,
+} from "react";
 
 import { ChannelHeader } from "./ChannelInfo";
 import { channelName } from "./labels";
 import { doneTyping, sayTyping, stoppedTyping, useTyping } from "./typing";
 import { forget, retry, send, snapshot, subscribe, type Pending } from "./outbox";
-import { FailedMenu, MessageMenu, useHold } from "./menu";
+import { FailedMenu, MessageMenu, SWIPE_REPLY, useHold } from "./menu";
 import { useChannel, useThread, type ChatMessage } from "./queries";
 import { goToMessage, useChannelScroll, useEarlier } from "./scroll";
 
@@ -173,6 +182,17 @@ function Channel({ channelId }: { channelId: string }) {
                         seen={m.id === lastMine?.id ? seenCount(others, m) : undefined}
                         onSeen={() => setSeenOf(m)}
                         onHold={() => setMenuOf(m)}
+                        onSwipe={
+                            channel.readOnly
+                                ? undefined
+                                : () => {
+                                      setReplyTo(m);
+                                      // As the finger lifts, so the phone opens its keyboard.
+                                      document
+                                          .querySelector<HTMLTextAreaElement>("[data-chat-box]")
+                                          ?.focus();
+                                  }
+                        }
                         active={menuOf?.id === m.id}
                         onQuote={(id) => void goToMessage(queryClient, slug, channelId, id)}
                         vip={!!m.authorId && vips.has(m.authorId)}
@@ -328,6 +348,7 @@ function Message({
     seen,
     onSeen,
     onHold,
+    onSwipe,
     onQuote,
     active,
     vip,
@@ -339,6 +360,8 @@ function Message({
     onSeen: () => void;
     /** Held down: the message's menu. */
     onHold: () => void;
+    /** Slid right: reply to it; absent where nobody posts. */
+    onSwipe?: () => void;
     /** Its quote tapped: to the message it answers. */
     onQuote: (id: string) => void;
     /** Its menu is open: the row stays lit. */
@@ -348,7 +371,7 @@ function Message({
 }) {
     const t = useT();
     const locale = useLocale();
-    const { handlers: hold, pressing } = useHold(onHold);
+    const { handlers: hold, pressing, dx } = useHold(onHold, onSwipe);
     if (m.event)
         return (
             <div className="flex justify-center py-1">
@@ -430,7 +453,7 @@ function Message({
         // The phone's own text menu stays off: holding a message opens ours.
         <div
             {...(m.deleted ? {} : hold)}
-            className={`max-w-[80%] select-none ${BUBBLE} text-left transition-transform duration-200 [-webkit-touch-callout:none] ${pressing ? "scale-[0.97]" : ""} ${mine ? `${TAIL_MINE} bg-brand text-white` : `${TAIL_THEIRS} bg-white text-gray-900`}`}
+            className={`max-w-[80%] touch-pan-y select-none ${BUBBLE} text-left transition-transform duration-200 [-webkit-touch-callout:none] ${pressing ? "scale-[0.97]" : ""} ${mine ? `${TAIL_MINE} bg-brand text-white` : `${TAIL_THEIRS} bg-white text-gray-900`}`}
         >
             {!mine && !grouped && (
                 <p className="flex items-center gap-1.5 text-[14px] font-semibold leading-5 text-brand">
@@ -452,8 +475,10 @@ function Message({
             <div
                 data-message-id={m.id}
                 data-at={m.at}
-                className={`-mx-4 flex flex-col items-end gap-1 px-4 transition-colors duration-200 ${grouped ? "" : "pt-2"} ${pressing || active ? "bg-brand/10" : ""}`}
+                className={`relative -mx-4 flex flex-col items-end gap-1 px-4 transition-colors duration-200 ${grouped ? "" : "pt-2"} ${pressing || active ? "bg-brand/10" : ""}`}
+                style={slide(dx)}
             >
+                <ReplyCue dx={dx} />
                 {bubble}
                 {seen !== undefined && seen > 0 && (
                     <button onClick={onSeen} className="text-[11px] text-brand">
@@ -466,11 +491,38 @@ function Message({
         <div
             data-message-id={m.id}
             data-at={m.at}
-            className={`-mx-4 flex items-start gap-2 px-4 transition-colors duration-200 ${grouped ? "" : "pt-2"} ${pressing || active ? "bg-brand/10" : ""}`}
+            className={`relative -mx-4 flex items-start gap-2 px-4 transition-colors duration-200 ${grouped ? "" : "pt-2"} ${pressing || active ? "bg-brand/10" : ""}`}
+            style={slide(dx)}
         >
+            <ReplyCue dx={dx} />
             <span className="w-8 shrink-0">{!grouped && <Avatar url={m.avatar} size={32} />}</span>
             {bubble}
         </div>
+    );
+}
+
+/** A message following the finger as it slides; back with a spring once let go. */
+function slide(dx: number): CSSProperties | undefined {
+    return dx
+        ? { transform: `translateX(${dx}px)`, transition: "none" }
+        : { transition: "transform 200ms ease-out, background-color 200ms" };
+}
+
+/** The reply arrow left of a sliding message: it stays put and fills in as the reply nears. */
+function ReplyCue({ dx }: { dx: number }) {
+    if (!dx) return null;
+    const p = Math.min(1, dx / SWIPE_REPLY);
+    return (
+        <span
+            aria-hidden
+            className="absolute top-1/2 left-4 flex size-8 items-center justify-center rounded-full bg-white text-brand shadow-sm"
+            style={{
+                transform: `translate(${-dx}px, -50%) scale(${0.6 + 0.4 * p})`,
+                opacity: p,
+            }}
+        >
+            <CornerUpLeft size={18} />
+        </span>
     );
 }
 

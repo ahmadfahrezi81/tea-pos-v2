@@ -17,7 +17,8 @@ Chat phase 1 works (tasks 065-068b, PR #145) and the keyboard holds still on the
    - **Reply** (item 2), **Copy** (text only), **Seen by** (my own messages: the sheet that exists today), **Delete** (my own, or anyone's for a chat admin: soft, a "deleted" line stays, as the Chat RFC; `deleted` already exists in the data)
    - The small "Seen by 3" under my last message stays as today and opens the same sheet (suggestion)
    - Not a right-click menu: the browser's own (copy, select text) is turned off on bubbles
-2. **Reply to a message.** The box shows the quoted message above it with an ✕; the sent message shows the quote at its top, and tapping the quote scrolls to the original (it flashes). Needs a nullable `reply_to` column on the messages table (new migration, adds only) and the field on send and in the list
+2. **Slide to reply** (owner, 2026-11-17, as WhatsApp): a message slid right follows the finger with a reply arrow filling in; let go past about 56 px and it is the reply below. Up and down stay the list's scroll
+2b. **Reply to a message.** The box shows the quoted message above it with an ✕; the sent message shows the quote at its top, and tapping the quote scrolls to the original (it flashes). Needs a nullable `reply_to` column on the messages table (new migration, adds only) and the field on send and in the list
 3. **Down arrow when scrolled up.** A round button above the box, bottom right, once the newest message is off screen; a count of new messages since you scrolled up; tap scrolls smoothly to the newest. While you are scrolled up, a new message does not pull you down
 4. **Open at the first unread.** A chat with unread messages opens at the first of them, under a "New messages" line; with none, at the newest as today
 5. **Sticky day labels.** "Today", "Yesterday", or the date stays at the top while scrolling through that day's messages
