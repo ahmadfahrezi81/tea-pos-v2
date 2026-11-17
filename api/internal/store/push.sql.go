@@ -85,6 +85,25 @@ func (q *Queries) ChatPushTargets(ctx context.Context, arg ChatPushTargetsParams
 	return items, nil
 }
 
+const claimChatPush = `-- name: ClaimChatPush :one
+UPDATE chat_channels SET last_pushed_message_id = $1
+WHERE id = $2 AND last_pushed_message_id IS DISTINCT FROM $1
+RETURNING id
+`
+
+type ClaimChatPushParams struct {
+	MessageID pgtype.UUID
+	ChannelID pgtype.UUID
+}
+
+// Marks a channel's newest message as pushed; no row when another job already pushed it.
+func (q *Queries) ClaimChatPush(ctx context.Context, arg ClaimChatPushParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, claimChatPush, arg.MessageID, arg.ChannelID)
+	var id pgtype.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const deleteGonePushSubscription = `-- name: DeleteGonePushSubscription :exec
 DELETE FROM push_subscriptions WHERE endpoint = $1
 `

@@ -55,6 +55,12 @@ func (w *ChatPushWorker) Work(ctx context.Context, j *river.Job[ChatPushArgs]) e
 	if err != nil {
 		return err
 	}
+	// Two jobs for one burst can run together: only the first to claim the message sends it.
+	if _, err := w.Queries.ClaimChatPush(ctx, store.ClaimChatPushParams{MessageID: m.ID, ChannelID: channel}); errors.Is(err, pgx.ErrNoRows) {
+		return nil
+	} else if err != nil {
+		return err
+	}
 	targets, err := w.Queries.ChatPushTargets(ctx, store.ChatPushTargetsParams{
 		ChannelID: channel, AuthorID: m.AuthorID, System: m.AuthorType == "system", At: m.CreatedAt,
 	})

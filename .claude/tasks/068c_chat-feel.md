@@ -17,8 +17,7 @@ Chat phase 1 works (tasks 065-068b, PR #145) and the keyboard holds still on the
    - **Reply** (item 2), **Copy** (text only), **Seen by** (my own messages: the sheet that exists today), **Delete** (my own, or anyone's for a chat admin: soft, a "deleted" line stays, as the Chat RFC; `deleted` already exists in the data)
    - The small "Seen by 3" under my last message stays as today and opens the same sheet (suggestion)
    - Not a right-click menu: the browser's own (copy, select text) is turned off on bubbles
-2. **Slide to reply** (owner, 2026-11-17, as WhatsApp): a message slid right follows the finger with a reply arrow filling in; let go past about 56 px and it is the reply below. Up and down stay the list's scroll
-2b. **Reply to a message.** The box shows the quoted message above it with an ✕; the sent message shows the quote at its top, and tapping the quote scrolls to the original (it flashes). Needs a nullable `reply_to` column on the messages table (new migration, adds only) and the field on send and in the list
+2. **Reply to a message.** The box shows the quoted message above it with an ✕; the sent message shows the quote at its top, and tapping the quote scrolls to the original (it flashes). Needs a nullable `reply_to` column on the messages table (new migration, adds only) and the field on send and in the list
 3. **Down arrow when scrolled up.** A round button above the box, bottom right, once the newest message is off screen; a count of new messages since you scrolled up; tap scrolls smoothly to the newest. While you are scrolled up, a new message does not pull you down
 4. **Open at the first unread.** A chat with unread messages opens at the first of them, under a "New messages" line; with none, at the newest as today
 5. **Sticky day labels.** "Today", "Yesterday", or the date stays at the top while scrolling through that day's messages
@@ -34,6 +33,13 @@ Steps 1 and 3-8 are the screen only; 2 and 9 are Go and the screen. All in one P
 - Tapping my photo opens only the photo; Seen by is only in the menu and the small link
 - Each item tried with the fake keyboards locally, then on the owner's iPhone on staging
 - The reply's migration only adds a nullable column; `schema.sql`, sqlc and the contract regenerated; an integration test for a reply to a message in another channel (refused)
+
+## Push, found on the phone (2026-11-17)
+
+Three identical notifications for one "Hi": each message queues a push job (River's once-per-10-s rule did not merge them), and three ran together, each sending the channel's newest message. Slide to reply was tried and dropped (owner: holding is enough on the web).
+
+- **Each message is pushed once:** `chat_channels.last_pushed_message_id` (new, nullable); a job claims the newest message before sending and stops if another job already did. New migration, adds only
+- Left for later: pushes arrive up to a minute late (the worker picks them up on its once-a-minute poll), and the iPhone shows each push on its own (it ignores the channel's tag)
 
 ## Not in this task
 
@@ -54,7 +60,6 @@ Score each 1-5 (5 = feels like WhatsApp), with a note when it is not 5. iPhone f
 | 7 | Seen by from the menu | The Seen by sheet | | |
 | 8 | Delete | Confirm, then "Message deleted"; the other phone sees it too | | |
 | 9 | Reply from the menu | "Replying to …" strip over the box, keyboard opens, header still | | |
-| 10 | Slide a message right | Follows the finger, arrow fills in; let go past it: reply as 9; short slide: nothing | | |
 | 11 | Send the reply | The quote shows in the bubble, even gaps and corners | | |
 | 12 | Tap a quote | Scrolls to the original and lights it up | | |
 | 13 | ✕ on the reply strip | The strip goes, the keyboard stays | | |

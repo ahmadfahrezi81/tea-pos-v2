@@ -54,3 +54,9 @@ WHERE c.id = @channel_id
   AND NOT (coalesce(r.notify_level, 'all') = 'humans' AND @system::bool)
   AND coalesce(r.last_read_at, '-infinity') < @at::timestamptz
   AND coalesce(r.updated_at, '-infinity') < now() - interval '30 seconds';
+
+-- name: ClaimChatPush :one
+-- Marks a channel's newest message as pushed; no row when another job already pushed it.
+UPDATE chat_channels SET last_pushed_message_id = @message_id
+WHERE id = @channel_id AND last_pushed_message_id IS DISTINCT FROM @message_id
+RETURNING id;
