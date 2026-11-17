@@ -384,7 +384,7 @@ function NewLine() {
  */
 const BUBBLE = "rounded-[10px] px-3 py-1.5";
 /** My bubbles: a light tint of the brand with black text, as WhatsApp's light green (owner). */
-const MINE = "mine bg-[color-mix(in_oklab,var(--accent-primary)_22%,white)] text-gray-900";
+const MINE = "mine bg-[color-mix(in_oklab,var(--accent-primary)_30%,white)] text-gray-900";
 const TAIL_MINE = "rounded-tr-[4px]";
 const TAIL_THEIRS = "rounded-tl-[4px]";
 /** 4 px in from the bubble's sides (12 − 8), and from its top when first (6 − 2). */
@@ -577,7 +577,7 @@ function withMentions(text: string, names: string[]): ReactNode {
                 key={at}
                 // A mention looks as it did typed in the box: the brand colour on a light highlight.
                 // A message that opens with one: 4 px from the bubble's edge, as a photo (owner).
-                className={`rounded-sm bg-[color-mix(in_oklab,var(--accent-primary)_15%,white)] text-brand shadow-[0_0_0_2px_color-mix(in_oklab,var(--accent-primary)_15%,white)] [box-decoration-break:clone] in-[.mine]:bg-[color-mix(in_oklab,var(--accent-primary)_40%,white)] in-[.mine]:shadow-[0_0_0_2px_color-mix(in_oklab,var(--accent-primary)_40%,white)] ${at === 0 ? "-ml-1.5" : ""}`}
+                className={`rounded-sm bg-[color-mix(in_oklab,var(--accent-primary)_15%,white)] text-brand shadow-[0_0_0_2px_color-mix(in_oklab,var(--accent-primary)_15%,white)] [box-decoration-break:clone] in-[.mine]:bg-[color-mix(in_oklab,var(--accent-primary)_50%,white)] in-[.mine]:shadow-[0_0_0_2px_color-mix(in_oklab,var(--accent-primary)_50%,white)] ${at === 0 ? "-ml-1.5" : ""}`}
             >
                 @{who}
             </span>,
