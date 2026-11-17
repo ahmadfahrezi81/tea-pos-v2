@@ -142,6 +142,87 @@ components:
         name:
           type: string
       type: object
+    ChatActivity:
+      additionalProperties: false
+      properties:
+        at:
+          format: date-time
+          type: string
+        author:
+          type: string
+        authorId:
+          description: Absent on a system message
+          format: uuid
+          type: string
+        avatar:
+          type: string
+        body:
+          type: string
+        channelId:
+          format: uuid
+          type: string
+        channelKind:
+          enum:
+            - general
+            - store
+            - group
+            - admin
+            - personal
+          type: string
+        channelName:
+          type: string
+        clientKey:
+          type: string
+        data:
+          additionalProperties: {}
+          type: object
+        deleted:
+          type: boolean
+        editedAt:
+          format: date-time
+          type: string
+        event:
+          description: A system message's kind, written in the reader's language
+          type: string
+        id:
+          format: uuid
+          type: string
+        photos:
+          items:
+            $ref: "#/components/schemas/ChatPhoto"
+          type:
+            - array
+            - "null"
+        replyTo:
+          $ref: "#/components/schemas/ChatQuote"
+          description: The message this one answers, quoted above it
+        unread:
+          type: boolean
+      required:
+        - channelId
+        - channelKind
+        - unread
+        - id
+        - body
+        - at
+      type: object
+    ChatActivityOutputBody:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/ChatActivity"
+          type: array
+        next:
+          type: string
+        unread:
+          description: "How many are unread, stops at 100: the Activity switch's count"
+          format: int64
+          type: integer
+      required:
+        - unread
+        - items
+      type: object
     ChatChannel:
       additionalProperties: false
       properties:
@@ -286,6 +367,9 @@ components:
           type:
             - array
             - "null"
+        replyTo:
+          $ref: "#/components/schemas/ChatQuote"
+          description: The message this one answers, quoted above it
       required:
         - id
         - body
@@ -355,6 +439,24 @@ components:
           type: boolean
       required:
         - mine
+      type: object
+    ChatQuote:
+      additionalProperties: false
+      properties:
+        author:
+          type: string
+        body:
+          type: string
+        deleted:
+          type: boolean
+        id:
+          format: uuid
+          type: string
+        photo:
+          description: "It had photos: the quote says Photo when there is no text"
+          type: boolean
+      required:
+        - id
       type: object
     ClaimEligibleOutputBody:
       additionalProperties: false
@@ -1016,12 +1118,14 @@ components:
             - idempotency_key_reused
             - internal
             - maintenance
+            - message_not_found
             - no_session
             - no_work_that_day
             - not_allowed
             - not_found
             - not_in_tenant
             - not_signed_in
+            - not_your_message
             - not_your_store
             - not_yourself
             - old_day_open
@@ -1923,6 +2027,10 @@ components:
           type:
             - array
             - "null"
+        replyTo:
+          description: A message of the same channel this one answers
+          format: uuid
+          type: string
       required:
         - body
       type: object
@@ -3123,6 +3231,60 @@ paths:
       x-access:
         repeatable: true
         signedIn: true
+  /tenants/{tenant}/chat/activity:
+    get:
+      operationId: listChatActivity
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - description: From the previous page's next; empty for the first
+          explode: false
+          in: query
+          name: cursor
+          schema:
+            description: From the previous page's next; empty for the first
+            type: string
+        - explode: false
+          in: query
+          name: limit
+          schema:
+            default: 30
+            format: int64
+            maximum: 100
+            minimum: 1
+            type: integer
+        - description: Only rows changed after this (a list catching up)
+          explode: false
+          in: query
+          name: since
+          schema:
+            description: Only rows changed after this (a list catching up)
+            format: date-time
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatActivityOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "Everything about the caller across their channels: replies to them, their inbox"
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        signedIn: true
   /tenants/{tenant}/chat/channels:
     get:
       operationId: listChatChannels
@@ -3294,6 +3456,45 @@ paths:
         level: member
         tenant: true
         idempotent: true
+        signedIn: true
+  /tenants/{tenant}/chat/channels/{id}/messages/{message}:
+    delete:
+      operationId: deleteChatMessage
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: message
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "Delete a message: its author, or a chat admin; a deleted line stays"
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        repeatable: true
         signedIn: true
   /tenants/{tenant}/chat/channels/{id}/read:
     post:

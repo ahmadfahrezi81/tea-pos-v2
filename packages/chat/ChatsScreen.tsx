@@ -7,8 +7,9 @@ import { Segmented } from "@tea-pos/ui/form/Segmented";
 import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
 import { SearchBox } from "@tea-pos/ui/SearchBox";
 import { useNavigate } from "@tanstack/react-router";
-import { Bell, Lock, MessagesSquare, Search } from "lucide-react";
+import { Lock, MessagesSquare, Search } from "lucide-react";
 
+import { ActivityList, useActivityUnread } from "./ActivityList";
 import { channelName, KIND_ICON, listTime } from "./labels";
 import { useTyping } from "./typing";
 
@@ -26,6 +27,8 @@ function Chats() {
     const hasChat = !!useTenant()?.tenant.access.chat;
     const [view, setView] = useSearchParam("view");
     const [search, setSearch] = useSearchText();
+    const slug = useSlug();
+    const activity = useActivityUnread(hasChat ? slug : "").data ?? 0;
     if (!hasChat) return <NoAccess />;
     return (
         <div className="space-y-3">
@@ -41,16 +44,17 @@ function Chats() {
                 onChange={(v) => setView(v === "activity" ? v : "")}
                 choices={[
                     { value: "messages", label: t("chat.messages") },
-                    { value: "activity", label: t("chat.activity") },
+                    {
+                        value: "activity",
+                        label:
+                            activity > 0
+                                ? `${t("chat.activity")} (${activity > 99 ? "99+" : activity})`
+                                : t("chat.activity"),
+                    },
                 ]}
             />
             {view === "activity" ? (
-                <EmptyState
-                    title={t("chat.noActivity")}
-                    body={t("chat.noActivitySub")}
-                    icon={Bell}
-                    className="py-16"
-                />
+                <ActivityList />
             ) : (
                 <Channels search={search.trim().toLowerCase()} />
             )}

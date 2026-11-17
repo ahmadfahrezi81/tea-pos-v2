@@ -24,6 +24,8 @@
     --animate-slide-up: slide-up 300ms ease both;
     /* A pencil writing, while someone types in a chat. */
     --animate-write: write 1s ease-in-out infinite;
+    /* A message jumped to (a reply's quote, Activity): it lights up once. */
+    --animate-flash: flash 1.2s ease-out both;
 
     @keyframes fade-in {
         from {
@@ -85,6 +87,15 @@
         from {
             opacity: 0;
             transform: translateY(-6px) scale(0.98);
+        }
+    }
+    @keyframes flash {
+        0%,
+        30% {
+            background-color: color-mix(in oklab, var(--accent-primary) 18%, transparent);
+        }
+        100% {
+            background-color: transparent;
         }
     }
     @keyframes write {

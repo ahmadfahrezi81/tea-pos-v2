@@ -13,6 +13,8 @@ export interface Pending {
     at: string;
     state: "sending" | "failed";
     photos: OutPhoto[];
+    /** The message it answers, quoted above it. */
+    replyTo?: components["schemas"]["ChatQuote"];
 }
 
 /** A photo on its way: the phone's own copy shows at once; uploaded once, kept across retries. */
@@ -92,15 +94,26 @@ async function attempt(queryClient: QueryClient, tenant: string, p: Pending) {
                     params: { path: { tenant, id: p.channel } },
                     // The same key every try: Go saves it once however often it arrives.
                     headers: { "Idempotency-Key": p.key },
-                    body: { body: p.body, photos: photos.length ? photos : undefined },
+                    body: {
+                        body: p.body,
+                        photos: photos.length ? photos : undefined,
+                        replyTo: p.replyTo?.id,
+                    },
                 },
             );
             if (data) {
-                hold(queryClient, tenant, p.channel, data);
+                // Go answers with the quote's id only: this phone already has the rest.
+                const quote = data.replyTo && p.replyTo ? p.replyTo : data.replyTo;
+                hold(queryClient, tenant, p.channel, { ...data, replyTo: quote });
                 forget(p.key);
                 return;
             }
             if (FINAL.has(error?.code ?? "")) break;
+            // The message it answered was deleted meanwhile: sent without the quote.
+            if (error?.code === "message_not_found" && p.replyTo) {
+                p.replyTo = undefined;
+                continue;
+            }
         } catch {
             // No connection: tried again below.
         }
@@ -117,8 +130,10 @@ export function send(
     channel: string,
     body: string,
     files: Blob[] = [],
+    replyTo?: Pending["replyTo"],
 ) {
     const p: Pending = {
+        replyTo,
         key: crypto.randomUUID(),
         channel,
         body,

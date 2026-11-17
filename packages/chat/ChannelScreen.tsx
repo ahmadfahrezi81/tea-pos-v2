@@ -4,6 +4,7 @@ import { addDays, formatDate, formatTime, localDate } from "@tea-pos/format";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
+import { useSearchParam } from "@tea-pos/shell/searchParam";
 import { useSlug } from "@tea-pos/shell/tenant";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { Badge } from "@tea-pos/ui/Badge";
@@ -13,8 +14,10 @@ import { Sheet } from "@tea-pos/ui/Sheet";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+    ArrowDown,
     Bell,
     Camera,
+    CircleAlert,
     CheckCheck,
     Clock,
     Image as ImageIcon,
@@ -24,20 +27,15 @@ import {
     SendHorizontal,
     X,
 } from "lucide-react";
-import {
-    Fragment,
-    useEffect,
-    useLayoutEffect,
-    useRef,
-    useState,
-    useSyncExternalStore,
-} from "react";
+import { Fragment, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { ChannelHeader } from "./ChannelInfo";
 import { channelName } from "./labels";
 import { doneTyping, sayTyping, stoppedTyping, useTyping } from "./typing";
 import { forget, retry, send, snapshot, subscribe, type Pending } from "./outbox";
-import { loadEarlier, useChannel, useThread, type ChatMessage } from "./queries";
+import { FailedMenu, MessageMenu, useHold } from "./menu";
+import { useChannel, useThread, type ChatMessage } from "./queries";
+import { goToMessage, useChannelScroll, useEarlier } from "./scroll";
 
 type Member = { id: string; name: string; avatar?: string; readAt?: string };
 
@@ -81,8 +79,39 @@ function Channel({ channelId }: { channelId: string }) {
     useEffect(() => {
         if (newest?.authorId) stoppedTyping(channelId, newest.authorId);
     }, [channelId, newest?.id, newest?.authorId]);
-    const bottom = useStickToBottom(items.length + waiting.length);
+    const queryClient = useQueryClient();
     const [seenOf, setSeenOf] = useState<ChatMessage | null>(null);
+    const [menuOf, setMenuOf] = useState<ChatMessage | null>(null);
+    const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+    const [sentHere, setSentHere] = useState(0);
+    // Opened from Activity: at that message, once.
+    const [jump] = useSearchParam("m");
+    const [jumpTo] = useState(jump);
+
+    const ready = !!channel && !!thread.data;
+    const firstNew = items.find(
+        // Never opened before: no line, everything is new.
+        (m) => m.authorId !== me && !!readAtOpen && m.at > readAtOpen,
+    )?.id;
+    const { end, away, fresh, toBottom } = useChannelScroll({
+        ids: ready ? [...items.map((m) => m.id), ...waiting.map((p) => p.key)] : [],
+        firstNew,
+        jumpTo: jumpTo || undefined,
+        sent: sentHere,
+    });
+    // A message older than the first page: history loads until it is there.
+    useEffect(() => {
+        if (ready && jumpTo && !document.querySelector(`[data-message-id="${CSS.escape(jumpTo)}"]`))
+            void goToMessage(queryClient, slug, channelId, jumpTo);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- once, when it opens
+    }, [ready]);
+    const { top: earlierTop, busy: earlierBusy } = useEarlier(
+        queryClient,
+        slug,
+        channelId,
+        items[0]?.id,
+        !!thread.data?.next,
+    );
 
     if (!channel || !thread.data)
         return (
@@ -96,15 +125,26 @@ function Channel({ channelId }: { channelId: string }) {
     const others = channel.members.filter((m) => m.id !== me);
     const vips = new Set(channel.members.filter((m) => m.admin).map((m) => m.id));
     const lastMine = [...items].reverse().find((m) => m.authorId === me);
-    const firstNew = items.find(
-        // Never opened before: no line, everything is new.
-        (m) => m.authorId !== me && !!readAtOpen && m.at > readAtOpen,
-    )?.id;
+    const iAmAdmin = !!channel.members.find((m) => m.id === me)?.admin;
 
     return (
-        <div className="space-y-1 pb-2">
+        // As WhatsApp: a tap on the messages puts the keyboard away.
+        <div
+            className="space-y-1 pb-2"
+            onClick={() => {
+                const a = document.activeElement;
+                if (a instanceof HTMLTextAreaElement) a.blur();
+            }}
+        >
             <ChannelHeader channel={channel} me={me} />
-            {thread.data.next && <EarlierButton channelId={channelId} />}
+            {thread.data.next && (
+                <div
+                    ref={earlierTop}
+                    className="flex h-10 items-center justify-center text-xs font-medium text-gray-500"
+                >
+                    {earlierBusy && t("chat.earlier")}
+                </div>
+            )}
             {items.length === 0 && waiting.length === 0 && (
                 <EmptyState
                     title={t("chat.noMessages")}
@@ -129,6 +169,8 @@ function Channel({ channelId }: { channelId: string }) {
                         }
                         seen={m.id === lastMine?.id ? seenCount(others, m) : undefined}
                         onSeen={() => setSeenOf(m)}
+                        onHold={() => setMenuOf(m)}
+                        onQuote={(id) => void goToMessage(queryClient, slug, channelId, id)}
                         vip={!!m.authorId && vips.has(m.authorId)}
                     />
                 </Fragment>
@@ -136,14 +178,37 @@ function Channel({ channelId }: { channelId: string }) {
             {waiting.map((p) => (
                 <Outgoing key={p.key} p={p} slug={slug} />
             ))}
-            <div ref={bottom} />
+            <div ref={end} />
             <Composer
                 channelId={channelId}
                 name={channelName(channel, t)}
                 readOnly={channel.readOnly}
                 kind={channel.kind}
                 members={channel.members}
+                replyTo={replyTo}
+                onCancelReply={() => setReplyTo(null)}
+                onSent={() => {
+                    setReplyTo(null);
+                    setSentHere((n) => n + 1);
+                }}
+                down={away ? { fresh, go: toBottom } : undefined}
             />
+            {menuOf && (
+                <MessageMenu
+                    m={menuOf}
+                    channelId={channelId}
+                    canReply={!channel.readOnly}
+                    canDelete={!menuOf.event && (menuOf.authorId === me || iAmAdmin)}
+                    mine={menuOf.authorId === me && !menuOf.event}
+                    onReply={() => {
+                        setReplyTo(menuOf);
+                        // In the tap itself, so the phone opens its keyboard.
+                        document.querySelector<HTMLTextAreaElement>("[data-chat-box]")?.focus();
+                    }}
+                    onSeen={() => setSeenOf(menuOf)}
+                    onClose={() => setMenuOf(null)}
+                />
+            )}
             {seenOf && (
                 <SeenBy
                     message={seenOf}
@@ -171,9 +236,10 @@ function DayLine({ at }: { at: string }) {
             : day === yesterday
               ? t("chat.yesterday")
               : formatDate(at, locale);
+    // Stays at the top while its day's messages scroll under it; the next day's covers it.
     return (
-        <div className="flex justify-center py-2">
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-600">
+        <div className="sticky top-1 z-10 flex justify-center py-2">
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-600 shadow-sm">
                 {label}
             </span>
         </div>
@@ -197,6 +263,8 @@ function Message({
     grouped,
     seen,
     onSeen,
+    onHold,
+    onQuote,
     vip,
 }: {
     m: ChatMessage;
@@ -204,11 +272,16 @@ function Message({
     grouped: boolean;
     seen?: number;
     onSeen: () => void;
+    /** Held down: the message's menu. */
+    onHold: () => void;
+    /** Its quote tapped: to the message it answers. */
+    onQuote: (id: string) => void;
     /** A chat admin: the VIP badge beside the name. */
     vip: boolean;
 }) {
     const t = useT();
     const locale = useLocale();
+    const hold = useHold(onHold);
     if (m.event)
         return (
             <div className="flex justify-center py-1">
@@ -241,6 +314,25 @@ function Message({
             <span className="absolute right-0 bottom-0.5">{stamp}</span>
         </p>
     );
+    const q = m.replyTo;
+    const quote = q && (
+        <button
+            onClick={(e) => {
+                e.stopPropagation();
+                onQuote(q.id);
+            }}
+            className={`mt-1 mb-1 block w-full rounded-lg border-l-4 px-2 py-1 text-left text-[13px] leading-[18px] ${mine ? "border-white/70 bg-white/15" : "border-brand bg-slate-100"}`}
+        >
+            <span className={`block truncate font-semibold ${mine ? "" : "text-brand"}`}>
+                {q.author || t("chat.message")}
+            </span>
+            <span
+                className={`line-clamp-2 ${q.deleted ? "italic" : ""} ${mine ? "text-white/85" : "text-gray-600"}`}
+            >
+                {q.deleted ? t("chat.deleted") : q.body || t("chat.photo")}
+            </span>
+        </button>
+    );
     const photos =
         !m.deleted && m.photos?.length ? (
             <div className="-mx-2 mt-1 mb-1">
@@ -248,8 +340,10 @@ function Message({
             </div>
         ) : null;
     const bubble = (
+        // The phone's own text menu stays off: holding a message opens ours.
         <div
-            className={`max-w-[80%] rounded-2xl px-3 py-1.5 text-left ${mine ? "rounded-tr-md bg-brand text-white" : "rounded-tl-md bg-white text-gray-900"}`}
+            {...(m.deleted ? {} : hold)}
+            className={`max-w-[80%] select-none rounded-2xl px-3 py-1.5 text-left [-webkit-touch-callout:none] ${mine ? "rounded-tr-md bg-brand text-white" : "rounded-tl-md bg-white text-gray-900"}`}
         >
             {!mine && !grouped && (
                 <p className="flex items-center gap-1.5 text-[14px] font-semibold leading-5 text-brand">
@@ -261,16 +355,18 @@ function Message({
                     )}
                 </p>
             )}
+            {!m.deleted && quote}
             {photos}
             {body || <div className="flex justify-end pb-0.5">{stamp}</div>}
         </div>
     );
     if (mine)
         return (
-            <div className={`flex flex-col items-end gap-1 ${grouped ? "" : "pt-2"}`}>
-                <button onClick={onSeen} className="contents active:opacity-80">
-                    {bubble}
-                </button>
+            <div
+                data-message-id={m.id}
+                className={`-mx-4 flex flex-col items-end gap-1 px-4 ${grouped ? "" : "pt-2"}`}
+            >
+                {bubble}
                 {seen !== undefined && seen > 0 && (
                     <button onClick={onSeen} className="text-[11px] text-brand">
                         {t("chat.seenBy").replace("{n}", String(seen))}
@@ -279,7 +375,10 @@ function Message({
             </div>
         );
     return (
-        <div className={`flex items-start gap-2 ${grouped ? "" : "pt-2"}`}>
+        <div
+            data-message-id={m.id}
+            className={`-mx-4 flex items-start gap-2 px-4 ${grouped ? "" : "pt-2"}`}
+        >
             <span className="w-8 shrink-0">{!grouped && <Avatar url={m.avatar} size={32} />}</span>
             {bubble}
         </div>
@@ -296,43 +395,59 @@ function Outgoing({ p, slug }: { p: Pending; slug: string }) {
     const t = useT();
     const locale = useLocale();
     const queryClient = useQueryClient();
+    const [menu, setMenu] = useState(false);
     const failed = p.state === "failed";
+    const q = p.replyTo;
     return (
-        <div className="flex flex-col items-end gap-1 pt-2">
-            {p.photos.length > 0 && (
-                <div
-                    className={`grid gap-1 ${p.photos.length === 1 ? "grid-cols-1 w-56" : "grid-cols-2 w-60"} ${failed ? "" : "opacity-70"}`}
-                >
-                    {p.photos.map((ph) => (
-                        <img
-                            key={ph.local}
-                            src={ph.local}
-                            alt=""
-                            className="block w-full rounded-xl object-cover aspect-square"
-                        />
-                    ))}
-                </div>
-            )}
-            {p.body && (
-                <button
-                    disabled={!failed}
-                    onClick={() => retry(queryClient, slug, p.key)}
-                    className={`max-w-[80%] rounded-2xl rounded-br-md px-3 py-2 text-left text-[15px] text-white whitespace-pre-wrap break-words ${failed ? "bg-red-500" : "bg-brand/70"}`}
-                >
-                    {p.body}
-                </button>
-            )}
-            {failed ? (
-                <span className="mt-0.5 flex items-center gap-3 text-[11px]">
+        <div data-message-id={p.key} className="flex flex-col items-end gap-1 pt-2">
+            <div className="flex max-w-full items-center justify-end gap-2">
+                {failed && (
                     <button
-                        onClick={() => retry(queryClient, slug, p.key)}
-                        className="font-semibold text-red-600"
+                        onClick={() => setMenu(true)}
+                        aria-label={t("chat.notSentShort")}
+                        className="shrink-0 text-red-600 active:opacity-60"
                     >
-                        {t("chat.notSent")}
+                        <CircleAlert size={22} />
                     </button>
-                    <button onClick={() => forget(p.key)} className="text-gray-500">
-                        {t("chat.delete")}
-                    </button>
+                )}
+                <div
+                    onClick={() => failed && setMenu(true)}
+                    className={`flex max-w-[80%] flex-col items-end gap-1 ${failed ? "" : "opacity-70"}`}
+                >
+                    {p.photos.length > 0 && (
+                        <div
+                            className={`grid gap-1 ${p.photos.length === 1 ? "grid-cols-1 w-56" : "grid-cols-2 w-60"}`}
+                        >
+                            {p.photos.map((ph) => (
+                                <img
+                                    key={ph.local}
+                                    src={ph.local}
+                                    alt=""
+                                    className="block w-full rounded-xl object-cover aspect-square"
+                                />
+                            ))}
+                        </div>
+                    )}
+                    {(p.body || q) && (
+                        <div className="rounded-2xl rounded-br-md bg-brand px-3 py-2 text-left text-[15px] text-white whitespace-pre-wrap break-words">
+                            {q && (
+                                <span className="mb-1 block rounded-lg border-l-4 border-white/70 bg-white/15 px-2 py-1 text-[13px] leading-[18px]">
+                                    <span className="block truncate font-semibold">
+                                        {q.author || t("chat.message")}
+                                    </span>
+                                    <span className="line-clamp-2 text-white/85">
+                                        {q.body || t("chat.photo")}
+                                    </span>
+                                </span>
+                            )}
+                            {p.body}
+                        </div>
+                    )}
+                </div>
+            </div>
+            {failed ? (
+                <span className="mt-0.5 text-[11px] font-semibold text-red-600">
+                    {t("chat.notSentShort")}
                 </span>
             ) : (
                 <span className="mt-0.5 flex items-center gap-1 text-[11px] text-gray-500">
@@ -340,27 +455,13 @@ function Outgoing({ p, slug }: { p: Pending; slug: string }) {
                     <Clock size={12} />
                 </span>
             )}
-        </div>
-    );
-}
-
-function EarlierButton({ channelId }: { channelId: string }) {
-    const t = useT();
-    const slug = useSlug();
-    const queryClient = useQueryClient();
-    const [busy, setBusy] = useState(false);
-    return (
-        <div className="flex justify-center py-2">
-            <button
-                disabled={busy}
-                onClick={() => {
-                    setBusy(true);
-                    void loadEarlier(queryClient, slug, channelId).finally(() => setBusy(false));
-                }}
-                className="rounded-full bg-white px-4 py-1.5 text-sm font-medium text-brand active:opacity-70 disabled:opacity-50"
-            >
-                {t("chat.earlier")}
-            </button>
+            {menu && (
+                <FailedMenu
+                    onRetry={() => retry(queryClient, slug, p.key)}
+                    onDelete={() => forget(p.key)}
+                    onClose={() => setMenu(false)}
+                />
+            )}
         </div>
     );
 }
@@ -375,12 +476,22 @@ function Composer({
     readOnly,
     kind,
     members,
+    replyTo,
+    onCancelReply,
+    onSent,
+    down,
 }: {
     channelId: string;
     name: string;
     readOnly: boolean;
     kind: string;
     members: Member[];
+    /** The message being answered: quoted over the box. */
+    replyTo: ChatMessage | null;
+    onCancelReply: () => void;
+    onSent: () => void;
+    /** Scrolled up: the arrow back to the newest, with how many came meanwhile. */
+    down?: { fresh: number; go: () => void };
 }) {
     const t = useT();
     const slug = useSlug();
@@ -404,7 +515,16 @@ function Composer({
             channelId,
             body,
             photos.map((p) => p.file),
+            replyTo
+                ? {
+                      id: replyTo.id,
+                      author: replyTo.author,
+                      body: replyTo.body,
+                      photo: !!replyTo.photos?.length,
+                  }
+                : undefined,
         );
+        onSent();
         photos.forEach((p) => URL.revokeObjectURL(p.url));
         setPhotos([]);
         setText("");
@@ -421,8 +541,23 @@ function Composer({
     return (
         <FooterSlot>
             {/* The page's colour behind the corners (the typing banner's while it shows): the footer under it is white. */}
-            <div className="chat relative bg-slate-200 has-[[data-typing]]:bg-violet-100">
+            <div className="chat relative bg-slate-200 has-[[data-typing]]:bg-violet-100 [&:has([data-typing])_[data-down]]:mb-12">
                 <Typing channelId={channelId} members={members} />
+                {down && (
+                    <button
+                        data-down
+                        onClick={down.go}
+                        aria-label={t("chat.latest")}
+                        className="absolute right-3 bottom-full mb-3 flex size-11 animate-pop-in items-center justify-center rounded-full bg-white text-gray-800 shadow-md active:opacity-70"
+                    >
+                        <ArrowDown size={22} />
+                        {down.fresh > 0 && (
+                            <span className="absolute -top-1.5 -right-1 min-w-5 rounded-full bg-brand px-1.5 text-center text-[11px] font-bold leading-5 text-white">
+                                {down.fresh > 99 ? "99+" : down.fresh}
+                            </span>
+                        )}
+                    </button>
+                )}
                 <div className="rounded-t-xl bg-white px-3 py-2">
                     {readOnly ? (
                         <p className="py-2 text-center text-sm text-gray-500">
@@ -430,6 +565,29 @@ function Composer({
                         </p>
                     ) : (
                         <>
+                            {replyTo && (
+                                <div className="mb-2 flex items-start gap-2 rounded-lg border-l-4 border-brand bg-slate-100 px-2 py-1.5">
+                                    <span className="min-w-0 flex-1 text-[13px] leading-[18px]">
+                                        <span className="block truncate font-semibold text-brand">
+                                            {t("chat.replyingTo").replace(
+                                                "{name}",
+                                                replyTo.author || t("chat.message"),
+                                            )}
+                                        </span>
+                                        <span className="line-clamp-1 text-gray-600">
+                                            {replyTo.body || t("chat.photo")}
+                                        </span>
+                                    </span>
+                                    <button
+                                        onPointerDown={(e) => e.preventDefault()}
+                                        onClick={onCancelReply}
+                                        aria-label={t("common.close")}
+                                        className="-mr-1 p-1 text-gray-600 active:opacity-60"
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                </div>
+                            )}
                             {photos.length > 0 && (
                                 <div className="flex gap-2 pb-2">
                                     {photos.map((p) => (
@@ -491,6 +649,7 @@ function Composer({
                                 />
                                 <textarea
                                     ref={box}
+                                    data-chat-box
                                     rows={1}
                                     value={text}
                                     maxLength={MAX_LENGTH}
@@ -705,36 +864,4 @@ function useMarkRead(tenant: string, channel: string, newest?: string) {
                 .catch(() => {});
         }
     }, [tenant, channel, newest]);
-}
-
-/** Opens at the newest message, and follows new ones while the reader is already at the bottom. */
-function useStickToBottom(count: number) {
-    const end = useRef<HTMLDivElement>(null);
-    const first = useRef(true);
-    useLayoutEffect(() => {
-        const scroller = document.getElementById("shell-scroll");
-        if (!scroller || !end.current || count === 0) return;
-        const near = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 200;
-        if (first.current || near) end.current.scrollIntoView({ block: "end" });
-        first.current = false;
-    }, [count]);
-    // The page shrinking for the keyboard keeps the newest message in view, as chat apps do.
-    useEffect(() => {
-        const scroller = document.getElementById("shell-scroll");
-        if (!scroller) return;
-        let atBottom = true;
-        const onScroll = () => {
-            atBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 40;
-        };
-        const resized = new ResizeObserver(() => {
-            if (atBottom) scroller.scrollTop = scroller.scrollHeight;
-        });
-        scroller.addEventListener("scroll", onScroll, { passive: true });
-        resized.observe(scroller);
-        return () => {
-            scroller.removeEventListener("scroll", onScroll);
-            resized.disconnect();
-        };
-    }, []);
-    return end;
 }

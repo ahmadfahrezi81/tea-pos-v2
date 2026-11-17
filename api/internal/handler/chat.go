@@ -31,6 +31,8 @@ var (
 	errBlankMessage    = httpx.New(http.StatusUnprocessableEntity, "blank_message", "Write something first")
 	errChatTooFast     = httpx.New(http.StatusTooManyRequests, "chat_too_fast", "Too many messages, wait a moment")
 	errBadReadTime     = httpx.New(http.StatusBadRequest, "bad_request", "Not a time")
+	errMessageNotFound = httpx.New(http.StatusNotFound, "message_not_found", "That message was not found")
+	errNotYourMessage  = httpx.New(http.StatusForbidden, "not_your_message", "Only its author or a chat admin can delete it")
 )
 
 // chatPhotoTTL: a signed photo address works this long; the phone keeps it with the page it came in.
@@ -181,9 +183,18 @@ func registerChat(api huma.API, d Deps) {
 			if readOnly(ch.Kind, ch.StoreStatus) {
 				return nil, errChannelReadOnly
 			}
+			// A reply answers a message of this same channel, never one elsewhere.
+			var replyTo pgtype.UUID
+			if in.Body.ReplyTo != "" {
+				m, err := chatMessageIn(ctx, q, ch.ID, in.Body.ReplyTo)
+				if err != nil {
+					return nil, err
+				}
+				replyTo = m.ID
+			}
 			row, err := q.InsertChatMessage(ctx, store.InsertChatMessageParams{
 				TenantID: caller.TenantID, ChannelID: ch.ID, AuthorID: caller.UserID, Body: body,
-				ClientKey: pgtype.Text{String: in.Key, Valid: in.Key != ""},
+				ClientKey: pgtype.Text{String: in.Key, Valid: in.Key != ""}, ReplyTo: replyTo,
 			})
 			if err != nil {
 				return nil, err
@@ -229,6 +240,10 @@ func registerChat(api huma.API, d Deps) {
 				ID: row.ID.String(), AuthorID: caller.UserID.String(), Author: name, Avatar: avatar,
 				Body: body, ClientKey: in.Key, At: nano(row.CreatedAt),
 			}}
+			if replyTo.Valid {
+				// The phone fetches the quote with the page; its own copy already shows it.
+				out.Body.ReplyTo = &contract.ChatQuote{ID: replyTo.String()}
+			}
 			items := []contract.ChatMessage{out.Body}
 			if len(in.Body.Photos) > 0 {
 				photos := make([]store.ChatMessagePhoto, len(in.Body.Photos))
@@ -238,6 +253,81 @@ func registerChat(api huma.API, d Deps) {
 				signPhotosInto(ctx, d.Files, items, photos)
 			}
 			out.Body = items[0]
+			return out, nil
+		})
+
+	route(api, huma.Operation{
+		OperationID: "deleteChatMessage", Method: http.MethodDelete, Path: "/tenants/{tenant}/chat/channels/{id}/messages/{message}",
+		Summary: "Delete a message: its author, or a chat admin; a deleted line stays", Tags: []string{"chat"},
+		DefaultStatus: http.StatusNoContent,
+	}, chatAccess.Repeatable(),
+		func(ctx context.Context, in *contract.ChatMessageInput) (*struct{}, error) {
+			caller, _ := auth.CallerFrom(ctx)
+			ch, err := chatChannel(ctx, d.Queries, caller, in.ID)
+			if err != nil {
+				return nil, err
+			}
+			m, err := chatMessageIn(ctx, d.Queries, ch.ID, in.Msg)
+			if err != nil {
+				return nil, err
+			}
+			if m.DeletedAt.Valid {
+				return nil, nil
+			}
+			if m.AuthorID != caller.UserID && caller.ChatLevel != auth.Admin {
+				return nil, errNotYourMessage
+			}
+			if err := d.Queries.DeleteChatMessage(ctx, m.ID); err != nil {
+				return nil, err
+			}
+			members, err := d.Queries.ListChatMembers(ctx, ch.ID)
+			if err != nil {
+				return nil, err
+			}
+			ids := make([]pgtype.UUID, len(members))
+			for i, x := range members {
+				ids[i] = x.ID
+			}
+			return nil, announceChat(ctx, d.Queries, chatChanged, ch.ID, ids)
+		})
+
+	route(api, op("listChatActivity", http.MethodGet, "/activity", "Everything about the caller across their channels: replies to them, their inbox"), chatAccess,
+		func(ctx context.Context, in *contract.ChatActivityInput) (*contract.ChatActivityOutput, error) {
+			caller, _ := auth.CallerFrom(ctx)
+			admin := caller.ChatLevel == auth.Admin
+			cursor, err := page.Decode(in.Cursor)
+			if err != nil {
+				return nil, errBadCursor
+			}
+			rows, err := d.Queries.ListChatActivity(ctx, store.ListChatActivityParams{
+				UserID: caller.UserID, TenantID: caller.TenantID, ChatAdmin: admin,
+				CursorAt: pgtype.Timestamptz{Time: cursor.At, Valid: true}, CursorID: cursor.ID, Lim: int32(in.Limit + 1),
+			})
+			if err != nil {
+				return nil, err
+			}
+			out := &contract.ChatActivityOutput{}
+			out.Body.Output = page.Map(page.Rows(rows, in.Limit, func(r store.ListChatActivityRow) page.Cursor {
+				return page.Cursor{At: r.CreatedAt.Time, ID: r.ID}
+			}), func(r store.ListChatActivityRow) contract.ChatActivity {
+				return contract.ChatActivity{
+					ChatMessage: chatMessage(store.ListChatMessagesRow{
+						ID: r.ID, AuthorType: r.AuthorType, AuthorID: r.AuthorID, AuthorName: r.AuthorName,
+						AuthorAvatar: r.AuthorAvatar, EventType: r.EventType, Body: r.Body, Metadata: r.Metadata,
+						EditedAt: r.EditedAt, CreatedAt: r.CreatedAt,
+					}),
+					ChannelID: r.ChannelID.String(), ChannelKind: r.ChannelKind, ChannelName: r.ChannelName, Unread: r.Unread,
+				}
+			})
+			if in.Cursor == "" {
+				n, err := d.Queries.CountChatActivityUnread(ctx, store.CountChatActivityUnreadParams{
+					UserID: caller.UserID, TenantID: caller.TenantID, ChatAdmin: admin,
+				})
+				if err != nil {
+					return nil, err
+				}
+				out.Body.Unread = int(n)
+			}
 			return out, nil
 		})
 
@@ -334,6 +424,19 @@ func chatChannel(ctx context.Context, q *store.Queries, caller auth.Caller, id s
 	return ch, err
 }
 
+// chatMessageIn is one message, only if it belongs to the channel.
+func chatMessageIn(ctx context.Context, q *store.Queries, channel pgtype.UUID, id string) (store.GetChatMessageRow, error) {
+	mid, err := uuid(id, errMessageNotFound)
+	if err != nil {
+		return store.GetChatMessageRow{}, err
+	}
+	m, err := q.GetChatMessage(ctx, store.GetChatMessageParams{ID: mid, ChannelID: channel})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return m, errMessageNotFound
+	}
+	return m, err
+}
+
 // readOnly: the system's inbox, or a store no longer open; its history stays readable.
 func readOnly(kind, storeStatus string) bool {
 	return kind == "personal" || (kind == "store" && storeStatus == "inactive")
@@ -392,8 +495,14 @@ func chatMessage(r store.ListChatMessagesRow) contract.ChatMessage {
 	if r.ClientKey.Valid {
 		m.ClientKey = r.ClientKey.String
 	}
+	if r.ReplyID.Valid {
+		m.ReplyTo = &contract.ChatQuote{ID: r.ReplyID.String(), Author: r.ReplyAuthor, Body: r.ReplyBody, Photo: r.ReplyPhoto, Deleted: r.ReplyDeleted}
+		if r.ReplyDeleted {
+			m.ReplyTo.Body, m.ReplyTo.Photo = "", false
+		}
+	}
 	if r.DeletedAt.Valid {
-		m.Deleted, m.Body = true, ""
+		m.Deleted, m.Body, m.ReplyTo = true, "", nil
 	}
 	return m
 }
@@ -403,7 +512,7 @@ func attachPhotos(ctx context.Context, d Deps, items []contract.ChatMessage) err
 	ids := make([]pgtype.UUID, 0, len(items))
 	for _, m := range items {
 		var id pgtype.UUID
-		if id.Scan(m.ID) == nil {
+		if !m.Deleted && id.Scan(m.ID) == nil {
 			ids = append(ids, id)
 		}
 	}

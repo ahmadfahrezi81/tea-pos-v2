@@ -1,6 +1,6 @@
 # Task 068c — Chat feels like a chat app
 
-**Status: approved 2026-11-17 (the owner: build it all, then release), in progress.**
+**Status: built 2026-11-17 on `feat/chat-feel`, all items; Go integration tests pass (reply, delete, Activity, permission); lint, typecheck, unit tests pass. Not yet seen on a phone: the owner tries it on staging. No migration: a reply uses the existing `thread_root_id` (the exact message it answers).**
 
 ## The goal
 
