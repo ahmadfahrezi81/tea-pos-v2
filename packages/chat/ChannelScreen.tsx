@@ -1119,7 +1119,7 @@ function Composer({
                                         aria-label={t("chat.send")}
                                         className="ml-auto flex size-9 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand transition-colors active:opacity-70 disabled:bg-slate-100 disabled:text-gray-400"
                                     >
-                                        <SendHorizontal size={21} strokeWidth={2.5} />
+                                        <SendHorizontal size={21} strokeWidth={2.5} className="translate-x-[1.5px]" />
                                     </button>
                                 </div>
                             </div>
