@@ -74,6 +74,7 @@ self.addEventListener("push", (event) => {
         body?: string;
         tag?: string;
         url?: string;
+        icon?: string;
     };
     event.waitUntil(
         self.registration.showNotification(m.title ?? "", {
@@ -81,7 +82,8 @@ self.addEventListener("push", (event) => {
             tag: m.tag,
             // An update to a channel's line does not buzz again.
             renotify: false,
-            icon: "/icons/icon-192x192.png",
+            // The sender's photo where the phone shows one (Android); iOS always shows the app's.
+            icon: m.icon || "/icons/icon-192x192.png",
             badge: "/icons/badge-96x96.png",
             data: { url: m.url ?? "/" },
         } as NotificationOptions),

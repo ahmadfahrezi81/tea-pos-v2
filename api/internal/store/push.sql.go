@@ -130,7 +130,7 @@ func (q *Queries) DeletePushSubscription(ctx context.Context, arg DeletePushSubs
 
 const latestChatMessage = `-- name: LatestChatMessage :one
 SELECT m.id, m.author_type, m.author_id, m.body, m.created_at,
-    coalesce(u.full_name, '')::text AS author_name,
+    coalesce(u.full_name, '')::text AS author_name, coalesce(u.avatar_url, '')::text AS author_avatar,
     (SELECT count(*) FROM chat_message_photos p WHERE p.message_id = m.id)::int AS photos,
     c.kind, coalesce(s.name, c.name, '')::text AS channel_name, t.slug
 FROM chat_messages m
@@ -144,16 +144,17 @@ LIMIT 1
 `
 
 type LatestChatMessageRow struct {
-	ID          pgtype.UUID
-	AuthorType  string
-	AuthorID    pgtype.UUID
-	Body        string
-	CreatedAt   pgtype.Timestamptz
-	AuthorName  string
-	Photos      int32
-	Kind        string
-	ChannelName string
-	Slug        string
+	ID           pgtype.UUID
+	AuthorType   string
+	AuthorID     pgtype.UUID
+	Body         string
+	CreatedAt    pgtype.Timestamptz
+	AuthorName   string
+	AuthorAvatar string
+	Photos       int32
+	Kind         string
+	ChannelName  string
+	Slug         string
 }
 
 // What a channel's push says: its newest message, the channel and the tenant.
@@ -167,6 +168,7 @@ func (q *Queries) LatestChatMessage(ctx context.Context, channelID pgtype.UUID) 
 		&i.Body,
 		&i.CreatedAt,
 		&i.AuthorName,
+		&i.AuthorAvatar,
 		&i.Photos,
 		&i.Kind,
 		&i.ChannelName,

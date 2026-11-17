@@ -16,7 +16,7 @@ DELETE FROM push_subscriptions WHERE endpoint = @endpoint;
 -- name: LatestChatMessage :one
 -- What a channel's push says: its newest message, the channel and the tenant.
 SELECT m.id, m.author_type, m.author_id, m.body, m.created_at,
-    coalesce(u.full_name, '')::text AS author_name,
+    coalesce(u.full_name, '')::text AS author_name, coalesce(u.avatar_url, '')::text AS author_avatar,
     (SELECT count(*) FROM chat_message_photos p WHERE p.message_id = m.id)::int AS photos,
     c.kind, coalesce(s.name, c.name, '')::text AS channel_name, t.slug
 FROM chat_messages m
