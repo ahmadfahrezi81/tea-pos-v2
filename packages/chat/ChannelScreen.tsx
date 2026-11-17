@@ -403,7 +403,7 @@ function NewLine() {
  */
 const BUBBLE = "rounded-[10px] px-3 py-1.5";
 /** My bubbles: a pastel purple of its own (not the brand faded) with black text, as WhatsApp's light green (owner). */
-const MINE = "mine bg-[oklch(0.86_0.075_293)] text-gray-900";
+const MINE = "mine bg-[oklch(0.915_0.085_302)] text-gray-900";
 const TAIL_MINE = "rounded-tr-[4px]";
 const TAIL_THEIRS = "rounded-tl-[4px]";
 /** 4 px in from the bubble's sides (12 − 8), and from its top when first (6 − 2). */
