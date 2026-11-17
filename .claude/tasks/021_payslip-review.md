@@ -1,6 +1,6 @@
 # Task 021 — Staff Payouts and the payslip: commissions, the day review, claims (Steps 21 and 22)
 
-**Status: built 2026-10-25 overnight, merged to staging when green (decisions in `overnight-log.md`). Checked: integration test over the list and payslip (the same totals, from approved rows only), a day review deciding only pending rows (a second review overturns nothing), single decisions with their activity log entries, every decision on a paid payout refused, another tenant's payout not found; typecheck, lint, bundle (backoffice 135.9 of 137 KB).**
+**Status: done 2026-10-24, PR #44 (decisions in `overnight-log.md`).**
 
 ## The goal
 

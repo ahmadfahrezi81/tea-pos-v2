@@ -96,28 +96,40 @@ ORDER BY u.full_name;
 -- A page of a channel, newest first (page.Input's cursor), with its author.
 SELECT m.id, m.author_type, m.author_id, coalesce(u.full_name, '')::text AS author_name,
     coalesce(u.avatar_url, '')::text AS author_avatar, m.event_type, m.body, m.metadata, m.client_key,
-    m.edited_at, m.deleted_at, m.created_at
+    m.edited_at, m.deleted_at, m.created_at,
+    m.thread_root_id AS reply_id, coalesce(ru.full_name, '')::text AS reply_author,
+    coalesce(r.body, '')::text AS reply_body, (r.deleted_at IS NOT NULL)::bool AS reply_deleted,
+    EXISTS (SELECT 1 FROM chat_message_photos p WHERE p.message_id = r.id)::bool AS reply_photo
 FROM chat_messages m
 LEFT JOIN users u ON u.id = m.author_id
+LEFT JOIN chat_messages r ON r.id = m.thread_root_id
+LEFT JOIN users ru ON ru.id = r.author_id
 WHERE m.channel_id = @channel_id AND (m.created_at, m.id) < (@cursor_at::timestamptz, @cursor_id::uuid)
 ORDER BY m.created_at DESC, m.id DESC
 LIMIT @lim;
 
 -- name: ListChatMessagesSince :many
 -- What a channel gained after the phone's newest message, oldest first: a live update's fetch.
+-- A message deleted since then comes again, so the phone shows it deleted.
 SELECT m.id, m.author_type, m.author_id, coalesce(u.full_name, '')::text AS author_name,
     coalesce(u.avatar_url, '')::text AS author_avatar, m.event_type, m.body, m.metadata, m.client_key,
-    m.edited_at, m.deleted_at, m.created_at
+    m.edited_at, m.deleted_at, m.created_at,
+    m.thread_root_id AS reply_id, coalesce(ru.full_name, '')::text AS reply_author,
+    coalesce(r.body, '')::text AS reply_body, (r.deleted_at IS NOT NULL)::bool AS reply_deleted,
+    EXISTS (SELECT 1 FROM chat_message_photos p WHERE p.message_id = r.id)::bool AS reply_photo
 FROM chat_messages m
 LEFT JOIN users u ON u.id = m.author_id
-WHERE m.channel_id = @channel_id AND m.created_at > @since::timestamptz
+LEFT JOIN chat_messages r ON r.id = m.thread_root_id
+LEFT JOIN users ru ON ru.id = r.author_id
+WHERE m.channel_id = @channel_id AND (m.created_at > @since::timestamptz OR m.deleted_at > @since::timestamptz)
 ORDER BY m.created_at, m.id
 LIMIT 200;
 
 -- name: InsertChatMessage :one
 -- A person's message; a repeat of the same client_key returns the first one, saved once.
-INSERT INTO chat_messages (tenant_id, channel_id, author_type, author_id, body, client_key)
-VALUES (@tenant_id, @channel_id, 'user', @author_id, @body, @client_key)
+-- thread_root_id is the message it replies to (shown quoted above it).
+INSERT INTO chat_messages (tenant_id, channel_id, author_type, author_id, body, client_key, thread_root_id)
+VALUES (@tenant_id, @channel_id, 'user', @author_id, @body, @client_key, sqlc.narg(reply_to)::uuid)
 ON CONFLICT (author_id, client_key) WHERE client_key IS NOT NULL DO UPDATE SET client_key = excluded.client_key
 RETURNING id, created_at;
 
@@ -152,3 +164,67 @@ SELECT message_id, position, path, preview_path, width, height
 FROM chat_message_photos
 WHERE message_id = ANY(@message_ids::uuid[])
 ORDER BY message_id, position;
+
+-- name: GetChatMessage :one
+-- One message of a channel: what a reply quotes, or what is deleted.
+SELECT m.id, m.channel_id, m.author_id, m.author_type, m.deleted_at
+FROM chat_messages m
+WHERE m.id = @id AND m.channel_id = @channel_id;
+
+-- name: DeleteChatMessage :exec
+-- Soft: a "deleted" line stays where it was, its text and photos no longer shown.
+UPDATE chat_messages SET deleted_at = now() WHERE id = @id AND deleted_at IS NULL;
+
+-- name: ListChatActivity :many
+-- Everything about the caller across their channels, newest first: someone's reply to one of
+-- their messages, and their own inbox (Notifications). Unread past their read mark.
+SELECT m.id, m.author_type, m.author_id, coalesce(u.full_name, '')::text AS author_name,
+    coalesce(u.avatar_url, '')::text AS author_avatar, m.event_type, m.body, m.metadata, m.client_key,
+    m.edited_at, m.deleted_at, m.created_at,
+    c.id AS channel_id, c.kind AS channel_kind, coalesce(s.name, c.name, '')::text AS channel_name,
+    (m.created_at > coalesce(cr.last_read_at, '-infinity'))::bool AS unread
+FROM chat_messages m
+JOIN chat_channels c ON c.id = m.channel_id
+LEFT JOIN stores s ON s.id = c.store_id
+LEFT JOIN users u ON u.id = m.author_id
+LEFT JOIN chat_reads cr ON cr.channel_id = c.id AND cr.user_id = @user_id
+WHERE c.tenant_id = @tenant_id AND m.deleted_at IS NULL
+  AND m.author_id IS DISTINCT FROM @user_id
+  AND (
+    (c.kind = 'personal' AND c.user_id = @user_id)
+    OR m.thread_root_id IN (SELECT mine.id FROM chat_messages mine WHERE mine.author_id = @user_id)
+  )
+  AND CASE c.kind
+    WHEN 'general' THEN true
+    WHEN 'admin' THEN @chat_admin::bool
+    WHEN 'personal' THEN c.user_id = @user_id
+    WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = @user_id)
+    ELSE false
+  END
+  AND (m.created_at, m.id) < (@cursor_at::timestamptz, @cursor_id::uuid)
+ORDER BY m.created_at DESC, m.id DESC
+LIMIT @lim;
+
+-- name: CountChatActivityUnread :one
+-- How many of ListChatActivity's are unread (stops at 100), for the Activity switch.
+SELECT count(*)::int FROM (
+    SELECT 1
+    FROM chat_messages m
+    JOIN chat_channels c ON c.id = m.channel_id
+    LEFT JOIN chat_reads cr ON cr.channel_id = c.id AND cr.user_id = @user_id
+    WHERE c.tenant_id = @tenant_id AND m.deleted_at IS NULL
+      AND m.author_id IS DISTINCT FROM @user_id
+      AND m.created_at > coalesce(cr.last_read_at, '-infinity')
+      AND (
+        (c.kind = 'personal' AND c.user_id = @user_id)
+        OR m.thread_root_id IN (SELECT mine.id FROM chat_messages mine WHERE mine.author_id = @user_id)
+      )
+      AND CASE c.kind
+        WHEN 'general' THEN true
+        WHEN 'admin' THEN @chat_admin::bool
+        WHEN 'personal' THEN c.user_id = @user_id
+        WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = @user_id)
+        ELSE false
+      END
+    LIMIT 100
+) a;

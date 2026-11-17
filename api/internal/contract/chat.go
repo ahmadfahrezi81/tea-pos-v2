@@ -74,6 +74,16 @@ type ChatMessage struct {
 	Deleted   bool        `json:"deleted,omitempty"`
 	At        string      `json:"at" format:"date-time"`
 	Photos    []ChatPhoto `json:"photos,omitempty"`
+	ReplyTo   *ChatQuote  `json:"replyTo,omitempty" doc:"The message this one answers, quoted above it"`
+}
+
+// ChatQuote is the message a reply answers, as its quote shows it.
+type ChatQuote struct {
+	ID      string `json:"id" format:"uuid"`
+	Author  string `json:"author,omitempty"`
+	Body    string `json:"body,omitempty"`
+	Photo   bool   `json:"photo,omitempty" doc:"It had photos: the quote says Photo when there is no text"`
+	Deleted bool   `json:"deleted,omitempty"`
 }
 
 // ChatPhoto is one of a message's photos: signed addresses that work for a few hours.
@@ -97,9 +107,37 @@ type PostChatMessageInput struct {
 	ID     string `path:"id" format:"uuid"`
 	Key    string `header:"Idempotency-Key"`
 	Body   struct {
-		Body   string           `json:"body" maxLength:"4000" doc:"May be empty with photos"`
-		Photos []ChatPhotoInput `json:"photos,omitempty" maxItems:"4"`
+		Body    string           `json:"body" maxLength:"4000" doc:"May be empty with photos"`
+		Photos  []ChatPhotoInput `json:"photos,omitempty" maxItems:"4"`
+		ReplyTo string           `json:"replyTo,omitempty" format:"uuid" doc:"A message of the same channel this one answers"`
 	}
+}
+
+type ChatMessageInput struct {
+	Tenant string `path:"tenant"`
+	ID     string `path:"id" format:"uuid"`
+	Msg    string `path:"message" format:"uuid"`
+}
+
+type ChatActivityInput struct {
+	Tenant string `path:"tenant"`
+	page.Input
+}
+
+type ChatActivityOutput struct {
+	Body struct {
+		page.Output[ChatActivity]
+		Unread int `json:"unread" doc:"How many are unread, stops at 100: the Activity switch's count"`
+	}
+}
+
+// ChatActivity is one message about the caller: a reply to theirs, or their inbox's.
+type ChatActivity struct {
+	ChatMessage
+	ChannelID   string `json:"channelId" format:"uuid"`
+	ChannelKind string `json:"channelKind" enum:"general,store,group,admin,personal"`
+	ChannelName string `json:"channelName,omitempty"`
+	Unread      bool   `json:"unread"`
 }
 
 type ChatMessageOutput struct {

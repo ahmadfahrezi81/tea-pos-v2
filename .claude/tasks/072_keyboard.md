@@ -1,6 +1,6 @@
 # Task 072 — The keyboard: one way for every field
 
-**Status: first build failed on the owner's iPhone 2026-11-16 (PR #147); #146 and #147 reverted on `revert/keyboard`. Redesigned as an RFC: [RFC: The keyboard (v2)](https://app.notion.com/p/41a95a71540581fe9edfec6aaea46993), which supersedes the plans below; waiting on the owner's review.**
+**Status: done on staging 2026-11-16, PR #148 (the browser's own behaviour, the tab bar steps aside); the iPhone's slide moved to task 073. Android to be tried on a borrowed phone.**
 
 ## The goal
 

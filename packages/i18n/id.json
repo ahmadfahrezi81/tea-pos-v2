@@ -163,6 +163,8 @@
         "outdated": "Perlu update"
     },
     "errors": {
+        "message_not_found": "Pesan itu tidak ditemukan",
+        "not_your_message": "Hanya pengirimnya atau admin chat yang bisa menghapusnya",
         "channel_read_only": "Tidak ada yang bisa mengirim di chat ini",
         "blank_message": "Tulis sesuatu dulu",
         "chat_too_fast": "Terlalu banyak pesan. Tunggu sebentar.",

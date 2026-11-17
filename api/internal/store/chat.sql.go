@@ -50,6 +50,54 @@ func (q *Queries) ChatAuthorsBetween(ctx context.Context, arg ChatAuthorsBetween
 	return items, nil
 }
 
+const countChatActivityUnread = `-- name: CountChatActivityUnread :one
+SELECT count(*)::int FROM (
+    SELECT 1
+    FROM chat_messages m
+    JOIN chat_channels c ON c.id = m.channel_id
+    LEFT JOIN chat_reads cr ON cr.channel_id = c.id AND cr.user_id = $1
+    WHERE c.tenant_id = $2 AND m.deleted_at IS NULL
+      AND m.author_id IS DISTINCT FROM $1
+      AND m.created_at > coalesce(cr.last_read_at, '-infinity')
+      AND (
+        (c.kind = 'personal' AND c.user_id = $1)
+        OR m.thread_root_id IN (SELECT mine.id FROM chat_messages mine WHERE mine.author_id = $1)
+      )
+      AND CASE c.kind
+        WHEN 'general' THEN true
+        WHEN 'admin' THEN $3::bool
+        WHEN 'personal' THEN c.user_id = $1
+        WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = $1)
+        ELSE false
+      END
+    LIMIT 100
+) a
+`
+
+type CountChatActivityUnreadParams struct {
+	UserID    pgtype.UUID
+	TenantID  pgtype.UUID
+	ChatAdmin bool
+}
+
+// How many of ListChatActivity's are unread (stops at 100), for the Activity switch.
+func (q *Queries) CountChatActivityUnread(ctx context.Context, arg CountChatActivityUnreadParams) (int32, error) {
+	row := q.db.QueryRow(ctx, countChatActivityUnread, arg.UserID, arg.TenantID, arg.ChatAdmin)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const deleteChatMessage = `-- name: DeleteChatMessage :exec
+UPDATE chat_messages SET deleted_at = now() WHERE id = $1 AND deleted_at IS NULL
+`
+
+// Soft: a "deleted" line stays where it was, its text and photos no longer shown.
+func (q *Queries) DeleteChatMessage(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteChatMessage, id)
+	return err
+}
+
 const ensureChatChannels = `-- name: EnsureChatChannels :exec
 
 WITH want AS (
@@ -133,9 +181,42 @@ func (q *Queries) GetChatChannel(ctx context.Context, arg GetChatChannelParams) 
 	return i, err
 }
 
+const getChatMessage = `-- name: GetChatMessage :one
+SELECT m.id, m.channel_id, m.author_id, m.author_type, m.deleted_at
+FROM chat_messages m
+WHERE m.id = $1 AND m.channel_id = $2
+`
+
+type GetChatMessageParams struct {
+	ID        pgtype.UUID
+	ChannelID pgtype.UUID
+}
+
+type GetChatMessageRow struct {
+	ID         pgtype.UUID
+	ChannelID  pgtype.UUID
+	AuthorID   pgtype.UUID
+	AuthorType string
+	DeletedAt  pgtype.Timestamptz
+}
+
+// One message of a channel: what a reply quotes, or what is deleted.
+func (q *Queries) GetChatMessage(ctx context.Context, arg GetChatMessageParams) (GetChatMessageRow, error) {
+	row := q.db.QueryRow(ctx, getChatMessage, arg.ID, arg.ChannelID)
+	var i GetChatMessageRow
+	err := row.Scan(
+		&i.ID,
+		&i.ChannelID,
+		&i.AuthorID,
+		&i.AuthorType,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const insertChatMessage = `-- name: InsertChatMessage :one
-INSERT INTO chat_messages (tenant_id, channel_id, author_type, author_id, body, client_key)
-VALUES ($1, $2, 'user', $3, $4, $5)
+INSERT INTO chat_messages (tenant_id, channel_id, author_type, author_id, body, client_key, thread_root_id)
+VALUES ($1, $2, 'user', $3, $4, $5, $6::uuid)
 ON CONFLICT (author_id, client_key) WHERE client_key IS NOT NULL DO UPDATE SET client_key = excluded.client_key
 RETURNING id, created_at
 `
@@ -146,6 +227,7 @@ type InsertChatMessageParams struct {
 	AuthorID  pgtype.UUID
 	Body      string
 	ClientKey pgtype.Text
+	ReplyTo   pgtype.UUID
 }
 
 type InsertChatMessageRow struct {
@@ -154,6 +236,7 @@ type InsertChatMessageRow struct {
 }
 
 // A person's message; a repeat of the same client_key returns the first one, saved once.
+// thread_root_id is the message it replies to (shown quoted above it).
 func (q *Queries) InsertChatMessage(ctx context.Context, arg InsertChatMessageParams) (InsertChatMessageRow, error) {
 	row := q.db.QueryRow(ctx, insertChatMessage,
 		arg.TenantID,
@@ -161,6 +244,7 @@ func (q *Queries) InsertChatMessage(ctx context.Context, arg InsertChatMessagePa
 		arg.AuthorID,
 		arg.Body,
 		arg.ClientKey,
+		arg.ReplyTo,
 	)
 	var i InsertChatMessageRow
 	err := row.Scan(&i.ID, &i.CreatedAt)
@@ -191,6 +275,109 @@ func (q *Queries) InsertChatPhoto(ctx context.Context, arg InsertChatPhotoParams
 		arg.Height,
 	)
 	return err
+}
+
+const listChatActivity = `-- name: ListChatActivity :many
+SELECT m.id, m.author_type, m.author_id, coalesce(u.full_name, '')::text AS author_name,
+    coalesce(u.avatar_url, '')::text AS author_avatar, m.event_type, m.body, m.metadata, m.client_key,
+    m.edited_at, m.deleted_at, m.created_at,
+    c.id AS channel_id, c.kind AS channel_kind, coalesce(s.name, c.name, '')::text AS channel_name,
+    (m.created_at > coalesce(cr.last_read_at, '-infinity'))::bool AS unread
+FROM chat_messages m
+JOIN chat_channels c ON c.id = m.channel_id
+LEFT JOIN stores s ON s.id = c.store_id
+LEFT JOIN users u ON u.id = m.author_id
+LEFT JOIN chat_reads cr ON cr.channel_id = c.id AND cr.user_id = $1
+WHERE c.tenant_id = $2 AND m.deleted_at IS NULL
+  AND m.author_id IS DISTINCT FROM $1
+  AND (
+    (c.kind = 'personal' AND c.user_id = $1)
+    OR m.thread_root_id IN (SELECT mine.id FROM chat_messages mine WHERE mine.author_id = $1)
+  )
+  AND CASE c.kind
+    WHEN 'general' THEN true
+    WHEN 'admin' THEN $3::bool
+    WHEN 'personal' THEN c.user_id = $1
+    WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = $1)
+    ELSE false
+  END
+  AND (m.created_at, m.id) < ($4::timestamptz, $5::uuid)
+ORDER BY m.created_at DESC, m.id DESC
+LIMIT $6
+`
+
+type ListChatActivityParams struct {
+	UserID    pgtype.UUID
+	TenantID  pgtype.UUID
+	ChatAdmin bool
+	CursorAt  pgtype.Timestamptz
+	CursorID  pgtype.UUID
+	Lim       int32
+}
+
+type ListChatActivityRow struct {
+	ID           pgtype.UUID
+	AuthorType   string
+	AuthorID     pgtype.UUID
+	AuthorName   string
+	AuthorAvatar string
+	EventType    pgtype.Text
+	Body         string
+	Metadata     []byte
+	ClientKey    pgtype.Text
+	EditedAt     pgtype.Timestamptz
+	DeletedAt    pgtype.Timestamptz
+	CreatedAt    pgtype.Timestamptz
+	ChannelID    pgtype.UUID
+	ChannelKind  string
+	ChannelName  string
+	Unread       bool
+}
+
+// Everything about the caller across their channels, newest first: someone's reply to one of
+// their messages, and their own inbox (Notifications). Unread past their read mark.
+func (q *Queries) ListChatActivity(ctx context.Context, arg ListChatActivityParams) ([]ListChatActivityRow, error) {
+	rows, err := q.db.Query(ctx, listChatActivity,
+		arg.UserID,
+		arg.TenantID,
+		arg.ChatAdmin,
+		arg.CursorAt,
+		arg.CursorID,
+		arg.Lim,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListChatActivityRow
+	for rows.Next() {
+		var i ListChatActivityRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AuthorType,
+			&i.AuthorID,
+			&i.AuthorName,
+			&i.AuthorAvatar,
+			&i.EventType,
+			&i.Body,
+			&i.Metadata,
+			&i.ClientKey,
+			&i.EditedAt,
+			&i.DeletedAt,
+			&i.CreatedAt,
+			&i.ChannelID,
+			&i.ChannelKind,
+			&i.ChannelName,
+			&i.Unread,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listChatChannels = `-- name: ListChatChannels :many
@@ -343,9 +530,14 @@ func (q *Queries) ListChatMembers(ctx context.Context, channelID pgtype.UUID) ([
 const listChatMessages = `-- name: ListChatMessages :many
 SELECT m.id, m.author_type, m.author_id, coalesce(u.full_name, '')::text AS author_name,
     coalesce(u.avatar_url, '')::text AS author_avatar, m.event_type, m.body, m.metadata, m.client_key,
-    m.edited_at, m.deleted_at, m.created_at
+    m.edited_at, m.deleted_at, m.created_at,
+    m.thread_root_id AS reply_id, coalesce(ru.full_name, '')::text AS reply_author,
+    coalesce(r.body, '')::text AS reply_body, (r.deleted_at IS NOT NULL)::bool AS reply_deleted,
+    EXISTS (SELECT 1 FROM chat_message_photos p WHERE p.message_id = r.id)::bool AS reply_photo
 FROM chat_messages m
 LEFT JOIN users u ON u.id = m.author_id
+LEFT JOIN chat_messages r ON r.id = m.thread_root_id
+LEFT JOIN users ru ON ru.id = r.author_id
 WHERE m.channel_id = $1 AND (m.created_at, m.id) < ($2::timestamptz, $3::uuid)
 ORDER BY m.created_at DESC, m.id DESC
 LIMIT $4
@@ -371,6 +563,11 @@ type ListChatMessagesRow struct {
 	EditedAt     pgtype.Timestamptz
 	DeletedAt    pgtype.Timestamptz
 	CreatedAt    pgtype.Timestamptz
+	ReplyID      pgtype.UUID
+	ReplyAuthor  string
+	ReplyBody    string
+	ReplyDeleted bool
+	ReplyPhoto   bool
 }
 
 // A page of a channel, newest first (page.Input's cursor), with its author.
@@ -401,6 +598,11 @@ func (q *Queries) ListChatMessages(ctx context.Context, arg ListChatMessagesPara
 			&i.EditedAt,
 			&i.DeletedAt,
 			&i.CreatedAt,
+			&i.ReplyID,
+			&i.ReplyAuthor,
+			&i.ReplyBody,
+			&i.ReplyDeleted,
+			&i.ReplyPhoto,
 		); err != nil {
 			return nil, err
 		}
@@ -415,10 +617,15 @@ func (q *Queries) ListChatMessages(ctx context.Context, arg ListChatMessagesPara
 const listChatMessagesSince = `-- name: ListChatMessagesSince :many
 SELECT m.id, m.author_type, m.author_id, coalesce(u.full_name, '')::text AS author_name,
     coalesce(u.avatar_url, '')::text AS author_avatar, m.event_type, m.body, m.metadata, m.client_key,
-    m.edited_at, m.deleted_at, m.created_at
+    m.edited_at, m.deleted_at, m.created_at,
+    m.thread_root_id AS reply_id, coalesce(ru.full_name, '')::text AS reply_author,
+    coalesce(r.body, '')::text AS reply_body, (r.deleted_at IS NOT NULL)::bool AS reply_deleted,
+    EXISTS (SELECT 1 FROM chat_message_photos p WHERE p.message_id = r.id)::bool AS reply_photo
 FROM chat_messages m
 LEFT JOIN users u ON u.id = m.author_id
-WHERE m.channel_id = $1 AND m.created_at > $2::timestamptz
+LEFT JOIN chat_messages r ON r.id = m.thread_root_id
+LEFT JOIN users ru ON ru.id = r.author_id
+WHERE m.channel_id = $1 AND (m.created_at > $2::timestamptz OR m.deleted_at > $2::timestamptz)
 ORDER BY m.created_at, m.id
 LIMIT 200
 `
@@ -441,9 +648,15 @@ type ListChatMessagesSinceRow struct {
 	EditedAt     pgtype.Timestamptz
 	DeletedAt    pgtype.Timestamptz
 	CreatedAt    pgtype.Timestamptz
+	ReplyID      pgtype.UUID
+	ReplyAuthor  string
+	ReplyBody    string
+	ReplyDeleted bool
+	ReplyPhoto   bool
 }
 
 // What a channel gained after the phone's newest message, oldest first: a live update's fetch.
+// A message deleted since then comes again, so the phone shows it deleted.
 func (q *Queries) ListChatMessagesSince(ctx context.Context, arg ListChatMessagesSinceParams) ([]ListChatMessagesSinceRow, error) {
 	rows, err := q.db.Query(ctx, listChatMessagesSince, arg.ChannelID, arg.Since)
 	if err != nil {
@@ -466,6 +679,11 @@ func (q *Queries) ListChatMessagesSince(ctx context.Context, arg ListChatMessage
 			&i.EditedAt,
 			&i.DeletedAt,
 			&i.CreatedAt,
+			&i.ReplyID,
+			&i.ReplyAuthor,
+			&i.ReplyBody,
+			&i.ReplyDeleted,
+			&i.ReplyPhoto,
 		); err != nil {
 			return nil, err
 		}

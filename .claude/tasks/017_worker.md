@@ -1,6 +1,6 @@
 # Task 017 — The worker: River, the weather jobs, jobs saved with the change
 
-**Status: built 2026-10-24, not committed (owner reviews first). Checked locally: unit tests for the cells and opening hours; integration tests: a job saved with its change or not at all, the weather per area against a fake Tomorrow.io (two areas at noon, one at 20:30, none at night, the old app's table only for its area, an observed hour never replaced by a forecast), the schedule on :00, :20, :40; the worker started against a fresh database with schedules on and stopped cleanly. Not yet seen: Tomorrow.io itself (needs the key), production rows, the cron website switched off. The old app's fixed point is always fetched (05:00-22:00, as the cron website), whatever the stores have: on staging no active store has a place yet, so without it v1's weather_hourly would stop.**
+**Status: done 2026-10-24, PR #40.**
 
 ## The goal
 

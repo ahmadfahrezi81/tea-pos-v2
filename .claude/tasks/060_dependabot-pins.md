@@ -1,6 +1,6 @@
 # Task 060 — Dependabot keeps TypeScript 5 and Node 22's types
 
-**Status: approved 2026-11-06; pins merged (#105), security bump in PR.**
+**Status: done 2026-11-06, PRs #105 and #107; release 2026.11.5.**
 
 ## The goal
 

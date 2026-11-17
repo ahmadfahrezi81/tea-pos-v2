@@ -163,6 +163,8 @@
         "outdated": "Outdated"
     },
     "errors": {
+        "message_not_found": "That message was not found",
+        "not_your_message": "Only its author or a chat admin can delete it",
         "channel_read_only": "Nobody can post in this chat",
         "blank_message": "Write something first",
         "chat_too_fast": "Too many messages. Wait a moment.",

@@ -50,6 +50,17 @@
         "typingOne": "{name} is typing…",
         "typingTwo": "{a} and {b} are typing…",
         "typingMany": "Several people are typing…",
-        "vip": "VIP"
+        "vip": "VIP",
+        "reply": "Reply",
+        "copy": "Copy",
+        "copied": "Copied",
+        "replyingTo": "Replying to {name}",
+        "deleteConfirm": "Delete this message?",
+        "deleteSub": "It shows as deleted for everyone.",
+        "newCount": "{n} new",
+        "latest": "Latest messages",
+        "notSentShort": "Not sent",
+        "activityReply": "replied to you",
+        "activityIn": "in {name}"
     }
 }

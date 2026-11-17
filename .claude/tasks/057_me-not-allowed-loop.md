@@ -1,6 +1,6 @@
 # Task 057 — A looping app cannot cost us, and we hear about it
 
-**Status: approved 2026-11-05, in PR.**
+**Status: done 2026-11-04, PR #100; release 2026.11.4.**
 
 ## The goal
 

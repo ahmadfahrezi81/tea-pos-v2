@@ -1,6 +1,6 @@
 # Task 011 — Pages and the `/api` forwarder
 
-**Status: done 2026-10-21 except the Go half, which waits on Railway. PR #14 merged. `tea-pos-staging.lykostech.app` and `tea-office-staging.lykostech.app` serve the staging build and their `/api/health` answers from staging's API; `tea-pos.` and `tea-office.lykostech.app` are active and show production's build from the next release. Staging names: added as custom domains in each project (Cloudflare then pointed their CNAMEs at production), and once Active, the CNAMEs edited to `staging.tea-pos-d8i.pages.dev` and `staging.tea-office.pages.dev`. Also added: SPF `v=spf1 -all` and DMARC `p=reject` (the domain sends no email). The Go secret check is live on staging since 2026-10-23 (Railway's own address answers 404). Reopened 2026-10-23 for the fixed-host fix below; built the same day (the new test fails on the old code for `//` and `\\` paths).**
+**Status: done 2026-10-23, PRs #14 and #20 (the Go half with #18); production with release 2026.10.3.**
 
 ## The goal
 

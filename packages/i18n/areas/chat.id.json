@@ -50,6 +50,17 @@
         "typingOne": "{name} sedang mengetik…",
         "typingTwo": "{a} dan {b} sedang mengetik…",
         "typingMany": "Beberapa orang sedang mengetik…",
-        "vip": "VIP"
+        "vip": "VIP",
+        "reply": "Balas",
+        "copy": "Salin",
+        "copied": "Disalin",
+        "replyingTo": "Membalas {name}",
+        "deleteConfirm": "Hapus pesan ini?",
+        "deleteSub": "Pesan ini akan terlihat terhapus untuk semua orang.",
+        "newCount": "{n} baru",
+        "latest": "Pesan terbaru",
+        "notSentShort": "Tidak terkirim",
+        "activityReply": "membalas kamu",
+        "activityIn": "di {name}"
     }
 }

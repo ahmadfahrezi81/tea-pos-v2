@@ -1,6 +1,6 @@
 # Task 044 — What the seller app keeps, cuts or moves
 
-**Status: list agreed 2026-10-31; building, one big PR, tested locally. Sellers switch only after chat is done.**
+**Status: built and merged 2026-11-01, PR #78, release 2026.11.1. Sellers stay on v1 until about January 2027 (Seller RFC, on hold).**
 
 The seller app is v1's, minus this list. RFC: Seller v2 (https://app.notion.com/p/40a95a715405810b9d37db50d22c76b3).
 

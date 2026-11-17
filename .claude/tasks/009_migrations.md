@@ -1,6 +1,6 @@
 # Task 009 — Migrations by CI
 
-**Status: built 2026-10-23, waiting on the owner's Infisical clicks. Steps 8 and 11 are done and Railway builds again, so nothing blocks it. Step 12 (PR #18, the sessions table) merges after it and is its first real migration.**
+**Status: done 2026-10-23, PR #23; production with release 2026.10.4.**
 
 ## The goal
 
