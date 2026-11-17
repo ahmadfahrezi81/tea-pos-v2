@@ -23,3 +23,20 @@ One PR. Migrations add only: `push_subscriptions.app`, `chat_message_reactions`.
 ## Not in this task
 
 Groups, Follow and Other channels (Step 70); sharing a screen into chat; message search.
+
+## Phone test (owner, on staging)
+
+Score each 1-5 (5 = feels like WhatsApp), with a note when it is not 5.
+
+| # | Try | What should happen | Score | Note |
+| --- | --- | --- | --- | --- |
+| 1 | Both apps installed, notifications on in both; use Tea-Office, then have someone message you | One notification, from Tea-Office; use Tea-POS, then again: from Tea-POS | | |
+| 2 | Hold a message, tap ❤️ | The menu closes, ❤️ under the bubble, lit as yours | | |
+| 3 | Tap your ❤️ under it | It goes | | |
+| 4 | Someone else reacts too | The count shows (2); hold it: who reacted | | |
+| 5 | Type @ in the box | The chat's people show; typing narrows them; tap one: `@Name ` in the box | | |
+| 6 | Send it | The name is bold in the bubble; the other person sees it lit, and "Mentioned you in" in Activity | | |
+| 7 | @everyone (VIP or admin) | Offered at the end of the list | | |
+| 8 | Hold your message (under 15 minutes), Edit | "Edit message" strip, the text in the box; send: the bubble changes in place with "edited"; no notification | | |
+| 9 | Hold a message older than 15 minutes | No Edit | | |
+| 10 | Overall feel | | | |

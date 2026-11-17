@@ -61,6 +61,11 @@
         "latest": "Pesan terbaru",
         "notSentShort": "Tidak terkirim",
         "activityPosted": "Dikirim di",
-        "activityReplied": "Membalas kamu di"
+        "activityReplied": "Membalas kamu di",
+        "edit": "Ubah",
+        "edited": "diubah",
+        "editing": "Ubah pesan",
+        "everyone": "semua orang",
+        "activityMentioned": "Menyebut kamu di"
     }
 }

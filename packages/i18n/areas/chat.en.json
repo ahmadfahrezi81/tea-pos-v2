@@ -61,6 +61,11 @@
         "latest": "Latest messages",
         "notSentShort": "Not sent",
         "activityPosted": "Posted in",
-        "activityReplied": "Replied to you in"
+        "activityReplied": "Replied to you in",
+        "edit": "Edit",
+        "edited": "edited",
+        "editing": "Edit message",
+        "everyone": "everyone",
+        "activityMentioned": "Mentioned you in"
     }
 }

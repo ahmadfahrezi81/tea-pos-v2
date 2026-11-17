@@ -28,3 +28,6 @@ export const KIND_ICON: Record<Kind, LucideIcon> = {
 export function listTime(at: string, locale: Locale): string {
     return localDate(at) === localDate() ? formatTime(at, locale) : formatDate(at, locale);
 }
+
+/** The six reactions (RFC: Chat (v2)); Go refuses any other. */
+export const EMOJI = ["👍", "❤️", "😂", "😮", "😢", "✅"] as const;
