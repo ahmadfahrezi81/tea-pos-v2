@@ -16,6 +16,7 @@ import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { useQueryClient } from "@tanstack/react-query";
 import {
     ArrowDown,
+    AtSign,
     Bell,
     Camera,
     CircleAlert,
@@ -799,6 +800,20 @@ function Composer({
         setCaret(at);
         requestAnimationFrame(() => box.current?.setSelectionRange(at, at));
     };
+    // The @ button: an @ where the caret is (a space before it if needed), and the names show.
+    const atSign = () => {
+        const el = box.current;
+        if (!el) return;
+        el.focus();
+        const at = document.activeElement === el ? caret : text.length;
+        const before = text.slice(0, at);
+        const add = before === "" || /\s$/.test(before) ? "@" : " @";
+        const next = before + add + text.slice(at);
+        const to = at + add.length;
+        setText(next);
+        setCaret(to);
+        requestAnimationFrame(() => el.setSelectionRange(to, to));
+    };
     // Shown at once; put back, with the reason, if Go refuses (useApiMutation shows it).
     const saveEdit = useApiMutation(
         async ({ m, text: next }: { m: ChatMessage; text: string }, headers) => {
@@ -984,19 +999,27 @@ function Composer({
                                     ))}
                                 </div>
                             )}
-                            <div
-                                // One row that never changes shape (task 068d: tapping it jumped): +, the box, send.
-                                className="flex items-end gap-x-1.5"
-                            >
-                                <button
-                                    onPointerDown={(e) => e.preventDefault()}
-                                    onClick={() => setAdding(true)}
-                                    disabled={photos.length >= MAX_PHOTOS || !!editing}
-                                    aria-label={t("chat.add")}
-                                    className="mb-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-gray-700 disabled:opacity-40 active:opacity-60"
-                                >
-                                    <Plus size={20} />
-                                </button>
+                            <div>
+                                {/* As Slack, on two lines, always (task 068d: changing shape on a tap jumped):
+                                    the box, then its tools; the bar only grows with the text. */}
+                                <textarea
+                                    ref={box}
+                                    data-chat-box
+                                    rows={1}
+                                    value={text}
+                                    maxLength={MAX_LENGTH}
+                                    onSelect={(e) => setCaret(e.currentTarget.selectionStart)}
+                                    onChange={(e) => {
+                                        setText(e.target.value);
+                                        setCaret(e.target.selectionStart);
+                                        if (e.target.value.trim()) sayTyping(slug, channelId);
+                                        // Grows with the text, up to about five lines.
+                                        e.target.style.height = "auto";
+                                        e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
+                                    }}
+                                    placeholder={t("chat.messageTo").replace("{name}", name)}
+                                    className="block h-10 max-h-32 w-full resize-none px-1 py-2.5 text-[16px] leading-5 text-gray-900 outline-none placeholder:text-gray-500"
+                                />
                                 <input
                                     ref={camera}
                                     type="file"
@@ -1019,35 +1042,34 @@ function Composer({
                                         e.target.value = "";
                                     }}
                                 />
-                                <textarea
-                                    ref={box}
-                                    data-chat-box
-                                    rows={1}
-                                    value={text}
-                                    maxLength={MAX_LENGTH}
-                                    onSelect={(e) => setCaret(e.currentTarget.selectionStart)}
-                                    onChange={(e) => {
-                                        setText(e.target.value);
-                                        setCaret(e.target.selectionStart);
-                                        if (e.target.value.trim()) sayTyping(slug, channelId);
-                                        // Grows with the text, up to about five lines.
-                                        e.target.style.height = "auto";
-                                        e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
-                                    }}
-                                    placeholder={t("chat.messageTo").replace("{name}", name)}
-                                    className="block h-10 max-h-32 min-w-0 flex-1 resize-none px-1 py-2.5 text-[16px] leading-5 text-gray-900 outline-none placeholder:text-gray-500"
-                                />
-                                {
+                                <div className="flex items-center gap-1.5">
+                                    <button
+                                        onPointerDown={(e) => e.preventDefault()}
+                                        onClick={() => setAdding(true)}
+                                        disabled={photos.length >= MAX_PHOTOS || !!editing}
+                                        aria-label={t("chat.add")}
+                                        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-gray-700 disabled:opacity-40 active:opacity-60"
+                                    >
+                                        <Plus size={20} />
+                                    </button>
+                                    <button
+                                        onPointerDown={(e) => e.preventDefault()}
+                                        onClick={atSign}
+                                        aria-label={t("chat.mention")}
+                                        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-gray-700 active:opacity-60"
+                                    >
+                                        <AtSign size={19} />
+                                    </button>
                                     <button
                                         onPointerDown={(e) => e.preventDefault()}
                                         onClick={submit}
                                         disabled={!ready}
                                         aria-label={t("chat.send")}
-                                        className="-mr-1.5 flex size-10 shrink-0 items-center justify-center text-brand disabled:text-gray-300 active:opacity-60"
+                                        className="ml-auto -mr-1.5 flex size-10 shrink-0 items-center justify-center text-brand disabled:text-gray-300 active:opacity-60"
                                     >
                                         <SendHorizontal size={22} />
                                     </button>
-                                }
+                                </div>
                             </div>
                             <Sheet
                                 open={adding}

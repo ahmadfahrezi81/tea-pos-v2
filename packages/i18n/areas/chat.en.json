@@ -66,6 +66,7 @@
         "edited": "edited",
         "editing": "Edit message",
         "everyone": "everyone",
-        "activityMentioned": "Mentioned you in"
+        "activityMentioned": "Mentioned you in",
+        "mention": "Mention someone"
     }
 }
