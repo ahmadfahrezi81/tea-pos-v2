@@ -187,9 +187,19 @@ components:
         id:
           format: uuid
           type: string
+        mentionsMe:
+          description: "@ the caller's name, or @everyone"
+          type: boolean
         photos:
           items:
             $ref: "#/components/schemas/ChatPhoto"
+          type:
+            - array
+            - "null"
+        reactions:
+          description: Each emoji used, in the order first used
+          items:
+            $ref: "#/components/schemas/ChatReaction"
           type:
             - array
             - "null"
@@ -373,6 +383,13 @@ components:
           type:
             - array
             - "null"
+        reactions:
+          description: Each emoji used, in the order first used
+          items:
+            $ref: "#/components/schemas/ChatReaction"
+          type:
+            - array
+            - "null"
         replyTo:
           $ref: "#/components/schemas/ChatQuote"
           description: The message this one answers, quoted above it
@@ -463,6 +480,21 @@ components:
           type: boolean
       required:
         - id
+      type: object
+    ChatReaction:
+      additionalProperties: false
+      properties:
+        emoji:
+          type: string
+        mine:
+          type: boolean
+        names:
+          items:
+            type: string
+          type: array
+      required:
+        - emoji
+        - names
       type: object
     ClaimEligibleOutputBody:
       additionalProperties: false
@@ -1084,6 +1116,15 @@ components:
           format: int64
           type: integer
       type: object
+    EditChatMessageInputBody:
+      additionalProperties: false
+      properties:
+        body:
+          maxLength: 4000
+          type: string
+      required:
+        - body
+      type: object
     Error:
       additionalProperties: false
       properties:
@@ -1117,6 +1158,7 @@ components:
             - day_closed
             - day_not_found
             - day_not_in_payout
+            - edit_closed
             - error
             - files_unavailable
             - forbidden
@@ -1128,6 +1170,7 @@ components:
             - no_session
             - no_work_that_day
             - not_allowed
+            - not_author
             - not_found
             - not_in_tenant
             - not_signed_in
@@ -3494,6 +3537,155 @@ paths:
                 $ref: "#/components/schemas/Error"
           description: Error
       summary: "Delete a message: its author, or a chat admin; a deleted line stays"
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        repeatable: true
+        signedIn: true
+    patch:
+      operationId: editChatMessage
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: message
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EditChatMessageInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Edit one's own message within 15 minutes; never pushes
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        repeatable: true
+        signedIn: true
+  /tenants/{tenant}/chat/channels/{id}/messages/{message}/reactions/{emoji}:
+    delete:
+      operationId: removeChatReaction
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: message
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: emoji
+          required: true
+          schema:
+            enum:
+              - 👍
+              - ❤️
+              - 😂
+              - 😮
+              - 😢
+              - ✅
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Take one's reaction back
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        repeatable: true
+        signedIn: true
+    put:
+      operationId: addChatReaction
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: message
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: emoji
+          required: true
+          schema:
+            enum:
+              - 👍
+              - ❤️
+              - 😂
+              - 😮
+              - 😢
+              - ✅
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: React to a message with one of the six; twice is once
       tags:
         - chat
       x-access:

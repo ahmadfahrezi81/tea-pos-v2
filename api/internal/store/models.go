@@ -92,6 +92,7 @@ type ChatMessage struct {
 	EditedAt     pgtype.Timestamptz
 	DeletedAt    pgtype.Timestamptz
 	CreatedAt    pgtype.Timestamptz
+	ChangedAt    pgtype.Timestamptz
 }
 
 type ChatMessagePhoto struct {
@@ -101,6 +102,13 @@ type ChatMessagePhoto struct {
 	PreviewPath string
 	Width       int32
 	Height      int32
+}
+
+type ChatMessageReaction struct {
+	MessageID pgtype.UUID
+	UserID    pgtype.UUID
+	Emoji     string
+	CreatedAt pgtype.Timestamptz
 }
 
 type ChatRead struct {
@@ -230,6 +238,7 @@ type PushSubscription struct {
 	UserAgent  string
 	CreatedAt  pgtype.Timestamptz
 	LastSeenAt pgtype.Timestamptz
+	App        pgtype.Text
 }
 
 type RiverRiverJob struct {

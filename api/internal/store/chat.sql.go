@@ -11,6 +11,22 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addChatReaction = `-- name: AddChatReaction :exec
+INSERT INTO chat_message_reactions (message_id, user_id, emoji) VALUES ($1, $2, $3)
+ON CONFLICT DO NOTHING
+`
+
+type AddChatReactionParams struct {
+	MessageID pgtype.UUID
+	UserID    pgtype.UUID
+	Emoji     string
+}
+
+func (q *Queries) AddChatReaction(ctx context.Context, arg AddChatReactionParams) error {
+	_, err := q.db.Exec(ctx, addChatReaction, arg.MessageID, arg.UserID, arg.Emoji)
+	return err
+}
+
 const chatAuthorsBetween = `-- name: ChatAuthorsBetween :many
 SELECT DISTINCT author_id::uuid FROM chat_messages
 WHERE channel_id = $1 AND author_id IS NOT NULL AND author_id <> $2
@@ -85,12 +101,28 @@ func (q *Queries) CountChatActivityUnread(ctx context.Context, arg CountChatActi
 }
 
 const deleteChatMessage = `-- name: DeleteChatMessage :exec
-UPDATE chat_messages SET deleted_at = now() WHERE id = $1 AND deleted_at IS NULL
+UPDATE chat_messages SET deleted_at = now(), changed_at = now() WHERE id = $1 AND deleted_at IS NULL
 `
 
 // Soft: a "deleted" line stays where it was, its text and photos no longer shown.
 func (q *Queries) DeleteChatMessage(ctx context.Context, id pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, deleteChatMessage, id)
+	return err
+}
+
+const editChatMessage = `-- name: EditChatMessage :exec
+UPDATE chat_messages SET body = $1, edited_at = now(), changed_at = now()
+WHERE id = $2 AND deleted_at IS NULL
+`
+
+type EditChatMessageParams struct {
+	Body string
+	ID   pgtype.UUID
+}
+
+// Its author's new text; edited_at shows "edited", changed_at brings it to the phones.
+func (q *Queries) EditChatMessage(ctx context.Context, arg EditChatMessageParams) error {
+	_, err := q.db.Exec(ctx, editChatMessage, arg.Body, arg.ID)
 	return err
 }
 
@@ -178,7 +210,7 @@ func (q *Queries) GetChatChannel(ctx context.Context, arg GetChatChannelParams) 
 }
 
 const getChatMessage = `-- name: GetChatMessage :one
-SELECT m.id, m.channel_id, m.author_id, m.author_type, m.deleted_at
+SELECT m.id, m.channel_id, m.author_id, m.author_type, m.deleted_at, m.created_at, m.body
 FROM chat_messages m
 WHERE m.id = $1 AND m.channel_id = $2
 `
@@ -194,6 +226,8 @@ type GetChatMessageRow struct {
 	AuthorID   pgtype.UUID
 	AuthorType string
 	DeletedAt  pgtype.Timestamptz
+	CreatedAt  pgtype.Timestamptz
+	Body       string
 }
 
 // One message of a channel: what a reply quotes, or what is deleted.
@@ -206,6 +240,8 @@ func (q *Queries) GetChatMessage(ctx context.Context, arg GetChatMessageParams) 
 		&i.AuthorID,
 		&i.AuthorType,
 		&i.DeletedAt,
+		&i.CreatedAt,
+		&i.Body,
 	)
 	return i, err
 }
@@ -279,7 +315,9 @@ SELECT m.id, m.author_type, m.author_id, coalesce(u.full_name, '')::text AS auth
     m.edited_at, m.deleted_at, m.created_at,
     c.id AS channel_id, c.kind AS channel_kind, coalesce(s.name, c.name, '')::text AS channel_name,
     (m.created_at > coalesce(cr.last_read_at, '-infinity'))::bool AS unread,
-    coalesce(rt.author_id = $1, false)::bool AS to_me
+    coalesce(rt.author_id = $1, false)::bool AS to_me,
+    (position('@' || (SELECT me.full_name FROM users me WHERE me.id = $1) IN m.body) > 0
+        OR position('@everyone' IN m.body) > 0)::bool AS mentions_me
 FROM chat_messages m
 JOIN chat_channels c ON c.id = m.channel_id
 LEFT JOIN stores s ON s.id = c.store_id
@@ -327,6 +365,7 @@ type ListChatActivityRow struct {
 	ChannelName  string
 	Unread       bool
 	ToMe         bool
+	MentionsMe   bool
 }
 
 // Activity, as Slack's: every message from someone else across the caller's channels, newest
@@ -365,6 +404,7 @@ func (q *Queries) ListChatActivity(ctx context.Context, arg ListChatActivityPara
 			&i.ChannelName,
 			&i.Unread,
 			&i.ToMe,
+			&i.MentionsMe,
 		); err != nil {
 			return nil, err
 		}
@@ -624,7 +664,7 @@ FROM chat_messages m
 LEFT JOIN users u ON u.id = m.author_id
 LEFT JOIN chat_messages r ON r.id = m.thread_root_id
 LEFT JOIN users ru ON ru.id = r.author_id
-WHERE m.channel_id = $1 AND (m.created_at > $2::timestamptz OR m.deleted_at > $2::timestamptz)
+WHERE m.channel_id = $1 AND (m.created_at > $2::timestamptz OR m.changed_at > $2::timestamptz)
 ORDER BY m.created_at, m.id
 LIMIT 200
 `
@@ -655,7 +695,7 @@ type ListChatMessagesSinceRow struct {
 }
 
 // What a channel gained after the phone's newest message, oldest first: a live update's fetch.
-// A message deleted since then comes again, so the phone shows it deleted.
+// A message changed since then (a reaction, an edit, a delete) comes again.
 func (q *Queries) ListChatMessagesSince(ctx context.Context, arg ListChatMessagesSinceParams) ([]ListChatMessagesSinceRow, error) {
 	rows, err := q.db.Query(ctx, listChatMessagesSince, arg.ChannelID, arg.Since)
 	if err != nil {
@@ -729,6 +769,47 @@ func (q *Queries) ListChatPhotos(ctx context.Context, messageIds []pgtype.UUID) 
 	return items, nil
 }
 
+const listChatReactions = `-- name: ListChatReactions :many
+SELECT x.message_id, x.emoji, x.user_id, coalesce(u.full_name, '')::text AS name
+FROM chat_message_reactions x
+LEFT JOIN users u ON u.id = x.user_id
+WHERE x.message_id = ANY($1::uuid[])
+ORDER BY x.message_id, x.created_at
+`
+
+type ListChatReactionsRow struct {
+	MessageID pgtype.UUID
+	Emoji     string
+	UserID    pgtype.UUID
+	Name      string
+}
+
+// The reactions of a page of messages: who, which, in order.
+func (q *Queries) ListChatReactions(ctx context.Context, messageIds []pgtype.UUID) ([]ListChatReactionsRow, error) {
+	rows, err := q.db.Query(ctx, listChatReactions, messageIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListChatReactionsRow
+	for rows.Next() {
+		var i ListChatReactionsRow
+		if err := rows.Scan(
+			&i.MessageID,
+			&i.Emoji,
+			&i.UserID,
+			&i.Name,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const markChatRead = `-- name: MarkChatRead :one
 WITH before AS (
     SELECT last_read_at FROM chat_reads WHERE user_id = $1 AND channel_id = $2
@@ -754,6 +835,21 @@ func (q *Queries) MarkChatRead(ctx context.Context, arg MarkChatReadParams) (pgt
 	return was, err
 }
 
+const removeChatReaction = `-- name: RemoveChatReaction :exec
+DELETE FROM chat_message_reactions WHERE message_id = $1 AND user_id = $2 AND emoji = $3
+`
+
+type RemoveChatReactionParams struct {
+	MessageID pgtype.UUID
+	UserID    pgtype.UUID
+	Emoji     string
+}
+
+func (q *Queries) RemoveChatReaction(ctx context.Context, arg RemoveChatReactionParams) error {
+	_, err := q.db.Exec(ctx, removeChatReaction, arg.MessageID, arg.UserID, arg.Emoji)
+	return err
+}
+
 const setChatChannelLast = `-- name: SetChatChannelLast :exec
 UPDATE chat_channels SET last_message_id = $1, last_message_at = $2
 WHERE id = $3 AND (last_message_at IS NULL OR last_message_at <= $2)
@@ -767,5 +863,14 @@ type SetChatChannelLastParams struct {
 
 func (q *Queries) SetChatChannelLast(ctx context.Context, arg SetChatChannelLastParams) error {
 	_, err := q.db.Exec(ctx, setChatChannelLast, arg.MessageID, arg.At, arg.ID)
+	return err
+}
+
+const touchChatMessage = `-- name: TouchChatMessage :exec
+UPDATE chat_messages SET changed_at = now() WHERE id = $1
+`
+
+func (q *Queries) TouchChatMessage(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, touchChatMessage, id)
 	return err
 }

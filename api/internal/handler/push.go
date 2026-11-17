@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
@@ -35,6 +36,7 @@ func registerPush(api huma.API, d Deps) {
 			}
 			return nil, d.Queries.UpsertPushSubscription(ctx, store.UpsertPushSubscriptionParams{
 				UserID: caller.UserID, Endpoint: in.Body.Endpoint, P256dh: in.Body.P256dh, Auth: in.Body.Auth, UserAgent: ua,
+				App: pgtype.Text{String: caller.App, Valid: caller.App != ""},
 			})
 		})
 

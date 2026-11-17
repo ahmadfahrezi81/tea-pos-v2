@@ -111,7 +111,7 @@ LIMIT @lim;
 
 -- name: ListChatMessagesSince :many
 -- What a channel gained after the phone's newest message, oldest first: a live update's fetch.
--- A message deleted since then comes again, so the phone shows it deleted.
+-- A message changed since then (a reaction, an edit, a delete) comes again.
 SELECT m.id, m.author_type, m.author_id, coalesce(u.full_name, '')::text AS author_name,
     coalesce(u.avatar_url, '')::text AS author_avatar, m.event_type, m.body, m.metadata, m.client_key,
     m.edited_at, m.deleted_at, m.created_at,
@@ -122,7 +122,7 @@ FROM chat_messages m
 LEFT JOIN users u ON u.id = m.author_id
 LEFT JOIN chat_messages r ON r.id = m.thread_root_id
 LEFT JOIN users ru ON ru.id = r.author_id
-WHERE m.channel_id = @channel_id AND (m.created_at > @since::timestamptz OR m.deleted_at > @since::timestamptz)
+WHERE m.channel_id = @channel_id AND (m.created_at > @since::timestamptz OR m.changed_at > @since::timestamptz)
 ORDER BY m.created_at, m.id
 LIMIT 200;
 
@@ -168,13 +168,13 @@ ORDER BY message_id, position;
 
 -- name: GetChatMessage :one
 -- One message of a channel: what a reply quotes, or what is deleted.
-SELECT m.id, m.channel_id, m.author_id, m.author_type, m.deleted_at
+SELECT m.id, m.channel_id, m.author_id, m.author_type, m.deleted_at, m.created_at, m.body
 FROM chat_messages m
 WHERE m.id = @id AND m.channel_id = @channel_id;
 
 -- name: DeleteChatMessage :exec
 -- Soft: a "deleted" line stays where it was, its text and photos no longer shown.
-UPDATE chat_messages SET deleted_at = now() WHERE id = @id AND deleted_at IS NULL;
+UPDATE chat_messages SET deleted_at = now(), changed_at = now() WHERE id = @id AND deleted_at IS NULL;
 
 -- name: ListChatActivity :many
 -- Activity, as Slack's: every message from someone else across the caller's channels, newest
@@ -184,7 +184,9 @@ SELECT m.id, m.author_type, m.author_id, coalesce(u.full_name, '')::text AS auth
     m.edited_at, m.deleted_at, m.created_at,
     c.id AS channel_id, c.kind AS channel_kind, coalesce(s.name, c.name, '')::text AS channel_name,
     (m.created_at > coalesce(cr.last_read_at, '-infinity'))::bool AS unread,
-    coalesce(rt.author_id = @user_id, false)::bool AS to_me
+    coalesce(rt.author_id = @user_id, false)::bool AS to_me,
+    (position('@' || (SELECT me.full_name FROM users me WHERE me.id = @user_id) IN m.body) > 0
+        OR position('@everyone' IN m.body) > 0)::bool AS mentions_me
 FROM chat_messages m
 JOIN chat_channels c ON c.id = m.channel_id
 LEFT JOIN stores s ON s.id = c.store_id
@@ -223,3 +225,26 @@ SELECT count(*)::int FROM (
       END
     LIMIT 100
 ) a;
+
+-- name: EditChatMessage :exec
+-- Its author's new text; edited_at shows "edited", changed_at brings it to the phones.
+UPDATE chat_messages SET body = @body, edited_at = now(), changed_at = now()
+WHERE id = @id AND deleted_at IS NULL;
+
+-- name: AddChatReaction :exec
+INSERT INTO chat_message_reactions (message_id, user_id, emoji) VALUES (@message_id, @user_id, @emoji)
+ON CONFLICT DO NOTHING;
+
+-- name: RemoveChatReaction :exec
+DELETE FROM chat_message_reactions WHERE message_id = @message_id AND user_id = @user_id AND emoji = @emoji;
+
+-- name: TouchChatMessage :exec
+UPDATE chat_messages SET changed_at = now() WHERE id = @id;
+
+-- name: ListChatReactions :many
+-- The reactions of a page of messages: who, which, in order.
+SELECT x.message_id, x.emoji, x.user_id, coalesce(u.full_name, '')::text AS name
+FROM chat_message_reactions x
+LEFT JOIN users u ON u.id = x.user_id
+WHERE x.message_id = ANY(@message_ids::uuid[])
+ORDER BY x.message_id, x.created_at;

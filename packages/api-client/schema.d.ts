@@ -275,6 +275,25 @@ export interface paths {
         delete: operations["deleteChatMessage"];
         options?: never;
         head?: never;
+        /** Edit one's own message within 15 minutes; never pushes */
+        patch: operations["editChatMessage"];
+        trace?: never;
+    };
+    "/tenants/{tenant}/chat/channels/{id}/messages/{message}/reactions/{emoji}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** React to a message with one of the six; twice is once */
+        put: operations["addChatReaction"];
+        post?: never;
+        /** Take one's reaction back */
+        delete: operations["removeChatReaction"];
+        options?: never;
+        head?: never;
         patch?: never;
         trace?: never;
     };
@@ -1323,7 +1342,11 @@ export interface components {
             event?: string;
             /** Format: uuid */
             id: string;
+            /** @description @ the caller's name, or @everyone */
+            mentionsMe?: boolean;
             photos?: components["schemas"]["ChatPhoto"][] | null;
+            /** @description Each emoji used, in the order first used */
+            reactions?: components["schemas"]["ChatReaction"][] | null;
             /** @description The message this one answers, quoted above it */
             replyTo?: components["schemas"]["ChatQuote"];
             /** @description A reply to one of the caller's messages */
@@ -1417,6 +1440,8 @@ export interface components {
             /** Format: uuid */
             id: string;
             photos?: components["schemas"]["ChatPhoto"][] | null;
+            /** @description Each emoji used, in the order first used */
+            reactions?: components["schemas"]["ChatReaction"][] | null;
             /** @description The message this one answers, quoted above it */
             replyTo?: components["schemas"]["ChatQuote"];
         };
@@ -1456,6 +1481,11 @@ export interface components {
             id: string;
             /** @description It had photos: the quote says Photo when there is no text */
             photo?: boolean;
+        };
+        ChatReaction: {
+            emoji: string;
+            mine?: boolean;
+            names: string[];
         };
         ClaimEligibleOutputBody: {
             userIds: string[];
@@ -1744,12 +1774,15 @@ export interface components {
             /** Format: int64 */
             screenWidth?: number;
         };
+        EditChatMessageInputBody: {
+            body: string;
+        };
         Error: {
             /**
              * @example day_already_closed
              * @enum {string}
              */
-            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_claim_code" | "bad_cursor" | "bad_hours" | "bad_level" | "bad_photo" | "bad_proof" | "bad_range" | "bad_receipt" | "bad_request" | "blank_message" | "blank_name" | "channel_not_found" | "channel_read_only" | "chat_too_fast" | "claim_done" | "claim_not_eligible" | "claim_not_found" | "claim_too_old" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_closed" | "day_not_found" | "day_not_in_payout" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "message_not_found" | "no_session" | "no_work_that_day" | "not_allowed" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_your_message" | "not_your_store" | "not_yourself" | "old_day_open" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_closed" | "period_not_found" | "person_not_found" | "product_changed" | "proof_required" | "request_not_found" | "route_not_found" | "session_not_found" | "session_taken" | "staff_not_found" | "store_already_opened" | "store_not_found" | "store_not_open" | "store_required" | "too_far_back" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
+            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_claim_code" | "bad_cursor" | "bad_hours" | "bad_level" | "bad_photo" | "bad_proof" | "bad_range" | "bad_receipt" | "bad_request" | "blank_message" | "blank_name" | "channel_not_found" | "channel_read_only" | "chat_too_fast" | "claim_done" | "claim_not_eligible" | "claim_not_found" | "claim_too_old" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_closed" | "day_not_found" | "day_not_in_payout" | "edit_closed" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "message_not_found" | "no_session" | "no_work_that_day" | "not_allowed" | "not_author" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_your_message" | "not_your_store" | "not_yourself" | "old_day_open" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_closed" | "period_not_found" | "person_not_found" | "product_changed" | "proof_required" | "request_not_found" | "route_not_found" | "session_not_found" | "session_taken" | "staff_not_found" | "store_already_opened" | "store_not_found" | "store_not_open" | "store_required" | "too_far_back" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
             details?: string[] | null;
             /** @example The day is already closed */
             message: string;
@@ -3192,6 +3225,107 @@ export interface operations {
                 tenant: string;
                 id: string;
                 message: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    editChatMessage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+                message: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditChatMessageInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatMessage"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    addChatReaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+                message: string;
+                emoji: "👍" | "❤️" | "😂" | "😮" | "😢" | "✅";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    removeChatReaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+                message: string;
+                emoji: "👍" | "❤️" | "😂" | "😮" | "😢" | "✅";
             };
             cookie?: never;
         };

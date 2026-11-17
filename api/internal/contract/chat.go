@@ -70,12 +70,20 @@ type ChatMessage struct {
 	Data     map[string]any `json:"data,omitempty"`
 	Body     string         `json:"body"`
 	// The phone's Idempotency-Key, so it swaps its own copy for this one.
-	ClientKey string      `json:"clientKey,omitempty"`
-	EditedAt  string      `json:"editedAt,omitempty" format:"date-time"`
-	Deleted   bool        `json:"deleted,omitempty"`
-	At        string      `json:"at" format:"date-time"`
-	Photos    []ChatPhoto `json:"photos,omitempty"`
-	ReplyTo   *ChatQuote  `json:"replyTo,omitempty" doc:"The message this one answers, quoted above it"`
+	ClientKey string         `json:"clientKey,omitempty"`
+	EditedAt  string         `json:"editedAt,omitempty" format:"date-time"`
+	Deleted   bool           `json:"deleted,omitempty"`
+	At        string         `json:"at" format:"date-time"`
+	Photos    []ChatPhoto    `json:"photos,omitempty"`
+	ReplyTo   *ChatQuote     `json:"replyTo,omitempty" doc:"The message this one answers, quoted above it"`
+	Reactions []ChatReaction `json:"reactions,omitempty" doc:"Each emoji used, in the order first used"`
+}
+
+// ChatReaction is one emoji on a message: who used it, and whether the caller did.
+type ChatReaction struct {
+	Emoji string   `json:"emoji"`
+	Mine  bool     `json:"mine,omitempty"`
+	Names []string `json:"names" nullable:"false"`
 }
 
 // ChatQuote is the message a reply answers, as its quote shows it.
@@ -140,6 +148,7 @@ type ChatActivity struct {
 	ChannelName string `json:"channelName,omitempty"`
 	Unread      bool   `json:"unread"`
 	ToMe        bool   `json:"toMe,omitempty" doc:"A reply to one of the caller's messages"`
+	MentionsMe  bool   `json:"mentionsMe,omitempty" doc:"@ the caller's name, or @everyone"`
 }
 
 type ChatMessageOutput struct {
@@ -157,4 +166,21 @@ type ReadChatInput struct {
 type ChatTypingInput struct {
 	Tenant string `path:"tenant"`
 	ID     string `path:"id" format:"uuid"`
+}
+
+type ChatReactionInput struct {
+	Tenant string `path:"tenant"`
+	ID     string `path:"id" format:"uuid"`
+	Msg    string `path:"message" format:"uuid"`
+	// The six reactions (RFC: Chat (v2)).
+	Emoji string `path:"emoji" enum:"👍,❤️,😂,😮,😢,✅"`
+}
+
+type EditChatMessageInput struct {
+	Tenant string `path:"tenant"`
+	ID     string `path:"id" format:"uuid"`
+	Msg    string `path:"message" format:"uuid"`
+	Body   struct {
+		Body string `json:"body" maxLength:"4000"`
+	}
 }
