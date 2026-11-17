@@ -72,19 +72,40 @@ function removeOnce(names: string[], name: string) {
 /** One emoji under a bubble: a tap adds or takes back mine; held, who used it. */
 function Chip({
     r,
+    onPurple,
     onToggle,
     onWho,
 }: {
     r: Reaction;
+    onPurple: boolean;
     onToggle: (emoji: string) => void;
     onWho: (r: Reaction) => void;
 }) {
     const { handlers } = useHold(() => onWho(r));
+    // Inside a bubble that has its own hold: the chip's touch is the chip's alone.
+    const own = {
+        ...handlers,
+        onPointerDown: (e: React.PointerEvent) => {
+            e.stopPropagation();
+            handlers.onPointerDown(e);
+        },
+        onContextMenu: (e: React.MouseEvent) => {
+            e.stopPropagation();
+            handlers.onContextMenu(e);
+        },
+    };
+    const look = onPurple
+        ? r.mine
+            ? "bg-white text-brand"
+            : "bg-white/20 text-white"
+        : r.mine
+          ? "bg-brand/10 text-brand ring-1 ring-brand/30"
+          : "bg-slate-100 text-gray-700";
     return (
         <button
-            {...handlers}
+            {...own}
             onClick={() => onToggle(r.emoji)}
-            className={`flex h-6 select-none items-center gap-1 rounded-full px-2 text-[13px] leading-none ring-1 [-webkit-touch-callout:none] active:opacity-70 ${r.mine ? "bg-brand/10 text-brand ring-brand/40" : "bg-white text-gray-700 ring-slate-200"}`}
+            className={`flex h-6 select-none items-center gap-1 rounded-full px-2 text-[13px] leading-none [-webkit-touch-callout:none] active:opacity-70 ${look}`}
         >
             <span>{r.emoji}</span>
             {r.names.length > 1 && (
@@ -94,22 +115,29 @@ function Chip({
     );
 }
 
-/** Under a bubble: each emoji and how many; mine lit; a tap adds or takes back mine. */
+/** Inside a bubble, under its text: each emoji and how many; mine lit; a tap adds or takes back mine. */
 export function Reactions({
     reactions,
-    mine: alignRight,
+    onPurple,
     onToggle,
 }: {
     reactions: Reaction[];
-    mine: boolean;
+    /** Inside my purple bubble. */
+    onPurple: boolean;
     onToggle: (emoji: string) => void;
 }) {
     const [who, setWho] = useState<Reaction | null>(null);
     return (
         <>
-            <span className={`-mt-0.5 flex flex-wrap gap-1 ${alignRight ? "justify-end" : ""}`}>
+            <span className="mt-1 mb-0.5 flex flex-wrap gap-1">
                 {reactions.map((r) => (
-                    <Chip key={r.emoji} r={r} onToggle={onToggle} onWho={setWho} />
+                    <Chip
+                        key={r.emoji}
+                        r={r}
+                        onPurple={onPurple}
+                        onToggle={onToggle}
+                        onWho={setWho}
+                    />
                 ))}
             </span>
             {who && (

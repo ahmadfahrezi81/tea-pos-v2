@@ -529,6 +529,10 @@ function Message({
             {!m.deleted && quote}
             {photos}
             {body || (!photos && <div className="flex justify-end pb-0.5">{stamp}</div>)}
+            {/* Reactions belong to the bubble: inside it, under the text (owner, not hanging below). */}
+            {!m.deleted && !!m.reactions?.length && (
+                <Reactions reactions={m.reactions} onPurple={mine} onToggle={(e) => onReact?.(e)} />
+            )}
         </div>
     );
     if (mine)
@@ -539,9 +543,6 @@ function Message({
                 className={`-mx-4 flex flex-col items-end gap-1 px-4 transition-colors duration-200 ${grouped ? "" : "pt-2"} ${pressing || active ? "bg-brand/10" : ""}`}
             >
                 {bubble}
-                {!m.deleted && !!m.reactions?.length && (
-                    <Reactions reactions={m.reactions} mine onToggle={(e) => onReact?.(e)} />
-                )}
                 {seen !== undefined && seen > 0 && (
                     <button onClick={onSeen} className="text-[11px] text-brand">
                         {t("chat.seenBy").replace("{n}", String(seen))}
@@ -556,16 +557,7 @@ function Message({
             className={`-mx-4 flex items-start gap-2 px-4 transition-colors duration-200 ${grouped ? "" : "pt-2"} ${pressing || active ? "bg-brand/10" : ""}`}
         >
             <span className="w-8 shrink-0">{!grouped && <Avatar url={m.avatar} size={32} />}</span>
-            <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
-                {bubble}
-                {!m.deleted && !!m.reactions?.length && (
-                    <Reactions
-                        reactions={m.reactions}
-                        mine={false}
-                        onToggle={(e) => onReact?.(e)}
-                    />
-                )}
-            </div>
+            <div className="flex min-w-0 flex-1 flex-col items-start gap-1">{bubble}</div>
         </div>
     );
 }
@@ -1119,7 +1111,11 @@ function Composer({
                                         aria-label={t("chat.send")}
                                         className="ml-auto flex size-9 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand transition-colors active:opacity-70 disabled:bg-slate-100 disabled:text-gray-400"
                                     >
-                                        <SendHorizontal size={21} strokeWidth={2.5} className="translate-x-[1.5px]" />
+                                        <SendHorizontal
+                                            size={21}
+                                            strokeWidth={2.5}
+                                            className="translate-x-[1.5px]"
+                                        />
                                     </button>
                                 </div>
                             </div>
