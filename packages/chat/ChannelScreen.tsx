@@ -383,6 +383,8 @@ function NewLine() {
  * the two curves run parallel. The corner nearest the sender is the tail.
  */
 const BUBBLE = "rounded-[10px] px-3 py-1.5";
+/** My bubbles: a light tint of the brand with black text, as WhatsApp's light green (owner). */
+const MINE = "mine bg-[color-mix(in_oklab,var(--accent-primary)_22%,white)] text-gray-900";
 const TAIL_MINE = "rounded-tr-[4px]";
 const TAIL_THEIRS = "rounded-tl-[4px]";
 /** 4 px in from the bubble's sides (12 − 8), and from its top when first (6 − 2). */
@@ -440,9 +442,7 @@ function Message({
     const ticks = mine && seen !== undefined && seen > 0;
     // As WhatsApp: name, photos, text and time in one bubble; the time sits on the text's last line.
     const stamp = (
-        <span
-            className={`flex items-center gap-0.5 text-[11px] leading-none ${mine ? "text-white/75" : "text-gray-500"}`}
-        >
+        <span className="flex items-center gap-0.5 text-[11px] leading-none text-gray-500">
             {m.editedAt && !m.deleted && <span>{t("chat.edited")}</span>}
             {time}
             {ticks && <CheckCheck size={14} strokeWidth={2.5} />}
@@ -454,9 +454,7 @@ function Message({
     const body = (m.body || m.deleted) && (
         <p className="relative text-[15px] leading-5 whitespace-pre-wrap break-words">
             {m.deleted ? (
-                <span className={`italic ${mine ? "text-white/80" : "text-gray-500"}`}>
-                    {t("chat.deleted")}
-                </span>
+                <span className="italic text-gray-500">{t("chat.deleted")}</span>
             ) : (
                 withMentions(m.body, names)
             )}
@@ -472,18 +470,14 @@ function Message({
                 e.stopPropagation();
                 onQuote(q.id);
             }}
-            className={`${INSET_X} ${mine || grouped ? `${INSET_TOP} ${mine ? TAIL_INNER_MINE : TAIL_INNER_THEIRS}` : "mt-0.5"} mb-1 flex w-[calc(100%+1rem)] min-w-40 overflow-hidden ${INNER} text-left text-[13px] leading-4 ${mine ? "bg-black/15" : "bg-slate-100"}`}
+            className={`${INSET_X} ${mine || grouped ? `${INSET_TOP} ${mine ? TAIL_INNER_MINE : TAIL_INNER_THEIRS}` : "mt-0.5"} mb-1 flex w-[calc(100%+1rem)] min-w-40 overflow-hidden ${INNER} text-left text-[13px] leading-4 ${mine ? "bg-black/5" : "bg-slate-100"}`}
         >
-            <span className={`w-1 shrink-0 ${mine ? "bg-white/80" : "bg-brand"}`} />
+            <span className="w-1 shrink-0 bg-brand" />
             <span className="min-w-0 flex-1 px-2 py-1">
-                <span
-                    className={`block truncate font-semibold ${mine ? "text-white" : "text-brand"}`}
-                >
+                <span className="block truncate font-semibold text-brand">
                     {q.author || t("chat.message")}
                 </span>
-                <span
-                    className={`line-clamp-2 ${mine ? "text-white/80" : "text-gray-600"} ${q.deleted ? "italic" : ""}`}
-                >
+                <span className={`line-clamp-2 text-gray-600 ${q.deleted ? "italic" : ""}`}>
                     {q.deleted ? t("chat.deleted") : q.body || t("chat.photo")}
                 </span>
             </span>
@@ -513,7 +507,7 @@ function Message({
         // The phone's own text menu stays off: holding a message opens ours.
         <div
             {...(m.deleted ? {} : hold)}
-            className={`max-w-[80%] select-none ${BUBBLE} text-left transition-transform duration-200 [-webkit-touch-callout:none] ${pressing ? "scale-[0.97]" : ""} ${mine ? `${TAIL_MINE} bg-brand text-white` : `${TAIL_THEIRS} bg-white text-gray-900`}`}
+            className={`max-w-[80%] select-none ${BUBBLE} text-left transition-transform duration-200 [-webkit-touch-callout:none] ${pressing ? "scale-[0.97]" : ""} ${mine ? `${TAIL_MINE} ${MINE}` : `${TAIL_THEIRS} bg-white text-gray-900`}`}
         >
             {!mine && !grouped && (
                 <p className="flex items-center gap-1.5 text-[14px] font-semibold leading-5 text-brand">
@@ -530,7 +524,7 @@ function Message({
             {body || (!photos && <div className="flex justify-end pb-0.5">{stamp}</div>)}
             {/* Reactions belong to the bubble: inside it, under the text (owner, not hanging below). */}
             {!m.deleted && !!m.reactions?.length && (
-                <Reactions reactions={m.reactions} onPurple={mine} onToggle={(e) => onReact?.(e)} />
+                <Reactions reactions={m.reactions} onTint={mine} onToggle={(e) => onReact?.(e)} />
             )}
         </div>
     );
@@ -583,7 +577,7 @@ function withMentions(text: string, names: string[]): ReactNode {
                 key={at}
                 // A mention looks as it did typed in the box: the brand colour on a light highlight.
                 // A message that opens with one: 4 px from the bubble's edge, as a photo (owner).
-                className={`rounded-sm bg-[color-mix(in_oklab,var(--accent-primary)_15%,white)] text-brand shadow-[0_0_0_2px_color-mix(in_oklab,var(--accent-primary)_15%,white)] [box-decoration-break:clone] ${at === 0 ? "-ml-1.5" : ""}`}
+                className={`rounded-sm bg-[color-mix(in_oklab,var(--accent-primary)_15%,white)] text-brand shadow-[0_0_0_2px_color-mix(in_oklab,var(--accent-primary)_15%,white)] [box-decoration-break:clone] in-[.mine]:bg-[color-mix(in_oklab,var(--accent-primary)_40%,white)] in-[.mine]:shadow-[0_0_0_2px_color-mix(in_oklab,var(--accent-primary)_40%,white)] ${at === 0 ? "-ml-1.5" : ""}`}
             >
                 @{who}
             </span>,
@@ -672,18 +666,18 @@ function Outgoing({
                 )}
                 <div
                     onClick={() => failed && setMenu(true)}
-                    className={`max-w-[80%] select-none ${BUBBLE} ${TAIL_MINE} bg-brand text-left text-white`}
+                    className={`max-w-[80%] select-none ${BUBBLE} ${TAIL_MINE} ${MINE} text-left`}
                 >
                     {q && (
                         <span
-                            className={`${INSET_X} ${INSET_TOP} ${TAIL_INNER_MINE} mb-1 flex w-[calc(100%+1rem)] min-w-40 overflow-hidden ${INNER} bg-black/15 text-left text-[13px] leading-4`}
+                            className={`${INSET_X} ${INSET_TOP} ${TAIL_INNER_MINE} mb-1 flex w-[calc(100%+1rem)] min-w-40 overflow-hidden ${INNER} bg-black/5 text-left text-[13px] leading-4`}
                         >
-                            <span className="w-1 shrink-0 bg-white/80" />
+                            <span className="w-1 shrink-0 bg-brand" />
                             <span className="min-w-0 flex-1 px-2 py-1">
-                                <span className="block truncate font-semibold text-white">
+                                <span className="block truncate font-semibold text-brand">
                                     {q.author || t("chat.message")}
                                 </span>
-                                <span className="line-clamp-2 text-white/80">
+                                <span className="line-clamp-2 text-gray-600">
                                     {q.body || t("chat.photo")}
                                 </span>
                             </span>
@@ -716,7 +710,7 @@ function Outgoing({
                         <p className="relative text-[15px] leading-5 whitespace-pre-wrap break-words">
                             {withMentions(p.body, names)}
                             <span className="inline-block" style={{ width: "4rem" }} />
-                            <span className="absolute right-0 bottom-0.5 text-[11px] leading-none text-white/75">
+                            <span className="absolute right-0 bottom-0.5 text-[11px] leading-none text-gray-500">
                                 {stamp}
                             </span>
                         </p>
