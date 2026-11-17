@@ -60,7 +60,7 @@
         "newCount": "{n} baru",
         "latest": "Pesan terbaru",
         "notSentShort": "Tidak terkirim",
-        "activityReply": "membalas kamu",
-        "activityIn": "di {name}"
+        "activityPosted": "Dikirim di {name}",
+        "activityReplied": "Membalas kamu di {name}"
     }
 }
