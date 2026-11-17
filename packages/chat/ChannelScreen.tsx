@@ -1117,9 +1117,9 @@ function Composer({
                                         onClick={submit}
                                         disabled={!ready}
                                         aria-label={t("chat.send")}
-                                        className="ml-auto -mr-1.5 flex size-10 shrink-0 items-center justify-center text-brand disabled:text-gray-300 active:opacity-60"
+                                        className="ml-auto flex size-9 shrink-0 items-center justify-center rounded-full bg-brand text-white transition-colors active:opacity-70 disabled:bg-slate-100 disabled:text-gray-400"
                                     >
-                                        <SendHorizontal size={22} />
+                                        <SendHorizontal size={18} />
                                     </button>
                                 </div>
                             </div>
