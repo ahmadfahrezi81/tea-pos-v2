@@ -403,7 +403,6 @@ function Message({
     onReact,
     onQuote,
     names,
-    myName,
     active,
     vip,
 }: {
@@ -459,7 +458,7 @@ function Message({
                     {t("chat.deleted")}
                 </span>
             ) : (
-                withMentions(m.body, names, myName, mine)
+                withMentions(m.body, names)
             )}
             <span className="inline-block" style={{ width: `${room}rem` }} />
             <span className="absolute right-0 bottom-0.5">{stamp}</span>
@@ -566,7 +565,7 @@ function Message({
  * A message's text with its @mentions lit (RFC: mentions are highlighted on the phone only):
  * `@` and a member's full name, or `@everyone`, as it looked typed in the box.
  */
-function withMentions(text: string, names: string[], myName: string, mine: boolean): ReactNode {
+function withMentions(text: string, names: string[]): ReactNode {
     const all = [...new Set([...names, "everyone"])]
         .filter(Boolean)
         .sort((a, b) => b.length - a.length);
@@ -583,7 +582,7 @@ function withMentions(text: string, names: string[], myName: string, mine: boole
             <span
                 key={at}
                 // A mention looks as it did typed in the box: the brand colour on a light highlight.
-                className={`rounded-sm [box-decoration-break:clone] ${mine ? "bg-violet-100 text-brand" : "bg-brand/15 text-brand"}`}
+                className="rounded-sm bg-[color-mix(in_oklab,var(--accent-primary)_15%,white)] text-brand shadow-[0_0_0_2px_color-mix(in_oklab,var(--accent-primary)_15%,white)] [box-decoration-break:clone]"
             >
                 @{who}
             </span>,
@@ -606,7 +605,10 @@ function litMentions(text: string, names: string[]): ReactNode {
         const at = hit.index ?? 0;
         if (at > last) out.push(text.slice(last, at));
         out.push(
-            <span key={at} className="rounded-sm bg-brand/15 text-brand">
+            <span
+                key={at}
+                className="rounded-sm bg-[color-mix(in_oklab,var(--accent-primary)_15%,white)] text-brand shadow-[0_0_0_2px_color-mix(in_oklab,var(--accent-primary)_15%,white)]"
+            >
                 {hit[0]}
             </span>,
         );
@@ -632,7 +634,6 @@ function Outgoing({
     slug,
     grouped,
     names,
-    myName,
 }: {
     p: Pending;
     slug: string;
@@ -712,7 +713,7 @@ function Outgoing({
                     )}
                     {p.body && (
                         <p className="relative text-[15px] leading-5 whitespace-pre-wrap break-words">
-                            {withMentions(p.body, names, myName, true)}
+                            {withMentions(p.body, names)}
                             <span className="inline-block" style={{ width: "4rem" }} />
                             <span className="absolute right-0 bottom-0.5 text-[11px] leading-none text-white/75">
                                 {stamp}
