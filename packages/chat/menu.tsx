@@ -18,6 +18,7 @@ import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react"
 
 import { threadKey, type ChatMessage, type Thread } from "./queries";
 import { EMOJI } from "./labels";
+import { withMentions } from "./mentions";
 
 /** How long a finger rests on a message before its menu opens. */
 const HOLD_MS = 450;
@@ -89,9 +90,12 @@ export function MessageMenu({
     onReact,
     onSeen,
     onClose,
+    names,
 }: {
     m: ChatMessage;
     channelId: string;
+    /** The channel's people: their @mentions lit in the preview, as in the bubble. */
+    names: string[];
     canReply: boolean;
     canDelete: boolean;
     /** Mine, with text, sent less than 15 minutes ago. */
@@ -247,7 +251,7 @@ export function MessageMenu({
                         )}
                         {m.body && (
                             <p className="line-clamp-3 px-1.5 py-0.5 text-[15px] text-gray-700 whitespace-pre-wrap break-words">
-                                {m.body}
+                                {withMentions(m.body, names)}
                             </p>
                         )}
                     </div>
