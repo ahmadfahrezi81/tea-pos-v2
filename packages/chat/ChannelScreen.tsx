@@ -202,7 +202,6 @@ function Channel({ channelId }: { channelId: string }) {
                         seen={m.id === lastMine?.id ? seenCount(others, m) : undefined}
                         onSeen={() => setSeenOf(m)}
                         names={channel.members.map((x) => x.name)}
-                        myName={myName}
                         onHold={() => {
                             setMenuOf(m);
                             setEditable(Date.now() - Date.parse(m.at) < EDIT_MS);
@@ -240,7 +239,6 @@ function Channel({ channelId }: { channelId: string }) {
                         slug={slug}
                         grouped={grouped}
                         names={channel.members.map((x) => x.name)}
-                        myName={myName}
                     />
                 );
             })}
@@ -402,7 +400,7 @@ function NewLine() {
  * the two curves run parallel. The corner nearest the sender is the tail.
  */
 const BUBBLE = "rounded-[10px] px-3 py-1.5";
-/** My bubbles: WhatsApp's own light green (#d9fdd3) with black text (owner). */
+/** My bubbles: WhatsApp's light green with black text. */
 const MINE = "mine bg-[#d9fdd3] text-gray-900";
 const TAIL_MINE = "rounded-tr-[4px]";
 const TAIL_THEIRS = "rounded-tl-[4px]";
@@ -438,7 +436,6 @@ function Message({
     onReact?: (emoji: string) => void;
     /** The channel's people, for their @mentions; mine is lit. */
     names: string[];
-    myName: string;
     /** Its quote tapped: to the message it answers. */
     onQuote: (id: string) => void;
     /** Its menu is open: the row stays lit. */
@@ -541,7 +538,7 @@ function Message({
             {!m.deleted && quote}
             {photos}
             {body || (!photos && <div className="flex justify-end pb-0.5">{stamp}</div>)}
-            {/* Reactions belong to the bubble: inside it, under the text (owner, not hanging below). */}
+            {/* Reactions belong to the bubble: inside it, under the text. */}
             {!m.deleted && !!m.reactions?.length && (
                 <Reactions reactions={m.reactions} onTint={mine} onToggle={(e) => onReact?.(e)} />
             )}
@@ -594,32 +591,10 @@ function withMentions(text: string, names: string[]): ReactNode {
         out.push(
             <span
                 key={at}
-                // As WhatsApp: a mention is the name in the brand green, no pill (owner).
+                // As WhatsApp: a mention is the name in the brand green.
                 className="text-brand"
             >
                 @{who}
-            </span>,
-        );
-        last = at + hit[0].length;
-    }
-    if (last < text.length) out.push(text.slice(last));
-    return out;
-}
-
-/** The box's text with each @name in the brand green, as it shows once sent; letters unmoved. */
-function litMentions(text: string, names: string[]): ReactNode {
-    const all = [...new Set(names)].filter(Boolean).sort((a, b) => b.length - a.length);
-    if (!text.includes("@") || all.length === 0) return text;
-    const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const re = new RegExp(`@(${all.map(escape).join("|")})`, "g");
-    const out: ReactNode[] = [];
-    let last = 0;
-    for (const hit of text.matchAll(re)) {
-        const at = hit.index ?? 0;
-        if (at > last) out.push(text.slice(last, at));
-        out.push(
-            <span key={at} className="text-brand">
-                {hit[0]}
             </span>,
         );
         last = at + hit[0].length;
@@ -649,7 +624,6 @@ function Outgoing({
     slug: string;
     grouped: boolean;
     names: string[];
-    myName: string;
 }) {
     const t = useT();
     const locale = useLocale();
@@ -1045,10 +1019,10 @@ function Composer({
                                         aria-hidden
                                         className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words px-1 py-2.5 text-[16px] leading-5 text-gray-900"
                                     >
-                                        {litMentions(text, [
-                                            ...members.map((x) => x.name),
-                                            ...(canEveryone ? ["everyone"] : []),
-                                        ])}
+                                        {withMentions(
+                                            text,
+                                            members.map((x) => x.name),
+                                        )}
                                         {"\u200b"}
                                     </div>
                                     <textarea

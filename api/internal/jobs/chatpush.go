@@ -20,9 +20,8 @@ import (
 const chatPushRounds = 5
 
 // ChatPushArgs pushes a channel's newest message to whoever has not read it (RFC: Chat (v2)).
-// Queued with each message and run at once: a job waiting to merge a burst was picked up only
-// by the worker's once-a-minute poll, so pushes came up to a minute late (task 068c). While one
-// waits or runs, another message's job is the same job; finished ones do not count.
+// Queued with each message and run at once (a scheduled job waits for the worker's minute
+// poll). While one waits or runs, another message's job is the same job.
 type ChatPushArgs struct {
 	ChannelID string `json:"channel_id" river:"unique"`
 }

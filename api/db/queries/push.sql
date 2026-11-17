@@ -30,8 +30,8 @@ LIMIT 1;
 
 -- name: ChatPushTargets :many
 -- Who a channel's newest message is pushed to: its members but the author, who want it (their
--- level) and have not read it yet, with each of their phones (one app per phone). Even with the
--- app open (owner, 2026-11-17): a "reading it now" rule hid replies after one's own message.
+-- level) and have not read it yet, with each of their phones (one app per phone), even with
+-- the app open.
 SELECT u.id AS user_id, u.preferred_language, ps.endpoint, ps.p256dh, ps.auth
 FROM chat_channels c
 JOIN tenants t ON t.id = c.tenant_id

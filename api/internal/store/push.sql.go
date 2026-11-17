@@ -60,8 +60,8 @@ type ChatPushTargetsRow struct {
 }
 
 // Who a channel's newest message is pushed to: its members but the author, who want it (their
-// level) and have not read it yet, with each of their phones (one app per phone). Even with the
-// app open (owner, 2026-11-17): a "reading it now" rule hid replies after one's own message.
+// level) and have not read it yet, with each of their phones (one app per phone), even with
+// the app open.
 func (q *Queries) ChatPushTargets(ctx context.Context, arg ChatPushTargetsParams) ([]ChatPushTargetsRow, error) {
 	rows, err := q.db.Query(ctx, chatPushTargets,
 		arg.ChannelID,
