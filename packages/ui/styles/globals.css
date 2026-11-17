@@ -81,9 +81,9 @@ body {
     --color-brand: var(--accent-primary);
 }
 
-/* Chat is its own app inside seller and backoffice: its own colour, violet. */
+/* Chat is its own app inside seller and backoffice: its own colour, WhatsApp's green (owner, 2026-11-17). */
 .chat {
-    --accent-primary: oklch(0.541 0.281 293.009);
+    --accent-primary: #00a884;
 }
 
 :root {

@@ -594,9 +594,8 @@ function withMentions(text: string, names: string[]): ReactNode {
         out.push(
             <span
                 key={at}
-                // A mention looks as it did typed in the box: the brand colour on a light highlight.
-                // A message that opens with one: 4 px from the bubble's edge, as a photo (owner).
-                className={`rounded-sm bg-[color-mix(in_oklab,var(--accent-primary)_15%,white)] text-brand shadow-[0_0_0_2px_color-mix(in_oklab,var(--accent-primary)_15%,white)] [box-decoration-break:clone] in-[.mine]:bg-[#b9ecb0] in-[.mine]:text-[#1f5f2a] in-[.mine]:shadow-[0_0_0_2px_#b9ecb0] ${at === 0 ? "-ml-1.5" : ""}`}
+                // As WhatsApp: a mention is the name in the brand green, no pill (owner).
+                className="text-brand"
             >
                 @{who}
             </span>,
@@ -607,7 +606,7 @@ function withMentions(text: string, names: string[]): ReactNode {
     return out;
 }
 
-/** The box's text with each @name in the brand colour on a light highlight, letters unmoved. */
+/** The box's text with each @name in the brand green, as it shows once sent; letters unmoved. */
 function litMentions(text: string, names: string[]): ReactNode {
     const all = [...new Set(names)].filter(Boolean).sort((a, b) => b.length - a.length);
     if (!text.includes("@") || all.length === 0) return text;
@@ -619,10 +618,7 @@ function litMentions(text: string, names: string[]): ReactNode {
         const at = hit.index ?? 0;
         if (at > last) out.push(text.slice(last, at));
         out.push(
-            <span
-                key={at}
-                className="rounded-sm bg-[color-mix(in_oklab,var(--accent-primary)_15%,white)] text-brand shadow-[0_0_0_2px_color-mix(in_oklab,var(--accent-primary)_15%,white)]"
-            >
+            <span key={at} className="text-brand">
                 {hit[0]}
             </span>,
         );
@@ -915,7 +911,7 @@ function Composer({
     return (
         <FooterSlot>
             {/* The page's colour behind the corners (the typing banner's while it shows): the footer under it is white. */}
-            <div className="chat relative bg-slate-200 has-[[data-typing]]:bg-violet-100 [&:has([data-typing])_[data-down]]:mb-12">
+            <div className="chat relative bg-slate-200 has-[[data-typing]]:bg-[#d9fdd3] [&:has([data-typing])_[data-down]]:mb-12">
                 <Typing channelId={channelId} members={members} />
                 {/* Names for an @, in a card above the bar (owner: not inside it). */}
                 {suggestions.length > 0 && (
@@ -1285,7 +1281,7 @@ function Typing({ channelId, members }: { channelId: string; members: Member[] }
         <div
             role="status"
             data-typing
-            className="absolute inset-x-0 bottom-full flex animate-fade-in items-center justify-center gap-2 bg-violet-100 px-4 py-1.5 text-sm font-semibold text-violet-900"
+            className="absolute inset-x-0 bottom-full flex animate-fade-in items-center justify-center gap-2 bg-[#d9fdd3] px-4 py-1.5 text-sm font-semibold text-[#0b5e48]"
         >
             <PenLine size={15} strokeWidth={2.5} className="animate-write" aria-hidden />
             {text}
