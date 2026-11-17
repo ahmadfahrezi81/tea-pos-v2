@@ -66,3 +66,4 @@ Score each 1-5 (5 = feels like WhatsApp), with a note when it is not 5.
 1. **Mentions bold, in the darker green** (as the author's name): bold in bubbles; in the box a thin stroke instead of weight, so no letter moves from the caret
 2. **The wallpaper too sparse** ("one image floating" while scrolling): a denser one was 17 KB, so the owner dropped the wallpaper; the plain background stays
 3. **The green darker and calmer:** `#2b6a56` (a forest green, less saturated) in place of `#008069`
+4. **Everything on the left, every bubble white** (owner: a lot of automated and long content to come, Slack's way): each person's photo and name start their run, mine too; a bubble is as wide as its content, up to the whole row; mine are told by my name, not a side or a colour. Nothing to tune in a bubble colour any more
