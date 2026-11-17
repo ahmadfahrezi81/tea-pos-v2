@@ -582,7 +582,8 @@ function withMentions(text: string, names: string[]): ReactNode {
             <span
                 key={at}
                 // A mention looks as it did typed in the box: the brand colour on a light highlight.
-                className="rounded-sm bg-[color-mix(in_oklab,var(--accent-primary)_15%,white)] text-brand shadow-[0_0_0_2px_color-mix(in_oklab,var(--accent-primary)_15%,white)] [box-decoration-break:clone]"
+                // A message that opens with one: 4 px from the bubble's edge, as a photo (owner).
+                className={`rounded-sm bg-[color-mix(in_oklab,var(--accent-primary)_15%,white)] text-brand shadow-[0_0_0_2px_color-mix(in_oklab,var(--accent-primary)_15%,white)] [box-decoration-break:clone] ${at === 0 ? "-ml-1.5" : ""}`}
             >
                 @{who}
             </span>,
