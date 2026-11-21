@@ -1,6 +1,13 @@
 # Task 074 — Chat: what chat says by itself
 
-**Status: planned 2026-11-21, contents agreed with the owner. Before chat's production release, after Steps 70 and 76.**
+**Status: built 2026-11-21 on `feat/chat-events` (with Step 75; on top of Steps 70 and 76), not pushed. Integration tests pass: each event once in its channel, the jobs twice post once, a payout seen only by the person and VIP, the pay total only in VIP, rain said once each way. Not tried in a browser (staging lacks the tables until merge).**
+
+**Decided while building (owner to check):**
+- The payout's transfer screenshot is not in the message: its link opens the payslip, which shows it.
+- Rain: a store is open while today's day is not closed; a store with no place yet uses the v1 point's forecast (most have none).
+- The pay total adds up the period as its Pay page does: everyone it pays, paid yet or not.
+- The release post runs as the worker starts and daily at 09:00, so a missed start catches up.
+- The push says the event in the reader's language (`chatevent.Text`, Go's copy of the phone's words).
 
 ## The goal
 

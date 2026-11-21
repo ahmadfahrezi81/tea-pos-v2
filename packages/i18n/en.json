@@ -111,6 +111,7 @@
         "account": "Account",
         "add": "Add",
         "edit": "Edit",
+        "share": "Share",
         "moreActions": "More actions",
         "maintenance": "Under Maintenance",
         "maintenanceSub": "We're making some updates to improve your experience. We'll be back shortly.",
@@ -239,7 +240,8 @@
         "session_not_found": "That session has already ended.",
         "bad_hours": "A store has to open before it closes.",
         "too_far_back": "That date is too far back.",
-        "blank_group_name": "Give the group a name."
+        "blank_group_name": "Give the group a name.",
+        "link_not_found": "That screen was not found"
     },
     "store": {
         "week": "Week",

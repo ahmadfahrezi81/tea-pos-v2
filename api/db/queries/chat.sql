@@ -182,9 +182,9 @@ LIMIT 200;
 
 -- name: InsertChatMessage :one
 -- A person's message; a repeat of the same client_key returns the first one, saved once.
--- thread_root_id is the message it replies to (shown quoted above it).
-INSERT INTO chat_messages (tenant_id, channel_id, author_type, author_id, body, client_key, thread_root_id)
-VALUES (@tenant_id, @channel_id, 'user', @author_id, @body, @client_key, sqlc.narg(reply_to)::uuid)
+-- thread_root_id is the message it replies to (shown quoted above it); metadata holds a shared screen.
+INSERT INTO chat_messages (tenant_id, channel_id, author_type, author_id, body, client_key, thread_root_id, metadata)
+VALUES (@tenant_id, @channel_id, 'user', @author_id, @body, @client_key, sqlc.narg(reply_to)::uuid, @metadata)
 ON CONFLICT (author_id, client_key) WHERE client_key IS NOT NULL DO UPDATE SET client_key = excluded.client_key
 RETURNING id, created_at;
 

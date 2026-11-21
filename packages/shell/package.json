@@ -5,6 +5,7 @@
     "exports": {
         "./AccountScreen": "./screens/AccountScreen.tsx",
         "./app": "./session/app.tsx",
+        "./AppContext": "./session/AppContext.tsx",
         "./ComingSoonScreen": "./screens/ComingSoonScreen.tsx",
         "./DayActivity": "./views/DayActivity.tsx",
         "./DayCard": "./views/DayCard.tsx",

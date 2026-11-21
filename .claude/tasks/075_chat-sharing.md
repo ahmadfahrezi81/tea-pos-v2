@@ -1,6 +1,11 @@
 # Task 075 — Chat: sharing, backoffice first
 
-**Status: planned 2026-11-21, waiting on the owner's review. Before chat's production release.**
+**Status: built 2026-11-21 on `feat/chat-events` with Step 74, not pushed (owner, 2026-11-21: "build it"). Integration test passes: another tenant's day and a share from the seller app are refused; the seller app gets the chip. Not tried in a browser.**
+
+**Decided while building (owner to check):**
+- A pay period's Share is on the Pay tab (a period is the tab with `?period=`); a payout's on its payslip; a day's on its day screen.
+- Only the backoffice may share and open links for now; the seller app shows "Opens in the backoffice". What's new opens in both.
+- A pay period shared by any of its days is stored by its first day.
 
 ## The goal
 

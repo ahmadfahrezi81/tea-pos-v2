@@ -1,3 +1,4 @@
+import { ShareAction } from "@tea-pos/chat/ShareAction";
 import type { components } from "@tea-pos/api-client";
 import { formatCalendarDay, formatMoney, localDate } from "@tea-pos/format";
 import { useLocale, useT } from "@tea-pos/i18n/react";
@@ -111,6 +112,7 @@ export function PeriodHome({ start }: { start: string }) {
 
     return (
         <div className="space-y-4">
+            <ShareAction link={{ kind: "pay_period", id: p.start }} />
             <div
                 ref={card}
                 onPointerDown={swipe.start}

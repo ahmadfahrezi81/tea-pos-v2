@@ -304,8 +304,8 @@ func (q *Queries) GetChatMessage(ctx context.Context, arg GetChatMessageParams) 
 }
 
 const insertChatMessage = `-- name: InsertChatMessage :one
-INSERT INTO chat_messages (tenant_id, channel_id, author_type, author_id, body, client_key, thread_root_id)
-VALUES ($1, $2, 'user', $3, $4, $5, $6::uuid)
+INSERT INTO chat_messages (tenant_id, channel_id, author_type, author_id, body, client_key, thread_root_id, metadata)
+VALUES ($1, $2, 'user', $3, $4, $5, $6::uuid, $7)
 ON CONFLICT (author_id, client_key) WHERE client_key IS NOT NULL DO UPDATE SET client_key = excluded.client_key
 RETURNING id, created_at
 `
@@ -317,6 +317,7 @@ type InsertChatMessageParams struct {
 	Body      string
 	ClientKey pgtype.Text
 	ReplyTo   pgtype.UUID
+	Metadata  []byte
 }
 
 type InsertChatMessageRow struct {
@@ -325,7 +326,7 @@ type InsertChatMessageRow struct {
 }
 
 // A person's message; a repeat of the same client_key returns the first one, saved once.
-// thread_root_id is the message it replies to (shown quoted above it).
+// thread_root_id is the message it replies to (shown quoted above it); metadata holds a shared screen.
 func (q *Queries) InsertChatMessage(ctx context.Context, arg InsertChatMessageParams) (InsertChatMessageRow, error) {
 	row := q.db.QueryRow(ctx, insertChatMessage,
 		arg.TenantID,
@@ -334,6 +335,7 @@ func (q *Queries) InsertChatMessage(ctx context.Context, arg InsertChatMessagePa
 		arg.Body,
 		arg.ClientKey,
 		arg.ReplyTo,
+		arg.Metadata,
 	)
 	var i InsertChatMessageRow
 	err := row.Scan(&i.ID, &i.CreatedAt)

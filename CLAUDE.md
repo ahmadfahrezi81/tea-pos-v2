@@ -51,6 +51,7 @@ api/                 Go module: one backend for every app
   internal/jobs      River (the queue in Postgres, schema river): job kinds, v2's cron, Insert inside the change's transaction
   internal/weather   Tomorrow.io per weather cell (stores grouped by area), for the worker
   internal/realtime  Announce (NOTIFY after commit) and the WebSocket hub cmd/realtime serves at /realtime
+  internal/chatevent what chat says by itself: Post (in the change's transaction), the worker's events, links between the apps
   internal/files     signed Storage addresses: phones upload photos straight to Supabase
   internal/idem      writes saved once per Idempotency-Key, in the write's own transaction
   internal/page      cursor paging (time, id) and since, for every list

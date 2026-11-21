@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/chatevent"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/files"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/httpx"
@@ -145,6 +146,9 @@ func registerChat(api huma.API, d Deps) {
 				for i, r := range rows {
 					out.Body.Items[i] = chatMessage(store.ListChatMessagesRow(r))
 				}
+				if err := resolveLinks(ctx, d.Queries, caller, out.Body.Items); err != nil {
+					return nil, err
+				}
 				return out, attachExtras(ctx, d, out.Body.Items, caller.UserID)
 			}
 			cursor, err := page.Decode(in.Cursor)
@@ -161,6 +165,9 @@ func registerChat(api huma.API, d Deps) {
 			out.Body = page.Map(page.Rows(rows, in.Limit, func(r store.ListChatMessagesRow) page.Cursor {
 				return page.Cursor{At: r.CreatedAt.Time, ID: r.ID}
 			}), chatMessage)
+			if err := resolveLinks(ctx, d.Queries, caller, out.Body.Items); err != nil {
+				return nil, err
+			}
 			return out, attachExtras(ctx, d, out.Body.Items, caller.UserID)
 		})
 
@@ -174,7 +181,7 @@ func registerChat(api huma.API, d Deps) {
 				return nil, errChatTooFast
 			}
 			body := strings.TrimSpace(in.Body.Body)
-			if body == "" && len(in.Body.Photos) == 0 {
+			if body == "" && len(in.Body.Photos) == 0 && in.Body.Link == nil {
 				return nil, errBlankMessage
 			}
 			// Only photos uploaded into this tenant's own folder.
@@ -192,6 +199,18 @@ func registerChat(api huma.API, d Deps) {
 			if readOnly(ch.Kind, ch.StoreStatus, ch.Archived) {
 				return nil, errChannelReadOnly
 			}
+			var link *chatevent.Link
+			if in.Body.Link != nil {
+				l, err := sharedLink(ctx, q, caller, in.Body.Link)
+				if err != nil {
+					return nil, err
+				}
+				link = &l
+			}
+			meta, err := linkMetadata(link)
+			if err != nil {
+				return nil, err
+			}
 			// A reply answers a message of this same channel, never one elsewhere.
 			var replyTo pgtype.UUID
 			if in.Body.ReplyTo != "" {
@@ -203,7 +222,7 @@ func registerChat(api huma.API, d Deps) {
 			}
 			row, err := q.InsertChatMessage(ctx, store.InsertChatMessageParams{
 				TenantID: caller.TenantID, ChannelID: ch.ID, AuthorID: caller.UserID, Body: body,
-				ClientKey: pgtype.Text{String: in.Key, Valid: in.Key != ""}, ReplyTo: replyTo,
+				ClientKey: pgtype.Text{String: in.Key, Valid: in.Key != ""}, ReplyTo: replyTo, Metadata: meta,
 			})
 			if err != nil {
 				return nil, err
@@ -259,7 +278,13 @@ func registerChat(api huma.API, d Deps) {
 				// The phone fetches the quote with the page; its own copy already shows it.
 				out.Body.ReplyTo = &contract.ChatQuote{ID: replyTo.String()}
 			}
+			if link != nil {
+				out.Body.Link = &contract.ChatLink{Kind: link.Kind, ID: link.ID}
+			}
 			items := []contract.ChatMessage{out.Body}
+			if err := resolveLinks(ctx, q, caller, items); err != nil {
+				return nil, err
+			}
 			if len(in.Body.Photos) > 0 {
 				photos := make([]store.ChatMessagePhoto, len(in.Body.Photos))
 				for i, p := range in.Body.Photos {
@@ -605,6 +630,7 @@ func chatMessage(r store.ListChatMessagesRow) contract.ChatMessage {
 	if r.AuthorType == "system" {
 		m.Event, m.Data = r.EventType.String, data(r.Metadata)
 	}
+	m.Link = linkOf(r.Metadata)
 	if r.ClientKey.Valid {
 		m.ClientKey = r.ClientKey.String
 	}
@@ -615,7 +641,7 @@ func chatMessage(r store.ListChatMessagesRow) contract.ChatMessage {
 		}
 	}
 	if r.DeletedAt.Valid {
-		m.Deleted, m.Body, m.ReplyTo = true, "", nil
+		m.Deleted, m.Body, m.ReplyTo, m.Link = true, "", nil, nil
 	}
 	return m
 }

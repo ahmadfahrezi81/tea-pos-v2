@@ -1,6 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useT } from "@tea-pos/i18n/react";
-import { CirclePlus, MoreHorizontal, Pencil, type LucideIcon } from "lucide-react";
+import { CirclePlus, MoreHorizontal, Pencil, Share2, type LucideIcon } from "lucide-react";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
@@ -42,6 +42,7 @@ export function HeaderTitle({ children, onClick }: { children: ReactNode; onClic
 const KINDS = {
     add: { icon: CirclePlus, labelKey: "shell.add", writes: true },
     edit: { icon: Pencil, labelKey: "shell.edit", writes: true },
+    share: { icon: Share2, labelKey: "shell.share", writes: false },
 } satisfies Record<string, { icon: LucideIcon; labelKey: MessageKey; writes: boolean }>;
 
 export type HeaderAction = {
