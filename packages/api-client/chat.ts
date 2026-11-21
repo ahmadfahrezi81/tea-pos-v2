@@ -41,9 +41,14 @@ export function useAppBadge(count: number) {
 export const pushSupported = () =>
     "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 
+/** The app's service worker, or none (the dev server has none): never waits for one. */
+async function worker() {
+    return (await navigator.serviceWorker.getRegistration()) ?? null;
+}
+
 async function subscription(): Promise<PushSubscription | null> {
-    const reg = await navigator.serviceWorker.ready;
-    return reg.pushManager.getSubscription();
+    const reg = await worker();
+    return reg ? reg.pushManager.getSubscription() : null;
 }
 
 /** The server's VAPID key, as the Push API wants it. Empty: push is off on this server. */
@@ -73,9 +78,18 @@ export async function pushOn(): Promise<boolean> {
     return !!(await subscription());
 }
 
+export type PushState = "on" | "off" | "blocked" | "unsupported";
+
+/** This phone's notifications, for the Chats card and Account → Notifications. */
+export async function pushState(): Promise<PushState> {
+    if (!pushSupported() || !(await worker())) return "unsupported";
+    if (Notification.permission === "denied") return "blocked";
+    return (await pushOn()) ? "on" : "off";
+}
+
 /** Asks the phone (it must be a tap: browsers allow the question only then) and subscribes. */
 export async function turnPushOn(): Promise<boolean> {
-    if (!pushSupported()) return false;
+    if (!pushSupported() || !(await worker())) return false;
     if ((await Notification.requestPermission()) !== "granted") return false;
     const key = await serverKey();
     if (!key) return false;

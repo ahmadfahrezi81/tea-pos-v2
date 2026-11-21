@@ -1,7 +1,7 @@
 import {
-    pushOn,
-    pushSupported,
+    pushState,
     turnPushOn,
+    type PushState,
     useChatChannels,
     type ChatChannel,
 } from "@tea-pos/api-client/chat";
@@ -110,15 +110,12 @@ function Channels({ search }: { search: string }) {
  */
 function PushCard() {
     const t = useT();
-    const [state, setState] = useState<"on" | "off" | "blocked" | null>(null);
+    const [state, setState] = useState<PushState | null>(null);
     const [busy, setBusy] = useState(false);
     useEffect(() => {
-        if (!pushSupported()) return;
-        void pushOn().then((on) =>
-            setState(on ? "on" : Notification.permission === "denied" ? "blocked" : "off"),
-        );
+        void pushState().then(setState);
     }, []);
-    if (state === null || state === "on") return null;
+    if (state !== "off" && state !== "blocked") return null;
     return (
         <div className="mt-3 flex items-start gap-3 rounded-2xl bg-white p-4">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
@@ -137,16 +134,9 @@ function PushCard() {
                         onClick={() => {
                             setBusy(true);
                             void turnPushOn()
-                                .then((on) =>
-                                    setState(
-                                        on
-                                            ? "on"
-                                            : Notification.permission === "denied"
-                                              ? "blocked"
-                                              : "off",
-                                    ),
-                                )
-                                .catch(() => setState("off"))
+                                .catch(() => {})
+                                .then(pushState)
+                                .then(setState)
                                 .finally(() => setBusy(false));
                         }}
                         className="mt-3 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white active:opacity-80 disabled:opacity-50"
