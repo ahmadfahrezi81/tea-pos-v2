@@ -93,6 +93,14 @@ func (f *Fetcher) fetchCell(ctx context.Context, cell string) error {
 		return err
 	}
 	v1 := cell == domain.Cell(v1Lat, v1Lng)
+	// The hour now comes twice, as the reading and as its forecast; v1's table has no guard, so
+	// it takes only the reading, as v1's own realtime call did (task 076).
+	var observed time.Time
+	for _, h := range hours {
+		if h.Observed {
+			observed = h.Time.Truncate(time.Hour)
+		}
+	}
 	for _, h := range hours {
 		t := h.Time.In(domain.WIB)
 		date := pgtype.Date{Time: time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC), Valid: true}
@@ -103,7 +111,7 @@ func (f *Fetcher) fetchCell(ctx context.Context, cell string) error {
 		}); err != nil {
 			return err
 		}
-		if v1 {
+		if v1 && (h.Observed || !h.Time.Truncate(time.Hour).Equal(observed)) {
 			if err := f.Queries.UpsertWeatherHourlyV1(ctx, store.UpsertWeatherHourlyV1Params{
 				Date: date, Hour: int16(t.Hour()), Temperature: temp, PrecipitationProbability: rain,
 				WeatherCode: h.Code, Lat: v1Lat, Lng: v1Lng, City: v1City, Region: v1Region,
