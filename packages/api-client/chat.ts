@@ -18,9 +18,9 @@ export function useChatChannels(tenant: string, enabled = true) {
     );
 }
 
-/** Unread across every channel, as the tab and the app icon show it. */
+/** Unread across the caller's channels (not a chat admin's Other ones), as the tab and the app icon show it. */
 export function unreadTotal(channels: readonly ChatChannel[] | undefined): number {
-    return (channels ?? []).reduce((n, c) => n + c.unread, 0);
+    return (channels ?? []).reduce((n, c) => n + (c.mine ? c.unread : 0), 0);
 }
 
 /** The unread count on the app's icon (Android, and an iPhone with notifications allowed). */

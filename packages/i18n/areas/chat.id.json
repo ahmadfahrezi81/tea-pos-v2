@@ -69,6 +69,20 @@
         "pushTitle": "Nyalakan notifikasi",
         "pushBody": "Supaya tidak ada pesan yang terlewat, walau aplikasi ditutup.",
         "pushBlocked": "Notifikasi diblokir. Izinkan untuk aplikasi ini di pengaturan HP kamu.",
-        "pushTurnOn": "Nyalakan"
+        "pushTurnOn": "Nyalakan",
+        "newGroup": "Grup baru",
+        "groupName": "Nama grup",
+        "createGroup": "Buat grup",
+        "otherChannels": "Chat lain",
+        "follow": "Ikuti",
+        "unfollow": "Berhenti ikuti",
+        "archived": "Diarsipkan",
+        "archivedGroup": "Diarsipkan: hanya baca",
+        "archive": "Arsipkan grup",
+        "unarchive": "Buka arsip grup",
+        "rename": "Ganti nama",
+        "editMembers": "Anggota",
+        "save": "Simpan",
+        "searchPeople": "Cari orang..."
     }
 }

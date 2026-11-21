@@ -94,6 +94,9 @@
         "logoutEverywhere": "Logout di semua device",
         "sessionEnded": "{device} sudah logout.",
         "vip": "VIP",
-        "chatVipHint": "Lencana VIP dan chat VIP"
+        "chatVipHint": "Lencana VIP dan chat VIP",
+        "groupChats": "Grup chat",
+        "noGroupChats": "Tidak ada grup chat",
+        "archived": "Diarsipkan"
     }
 }

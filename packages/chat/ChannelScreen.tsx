@@ -888,7 +888,13 @@ function Composer({
                 <div className="overflow-hidden rounded-t-xl bg-white px-3 py-2">
                     {readOnly ? (
                         <p className="py-2 text-center text-sm text-gray-500">
-                            {t(kind === "personal" ? "chat.readOnly" : "chat.storeClosed")}
+                            {t(
+                                kind === "personal"
+                                    ? "chat.readOnly"
+                                    : kind === "group"
+                                      ? "chat.archivedGroup"
+                                      : "chat.storeClosed",
+                            )}
                         </p>
                     ) : (
                         <>

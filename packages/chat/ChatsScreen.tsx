@@ -12,11 +12,13 @@ import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { Segmented } from "@tea-pos/ui/form/Segmented";
 import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
 import { SearchBox } from "@tea-pos/ui/SearchBox";
+import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 import { useNavigate } from "@tanstack/react-router";
-import { Bell, Lock, MessagesSquare, Search } from "lucide-react";
+import { Bell, Lock, MessagesSquare, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ActivityList, useActivityUnread } from "./ActivityList";
+import { NewGroupSheet, useChatAdmin, useFollow } from "./groups";
 import { channelName, KIND_ICON, listTime } from "./labels";
 import { useTyping } from "./typing";
 
@@ -69,10 +71,15 @@ function Chats() {
     );
 }
 
-/** Messages: every channel but Notifications, which belongs to Activity. */
+/**
+ * Messages: every channel but Notifications, which belongs to Activity. A chat admin also sees
+ * Other channels (RFC screen 1): not theirs, opened to read, followed to be told.
+ */
 function Channels({ search }: { search: string }) {
     const t = useT();
     const slug = useSlug();
+    const admin = useChatAdmin();
+    const [making, setMaking] = useState(false);
     const { data } = useChatChannels(slug, true);
     if (!data)
         return (
@@ -82,10 +89,19 @@ function Channels({ search }: { search: string }) {
                 ))}
             </ListCard>
         );
-    const channels = data.channels
+    const shown = data.channels
         .filter((c) => c.kind !== "personal")
         .filter((c) => !search || channelName(c, t).toLowerCase().includes(search));
-    if (channels.length === 0)
+    const mine = shown.filter((c) => c.mine);
+    // Other channels: stores' first, then groups, by name.
+    const other = shown
+        .filter((c) => !c.mine)
+        .sort(
+            (a, b) =>
+                a.kind.localeCompare(b.kind) * -1 ||
+                channelName(a, t).localeCompare(channelName(b, t)),
+        );
+    if (shown.length === 0 && !admin)
         return search ? (
             <EmptyState title={t("chat.noMatch")} icon={Search} className="py-16" />
         ) : (
@@ -93,13 +109,59 @@ function Channels({ search }: { search: string }) {
         );
     return (
         <>
-            <ListCard>
-                {channels.map((c) => (
-                    <ChannelRow key={c.id} channel={c} />
-                ))}
-            </ListCard>
+            {mine.length > 0 && (
+                <ListCard>
+                    {mine.map((c) => (
+                        <ChannelRow key={c.id} channel={c} />
+                    ))}
+                </ListCard>
+            )}
+            {admin && !search && (
+                <button
+                    type="button"
+                    onClick={() => setMaking(true)}
+                    className="mt-3 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3.5 text-left active:opacity-70"
+                >
+                    <span className="flex size-10 items-center justify-center rounded-xl bg-brand/10 text-brand">
+                        <Plus size={20} />
+                    </span>
+                    <span className="text-[16px] font-medium text-gray-900">
+                        {t("chat.newGroup")}
+                    </span>
+                </button>
+            )}
+            {other.length > 0 && (
+                <section className="mt-4 space-y-1.5">
+                    <SectionLabel>{t("chat.otherChannels")}</SectionLabel>
+                    <ListCard>
+                        {other.map((c) => (
+                            <ChannelRow key={c.id} channel={c} />
+                        ))}
+                    </ListCard>
+                </section>
+            )}
             <PushCard />
+            {admin && <NewGroupSheet open={making} onClose={() => setMaking(false)} />}
         </>
+    );
+}
+
+/** Follow on an Other channel's row: its badge and pushes from now on. */
+function FollowButton({ id }: { id: string }) {
+    const t = useT();
+    const follow = useFollow(id);
+    return (
+        <button
+            type="button"
+            disabled={follow.isPending}
+            onClick={(e) => {
+                e.stopPropagation();
+                follow.mutate({ on: true });
+            }}
+            className="rounded-full bg-brand/10 px-3 py-1.5 text-sm font-semibold text-brand active:opacity-70 disabled:opacity-50"
+        >
+            {t("chat.follow")}
+        </button>
     );
 }
 
@@ -168,16 +230,20 @@ function ChannelRow({ channel: c }: { channel: ChatChannel }) {
             title={
                 <span className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-0.5">
                     <span
-                        className={`truncate text-gray-900 ${c.unread ? "font-semibold" : "font-medium"}`}
+                        className={`truncate text-gray-900 ${c.mine && c.unread ? "font-semibold" : "font-medium"}`}
                     >
                         {channelName(c, t)}
                     </span>
                     {/* Top right: how many are unread, not the time (a group is opened, not scanned). */}
                     <span className="flex h-5 justify-end">
-                        {c.unread > 0 && (
-                            <span className="min-w-7 h-5 px-2 rounded-full bg-brand text-white text-xs font-bold leading-5 text-center">
-                                {c.unread > 99 ? "99+" : c.unread}
-                            </span>
+                        {!c.mine ? (
+                            <FollowButton id={c.id} />
+                        ) : (
+                            c.unread > 0 && (
+                                <span className="min-w-7 h-5 px-2 rounded-full bg-brand text-white text-xs font-bold leading-5 text-center">
+                                    {c.unread > 99 ? "99+" : c.unread}
+                                </span>
+                            )
                         )}
                     </span>
                     {/* A group chat: who is in it, not its last message (that is the chat's or Activity's). */}
@@ -187,6 +253,7 @@ function ChannelRow({ channel: c }: { channel: ChatChannel }) {
                         {typing
                             ? t("chat.typing")
                             : [
+                                  ...(c.archived ? [t("chat.archived")] : []),
                                   t(
                                       c.members === 1 ? "chat.oneMember" : "chat.memberCount",
                                   ).replace("{n}", String(c.members ?? 0)),

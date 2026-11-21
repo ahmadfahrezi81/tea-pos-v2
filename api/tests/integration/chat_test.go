@@ -131,7 +131,14 @@ func TestChatOwnerIsAlwaysAdmin(t *testing.T) {
 		t.Fatal(err)
 	}
 	a := testkit.NewAPI(t, db, "")
-	got := kinds(chatChannels(t, a, testkit.AdminA, "backoffice"))
+	// Every store is listed for a chat admin; theirs are the ones they work.
+	var mine []contract.ChatChannel
+	for _, c := range chatChannels(t, a, testkit.AdminA, "backoffice") {
+		if c.Mine {
+			mine = append(mine, c)
+		}
+	}
+	got := kinds(mine)
 	want := []string{"admin", "general", "personal", "store:A North"}
 	if len(got) != len(want) || got[0] != want[0] || got[3] != want[3] {
 		t.Fatalf("owner sees %v", got)

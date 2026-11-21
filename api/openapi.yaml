@@ -239,6 +239,12 @@ components:
     ChatChannel:
       additionalProperties: false
       properties:
+        archived:
+          description: "An archived group: read only, its history kept"
+          type: boolean
+        following:
+          description: A chat admin following a channel they are not in
+          type: boolean
         id:
           format: uuid
           type: string
@@ -259,6 +265,9 @@ components:
           description: How many are in it (the list; absent on one channel's own read)
           format: int64
           type: integer
+        mine:
+          description: "In it or following: its badge and pushes count"
+          type: boolean
         name:
           type: string
         readOnly:
@@ -273,10 +282,17 @@ components:
         - kind
         - readOnly
         - unread
+        - mine
       type: object
     ChatChannelOutputBody:
       additionalProperties: false
       properties:
+        archived:
+          description: "An archived group: read only, its history kept"
+          type: boolean
+        following:
+          description: A chat admin following a channel they are not in
+          type: boolean
         id:
           format: uuid
           type: string
@@ -298,6 +314,9 @@ components:
           items:
             $ref: "#/components/schemas/ChatMember"
           type: array
+        mine:
+          description: "In it or following: its badge and pushes count"
+          type: boolean
         name:
           type: string
         readOnly:
@@ -313,6 +332,7 @@ components:
         - kind
         - readOnly
         - unread
+        - mine
       type: object
     ChatChannelsOutputBody:
       additionalProperties: false
@@ -325,6 +345,34 @@ components:
       required:
         - channels
       type: object
+    ChatGroupBody:
+      additionalProperties: false
+      properties:
+        members:
+          description: Everyone in it; the tenant's active people only
+          items:
+            type: string
+          maxItems: 500
+          type:
+            - array
+            - "null"
+        name:
+          maxLength: 60
+          minLength: 1
+          type: string
+      required:
+        - name
+        - members
+      type: object
+    ChatGroupOutputBody:
+      additionalProperties: false
+      properties:
+        id:
+          format: uuid
+          type: string
+      required:
+        - id
+      type: object
     ChatMember:
       additionalProperties: false
       properties:
@@ -333,6 +381,8 @@ components:
           type: boolean
         avatar:
           type: string
+        follower:
+          type: boolean
         id:
           format: uuid
           type: string
@@ -401,6 +451,33 @@ components:
         - id
         - body
         - at
+      type: object
+    ChatPeopleOutputBody:
+      additionalProperties: false
+      properties:
+        people:
+          description: "Everyone with a chat level: who a group can be made of"
+          items:
+            $ref: "#/components/schemas/ChatPerson"
+          type: array
+      required:
+        - people
+      type: object
+    ChatPerson:
+      additionalProperties: false
+      properties:
+        avatar:
+          type: string
+        id:
+          format: uuid
+          type: string
+        in:
+          type: boolean
+        name:
+          type: string
+      required:
+        - id
+        - name
       type: object
     ChatPhoto:
       additionalProperties: false
@@ -1146,6 +1223,7 @@ components:
             - bad_range
             - bad_receipt
             - bad_request
+            - blank_group_name
             - blank_message
             - blank_name
             - channel_not_found
@@ -2322,6 +2400,20 @@ components:
           maxLength: 1000
           type: string
       type: object
+    SetChatGroupMembersInputBody:
+      additionalProperties: false
+      properties:
+        members:
+          description: Everyone in it, the whole list
+          items:
+            type: string
+          maxItems: 500
+          type:
+            - array
+            - "null"
+      required:
+        - members
+      type: object
     SetClaimEligibleInputBody:
       additionalProperties: false
       properties:
@@ -2383,6 +2475,20 @@ components:
       required:
         - fullName
         - phone
+      type: object
+    SetUserChatGroupsInputBody:
+      additionalProperties: false
+      properties:
+        groups:
+          description: Every group the person is in, the whole list
+          items:
+            type: string
+          maxItems: 500
+          type:
+            - array
+            - "null"
+      required:
+        - groups
       type: object
     SettlePayoutInputBody:
       additionalProperties: false
@@ -2843,6 +2949,17 @@ components:
       required:
         - sessions
       type: object
+    UpdateChatGroupInputBody:
+      additionalProperties: false
+      properties:
+        archived:
+          description: "Archived: read only, its history kept"
+          type: boolean
+        name:
+          maxLength: 60
+          minLength: 1
+          type: string
+      type: object
     UpdateClaimTypeInputBody:
       additionalProperties: false
       properties:
@@ -2917,6 +3034,33 @@ components:
         - uploadUrl
         - path
         - url
+      type: object
+    UserChatGroup:
+      additionalProperties: false
+      properties:
+        archived:
+          type: boolean
+        id:
+          format: uuid
+          type: string
+        member:
+          type: boolean
+        name:
+          type: string
+      required:
+        - id
+        - name
+        - member
+      type: object
+    UserChatGroupsOutputBody:
+      additionalProperties: false
+      properties:
+        groups:
+          items:
+            $ref: "#/components/schemas/UserChatGroup"
+          type: array
+      required:
+        - groups
       type: object
     WeatherHour:
       additionalProperties: false
@@ -3404,6 +3548,71 @@ paths:
         level: member
         tenant: true
         signedIn: true
+  /tenants/{tenant}/chat/channels/{id}/follow:
+    delete:
+      operationId: unfollowChatChannel
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Stop following a channel
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: admin
+        tenant: true
+        repeatable: true
+        signedIn: true
+    put:
+      operationId: followChatChannel
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "A chat admin follows a channel they are not in: its badge and pushes"
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: admin
+        tenant: true
+        repeatable: true
+        signedIn: true
   /tenants/{tenant}/chat/channels/{id}/messages:
     get:
       operationId: listChatMessages
@@ -3769,6 +3978,159 @@ paths:
         level: member
         tenant: true
         repeatable: true
+        signedIn: true
+  /tenants/{tenant}/chat/groups:
+    post:
+      operationId: createChatGroup
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatGroupBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatGroupOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Make a group with its people
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/chat/groups/{id}:
+    patch:
+      operationId: updateChatGroup
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateChatGroupInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Rename a group, or archive it (read only) and back
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: admin
+        tenant: true
+        repeatable: true
+        signedIn: true
+  /tenants/{tenant}/chat/groups/{id}/members:
+    put:
+      operationId: setChatGroupMembers
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetChatGroupMembersInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Set a group's people, the whole list
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: admin
+        tenant: true
+        repeatable: true
+        signedIn: true
+  /tenants/{tenant}/chat/people:
+    get:
+      operationId: listChatPeople
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - description: Mark who is in this group
+          explode: false
+          in: query
+          name: group
+          schema:
+            description: Mark who is in this group
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatPeopleOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "Everyone with a chat level: who a group can be made of"
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: admin
+        tenant: true
         signedIn: true
   /tenants/{tenant}/days:
     get:
@@ -5870,6 +6232,84 @@ paths:
                 $ref: "#/components/schemas/Error"
           description: Error
       summary: Set a person's levels per app, stores and status, at once
+      tags:
+        - uac
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/uac/people/{userId}/chat-groups:
+    get:
+      operationId: getUacChatGroups
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserChatGroupsOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Every group chat, and whether this person is in it
+      tags:
+        - uac
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+    put:
+      operationId: setUacChatGroups
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetUserChatGroupsInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserChatGroupsOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Set the group chats a person is in, the whole list
       tags:
         - uac
       x-access:

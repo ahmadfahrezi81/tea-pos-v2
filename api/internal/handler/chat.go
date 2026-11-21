@@ -55,6 +55,7 @@ var chatAccess = auth.App(auth.Chat, auth.Member)
 
 func registerChat(api huma.API, d Deps) {
 	registerChatTyping(api, d)
+	registerChatGroups(api, d)
 	op := func(id, method, path, summary string) huma.Operation {
 		return huma.Operation{OperationID: id, Method: method, Path: "/tenants/{tenant}/chat" + path, Summary: summary, Tags: []string{"chat"}}
 	}
@@ -62,15 +63,15 @@ func registerChat(api huma.API, d Deps) {
 	route(api, op("listChatChannels", http.MethodGet, "/channels", "The caller's channels, made first if missing"), chatAccess,
 		func(ctx context.Context, _ *contract.TenantInput) (*contract.ChatChannelsOutput, error) {
 			caller, _ := auth.CallerFrom(ctx)
-			vip := caller.ChatLevel.AtLeast(auth.VIP)
+			vip, admin := caller.ChatLevel.AtLeast(auth.VIP), caller.ChatLevel == auth.Admin
 			// Made on demand, never seeded: nothing to keep in step with v1's stores and people.
 			if err := d.Queries.EnsureChatChannels(ctx, store.EnsureChatChannelsParams{
-				UserID: caller.UserID, ChatVip: vip, TenantID: caller.TenantID,
+				UserID: caller.UserID, ChatVip: vip, TenantID: caller.TenantID, ChatAdmin: admin,
 			}); err != nil {
 				return nil, err
 			}
 			rows, err := d.Queries.ListChatChannels(ctx, store.ListChatChannelsParams{
-				UserID: caller.UserID, TenantID: caller.TenantID, ChatVip: vip,
+				UserID: caller.UserID, TenantID: caller.TenantID, ChatVip: vip, ChatAdmin: admin,
 			})
 			if err != nil {
 				return nil, err
@@ -80,7 +81,8 @@ func registerChat(api huma.API, d Deps) {
 			for i, r := range rows {
 				c := contract.ChatChannel{
 					ID: r.ID.String(), Kind: r.Kind, Name: r.Name, Unread: int(r.Unread), Members: int(r.Members),
-					ReadOnly: readOnly(r.Kind, r.StoreStatus),
+					ReadOnly: readOnly(r.Kind, r.StoreStatus, r.Archived),
+					Mine:     r.Member || r.Following, Following: r.Following && !r.Member, Archived: r.Archived,
 				}
 				if r.LastMessageAt.Valid {
 					c.LastAt = nano(r.LastMessageAt)
@@ -112,13 +114,14 @@ func registerChat(api huma.API, d Deps) {
 			}
 			out := &contract.ChatChannelOutput{}
 			out.Body.ChatChannel = contract.ChatChannel{
-				ID: ch.ID.String(), Kind: ch.Kind, Name: ch.Name, ReadOnly: readOnly(ch.Kind, ch.StoreStatus),
+				ID: ch.ID.String(), Kind: ch.Kind, Name: ch.Name, ReadOnly: readOnly(ch.Kind, ch.StoreStatus, ch.Archived),
+				Mine: ch.Member || ch.Following, Following: ch.Following && !ch.Member, Archived: ch.Archived,
 			}
 			out.Body.Members = make([]contract.ChatMember, len(members))
 			for i, m := range members {
 				out.Body.Members[i] = contract.ChatMember{
 					ID: m.ID.String(), Name: m.FullName, Avatar: m.AvatarUrl, ReadAt: readAt(m.LastReadAt),
-					Admin: m.ChatAdmin, VIP: m.ChatVip,
+					Admin: m.ChatAdmin, VIP: m.ChatVip, Follower: m.Follower,
 				}
 			}
 			return out, nil
@@ -186,7 +189,7 @@ func registerChat(api huma.API, d Deps) {
 			if err != nil {
 				return nil, err
 			}
-			if readOnly(ch.Kind, ch.StoreStatus) {
+			if readOnly(ch.Kind, ch.StoreStatus, ch.Archived) {
 				return nil, errChannelReadOnly
 			}
 			// A reply answers a message of this same channel, never one elsewhere.
@@ -215,6 +218,12 @@ func registerChat(api huma.API, d Deps) {
 			}
 			if err := q.SetChatChannelLast(ctx, store.SetChatChannelLastParams{MessageID: row.ID, At: row.CreatedAt, ID: ch.ID}); err != nil {
 				return nil, err
+			}
+			// A chat admin writing in a channel they are not in follows it, so they hear the answer.
+			if !ch.Member && !ch.Following {
+				if err := q.SetChatFollow(ctx, store.SetChatFollowParams{UserID: caller.UserID, ChannelID: ch.ID, Follow: true}); err != nil {
+					return nil, err
+				}
 			}
 			// The author has read their own message.
 			if _, err := q.MarkChatRead(ctx, store.MarkChatReadParams{UserID: caller.UserID, ChannelID: ch.ID, At: row.CreatedAt}); err != nil {
@@ -292,13 +301,13 @@ func registerChat(api huma.API, d Deps) {
 	route(api, op("listChatActivity", http.MethodGet, "/activity", "Every message from others across the caller's channels, newest first; replies to them marked"), chatAccess,
 		func(ctx context.Context, in *contract.ChatActivityInput) (*contract.ChatActivityOutput, error) {
 			caller, _ := auth.CallerFrom(ctx)
-			vip := caller.ChatLevel.AtLeast(auth.VIP)
+			vip, admin := caller.ChatLevel.AtLeast(auth.VIP), caller.ChatLevel == auth.Admin
 			cursor, err := page.Decode(in.Cursor)
 			if err != nil {
 				return nil, errBadCursor
 			}
 			rows, err := d.Queries.ListChatActivity(ctx, store.ListChatActivityParams{
-				UserID: caller.UserID, TenantID: caller.TenantID, ChatVip: vip,
+				UserID: caller.UserID, TenantID: caller.TenantID, ChatVip: vip, ChatAdmin: admin,
 				CursorAt: pgtype.Timestamptz{Time: cursor.At, Valid: true}, CursorID: cursor.ID, Lim: int32(in.Limit + 1),
 			})
 			if err != nil {
@@ -331,7 +340,7 @@ func registerChat(api huma.API, d Deps) {
 			}
 			if in.Cursor == "" {
 				n, err := d.Queries.CountChatActivityUnread(ctx, store.CountChatActivityUnreadParams{
-					UserID: caller.UserID, TenantID: caller.TenantID, ChatVip: vip,
+					UserID: caller.UserID, TenantID: caller.TenantID, ChatVip: vip, ChatAdmin: admin,
 				})
 				if err != nil {
 					return nil, err
@@ -351,7 +360,7 @@ func registerChat(api huma.API, d Deps) {
 			if err != nil {
 				return nil, err
 			}
-			if readOnly(ch.Kind, ch.StoreStatus) {
+			if readOnly(ch.Kind, ch.StoreStatus, ch.Archived) {
 				return nil, errChannelReadOnly
 			}
 			m, err := chatMessageIn(ctx, d.Queries, ch.ID, in.Msg)
@@ -479,7 +488,7 @@ func registerChatTyping(api huma.API, d Deps) {
 			if err != nil {
 				return nil, err
 			}
-			if readOnly(ch.Kind, ch.StoreStatus) {
+			if readOnly(ch.Kind, ch.StoreStatus, ch.Archived) {
 				return nil, errChannelReadOnly
 			}
 			members, err := d.Queries.ListChatMembers(ctx, ch.ID)
@@ -499,7 +508,7 @@ func registerChatTyping(api huma.API, d Deps) {
 		})
 }
 
-// chatChannel is one channel, only if the caller is in it.
+// chatChannel is one channel, only if the caller is in it or a chat admin (not someone's Notifications).
 func chatChannel(ctx context.Context, q *store.Queries, caller auth.Caller, id string) (store.GetChatChannelRow, error) {
 	cid, err := uuid(id, errChannelNotFound)
 	if err != nil {
@@ -507,6 +516,7 @@ func chatChannel(ctx context.Context, q *store.Queries, caller auth.Caller, id s
 	}
 	ch, err := q.GetChatChannel(ctx, store.GetChatChannelParams{
 		ID: cid, TenantID: caller.TenantID, ChatVip: caller.ChatLevel.AtLeast(auth.VIP), UserID: caller.UserID,
+		ChatAdmin: caller.ChatLevel == auth.Admin,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ch, errChannelNotFound
@@ -527,9 +537,9 @@ func chatMessageIn(ctx context.Context, q *store.Queries, channel pgtype.UUID, i
 	return m, err
 }
 
-// readOnly: the system's inbox, or a store no longer open; its history stays readable.
-func readOnly(kind, storeStatus string) bool {
-	return kind == "personal" || (kind == "store" && storeStatus == "inactive")
+// readOnly: the system's inbox, a store no longer open, or an archived group; its history stays readable.
+func readOnly(kind, storeStatus string, archived bool) bool {
+	return kind == "personal" || (kind == "store" && storeStatus == "inactive") || archived
 }
 
 func data(raw []byte) map[string]any {

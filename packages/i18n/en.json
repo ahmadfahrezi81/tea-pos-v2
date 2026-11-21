@@ -238,7 +238,8 @@
         "notSavedOffline": "Not saved: no connection. Try again.",
         "session_not_found": "That session has already ended.",
         "bad_hours": "A store has to open before it closes.",
-        "too_far_back": "That date is too far back."
+        "too_far_back": "That date is too far back.",
+        "blank_group_name": "Give the group a name."
     },
     "store": {
         "week": "Week",

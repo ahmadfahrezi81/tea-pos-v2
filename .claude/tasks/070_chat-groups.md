@@ -1,6 +1,8 @@
 # Task 070 — Chat: groups and the chat admin's view
 
-**Status: planned 2026-11-21, waiting on the owner's review. Before chat's production release.**
+**Status: built 2026-11-21 on `feat/chat-groups`; Go integration tests pass (groups, follow, UAC's Group chats, the permission test). Not yet tried in the browser: staging lacks the new tables until the PR merges, so locally through `scripts/local-db.sh backoffice`.**
+
+As built: New group is a sheet from Chats (not a `/chats/new` page); rename, people, archive and Follow live in a channel's info sheet. A chat admin who writes in a channel they are not in follows it, so they hear the answer.
 
 ## The goal
 

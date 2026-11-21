@@ -69,6 +69,20 @@
         "pushTitle": "Turn on notifications",
         "pushBody": "So you never miss a message, even with the app closed.",
         "pushBlocked": "Notifications are blocked. Allow them for this app in your phone's settings.",
-        "pushTurnOn": "Turn on"
+        "pushTurnOn": "Turn on",
+        "newGroup": "New group",
+        "groupName": "Group name",
+        "createGroup": "Create group",
+        "otherChannels": "Other channels",
+        "follow": "Follow",
+        "unfollow": "Unfollow",
+        "archived": "Archived",
+        "archivedGroup": "Archived: read only",
+        "archive": "Archive group",
+        "unarchive": "Unarchive group",
+        "rename": "Rename",
+        "editMembers": "Members",
+        "save": "Save",
+        "searchPeople": "Search people..."
     }
 }
