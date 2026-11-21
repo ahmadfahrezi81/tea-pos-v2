@@ -57,9 +57,9 @@ type Schedule struct {
 var Schedules = []Schedule{
 	{ID: "cleanup", Production: Every(time.Hour), Staging: DailyAt(4),
 		Args: func(string) river.JobArgs { return CleanupArgs{} }},
-	// Off until the old cron website stops fetching (Step 45): then production
-	// Every(20*time.Minute), staging DailyAt(21).
-	{ID: "weather", Production: nil, Staging: nil,
+	// Every 20 minutes around store hours; it also fills v1's weather_hourly, so the old cron
+	// website is turned off once this runs (task 076). Staging: once a day, every area.
+	{ID: "weather", Production: Every(20 * time.Minute), Staging: DailyAt(21),
 		Args: func(env string) river.JobArgs { return WeatherArgs{All: env != "prod"} }},
 }
 
