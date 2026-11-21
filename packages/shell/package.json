@@ -17,6 +17,7 @@
         "./LanguageScreen": "./screens/LanguageScreen.tsx",
         "./LoadFailed": "./screens/LoadFailed.tsx",
         "./MoreScreen": "./screens/MoreScreen.tsx",
+        "./NotificationsScreen": "./screens/NotificationsScreen.tsx",
         "./OrderCard": "./views/OrderCard.tsx",
         "./PersonalDetailsScreen": "./screens/PersonalDetailsScreen.tsx",
         "./ScreenLabScreen": "./screens/ScreenLabScreen.tsx",

@@ -24,7 +24,7 @@ Bugs seen in staging's logs after chat's PRs (#145-#159), and the owner's next f
 
 ## Feedback
 
-1. **Notifications belong in chat, with no off switch** (owner, 2026-11-21). More's on/off row is gone (`PushRow`); under the list of chats, while this phone does not get them, a card says "Turn on notifications" with one Turn on button (a tap: phones ask only then); once allowed, it is gone. Blocked in the phone's settings: the card says to allow them there. No off switch anywhere, so nobody turns them off by accident; the phone's own settings do that. The helpers move from `shell/lib/push.ts` to `api-client/chat.ts` (chat is push's only user; no new package export)
+1. **Notifications belong in chat, with no off switch** (owner, 2026-11-21). More's on/off row is gone (`PushRow`); under the list of chats, while this phone does not get them, a card says "Turn on notifications" with one Turn on button (a tap: phones ask only then); once allowed, it is gone. Blocked in the phone's settings: the card says to allow them there. No off switch where it is easy to tap: the one switch is deep in Account → Notifications (owner), on its own page (`NotificationsScreen`, route `account/notifications` in both apps), with this phone's state (on, off, blocked, or not possible here). The helpers move from `shell/lib/push.ts` to `api-client/chat.ts` (chat is push's only user; no new package export)
 
 ## Done when
 

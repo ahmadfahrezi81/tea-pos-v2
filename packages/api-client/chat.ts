@@ -73,8 +73,7 @@ export async function pushOn(): Promise<boolean> {
     return !!(await subscription());
 }
 
-/** Asks the phone (it must be a tap: browsers allow the question only then) and subscribes. No off
- * switch in the app (owner): turning it off is the phone's own settings, so nobody does it by accident. */
+/** Asks the phone (it must be a tap: browsers allow the question only then) and subscribes. */
 export async function turnPushOn(): Promise<boolean> {
     if (!pushSupported()) return false;
     if ((await Notification.requestPermission()) !== "granted") return false;
@@ -86,6 +85,14 @@ export async function turnPushOn(): Promise<boolean> {
         (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key }));
     await save(sub);
     return true;
+}
+
+/** Account → Notifications only, deep in the settings (owner): this phone gets no more pushes. */
+export async function turnPushOff() {
+    const sub = await subscription();
+    if (!sub) return;
+    await api.POST("/push/subscription/off", { body: { endpoint: sub.endpoint } }).catch(() => {});
+    await sub.unsubscribe();
 }
 
 /** On every start: the subscription saved again, which heals a cleared site without a word. */

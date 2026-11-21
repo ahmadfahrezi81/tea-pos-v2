@@ -64,7 +64,13 @@
         "title": "Akun",
         "signingOut": "Sedang logout…",
         "confirmSave": "Simpan data Anda?",
-        "confirmSaveBody": "Nama Anda berubah di semua tempat, di setiap aplikasi."
+        "confirmSaveBody": "Nama Anda berubah di semua tempat, di setiap aplikasi.",
+        "notifications": "Notifikasi",
+        "chatNotifications": "Notifikasi chat",
+        "onThisPhone": "Nyala di HP ini",
+        "offThisPhone": "Mati di HP ini",
+        "notificationsBlocked": "Diblokir: izinkan notifikasi di pengaturan HP",
+        "notificationsUnsupported": "HP ini belum bisa menerimanya di sini (di iPhone: pasang aplikasinya dulu)"
     },
     "more": {
         "workDays": "Hari Kerja",

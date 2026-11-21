@@ -64,7 +64,13 @@
         "title": "Account",
         "signingOut": "Signing out…",
         "confirmSave": "Save your details?",
-        "confirmSaveBody": "Your name changes everywhere it shows, in every app."
+        "confirmSaveBody": "Your name changes everywhere it shows, in every app.",
+        "notifications": "Notifications",
+        "chatNotifications": "Chat notifications",
+        "onThisPhone": "On for this phone",
+        "offThisPhone": "Off for this phone",
+        "notificationsBlocked": "Blocked: allow notifications in the phone's settings",
+        "notificationsUnsupported": "This phone can't get them here (on an iPhone: install the app first)"
     },
     "more": {
         "workDays": "Work Days",
