@@ -676,7 +676,8 @@ func signPhotosInto(ctx context.Context, s *files.Storage, items []contract.Chat
 	if s != nil {
 		var err error
 		signed, err = s.SignReads(ctx, files.Purposes["chat_photo"].Bucket, paths, chatPhotoTTL)
-		if err != nil && !errors.Is(err, files.ErrNotConfigured) {
+		// A phone that gave up (context canceled) never sees them: not worth a warning.
+		if err != nil && !errors.Is(err, files.ErrNotConfigured) && !errors.Is(err, context.Canceled) {
 			slog.WarnContext(ctx, "sign chat photos", "err", err)
 		}
 	}

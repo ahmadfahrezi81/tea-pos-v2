@@ -321,7 +321,8 @@ func signPhotos(ctx context.Context, s *files.Storage, addresses []string) map[s
 	out := map[string]string{}
 	signed, err := s.SignReads(ctx, bucket, paths, photoTTL)
 	if err != nil {
-		if !errors.Is(err, files.ErrNotConfigured) {
+		// A phone that gave up (context canceled) never sees them: not worth a warning.
+		if !errors.Is(err, files.ErrNotConfigured) && !errors.Is(err, context.Canceled) {
 			slog.WarnContext(ctx, "sign day photos", "err", err)
 		}
 		return out
