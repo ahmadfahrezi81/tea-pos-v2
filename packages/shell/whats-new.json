@@ -1,1 +1,32 @@
-[]
+[
+    {
+        "version": "2026.11.15",
+        "date": "2026-11-21",
+        "apps": ["backoffice"],
+        "lines": {
+            "en": [
+                "You can now chat with the team in Chats, with photos, replies and reactions.",
+                "Chats can send notifications to your phone, even when the app is closed.",
+                "You can now share a store's day, a pay period or a payslip into a chat.",
+                "Chat now tells you how each store did every night, when rain is coming, and when pay is sent.",
+                "Typing on iPhone no longer moves the screen around."
+            ],
+            "id": [
+                "Sekarang kamu bisa chat dengan tim di Chats, lengkap dengan foto, balasan, dan reaksi.",
+                "Chats bisa mengirim notifikasi ke HP kamu, walau aplikasinya sedang tertutup.",
+                "Sekarang kamu bisa membagikan hari toko, periode gaji, atau slip gaji ke chat.",
+                "Chat sekarang mengabari hasil tiap toko setiap malam, saat akan hujan, dan saat gaji dikirim.",
+                "Mengetik di iPhone tidak lagi membuat layar bergeser."
+            ]
+        }
+    },
+    {
+        "version": "2026.11.15",
+        "date": "2026-11-21",
+        "apps": ["seller"],
+        "lines": {
+            "en": ["Typing on iPhone no longer moves the screen around."],
+            "id": ["Mengetik di iPhone tidak lagi membuat layar bergeser."]
+        }
+    }
+]
