@@ -14,7 +14,7 @@ import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
 import { SearchBox } from "@tea-pos/ui/SearchBox";
 import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 import { useNavigate } from "@tanstack/react-router";
-import { Bell, Lock, MessagesSquare, Plus, Search } from "lucide-react";
+import { Bell, ChevronDown, Lock, MessagesSquare, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { ActivityList, useActivityUnread } from "./ActivityList";
@@ -80,6 +80,7 @@ function Channels({ search }: { search: string }) {
     const slug = useSlug();
     const admin = useChatAdmin();
     const [making, setMaking] = useState(false);
+    const [showOther, setShowOther] = useState(false);
     const { data } = useChatChannels(slug, true);
     if (!data)
         return (
@@ -132,12 +133,27 @@ function Channels({ search }: { search: string }) {
             )}
             {other.length > 0 && (
                 <section className="mt-4 space-y-1.5">
-                    <SectionLabel>{t("chat.otherChannels")}</SectionLabel>
-                    <ListCard>
-                        {other.map((c) => (
-                            <ChannelRow key={c.id} channel={c} />
-                        ))}
-                    </ListCard>
+                    {/* Folded away until asked for (a search shows its matches): every store is here. */}
+                    <button
+                        type="button"
+                        onClick={() => setShowOther((o) => !o)}
+                        className="flex w-full items-center justify-between pr-1 active:opacity-70"
+                    >
+                        <SectionLabel>
+                            {t("chat.otherChannels")} · {other.length}
+                        </SectionLabel>
+                        <ChevronDown
+                            size={18}
+                            className={`text-gray-600 transition-transform ${showOther || search ? "rotate-180" : ""}`}
+                        />
+                    </button>
+                    {(showOther || search) && (
+                        <ListCard>
+                            {other.map((c) => (
+                                <ChannelRow key={c.id} channel={c} />
+                            ))}
+                        </ListCard>
+                    )}
                 </section>
             )}
             <PushCard />
@@ -158,7 +174,7 @@ function FollowButton({ id }: { id: string }) {
                 e.stopPropagation();
                 follow.mutate({ on: true });
             }}
-            className="rounded-full bg-brand/10 px-3 py-1.5 text-sm font-semibold text-brand active:opacity-70 disabled:opacity-50"
+            className="rounded-full bg-brand/10 px-3 py-0.5 text-[13px] leading-4 font-semibold text-brand active:opacity-70 disabled:opacity-50"
         >
             {t("chat.follow")}
         </button>

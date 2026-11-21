@@ -405,6 +405,8 @@ components:
           type: integer
         person:
           type: string
+        preview:
+          $ref: "#/components/schemas/LinkPreview"
         start:
           format: date
           type: string
@@ -1437,6 +1439,34 @@ components:
         - quantity
         - unitPrice
       type: object
+    LinkPreview:
+      additionalProperties: false
+      properties:
+        more:
+          description: Rows left out of the list
+          format: int64
+          type: integer
+        rows:
+          items:
+            $ref: "#/components/schemas/PreviewRow"
+          type:
+            - array
+            - "null"
+        stats:
+          items:
+            $ref: "#/components/schemas/PreviewStat"
+          type: array
+        status:
+          enum:
+            - open
+            - closed
+            - paid
+            - pending
+            - skipped
+          type: string
+      required:
+        - stats
+      type: object
     Me:
       additionalProperties: false
       properties:
@@ -2237,6 +2267,63 @@ components:
           type: string
       required:
         - body
+      type: object
+    PreviewRow:
+      additionalProperties: false
+      properties:
+        avatar:
+          type: string
+        name:
+          type: string
+        status:
+          enum:
+            - paid
+            - pending
+            - skipped
+          type: string
+        unit:
+          enum:
+            - money
+            - cups
+          type: string
+        value:
+          format: int64
+          type: integer
+      required:
+        - name
+        - value
+        - unit
+      type: object
+    PreviewStat:
+      additionalProperties: false
+      properties:
+        label:
+          enum:
+            - sales
+            - cups
+            - orders
+            - expenses
+            - expected
+            - counted
+            - total
+            - paid
+            - toPay
+            - people
+            - commissions
+            - claims
+          type: string
+        unit:
+          enum:
+            - money
+            - count
+          type: string
+        value:
+          format: int64
+          type: integer
+      required:
+        - label
+        - value
+        - unit
       type: object
     Product:
       additionalProperties: false

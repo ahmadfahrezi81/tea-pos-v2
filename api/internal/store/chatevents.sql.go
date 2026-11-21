@@ -113,9 +113,13 @@ func (q *Queries) LastRainEvent(ctx context.Context, arg LastRainEventParams) (s
 }
 
 const linkDays = `-- name: LinkDays :many
-SELECT d.id, d.store_id, st.name AS store_name, d.date,
+SELECT d.id, d.store_id, st.name AS store_name, d.date, (d.closed_at IS NOT NULL)::bool AS closed,
+    d.opening_balance::bigint AS opening, COALESCE(d.actual_cash, 0)::bigint AS counted,
     COALESCE((SELECT sum(i.quantity) FROM store_orders o JOIN store_order_items i ON i.order_id = o.id
-        WHERE o.daily_summary_id = d.id), 0)::bigint AS cups
+        WHERE o.daily_summary_id = d.id), 0)::bigint AS cups,
+    COALESCE((SELECT count(*) FROM store_orders o WHERE o.daily_summary_id = d.id), 0)::bigint AS orders,
+    COALESCE((SELECT sum(o.total_amount) FROM store_orders o WHERE o.daily_summary_id = d.id), 0)::bigint AS sales,
+    COALESCE((SELECT sum(e.amount) FROM store_expenses e WHERE e.daily_summary_id = d.id), 0)::bigint AS expenses
 FROM store_daily_summaries d
 JOIN stores st ON st.id = d.store_id
 WHERE d.id = ANY($1::uuid[]) AND d.tenant_id = $2
@@ -131,10 +135,17 @@ type LinkDaysRow struct {
 	StoreID   pgtype.UUID
 	StoreName string
 	Date      pgtype.Date
+	Closed    bool
+	Opening   int64
+	Counted   int64
 	Cups      int64
+	Orders    int64
+	Sales     int64
+	Expenses  int64
 }
 
-// Shared days, as their cards show them (Step 75): the store, the date, the cups so far.
+// Shared days, as their cards show them (Step 75): the store, the date, and the day screen's top
+// numbers, from the orders so far (a day still open has no totals written yet).
 func (q *Queries) LinkDays(ctx context.Context, arg LinkDaysParams) ([]LinkDaysRow, error) {
 	rows, err := q.db.Query(ctx, linkDays, arg.Ids, arg.TenantID)
 	if err != nil {
@@ -149,7 +160,13 @@ func (q *Queries) LinkDays(ctx context.Context, arg LinkDaysParams) ([]LinkDaysR
 			&i.StoreID,
 			&i.StoreName,
 			&i.Date,
+			&i.Closed,
+			&i.Opening,
+			&i.Counted,
 			&i.Cups,
+			&i.Orders,
+			&i.Sales,
+			&i.Expenses,
 		); err != nil {
 			return nil, err
 		}
@@ -162,9 +179,9 @@ func (q *Queries) LinkDays(ctx context.Context, arg LinkDaysParams) ([]LinkDaysR
 }
 
 const linkPayouts = `-- name: LinkPayouts :many
-SELECT p.id, p.user_id, u.full_name, p.start_date, p.end_date,
-    (COALESCE((SELECT sum(pc.total_commission) FROM payroll_commissions pc WHERE pc.payout_id = p.id AND pc.status = 'approved'), 0)
-    + COALESCE((SELECT sum(cl.amount) FROM payroll_claims cl WHERE cl.payout_id = p.id AND cl.status = 'approved'), 0))::bigint AS total
+SELECT p.id, p.user_id, u.full_name, p.start_date, p.end_date, p.status, p.paid_at,
+    COALESCE((SELECT sum(pc.total_commission) FROM payroll_commissions pc WHERE pc.payout_id = p.id AND pc.status = 'approved'), 0)::bigint AS commissions,
+    COALESCE((SELECT sum(cl.amount) FROM payroll_claims cl WHERE cl.payout_id = p.id AND cl.status = 'approved'), 0)::bigint AS claims
 FROM payroll_payouts p
 JOIN users u ON u.id = p.user_id
 WHERE p.id = ANY($1::uuid[]) AND p.tenant_id = $2
@@ -176,15 +193,18 @@ type LinkPayoutsParams struct {
 }
 
 type LinkPayoutsRow struct {
-	ID        pgtype.UUID
-	UserID    pgtype.UUID
-	FullName  string
-	StartDate pgtype.Date
-	EndDate   pgtype.Date
-	Total     int64
+	ID          pgtype.UUID
+	UserID      pgtype.UUID
+	FullName    string
+	StartDate   pgtype.Date
+	EndDate     pgtype.Date
+	Status      string
+	PaidAt      pgtype.Timestamptz
+	Commissions int64
+	Claims      int64
 }
 
-// Shared payouts, as their cards show them: the person, the period, the total approved.
+// Shared payouts, as their cards show them: the person, the period, what it pays and its state.
 func (q *Queries) LinkPayouts(ctx context.Context, arg LinkPayoutsParams) ([]LinkPayoutsRow, error) {
 	rows, err := q.db.Query(ctx, linkPayouts, arg.Ids, arg.TenantID)
 	if err != nil {
@@ -200,7 +220,10 @@ func (q *Queries) LinkPayouts(ctx context.Context, arg LinkPayoutsParams) ([]Lin
 			&i.FullName,
 			&i.StartDate,
 			&i.EndDate,
-			&i.Total,
+			&i.Status,
+			&i.PaidAt,
+			&i.Commissions,
+			&i.Claims,
 		); err != nil {
 			return nil, err
 		}

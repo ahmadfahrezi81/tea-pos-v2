@@ -104,6 +104,31 @@ type ChatLink struct {
 	End     string `json:"end,omitempty" format:"date"`
 	Total   *int64 `json:"total,omitempty"`
 	People  *int64 `json:"people,omitempty"`
+	// What the screen shows at the top, so the chat reads it without opening it.
+	Preview *LinkPreview `json:"preview,omitempty"`
+}
+
+// LinkPreview is a shared screen in small: a few numbers, then a short list. One shape for every
+// kind, so the phone draws any of them with one card; labels are words the phone translates.
+type LinkPreview struct {
+	Status string        `json:"status,omitempty" enum:"open,closed,paid,pending,skipped"`
+	Stats  []PreviewStat `json:"stats" nullable:"false"`
+	Rows   []PreviewRow  `json:"rows,omitempty"`
+	More   int           `json:"more,omitempty" doc:"Rows left out of the list"`
+}
+
+type PreviewStat struct {
+	Label string `json:"label" enum:"sales,cups,orders,expenses,expected,counted,total,paid,toPay,people,commissions,claims"`
+	Value int64  `json:"value"`
+	Unit  string `json:"unit" enum:"money,count"`
+}
+
+type PreviewRow struct {
+	Name   string `json:"name"`
+	Avatar string `json:"avatar,omitempty"`
+	Value  int64  `json:"value"`
+	Unit   string `json:"unit" enum:"money,cups"`
+	Status string `json:"status,omitempty" enum:"paid,pending,skipped"`
 }
 
 // ChatLinkInput is a screen shared into a chat.

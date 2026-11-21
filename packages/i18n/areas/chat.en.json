@@ -106,6 +106,28 @@
         "shareTo": "Share to a chat",
         "shareMessage": "Add a message (optional)",
         "sharedTo": "Shared to {name}",
-        "open": "Open"
+        "open": "Open",
+        "stat": {
+            "sales": "Sales",
+            "cups": "Cups",
+            "orders": "Orders",
+            "expenses": "Expenses",
+            "expected": "Expected cash",
+            "counted": "Counted cash",
+            "total": "Total",
+            "paid": "Paid",
+            "toPay": "To pay",
+            "people": "People",
+            "commissions": "Commissions",
+            "claims": "Claims"
+        },
+        "state": {
+            "open": "Open",
+            "closed": "Closed",
+            "paid": "Paid",
+            "pending": "Pending",
+            "skipped": "Skipped"
+        },
+        "andMore": "and {n} more"
     }
 }

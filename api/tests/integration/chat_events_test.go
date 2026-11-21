@@ -232,12 +232,15 @@ func TestChatShareLink(t *testing.T) {
 	if len(got) != 2 || got[1].Link == nil || !got[1].Link.Open || got[1].Link.Store != "A Central" || got[1].Link.Cups == nil || *got[1].Link.Cups != 4 {
 		t.Fatalf("in the backoffice: %+v", got)
 	}
+	if p := got[1].Link.Preview; p == nil || p.Status != "closed" || p.Stats[0].Label != "sales" || p.Stats[0].Value != 34000 || len(p.Rows) != 2 {
+		t.Errorf("day preview: %+v", got[1].Link.Preview)
+	}
 	// A period by any of its days is stored by its first.
 	if got[0].Link == nil || got[0].Link.ID != "2026-09-28" || got[0].Link.End != "2026-10-11" {
 		t.Errorf("period: %+v", got[0].Link)
 	}
 	seller := messages(t, a, testkit.SellerA, "seller", general, "")
-	if len(seller) != 2 || seller[1].Link == nil || seller[1].Link.Open || seller[1].Link.Store != "" {
+	if len(seller) != 2 || seller[1].Link == nil || seller[1].Link.Open || seller[1].Link.Store != "" || seller[1].Link.Preview != nil {
 		t.Errorf("in the seller app: %+v", seller[1].Link)
 	}
 }

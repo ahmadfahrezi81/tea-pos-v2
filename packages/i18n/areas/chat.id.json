@@ -106,6 +106,28 @@
         "shareTo": "Bagikan ke chat",
         "shareMessage": "Tambah pesan (opsional)",
         "sharedTo": "Dibagikan ke {name}",
-        "open": "Buka"
+        "open": "Buka",
+        "stat": {
+            "sales": "Penjualan",
+            "cups": "Cups",
+            "orders": "Pesanan",
+            "expenses": "Pengeluaran",
+            "expected": "Kas Seharusnya",
+            "counted": "Kas Dihitung",
+            "total": "Total",
+            "paid": "Dibayar",
+            "toPay": "Belum dibayar",
+            "people": "Orang",
+            "commissions": "Komisi",
+            "claims": "Klaim"
+        },
+        "state": {
+            "open": "Buka",
+            "closed": "Tutup",
+            "paid": "Dibayar",
+            "pending": "Menunggu",
+            "skipped": "Dilewati"
+        },
+        "andMore": "dan {n} lainnya"
     }
 }
