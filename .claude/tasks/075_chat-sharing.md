@@ -11,7 +11,8 @@ Step 75 of [RFC: Chat (v2)](https://app.notion.com/p/40595a71540581e7b86edc272f6
 1. **What can be shared** (one list, `packages/chat/links.ts` and Go's twin):
    - a store's day (`store_days`): opens `store/$storeId/analytics/days/$dayId`;
    - a pay period (`pay_periods`, by its start date): opens `pay/$start`. The owner's main reason for this step: each week's pay, kept in the VIP chat;
-   - a payout (`payouts`): opens `pay/$start/$userId`.
+   - a payout (`payouts`): opens `pay/$start/$userId`;
+   - a release (`whats_new`, by version): opens What's new at that version, in either app. It is posted by Step 74 only, with no Share button.
 
    A new kind later is one line in each list.
 2. **Posting a link:** `POST /chat/channels/{id}/messages` takes an optional `link { kind, id }`.
