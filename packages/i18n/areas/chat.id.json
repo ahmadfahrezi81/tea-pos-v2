@@ -65,6 +65,10 @@
         "editing": "Ubah pesan",
         "everyone": "semua orang",
         "activityMentioned": "Menyebut kamu di",
-        "mention": "Sebut seseorang"
+        "mention": "Sebut seseorang",
+        "pushTitle": "Nyalakan notifikasi",
+        "pushBody": "Supaya tidak ada pesan yang terlewat, walau aplikasi ditutup.",
+        "pushBlocked": "Notifikasi diblokir. Izinkan untuk aplikasi ini di pengaturan HP kamu.",
+        "pushTurnOn": "Nyalakan"
     }
 }
