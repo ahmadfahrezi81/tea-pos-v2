@@ -79,19 +79,24 @@ SELECT COALESCE((
 SELECT full_name FROM users WHERE id = @id;
 
 -- name: LinkDays :many
--- Shared days, as their cards show them (Step 75): the store, the date, the cups so far.
-SELECT d.id, d.store_id, st.name AS store_name, d.date,
+-- Shared days, as their cards show them (Step 75): the store, the date, and the day screen's top
+-- numbers, from the orders so far (a day still open has no totals written yet).
+SELECT d.id, d.store_id, st.name AS store_name, d.date, (d.closed_at IS NOT NULL)::bool AS closed,
+    d.opening_balance::bigint AS opening, COALESCE(d.actual_cash, 0)::bigint AS counted,
     COALESCE((SELECT sum(i.quantity) FROM store_orders o JOIN store_order_items i ON i.order_id = o.id
-        WHERE o.daily_summary_id = d.id), 0)::bigint AS cups
+        WHERE o.daily_summary_id = d.id), 0)::bigint AS cups,
+    COALESCE((SELECT count(*) FROM store_orders o WHERE o.daily_summary_id = d.id), 0)::bigint AS orders,
+    COALESCE((SELECT sum(o.total_amount) FROM store_orders o WHERE o.daily_summary_id = d.id), 0)::bigint AS sales,
+    COALESCE((SELECT sum(e.amount) FROM store_expenses e WHERE e.daily_summary_id = d.id), 0)::bigint AS expenses
 FROM store_daily_summaries d
 JOIN stores st ON st.id = d.store_id
 WHERE d.id = ANY(@ids::uuid[]) AND d.tenant_id = @tenant_id;
 
 -- name: LinkPayouts :many
--- Shared payouts, as their cards show them: the person, the period, the total approved.
-SELECT p.id, p.user_id, u.full_name, p.start_date, p.end_date,
-    (COALESCE((SELECT sum(pc.total_commission) FROM payroll_commissions pc WHERE pc.payout_id = p.id AND pc.status = 'approved'), 0)
-    + COALESCE((SELECT sum(cl.amount) FROM payroll_claims cl WHERE cl.payout_id = p.id AND cl.status = 'approved'), 0))::bigint AS total
+-- Shared payouts, as their cards show them: the person, the period, what it pays and its state.
+SELECT p.id, p.user_id, u.full_name, p.start_date, p.end_date, p.status, p.paid_at,
+    COALESCE((SELECT sum(pc.total_commission) FROM payroll_commissions pc WHERE pc.payout_id = p.id AND pc.status = 'approved'), 0)::bigint AS commissions,
+    COALESCE((SELECT sum(cl.amount) FROM payroll_claims cl WHERE cl.payout_id = p.id AND cl.status = 'approved'), 0)::bigint AS claims
 FROM payroll_payouts p
 JOIN users u ON u.id = p.user_id
 WHERE p.id = ANY(@ids::uuid[]) AND p.tenant_id = @tenant_id;

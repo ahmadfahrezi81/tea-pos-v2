@@ -7,6 +7,13 @@
 - Only the backoffice may share and open links for now; the seller app shows "Opens in the backoffice". What's new opens in both.
 - A pay period shared by any of its days is stored by its first day.
 
+**Previews (owner, 2026-11-21: "like a screenshot of the page", built on `fix/chat-staging-look`):** a card shows the screen in small, so nobody needs to open it. One shape for every kind (`LinkPreview`: a state, a few numbers, a short list of people), filled by Go and drawn by one card, live:
+- a day: sales, cups, orders, expenses, expected cash (counted once closed), who worked and their cups;
+- a pay period: total, paid, still to pay, each person with their amount and state (5, then "and N more");
+- a payout: commissions, claims, total, its state.
+
+The same card shows under the app's own messages (day summary, pay total, payout paid). Only for readers who may open the screen.
+
 ## The goal
 
 Step 75 of [RFC: Chat (v2)](https://app.notion.com/p/40595a71540581e7b86edc272f66b0c1) (Links between the apps), backoffice only (owner, 2026-11-21): chat reaches production in the backoffice for the family, so a link is shared and opened there. The seller app's views wait for Step 71.

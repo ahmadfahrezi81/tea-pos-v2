@@ -1549,6 +1549,7 @@ export interface components {
             /** Format: int64 */
             people?: number;
             person?: string;
+            preview?: components["schemas"]["LinkPreview"];
             /** Format: date */
             start?: string;
             store?: string;
@@ -1993,6 +1994,17 @@ export interface components {
              */
             unitPrice: number;
         };
+        LinkPreview: {
+            /**
+             * Format: int64
+             * @description Rows left out of the list
+             */
+            more?: number;
+            rows?: components["schemas"]["PreviewRow"][] | null;
+            stats: components["schemas"]["PreviewStat"][];
+            /** @enum {string} */
+            status?: "open" | "closed" | "paid" | "pending" | "skipped";
+        };
         Me: {
             /** @description Slugs of the tenants the user asked to join, still waiting */
             asked: string[];
@@ -2392,6 +2404,24 @@ export interface components {
              * @description A message of the same channel this one answers
              */
             replyTo?: string;
+        };
+        PreviewRow: {
+            avatar?: string;
+            name: string;
+            /** @enum {string} */
+            status?: "paid" | "pending" | "skipped";
+            /** @enum {string} */
+            unit: "money" | "cups";
+            /** Format: int64 */
+            value: number;
+        };
+        PreviewStat: {
+            /** @enum {string} */
+            label: "sales" | "cups" | "orders" | "expenses" | "expected" | "counted" | "total" | "paid" | "toPay" | "people" | "commissions" | "claims";
+            /** @enum {string} */
+            unit: "money" | "count";
+            /** Format: int64 */
+            value: number;
         };
         Product: {
             /** Format: uuid */
