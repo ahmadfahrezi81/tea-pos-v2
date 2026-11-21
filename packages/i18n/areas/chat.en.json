@@ -65,6 +65,10 @@
         "editing": "Edit message",
         "everyone": "everyone",
         "activityMentioned": "Mentioned you in",
-        "mention": "Mention someone"
+        "mention": "Mention someone",
+        "pushTitle": "Turn on notifications",
+        "pushBody": "So you never miss a message, even with the app closed.",
+        "pushBlocked": "Notifications are blocked. Allow them for this app in your phone's settings.",
+        "pushTurnOn": "Turn on"
     }
 }

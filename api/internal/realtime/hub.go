@@ -172,6 +172,18 @@ var (
 	errNotAllowed  = httpx.New(http.StatusForbidden, "not_allowed", "Not allowed")
 )
 
+// failed answers a lookup that did not finish: a phone that gave up on the socket (a reload, a
+// lost signal) is no failure of ours, so 499 at info, as the API does; anything else is a 500.
+func failed(ctx context.Context, w http.ResponseWriter, what string, err error) {
+	if errors.Is(err, context.Canceled) {
+		slog.InfoContext(ctx, "cancelled", "what", what, "err", err)
+		w.WriteHeader(httpx.StatusClientClosed)
+		return
+	}
+	slog.ErrorContext(ctx, what, "err", err)
+	httpx.Write(w, httpx.New(http.StatusInternalServerError, "internal", "Something went wrong"))
+}
+
 // ServeHTTP is the socket at /realtime: signed in by the app's session cookie (sent with the
 // upgrade like any request), through the forwarder only (the edge middleware).
 func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -187,8 +199,7 @@ func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		slog.ErrorContext(ctx, "realtime: session lookup", "err", err)
-		httpx.Write(w, httpx.New(http.StatusInternalServerError, "internal", "Something went wrong"))
+		failed(ctx, w, "realtime: session lookup", err)
 		return
 	}
 	app := middleware.App(ctx)
@@ -198,8 +209,7 @@ func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	allowed, err := h.allowedTopics(ctx, session.UserID, app)
 	if err != nil {
-		slog.ErrorContext(ctx, "realtime: topics", "err", err)
-		httpx.Write(w, httpx.New(http.StatusInternalServerError, "internal", "Something went wrong"))
+		failed(ctx, w, "realtime: topics", err)
 		return
 	}
 	middleware.InfoFrom(ctx).SetCaller(session.UserID.String(), "")

@@ -108,7 +108,8 @@ function Frame({
     useAppBadge(unread);
     useEffect(() => {
         // Loaded after the first screen, and only for someone with chat.
-        if (hasChat) void import("../lib/push").then((m) => m.renewPush()).catch(() => {});
+        if (hasChat)
+            void import("@tea-pos/api-client/chat").then((m) => m.renewPush()).catch(() => {});
     }, [hasChat]);
     const root = slug ? `/${slug}` : "/";
     const under = (path: string) => (path ? `${root}/${path}` : root);

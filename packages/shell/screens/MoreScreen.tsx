@@ -6,8 +6,7 @@ import { currentVersion, useAppUpdate, useUpdateState } from "../frame/update/Ap
 import { rowIcon, SettingsGroup, SettingsRow } from "../frame/Settings";
 import { UpdateNow } from "../frame/update/UpdateNow";
 import { useUpdateText } from "../frame/update/useUpdateText";
-import { useSlug, useTenant } from "../session/tenant";
-import { PushRow } from "../frame/PushRow";
+import { useSlug } from "../session/tenant";
 import { LATEST, seen } from "../lib/whatsNew";
 import { APP_VERSION } from "../lib/version";
 
@@ -22,7 +21,6 @@ export function MoreScreen({ rows, before }: { rows?: ReactNode; before?: ReactN
     const { peek } = useAppUpdate();
     const state = useUpdateState();
     const stateText = useUpdateText(state);
-    const hasChat = !!useTenant()?.tenant.access.chat;
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => peek(), []);
     if (!slug) return null;
@@ -39,7 +37,6 @@ export function MoreScreen({ rows, before }: { rows?: ReactNode; before?: ReactN
                     dot={unseen}
                 />
             </SettingsGroup>
-            {hasChat && <PushRow />}
             <SettingsGroup title={t("more.app")}>
                 <SettingsRow
                     to={`/${slug}/app-info`}

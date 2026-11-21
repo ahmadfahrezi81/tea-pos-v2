@@ -1,4 +1,10 @@
-import { useChatChannels, type ChatChannel } from "@tea-pos/api-client/chat";
+import {
+    pushState,
+    turnPushOn,
+    type PushState,
+    useChatChannels,
+    type ChatChannel,
+} from "@tea-pos/api-client/chat";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { useSearchParam, useSearchText } from "@tea-pos/shell/searchParam";
@@ -7,7 +13,8 @@ import { Segmented } from "@tea-pos/ui/form/Segmented";
 import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
 import { SearchBox } from "@tea-pos/ui/SearchBox";
 import { useNavigate } from "@tanstack/react-router";
-import { Lock, MessagesSquare, Search } from "lucide-react";
+import { Bell, Lock, MessagesSquare, Search } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { ActivityList, useActivityUnread } from "./ActivityList";
 import { channelName, KIND_ICON, listTime } from "./labels";
@@ -85,11 +92,60 @@ function Channels({ search }: { search: string }) {
             <EmptyState title={t("chat.noChats")} icon={MessagesSquare} />
         );
     return (
-        <ListCard>
-            {channels.map((c) => (
-                <ChannelRow key={c.id} channel={c} />
-            ))}
-        </ListCard>
+        <>
+            <ListCard>
+                {channels.map((c) => (
+                    <ChannelRow key={c.id} channel={c} />
+                ))}
+            </ListCard>
+            <PushCard />
+        </>
+    );
+}
+
+/**
+ * Notifications, where chat is (owner): while this phone does not get them, a card under the
+ * chats asks once with a tap (phones allow the question only then). No off switch in the app:
+ * that is the phone's settings, so nobody turns them off by accident.
+ */
+function PushCard() {
+    const t = useT();
+    const [state, setState] = useState<PushState | null>(null);
+    const [busy, setBusy] = useState(false);
+    useEffect(() => {
+        void pushState().then(setState);
+    }, []);
+    if (state !== "off" && state !== "blocked") return null;
+    return (
+        <div className="mt-3 flex items-start gap-3 rounded-2xl bg-white p-4">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
+                <Bell size={20} />
+            </span>
+            <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-semibold text-gray-900">
+                    {t("chat.pushTitle")}
+                </span>
+                <span className="block text-sm text-gray-600">
+                    {t(state === "blocked" ? "chat.pushBlocked" : "chat.pushBody")}
+                </span>
+                {state === "off" && (
+                    <button
+                        disabled={busy}
+                        onClick={() => {
+                            setBusy(true);
+                            void turnPushOn()
+                                .catch(() => {})
+                                .then(pushState)
+                                .then(setState)
+                                .finally(() => setBusy(false));
+                        }}
+                        className="mt-3 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white active:opacity-80 disabled:opacity-50"
+                    >
+                        {t("chat.pushTurnOn")}
+                    </button>
+                )}
+            </span>
+        </div>
     );
 }
 
