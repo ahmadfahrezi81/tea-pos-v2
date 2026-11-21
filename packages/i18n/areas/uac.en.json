@@ -94,6 +94,9 @@
         "logoutEverywhere": "Log out everywhere",
         "sessionEnded": "{device} is logged out.",
         "vip": "VIP",
-        "chatVipHint": "The VIP badge and the VIP chat"
+        "chatVipHint": "The VIP badge and the VIP chat",
+        "groupChats": "Group chats",
+        "noGroupChats": "No group chats",
+        "archived": "Archived"
     }
 }

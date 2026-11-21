@@ -194,3 +194,40 @@ export function storeGroups<S extends Store>(stores: S[]): { key: MessageKey; st
         .map(([status, key]) => ({ key, stores: stores.filter((s) => s.status === status) }))
         .filter((g) => g.stores.length > 0);
 }
+
+/** Every group chat, and whether this person is in it (their Group chats; task 070). */
+export function useUacChatGroups(userId: string) {
+    const tenant = useSlug();
+    return $api.useQuery(
+        "get",
+        "/tenants/{tenant}/uac/people/{userId}/chat-groups",
+        { params: { path: { tenant, userId } } },
+        { enabled: !!tenant, staleTime: STALE.QUICK, meta: { live: ["access", "chat"] } },
+    );
+}
+
+/** Sets the group chats a person is in, the whole list. */
+export function useSetChatGroups(userId: string) {
+    const tenant = useSlug();
+    const queryClient = useQueryClient();
+    return useApiMutation<unknown, { groups: string[] }>(
+        async (body, headers) => {
+            const res = await api.PUT("/tenants/{tenant}/uac/people/{userId}/chat-groups", {
+                params: { path: { tenant, userId } },
+                body,
+                headers,
+            });
+            if (res.error) throw res.error;
+            return res.data;
+        },
+        {
+            onSuccess: () =>
+                void queryClient.invalidateQueries({
+                    predicate: (q) => {
+                        const path = String(q.queryKey[1] ?? "");
+                        return path.includes("/chat-groups") || path.includes("/chat/");
+                    },
+                }),
+        },
+    );
+}

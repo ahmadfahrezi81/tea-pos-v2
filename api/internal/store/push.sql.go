@@ -22,13 +22,14 @@ LEFT JOIN user_app_access x ON x.tenant_id = c.tenant_id AND x.user_id = a.user_
 LEFT JOIN chat_reads r ON r.channel_id = c.id AND r.user_id = a.user_id
 WHERE c.id = $1
   AND (t.owner_id = a.user_id OR x.access IS NOT NULL)
-  AND CASE c.kind
+  AND (CASE c.kind
     WHEN 'general' THEN true
     WHEN 'admin' THEN t.owner_id = a.user_id OR x.access IN ('vip', 'admin')
     WHEN 'personal' THEN a.user_id = c.user_id
     WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = a.user_id)
+    WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = a.user_id)
     ELSE false
-  END
+  END OR (r.followed_at IS NOT NULL AND c.kind <> 'personal' AND (t.owner_id = a.user_id OR x.access = 'admin')))
   AND u.id IS DISTINCT FROM $2::uuid
   AND coalesce(r.notify_level, 'all') <> 'none'
   AND NOT (coalesce(r.notify_level, 'all') = 'humans' AND $3::bool)

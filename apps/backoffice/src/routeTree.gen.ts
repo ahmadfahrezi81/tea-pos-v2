@@ -44,6 +44,7 @@ import { Route as ShellTenantUacUserIdAppsRouteImport } from './routes/_shell/$t
 import { Route as ShellTenantUacUserIdClaimsRouteImport } from './routes/_shell/$tenant/uac/$userId/claims'
 import { Route as ShellTenantUacUserIdCommissionRouteImport } from './routes/_shell/$tenant/uac/$userId/commission'
 import { Route as ShellTenantUacUserIdDetailsRouteImport } from './routes/_shell/$tenant/uac/$userId/details'
+import { Route as ShellTenantUacUserIdGroupChatsRouteImport } from './routes/_shell/$tenant/uac/$userId/group-chats'
 import { Route as ShellTenantUacUserIdSessionsRouteImport } from './routes/_shell/$tenant/uac/$userId/sessions'
 import { Route as ShellTenantUacUserIdStoresRouteImport } from './routes/_shell/$tenant/uac/$userId/stores'
 import { Route as ShellTenantUacRequestsIdRouteImport } from './routes/_shell/$tenant/uac/requests/$id'
@@ -255,6 +256,12 @@ const ShellTenantUacUserIdDetailsRoute =
     path: '/uac/$userId/details',
     getParentRoute: () => ShellTenantRoute,
   } as any)
+const ShellTenantUacUserIdGroupChatsRoute =
+  ShellTenantUacUserIdGroupChatsRouteImport.update({
+    id: '/uac/$userId/group-chats',
+    path: '/uac/$userId/group-chats',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
 const ShellTenantUacUserIdSessionsRoute =
   ShellTenantUacUserIdSessionsRouteImport.update({
     id: '/uac/$userId/sessions',
@@ -388,6 +395,7 @@ export interface FileRoutesByFullPath {
   '/$tenant/uac/$userId/claims': typeof ShellTenantUacUserIdClaimsRoute
   '/$tenant/uac/$userId/commission': typeof ShellTenantUacUserIdCommissionRoute
   '/$tenant/uac/$userId/details': typeof ShellTenantUacUserIdDetailsRoute
+  '/$tenant/uac/$userId/group-chats': typeof ShellTenantUacUserIdGroupChatsRoute
   '/$tenant/uac/$userId/sessions': typeof ShellTenantUacUserIdSessionsRoute
   '/$tenant/uac/$userId/stores': typeof ShellTenantUacUserIdStoresRoute
   '/$tenant/uac/requests/$id': typeof ShellTenantUacRequestsIdRoute
@@ -440,6 +448,7 @@ export interface FileRoutesByTo {
   '/$tenant/uac/$userId/claims': typeof ShellTenantUacUserIdClaimsRoute
   '/$tenant/uac/$userId/commission': typeof ShellTenantUacUserIdCommissionRoute
   '/$tenant/uac/$userId/details': typeof ShellTenantUacUserIdDetailsRoute
+  '/$tenant/uac/$userId/group-chats': typeof ShellTenantUacUserIdGroupChatsRoute
   '/$tenant/uac/$userId/sessions': typeof ShellTenantUacUserIdSessionsRoute
   '/$tenant/uac/$userId/stores': typeof ShellTenantUacUserIdStoresRoute
   '/$tenant/uac/requests/$id': typeof ShellTenantUacRequestsIdRoute
@@ -495,6 +504,7 @@ export interface FileRoutesById {
   '/_shell/$tenant/uac/$userId/claims': typeof ShellTenantUacUserIdClaimsRoute
   '/_shell/$tenant/uac/$userId/commission': typeof ShellTenantUacUserIdCommissionRoute
   '/_shell/$tenant/uac/$userId/details': typeof ShellTenantUacUserIdDetailsRoute
+  '/_shell/$tenant/uac/$userId/group-chats': typeof ShellTenantUacUserIdGroupChatsRoute
   '/_shell/$tenant/uac/$userId/sessions': typeof ShellTenantUacUserIdSessionsRoute
   '/_shell/$tenant/uac/$userId/stores': typeof ShellTenantUacUserIdStoresRoute
   '/_shell/$tenant/uac/requests/$id': typeof ShellTenantUacRequestsIdRoute
@@ -550,6 +560,7 @@ export interface FileRouteTypes {
     | '/$tenant/uac/$userId/claims'
     | '/$tenant/uac/$userId/commission'
     | '/$tenant/uac/$userId/details'
+    | '/$tenant/uac/$userId/group-chats'
     | '/$tenant/uac/$userId/sessions'
     | '/$tenant/uac/$userId/stores'
     | '/$tenant/uac/requests/$id'
@@ -602,6 +613,7 @@ export interface FileRouteTypes {
     | '/$tenant/uac/$userId/claims'
     | '/$tenant/uac/$userId/commission'
     | '/$tenant/uac/$userId/details'
+    | '/$tenant/uac/$userId/group-chats'
     | '/$tenant/uac/$userId/sessions'
     | '/$tenant/uac/$userId/stores'
     | '/$tenant/uac/requests/$id'
@@ -656,6 +668,7 @@ export interface FileRouteTypes {
     | '/_shell/$tenant/uac/$userId/claims'
     | '/_shell/$tenant/uac/$userId/commission'
     | '/_shell/$tenant/uac/$userId/details'
+    | '/_shell/$tenant/uac/$userId/group-chats'
     | '/_shell/$tenant/uac/$userId/sessions'
     | '/_shell/$tenant/uac/$userId/stores'
     | '/_shell/$tenant/uac/requests/$id'
@@ -932,6 +945,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellTenantUacUserIdDetailsRouteImport
       parentRoute: typeof ShellTenantRoute
     }
+    '/_shell/$tenant/uac/$userId/group-chats': {
+      id: '/_shell/$tenant/uac/$userId/group-chats'
+      path: '/uac/$userId/group-chats'
+      fullPath: '/$tenant/uac/$userId/group-chats'
+      preLoaderRoute: typeof ShellTenantUacUserIdGroupChatsRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
     '/_shell/$tenant/uac/$userId/sessions': {
       id: '/_shell/$tenant/uac/$userId/sessions'
       path: '/uac/$userId/sessions'
@@ -1081,6 +1101,7 @@ interface ShellTenantRouteChildren {
   ShellTenantUacUserIdClaimsRoute: typeof ShellTenantUacUserIdClaimsRoute
   ShellTenantUacUserIdCommissionRoute: typeof ShellTenantUacUserIdCommissionRoute
   ShellTenantUacUserIdDetailsRoute: typeof ShellTenantUacUserIdDetailsRoute
+  ShellTenantUacUserIdGroupChatsRoute: typeof ShellTenantUacUserIdGroupChatsRoute
   ShellTenantUacUserIdSessionsRoute: typeof ShellTenantUacUserIdSessionsRoute
   ShellTenantUacUserIdStoresRoute: typeof ShellTenantUacUserIdStoresRoute
   ShellTenantUacRequestsIdRoute: typeof ShellTenantUacRequestsIdRoute
@@ -1132,6 +1153,7 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
   ShellTenantUacUserIdClaimsRoute: ShellTenantUacUserIdClaimsRoute,
   ShellTenantUacUserIdCommissionRoute: ShellTenantUacUserIdCommissionRoute,
   ShellTenantUacUserIdDetailsRoute: ShellTenantUacUserIdDetailsRoute,
+  ShellTenantUacUserIdGroupChatsRoute: ShellTenantUacUserIdGroupChatsRoute,
   ShellTenantUacUserIdSessionsRoute: ShellTenantUacUserIdSessionsRoute,
   ShellTenantUacUserIdStoresRoute: ShellTenantUacUserIdStoresRoute,
   ShellTenantUacRequestsIdRoute: ShellTenantUacRequestsIdRoute,

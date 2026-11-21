@@ -243,6 +243,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{tenant}/chat/channels/{id}/follow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** A chat admin follows a channel they are not in: its badge and pushes */
+        put: operations["followChatChannel"];
+        post?: never;
+        /** Stop following a channel */
+        delete: operations["unfollowChatChannel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{tenant}/chat/channels/{id}/messages": {
         parameters: {
             query?: never;
@@ -325,6 +343,74 @@ export interface paths {
         put?: never;
         /** The caller is typing in a channel: its other members are told, nothing is saved */
         post: operations["chatTyping"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/chat/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Make a group with its people */
+        post: operations["createChatGroup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/chat/groups/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename a group, or archive it (read only) and back */
+        patch: operations["updateChatGroup"];
+        trace?: never;
+    };
+    "/tenants/{tenant}/chat/groups/{id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set a group's people, the whole list */
+        put: operations["setChatGroupMembers"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/chat/people": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Everyone with a chat level: who a group can be made of */
+        get: operations["listChatPeople"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1103,6 +1189,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{tenant}/uac/people/{userId}/chat-groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every group chat, and whether this person is in it */
+        get: operations["getUacChatGroups"];
+        /** Set the group chats a person is in, the whole list */
+        put: operations["setUacChatGroups"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{tenant}/uac/people/{userId}/details": {
         parameters: {
             query?: never;
@@ -1363,6 +1467,10 @@ export interface components {
             unread: number;
         };
         ChatChannel: {
+            /** @description An archived group: read only, its history kept */
+            archived?: boolean;
+            /** @description A chat admin following a channel they are not in */
+            following?: boolean;
             /** Format: uuid */
             id: string;
             /** @enum {string} */
@@ -1375,6 +1483,8 @@ export interface components {
              * @description How many are in it (the list; absent on one channel's own read)
              */
             members?: number;
+            /** @description In it or following: its badge and pushes count */
+            mine: boolean;
             name?: string;
             /** @description Nobody posts: Notifications, or a store no longer open */
             readOnly: boolean;
@@ -1385,6 +1495,10 @@ export interface components {
             unread: number;
         };
         ChatChannelOutputBody: {
+            /** @description An archived group: read only, its history kept */
+            archived?: boolean;
+            /** @description A chat admin following a channel they are not in */
+            following?: boolean;
             /** Format: uuid */
             id: string;
             /** @enum {string} */
@@ -1394,6 +1508,8 @@ export interface components {
             lastAt?: string;
             /** @description Everyone in it, with how far each has read: Seen by */
             members: components["schemas"]["ChatMember"][];
+            /** @description In it or following: its badge and pushes count */
+            mine: boolean;
             name?: string;
             /** @description Nobody posts: Notifications, or a store no longer open */
             readOnly: boolean;
@@ -1407,10 +1523,20 @@ export interface components {
             /** @description The caller's channels, the newest message first */
             channels: components["schemas"]["ChatChannel"][];
         };
+        ChatGroupBody: {
+            /** @description Everyone in it; the tenant's active people only */
+            members: string[] | null;
+            name: string;
+        };
+        ChatGroupOutputBody: {
+            /** Format: uuid */
+            id: string;
+        };
         ChatMember: {
             /** @description A chat admin (the owner, or chat level admin): deletes anyone's message */
             admin?: boolean;
             avatar?: string;
+            follower?: boolean;
             /** Format: uuid */
             id: string;
             name: string;
@@ -1449,6 +1575,17 @@ export interface components {
             reactions?: components["schemas"]["ChatReaction"][] | null;
             /** @description The message this one answers, quoted above it */
             replyTo?: components["schemas"]["ChatQuote"];
+        };
+        ChatPeopleOutputBody: {
+            /** @description Everyone with a chat level: who a group can be made of */
+            people: components["schemas"]["ChatPerson"][];
+        };
+        ChatPerson: {
+            avatar?: string;
+            /** Format: uuid */
+            id: string;
+            in?: boolean;
+            name: string;
         };
         ChatPhoto: {
             /** Format: int64 */
@@ -1787,7 +1924,7 @@ export interface components {
              * @example day_already_closed
              * @enum {string}
              */
-            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_claim_code" | "bad_cursor" | "bad_hours" | "bad_level" | "bad_photo" | "bad_proof" | "bad_range" | "bad_receipt" | "bad_request" | "blank_message" | "blank_name" | "channel_not_found" | "channel_read_only" | "chat_too_fast" | "claim_done" | "claim_not_eligible" | "claim_not_found" | "claim_too_old" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_closed" | "day_not_found" | "day_not_in_payout" | "edit_closed" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "message_not_found" | "no_session" | "no_work_that_day" | "not_allowed" | "not_author" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_your_message" | "not_your_store" | "not_yourself" | "old_day_open" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_closed" | "period_not_found" | "person_not_found" | "product_changed" | "proof_required" | "request_not_found" | "route_not_found" | "session_not_found" | "session_taken" | "staff_not_found" | "store_already_opened" | "store_not_found" | "store_not_open" | "store_required" | "too_far_back" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
+            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_claim_code" | "bad_cursor" | "bad_hours" | "bad_level" | "bad_photo" | "bad_proof" | "bad_range" | "bad_receipt" | "bad_request" | "blank_group_name" | "blank_message" | "blank_name" | "channel_not_found" | "channel_read_only" | "chat_too_fast" | "claim_done" | "claim_not_eligible" | "claim_not_found" | "claim_too_old" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_closed" | "day_not_found" | "day_not_in_payout" | "edit_closed" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "maintenance" | "message_not_found" | "no_session" | "no_work_that_day" | "not_allowed" | "not_author" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_your_message" | "not_your_store" | "not_yourself" | "old_day_open" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_closed" | "period_not_found" | "person_not_found" | "product_changed" | "proof_required" | "request_not_found" | "route_not_found" | "session_not_found" | "session_taken" | "staff_not_found" | "store_already_opened" | "store_not_found" | "store_not_open" | "store_required" | "too_far_back" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
             details?: string[] | null;
             /** @example The day is already closed */
             message: string;
@@ -2333,6 +2470,10 @@ export interface components {
             /** @description The address from POST /files (purpose daily_photo); empty keeps the photo and changes the quantity */
             url?: string;
         };
+        SetChatGroupMembersInputBody: {
+            /** @description Everyone in it, the whole list */
+            members: string[] | null;
+        };
         SetClaimEligibleInputBody: {
             /** @description Everyone who may claim it; the rest may not */
             userIds: string[];
@@ -2356,6 +2497,10 @@ export interface components {
             fullName: string;
             /** @description Empty clears it */
             phone: string;
+        };
+        SetUserChatGroupsInputBody: {
+            /** @description Every group the person is in, the whole list */
+            groups: string[] | null;
         };
         SettlePayoutInputBody: {
             /** @description For the staff member, on their payslip; cannot be changed after */
@@ -2605,6 +2750,11 @@ export interface components {
             /** @description Still running, the latest used first */
             sessions: components["schemas"]["UacSession"][];
         };
+        UpdateChatGroupInputBody: {
+            /** @description Archived: read only, its history kept */
+            archived?: boolean;
+            name?: string;
+        };
         UpdateClaimTypeInputBody: {
             enabled?: boolean;
             name?: string;
@@ -2638,6 +2788,16 @@ export interface components {
             uploadUrl: string;
             /** @description The address saved in the row (the old app's form); a private photo opens only through a signed address */
             url: string;
+        };
+        UserChatGroup: {
+            archived?: boolean;
+            /** Format: uuid */
+            id: string;
+            member: boolean;
+            name: string;
+        };
+        UserChatGroupsOutputBody: {
+            groups: components["schemas"]["UserChatGroup"][];
         };
         WeatherHour: {
             /**
@@ -3146,6 +3306,66 @@ export interface operations {
             };
         };
     };
+    followChatChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    unfollowChatChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     listChatMessages: {
         parameters: {
             query?: {
@@ -3406,6 +3626,143 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createChatGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatGroupBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatGroupOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    updateChatGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateChatGroupInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    setChatGroupMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetChatGroupMembersInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listChatPeople: {
+        parameters: {
+            query?: {
+                /** @description Mark who is in this group */
+                group?: string;
+            };
+            header?: never;
+            path: {
+                tenant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatPeopleOutputBody"];
+                };
             };
             /** @description Error */
             default: {
@@ -5180,6 +5537,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UacPerson"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getUacChatGroups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserChatGroupsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    setUacChatGroups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetUserChatGroupsInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserChatGroupsOutputBody"];
                 };
             };
             /** @description Error */

@@ -24,6 +24,7 @@ import {
     ReceiptText,
     Store,
     UserCheck,
+    Users,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
@@ -31,8 +32,10 @@ import { SessionsCard } from "./Sessions";
 import { useClaimTypes, useCommissionTypes, usePayWrite, writes } from "../pay/pay";
 import {
     storeGroups,
+    useSetChatGroups,
     useSetDetails,
     useSetPerson,
+    useUacChatGroups,
     useUacPerson,
     type Change,
     type Person,
@@ -62,7 +65,7 @@ const HINTS: Record<string, MessageKey> = {
     admin: "uac.adminHint",
 };
 
-type Part = "details" | "apps" | "stores" | "commission" | "claims";
+type Part = "details" | "apps" | "stores" | "groups" | "commission" | "claims";
 
 /** A person, everything at a glance: each row opens its own page, whose save asks first. */
 export function PersonPage({ userId }: { userId: string }) {
@@ -73,6 +76,7 @@ export function PersonPage({ userId }: { userId: string }) {
     const stores = useTenant()?.tenant.stores ?? [];
     const { data: p } = useUacPerson(userId);
     const { data: claimTypes } = useClaimTypes();
+    const { data: groups } = useUacChatGroups(userId);
     if (!p) return <Skeleton className="h-60 rounded-2xl" />;
     const bank = p.bank;
     // The owner keeps full access, and someone turned off has none to change.
@@ -92,7 +96,11 @@ export function PersonPage({ userId }: { userId: string }) {
             icon={icon}
             label={label}
             sublabel={sublabel}
-            to={editable ? `/${slug}/uac/${p.id}/${part}` : undefined}
+            to={
+                editable
+                    ? `/${slug}/uac/${p.id}/${part === "groups" ? "group-chats" : part}`
+                    : undefined
+            }
             right={editable ? undefined : <></>}
         />
     );
@@ -136,6 +144,17 @@ export function PersonPage({ userId }: { userId: string }) {
                         .map((s) => s.name)
                         .join(", ") || t("uac.noStores"),
                     storesOpen,
+                )}
+                {/* Beside Stores, as the RFC's screen 7: their store chats follow Stores, these are picked. */}
+                {row(
+                    "groups",
+                    <Users {...rowIcon} />,
+                    t("uac.groupChats"),
+                    groups?.groups
+                        .filter((g) => g.member)
+                        .map((g) => g.name)
+                        .join(", ") || t("uac.noGroupChats"),
+                    canWrite && p.active && !!groups?.groups.length,
                 )}
                 {row(
                     "commission",
@@ -197,6 +216,7 @@ export function PersonSetting({ userId, part }: { userId: string; part: Part }) 
     if (part === "commission")
         return <CommissionForm key={key} person={data} canWrite={canWrite} />;
     if (part === "claims") return <ClaimsForm key={key} person={data} canWrite={canWrite} />;
+    if (part === "groups") return <GroupsForm person={data} canWrite={canWrite && data.active} />;
     return (
         <ChangeForm
             key={key}
@@ -460,6 +480,57 @@ function CheckRow({
                 {on && <Check size={16} strokeWidth={4} />}
             </span>
         </button>
+    );
+}
+
+/** The group chats a person is in, ticked; the same list a group's own members screen sets. */
+function GroupsForm({ person: p, canWrite }: FormProps) {
+    const { data } = useUacChatGroups(p.id);
+    if (!data) return <Skeleton className="h-60 rounded-2xl" />;
+    return (
+        <GroupChecks
+            key={JSON.stringify(data)}
+            person={p}
+            canWrite={canWrite}
+            groups={data.groups}
+        />
+    );
+}
+
+function GroupChecks({
+    person: p,
+    canWrite,
+    groups,
+}: FormProps & { groups: { id: string; name: string; archived?: boolean; member: boolean }[] }) {
+    const t = useT();
+    const save = useSetChatGroups(p.id);
+    const saved = groups.filter((g) => g.member).map((g) => g.id);
+    const [ids, setIds] = useState(saved);
+    return (
+        <>
+            <Panel>
+                <div className="bg-slate-100 rounded-xl px-4 py-1">
+                    {groups.map((g) => (
+                        <CheckRow
+                            key={g.id}
+                            label={g.name}
+                            sublabel={g.archived ? t("uac.archived") : undefined}
+                            disabled={!canWrite}
+                            on={ids.includes(g.id)}
+                            onToggle={() => setIds(toggled(ids, g.id))}
+                        />
+                    ))}
+                </div>
+            </Panel>
+            {canWrite && (
+                <Save
+                    person={p}
+                    access
+                    changed={[...ids].sort().join() !== [...saved].sort().join()}
+                    onSave={() => save.mutateAsync({ groups: ids })}
+                />
+            )}
+        </>
     );
 }
 

@@ -238,7 +238,8 @@
         "notSavedOffline": "Tidak tersimpan: tidak ada koneksi. Coba lagi.",
         "session_not_found": "Session itu sudah berakhir.",
         "bad_hours": "Jam buka harus sebelum jam tutup.",
-        "too_far_back": "Tanggal itu terlalu jauh ke belakang."
+        "too_far_back": "Tanggal itu terlalu jauh ke belakang.",
+        "blank_group_name": "Beri nama grup."
     },
     "store": {
         "week": "Week",

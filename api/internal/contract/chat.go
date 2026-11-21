@@ -18,6 +18,11 @@ type ChatChannel struct {
 	Last     *ChatPreview `json:"last,omitempty"`
 	Unread   int          `json:"unread" doc:"Stops at 100: show 99+"`
 	Members  int          `json:"members,omitempty" doc:"How many are in it (the list; absent on one channel's own read)"`
+	// Mine: the caller is in it, or follows it; a chat admin's other channels are listed too
+	// (Other channels), without a badge.
+	Mine      bool `json:"mine" doc:"In it or following: its badge and pushes count"`
+	Following bool `json:"following,omitempty" doc:"A chat admin following a channel they are not in"`
+	Archived  bool `json:"archived,omitempty" doc:"An archived group: read only, its history kept"`
 }
 
 // ChatPreview is a channel's last message, one line on the list.
@@ -49,6 +54,8 @@ type ChatMember struct {
 	ReadAt string `json:"readAt,omitempty" format:"date-time" doc:"Read everything up to here; absent: never opened"`
 	Admin  bool   `json:"admin,omitempty" doc:"A chat admin (the owner, or chat level admin): deletes anyone's message"`
 	VIP    bool   `json:"vip,omitempty" doc:"A VIP or an admin: the VIP badge"`
+	// Follower: a chat admin following the channel, told of it but not one of its members.
+	Follower bool `json:"follower,omitempty"`
 }
 
 type ChatMessagesInput struct {
@@ -183,5 +190,79 @@ type EditChatMessageInput struct {
 	Msg    string `path:"message" format:"uuid"`
 	Body   struct {
 		Body string `json:"body" maxLength:"4000"`
+	}
+}
+
+type ChatGroupBody struct {
+	Name    string   `json:"name" minLength:"1" maxLength:"60"`
+	Members []string `json:"members" maxItems:"500" doc:"Everyone in it; the tenant's active people only"`
+}
+
+type CreateChatGroupInput struct {
+	Tenant string `path:"tenant"`
+	Body   ChatGroupBody
+}
+
+type UpdateChatGroupInput struct {
+	Tenant string `path:"tenant"`
+	ID     string `path:"id" format:"uuid"`
+	Body   struct {
+		Name     *string `json:"name,omitempty" required:"false" minLength:"1" maxLength:"60"`
+		Archived *bool   `json:"archived,omitempty" required:"false" doc:"Archived: read only, its history kept"`
+	}
+}
+
+type SetChatGroupMembersInput struct {
+	Tenant string `path:"tenant"`
+	ID     string `path:"id" format:"uuid"`
+	Body   struct {
+		Members []string `json:"members" maxItems:"500" doc:"Everyone in it, the whole list"`
+	}
+}
+
+type ChatGroupOutput struct {
+	Body struct {
+		ID string `json:"id" format:"uuid"`
+	}
+}
+
+type ChatPeopleOutput struct {
+	Body struct {
+		People []ChatPerson `json:"people" nullable:"false" doc:"Everyone with a chat level: who a group can be made of"`
+	}
+}
+
+type ChatPerson struct {
+	ID     string `json:"id" format:"uuid"`
+	Name   string `json:"name"`
+	Avatar string `json:"avatar,omitempty"`
+	// In: already in the group asked about (?group=).
+	In bool `json:"in,omitempty"`
+}
+
+type ChatPeopleInput struct {
+	Tenant string `path:"tenant"`
+	Group  string `query:"group" required:"false" format:"uuid" doc:"Mark who is in this group"`
+}
+
+// UserChatGroups is UAC's Group chats: every group, and whether the person is in it.
+type UserChatGroupsOutput struct {
+	Body struct {
+		Groups []UserChatGroup `json:"groups" nullable:"false"`
+	}
+}
+
+type UserChatGroup struct {
+	ID       string `json:"id" format:"uuid"`
+	Name     string `json:"name"`
+	Archived bool   `json:"archived,omitempty"`
+	Member   bool   `json:"member"`
+}
+
+type SetUserChatGroupsInput struct {
+	Tenant string `path:"tenant"`
+	UserID string `path:"userId" format:"uuid"`
+	Body   struct {
+		Groups []string `json:"groups" maxItems:"500" doc:"Every group the person is in, the whole list"`
 	}
 }

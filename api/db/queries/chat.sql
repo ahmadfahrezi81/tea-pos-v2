@@ -1,18 +1,23 @@
 -- Chat (RFC: Chat (v2)). Who is in a channel is decided here, the same way in every query:
 -- an active member of the tenant with a chat level (the owner always), and by kind: everyone for
--- general, chat admins for admin, the person for personal, whoever works the store for a store's.
+-- general, chat admins for admin, the person for personal, whoever works the store for a store's,
+-- the people picked for a group. A chat admin may open any channel but someone's Notifications;
+-- one they follow counts as theirs for badges, Activity and pushes (task 070).
 
 -- name: EnsureChatChannels :exec
 -- Makes whichever of the caller's channels do not exist yet: General, their Notifications, Admin
--- for a VIP (or admin: the VIP chat, kind admin), one per store they work. Reads only, once they all exist.
+-- for a VIP (or admin: the VIP chat, kind admin), one per store they work (a chat admin: every
+-- store, for Other channels). Reads only, once they all exist.
 WITH want AS (
     SELECT 'general'::text AS kind, NULL::uuid AS store_id, NULL::uuid AS user_id
-    UNION ALL SELECT 'personal', NULL, @user_id::uuid
-    UNION ALL SELECT 'admin', NULL, NULL WHERE @chat_vip::bool
-    UNION ALL
+    UNION SELECT 'personal', NULL, @user_id::uuid
+    UNION SELECT 'admin', NULL, NULL WHERE @chat_vip::bool
+    UNION
     SELECT 'store', s.id, NULL
-    FROM user_store_assignments sa JOIN stores s ON s.id = sa.store_id
-    WHERE sa.user_id = @user_id AND s.tenant_id = @tenant_id
+    FROM stores s
+    WHERE s.tenant_id = @tenant_id AND (@chat_admin::bool OR EXISTS (
+        SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = s.id AND sa.user_id = @user_id
+    ))
 )
 INSERT INTO chat_channels (tenant_id, kind, store_id, user_id)
 SELECT @tenant_id, w.kind, w.store_id, w.user_id
@@ -26,9 +31,20 @@ ON CONFLICT DO NOTHING;
 
 -- name: ListChatChannels :many
 -- The caller's channels, the newest message first: the name (a store's read live), the last
--- message, and how many unread (stops at 100: "99+").
+-- message, and how many unread (stops at 100: "99+"). A chat admin also gets every other
+-- channel but someone's Notifications: member and following say which are theirs.
 SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name,
     coalesce(s.status, 'active')::text AS store_status,
+    (c.archived_at IS NOT NULL)::bool AS archived,
+    (CASE c.kind
+        WHEN 'general' THEN true
+        WHEN 'admin' THEN @chat_vip::bool
+        WHEN 'personal' THEN c.user_id = @user_id
+        WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = @user_id)
+        WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = @user_id)
+        ELSE false
+    END)::bool AS member,
+    (r.followed_at IS NOT NULL)::bool AS following,
     c.last_message_at,
     coalesce(m.body, '')::text AS last_body,
     coalesce(m.author_type, '')::text AS last_author_type,
@@ -53,6 +69,7 @@ SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name,
             WHEN 'admin' THEN t.owner_id = ma.user_id OR mx.access IN ('vip', 'admin')
             WHEN 'personal' THEN ma.user_id = c.user_id
             WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = ma.user_id)
+            WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = ma.user_id)
             ELSE false
           END
     )::int AS members
@@ -62,33 +79,56 @@ LEFT JOIN stores s ON s.id = c.store_id
 LEFT JOIN chat_reads r ON r.channel_id = c.id AND r.user_id = @user_id
 LEFT JOIN chat_messages m ON m.id = c.last_message_id
 LEFT JOIN users au ON au.id = m.author_id
-WHERE c.tenant_id = @tenant_id AND CASE c.kind
-    WHEN 'general' THEN true
-    WHEN 'admin' THEN @chat_vip::bool
-    WHEN 'personal' THEN c.user_id = @user_id
-    WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = @user_id)
-    ELSE false
-END
+WHERE c.tenant_id = @tenant_id AND (CASE c.kind
+        WHEN 'general' THEN true
+        WHEN 'admin' THEN @chat_vip::bool
+        WHEN 'personal' THEN c.user_id = @user_id
+        WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = @user_id)
+        WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = @user_id)
+        ELSE false
+    END
+    OR (@chat_admin::bool AND c.kind <> 'personal'))
 ORDER BY c.last_message_at DESC NULLS LAST, c.kind, 3;
 
 -- name: GetChatChannel :one
--- One channel, only if the caller is in it (the same rule as ListChatChannels).
-SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name, coalesce(s.status, 'active')::text AS store_status
+-- One channel, only if the caller is in it or a chat admin (the same rule as ListChatChannels).
+SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name, coalesce(s.status, 'active')::text AS store_status,
+    (c.archived_at IS NOT NULL)::bool AS archived,
+    (CASE c.kind
+        WHEN 'general' THEN true
+        WHEN 'admin' THEN @chat_vip::bool
+        WHEN 'personal' THEN c.user_id = @user_id
+        WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = @user_id)
+        WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = @user_id)
+        ELSE false
+    END)::bool AS member,
+    coalesce((SELECT r.followed_at IS NOT NULL FROM chat_reads r WHERE r.channel_id = c.id AND r.user_id = @user_id), false)::bool AS following
 FROM chat_channels c
 LEFT JOIN stores s ON s.id = c.store_id
-WHERE c.id = @id AND c.tenant_id = @tenant_id AND CASE c.kind
-    WHEN 'general' THEN true
-    WHEN 'admin' THEN @chat_vip::bool
-    WHEN 'personal' THEN c.user_id = @user_id
-    WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = @user_id)
-    ELSE false
-END;
+WHERE c.id = @id AND c.tenant_id = @tenant_id AND (CASE c.kind
+        WHEN 'general' THEN true
+        WHEN 'admin' THEN @chat_vip::bool
+        WHEN 'personal' THEN c.user_id = @user_id
+        WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = @user_id)
+        WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = @user_id)
+        ELSE false
+    END
+    OR (@chat_admin::bool AND c.kind <> 'personal'));
 
 -- name: ListChatMembers :many
--- Everyone in a channel, with how far they have read: Seen by, Not yet, and who to tell.
+-- Everyone in a channel, with how far they have read: Seen by, Not yet, and who to tell. A chat
+-- admin following it is told too (follower: not one of its members).
 SELECT u.id, u.full_name, coalesce(u.avatar_url, '')::text AS avatar_url, r.last_read_at,
     coalesce(t.owner_id = a.user_id OR x.access = 'admin', false)::bool AS chat_admin,
-    coalesce(t.owner_id = a.user_id OR x.access IN ('vip', 'admin'), false)::bool AS chat_vip
+    coalesce(t.owner_id = a.user_id OR x.access IN ('vip', 'admin'), false)::bool AS chat_vip,
+    (NOT CASE c.kind
+        WHEN 'general' THEN true
+        WHEN 'admin' THEN t.owner_id = a.user_id OR x.access IN ('vip', 'admin')
+        WHEN 'personal' THEN a.user_id = c.user_id
+        WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = a.user_id)
+        WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = a.user_id)
+        ELSE false
+    END)::bool AS follower
 FROM chat_channels c
 JOIN tenants t ON t.id = c.tenant_id
 JOIN user_tenant_assignments a ON a.tenant_id = c.tenant_id AND a.status = 'active'
@@ -97,13 +137,14 @@ LEFT JOIN user_app_access x ON x.tenant_id = c.tenant_id AND x.user_id = a.user_
 LEFT JOIN chat_reads r ON r.channel_id = c.id AND r.user_id = a.user_id
 WHERE c.id = @channel_id
   AND (t.owner_id = a.user_id OR x.access IS NOT NULL)
-  AND CASE c.kind
+  AND (CASE c.kind
     WHEN 'general' THEN true
     WHEN 'admin' THEN t.owner_id = a.user_id OR x.access IN ('vip', 'admin')
     WHEN 'personal' THEN a.user_id = c.user_id
     WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = a.user_id)
+    WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = a.user_id)
     ELSE false
-  END
+  END OR (r.followed_at IS NOT NULL AND c.kind <> 'personal' AND (t.owner_id = a.user_id OR x.access = 'admin')))
 ORDER BY u.full_name;
 
 -- name: ListChatMessages :many
@@ -208,13 +249,14 @@ LEFT JOIN chat_messages rt ON rt.id = m.thread_root_id
 LEFT JOIN chat_reads cr ON cr.channel_id = c.id AND cr.user_id = @user_id
 WHERE c.tenant_id = @tenant_id AND m.deleted_at IS NULL
   AND m.author_id IS DISTINCT FROM @user_id
-  AND CASE c.kind
+  AND (CASE c.kind
     WHEN 'general' THEN true
     WHEN 'admin' THEN @chat_vip::bool
     WHEN 'personal' THEN c.user_id = @user_id
     WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = @user_id)
+    WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = @user_id)
     ELSE false
-  END
+  END OR (@chat_admin::bool AND cr.followed_at IS NOT NULL AND c.kind <> 'personal'))
   AND (m.created_at, m.id) < (@cursor_at::timestamptz, @cursor_id::uuid)
 ORDER BY m.created_at DESC, m.id DESC
 LIMIT @lim;
@@ -229,13 +271,14 @@ SELECT count(*)::int FROM (
     WHERE c.tenant_id = @tenant_id AND m.deleted_at IS NULL
       AND m.author_id IS DISTINCT FROM @user_id
       AND m.created_at > coalesce(cr.last_read_at, '-infinity')
-      AND CASE c.kind
+      AND (CASE c.kind
         WHEN 'general' THEN true
         WHEN 'admin' THEN @chat_vip::bool
         WHEN 'personal' THEN c.user_id = @user_id
         WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = @user_id)
+        WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = @user_id)
         ELSE false
-      END
+      END OR (@chat_admin::bool AND cr.followed_at IS NOT NULL AND c.kind <> 'personal'))
     LIMIT 100
 ) a;
 
@@ -261,3 +304,76 @@ FROM chat_message_reactions x
 LEFT JOIN users u ON u.id = x.user_id
 WHERE x.message_id = ANY(@message_ids::uuid[])
 ORDER BY x.message_id, x.created_at;
+
+-- name: CreateChatGroup :one
+INSERT INTO chat_channels (tenant_id, kind, name, created_by)
+VALUES (@tenant_id, 'group', @name, @created_by)
+RETURNING id;
+
+-- name: UpdateChatGroup :one
+-- Renames a group, or archives it (read only, history kept) and back; a nil leaves it as it is.
+UPDATE chat_channels SET
+    name = coalesce(sqlc.narg(name)::text, name),
+    archived_at = CASE
+        WHEN sqlc.narg(archived)::bool IS NULL THEN archived_at
+        WHEN sqlc.narg(archived)::bool THEN coalesce(archived_at, now())
+    END
+WHERE id = @id AND tenant_id = @tenant_id AND kind = 'group'
+RETURNING id;
+
+-- name: SetChatGroupMembers :exec
+-- A group's people, the whole list: whoever is not in it leaves, only the tenant's active people join.
+WITH keep AS (SELECT unnest(@user_ids::uuid[]) AS user_id),
+gone AS (
+    DELETE FROM chat_channel_members g
+    WHERE g.channel_id = @channel_id AND g.user_id NOT IN (SELECT user_id FROM keep)
+)
+INSERT INTO chat_channel_members (channel_id, user_id, added_by)
+SELECT @channel_id, k.user_id, @added_by
+FROM keep k
+JOIN user_tenant_assignments a ON a.user_id = k.user_id AND a.tenant_id = @tenant_id AND a.status = 'active'
+ON CONFLICT DO NOTHING;
+
+-- name: ListChatPeople :many
+-- Everyone in the tenant with a chat level (the owner always): who a group can be made of.
+SELECT u.id, u.full_name, coalesce(u.avatar_url, '')::text AS avatar_url
+FROM user_tenant_assignments a
+JOIN tenants t ON t.id = a.tenant_id
+JOIN users u ON u.id = a.user_id
+LEFT JOIN user_app_access x ON x.tenant_id = a.tenant_id AND x.user_id = a.user_id AND x.app = 'chat'
+WHERE a.tenant_id = @tenant_id AND a.status = 'active' AND (t.owner_id = a.user_id OR x.access IS NOT NULL)
+ORDER BY u.full_name;
+
+-- name: ListChatGroupMembers :many
+SELECT user_id FROM chat_channel_members WHERE channel_id = @channel_id;
+
+-- name: SetChatFollow :exec
+-- A chat admin follows a channel (or stops): its badge counts from now, not its whole history.
+INSERT INTO chat_reads (user_id, channel_id, last_read_at, followed_at)
+VALUES (@user_id, @channel_id, now(), CASE WHEN @follow::bool THEN now() END)
+ON CONFLICT (user_id, channel_id) DO UPDATE
+SET followed_at = CASE WHEN @follow::bool THEN coalesce(chat_reads.followed_at, now()) END, updated_at = now();
+
+-- name: ListUserChatGroups :many
+-- UAC: every group of the tenant, and whether this person is in it.
+SELECT c.id, coalesce(c.name, '')::text AS name, (c.archived_at IS NOT NULL)::bool AS archived,
+    EXISTS (SELECT 1 FROM chat_channel_members g WHERE g.channel_id = c.id AND g.user_id = @user_id)::bool AS member
+FROM chat_channels c
+WHERE c.tenant_id = @tenant_id AND c.kind = 'group'
+ORDER BY c.archived_at IS NOT NULL, lower(c.name);
+
+-- name: SetUserChatGroups :exec
+-- UAC: the groups this person is in, the whole list; the same rows a group's own screen writes.
+WITH want AS (SELECT unnest(@channel_ids::uuid[]) AS id),
+gone AS (
+    DELETE FROM chat_channel_members g
+    USING chat_channels c
+    WHERE c.id = g.channel_id AND c.tenant_id = @tenant_id AND c.kind = 'group'
+      AND g.user_id = @user_id AND g.channel_id NOT IN (SELECT id FROM want)
+)
+INSERT INTO chat_channel_members (channel_id, user_id, added_by)
+SELECT c.id, @user_id, @added_by
+FROM chat_channels c
+JOIN want w ON w.id = c.id
+WHERE c.tenant_id = @tenant_id AND c.kind = 'group'
+ON CONFLICT DO NOTHING;

@@ -76,6 +76,14 @@ type ChatChannel struct {
 	LastMessageAt       pgtype.Timestamptz
 	CreatedAt           pgtype.Timestamptz
 	LastPushedMessageID pgtype.UUID
+	ArchivedAt          pgtype.Timestamptz
+}
+
+type ChatChannelMember struct {
+	ChannelID pgtype.UUID
+	UserID    pgtype.UUID
+	AddedBy   pgtype.UUID
+	AddedAt   pgtype.Timestamptz
 }
 
 type ChatMessage struct {
@@ -117,6 +125,7 @@ type ChatRead struct {
 	LastReadAt  pgtype.Timestamptz
 	NotifyLevel string
 	UpdatedAt   pgtype.Timestamptz
+	FollowedAt  pgtype.Timestamptz
 }
 
 type IdempotencyKey struct {

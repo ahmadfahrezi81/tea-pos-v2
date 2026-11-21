@@ -75,29 +75,55 @@ SELECT count(*)::int FROM (
     WHERE c.tenant_id = $2 AND m.deleted_at IS NULL
       AND m.author_id IS DISTINCT FROM $1
       AND m.created_at > coalesce(cr.last_read_at, '-infinity')
-      AND CASE c.kind
+      AND (CASE c.kind
         WHEN 'general' THEN true
         WHEN 'admin' THEN $3::bool
         WHEN 'personal' THEN c.user_id = $1
         WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = $1)
+        WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = $1)
         ELSE false
-      END
+      END OR ($4::bool AND cr.followed_at IS NOT NULL AND c.kind <> 'personal'))
     LIMIT 100
 ) a
 `
 
 type CountChatActivityUnreadParams struct {
-	UserID   pgtype.UUID
-	TenantID pgtype.UUID
-	ChatVip  bool
+	UserID    pgtype.UUID
+	TenantID  pgtype.UUID
+	ChatVip   bool
+	ChatAdmin bool
 }
 
 // How many of ListChatActivity's are unread (stops at 100), for the Activity switch.
 func (q *Queries) CountChatActivityUnread(ctx context.Context, arg CountChatActivityUnreadParams) (int32, error) {
-	row := q.db.QueryRow(ctx, countChatActivityUnread, arg.UserID, arg.TenantID, arg.ChatVip)
+	row := q.db.QueryRow(ctx, countChatActivityUnread,
+		arg.UserID,
+		arg.TenantID,
+		arg.ChatVip,
+		arg.ChatAdmin,
+	)
 	var column_1 int32
 	err := row.Scan(&column_1)
 	return column_1, err
+}
+
+const createChatGroup = `-- name: CreateChatGroup :one
+INSERT INTO chat_channels (tenant_id, kind, name, created_by)
+VALUES ($1, 'group', $2, $3)
+RETURNING id
+`
+
+type CreateChatGroupParams struct {
+	TenantID  pgtype.UUID
+	Name      pgtype.Text
+	CreatedBy pgtype.UUID
+}
+
+func (q *Queries) CreateChatGroup(ctx context.Context, arg CreateChatGroupParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, createChatGroup, arg.TenantID, arg.Name, arg.CreatedBy)
+	var id pgtype.UUID
+	err := row.Scan(&id)
+	return id, err
 }
 
 const deleteChatMessage = `-- name: DeleteChatMessage :exec
@@ -130,12 +156,14 @@ const ensureChatChannels = `-- name: EnsureChatChannels :exec
 
 WITH want AS (
     SELECT 'general'::text AS kind, NULL::uuid AS store_id, NULL::uuid AS user_id
-    UNION ALL SELECT 'personal', NULL, $2::uuid
-    UNION ALL SELECT 'admin', NULL, NULL WHERE $3::bool
-    UNION ALL
+    UNION SELECT 'personal', NULL, $2::uuid
+    UNION SELECT 'admin', NULL, NULL WHERE $3::bool
+    UNION
     SELECT 'store', s.id, NULL
-    FROM user_store_assignments sa JOIN stores s ON s.id = sa.store_id
-    WHERE sa.user_id = $2 AND s.tenant_id = $1
+    FROM stores s
+    WHERE s.tenant_id = $1 AND ($4::bool OR EXISTS (
+        SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = s.id AND sa.user_id = $2
+    ))
 )
 INSERT INTO chat_channels (tenant_id, kind, store_id, user_id)
 SELECT $1, w.kind, w.store_id, w.user_id
@@ -149,39 +177,61 @@ ON CONFLICT DO NOTHING
 `
 
 type EnsureChatChannelsParams struct {
-	TenantID pgtype.UUID
-	UserID   pgtype.UUID
-	ChatVip  bool
+	TenantID  pgtype.UUID
+	UserID    pgtype.UUID
+	ChatVip   bool
+	ChatAdmin bool
 }
 
 // Chat (RFC: Chat (v2)). Who is in a channel is decided here, the same way in every query:
 // an active member of the tenant with a chat level (the owner always), and by kind: everyone for
-// general, chat admins for admin, the person for personal, whoever works the store for a store's.
+// general, chat admins for admin, the person for personal, whoever works the store for a store's,
+// the people picked for a group. A chat admin may open any channel but someone's Notifications;
+// one they follow counts as theirs for badges, Activity and pushes (task 070).
 // Makes whichever of the caller's channels do not exist yet: General, their Notifications, Admin
-// for a VIP (or admin: the VIP chat, kind admin), one per store they work. Reads only, once they all exist.
+// for a VIP (or admin: the VIP chat, kind admin), one per store they work (a chat admin: every
+// store, for Other channels). Reads only, once they all exist.
 func (q *Queries) EnsureChatChannels(ctx context.Context, arg EnsureChatChannelsParams) error {
-	_, err := q.db.Exec(ctx, ensureChatChannels, arg.TenantID, arg.UserID, arg.ChatVip)
+	_, err := q.db.Exec(ctx, ensureChatChannels,
+		arg.TenantID,
+		arg.UserID,
+		arg.ChatVip,
+		arg.ChatAdmin,
+	)
 	return err
 }
 
 const getChatChannel = `-- name: GetChatChannel :one
-SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name, coalesce(s.status, 'active')::text AS store_status
+SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name, coalesce(s.status, 'active')::text AS store_status,
+    (c.archived_at IS NOT NULL)::bool AS archived,
+    (CASE c.kind
+        WHEN 'general' THEN true
+        WHEN 'admin' THEN $1::bool
+        WHEN 'personal' THEN c.user_id = $2
+        WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = $2)
+        WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = $2)
+        ELSE false
+    END)::bool AS member,
+    coalesce((SELECT r.followed_at IS NOT NULL FROM chat_reads r WHERE r.channel_id = c.id AND r.user_id = $2), false)::bool AS following
 FROM chat_channels c
 LEFT JOIN stores s ON s.id = c.store_id
-WHERE c.id = $1 AND c.tenant_id = $2 AND CASE c.kind
-    WHEN 'general' THEN true
-    WHEN 'admin' THEN $3::bool
-    WHEN 'personal' THEN c.user_id = $4
-    WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = $4)
-    ELSE false
-END
+WHERE c.id = $3 AND c.tenant_id = $4 AND (CASE c.kind
+        WHEN 'general' THEN true
+        WHEN 'admin' THEN $1::bool
+        WHEN 'personal' THEN c.user_id = $2
+        WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = $2)
+        WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = $2)
+        ELSE false
+    END
+    OR ($5::bool AND c.kind <> 'personal'))
 `
 
 type GetChatChannelParams struct {
-	ID       pgtype.UUID
-	TenantID pgtype.UUID
-	ChatVip  bool
-	UserID   pgtype.UUID
+	ChatVip   bool
+	UserID    pgtype.UUID
+	ID        pgtype.UUID
+	TenantID  pgtype.UUID
+	ChatAdmin bool
 }
 
 type GetChatChannelRow struct {
@@ -189,15 +239,19 @@ type GetChatChannelRow struct {
 	Kind        string
 	Name        string
 	StoreStatus string
+	Archived    bool
+	Member      bool
+	Following   bool
 }
 
-// One channel, only if the caller is in it (the same rule as ListChatChannels).
+// One channel, only if the caller is in it or a chat admin (the same rule as ListChatChannels).
 func (q *Queries) GetChatChannel(ctx context.Context, arg GetChatChannelParams) (GetChatChannelRow, error) {
 	row := q.db.QueryRow(ctx, getChatChannel,
-		arg.ID,
-		arg.TenantID,
 		arg.ChatVip,
 		arg.UserID,
+		arg.ID,
+		arg.TenantID,
+		arg.ChatAdmin,
 	)
 	var i GetChatChannelRow
 	err := row.Scan(
@@ -205,6 +259,9 @@ func (q *Queries) GetChatChannel(ctx context.Context, arg GetChatChannelParams) 
 		&i.Kind,
 		&i.Name,
 		&i.StoreStatus,
+		&i.Archived,
+		&i.Member,
+		&i.Following,
 	)
 	return i, err
 }
@@ -326,25 +383,27 @@ LEFT JOIN chat_messages rt ON rt.id = m.thread_root_id
 LEFT JOIN chat_reads cr ON cr.channel_id = c.id AND cr.user_id = $1
 WHERE c.tenant_id = $2 AND m.deleted_at IS NULL
   AND m.author_id IS DISTINCT FROM $1
-  AND CASE c.kind
+  AND (CASE c.kind
     WHEN 'general' THEN true
     WHEN 'admin' THEN $3::bool
     WHEN 'personal' THEN c.user_id = $1
     WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = $1)
+    WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = $1)
     ELSE false
-  END
-  AND (m.created_at, m.id) < ($4::timestamptz, $5::uuid)
+  END OR ($4::bool AND cr.followed_at IS NOT NULL AND c.kind <> 'personal'))
+  AND (m.created_at, m.id) < ($5::timestamptz, $6::uuid)
 ORDER BY m.created_at DESC, m.id DESC
-LIMIT $6
+LIMIT $7
 `
 
 type ListChatActivityParams struct {
-	UserID   pgtype.UUID
-	TenantID pgtype.UUID
-	ChatVip  bool
-	CursorAt pgtype.Timestamptz
-	CursorID pgtype.UUID
-	Lim      int32
+	UserID    pgtype.UUID
+	TenantID  pgtype.UUID
+	ChatVip   bool
+	ChatAdmin bool
+	CursorAt  pgtype.Timestamptz
+	CursorID  pgtype.UUID
+	Lim       int32
 }
 
 type ListChatActivityRow struct {
@@ -375,6 +434,7 @@ func (q *Queries) ListChatActivity(ctx context.Context, arg ListChatActivityPara
 		arg.UserID,
 		arg.TenantID,
 		arg.ChatVip,
+		arg.ChatAdmin,
 		arg.CursorAt,
 		arg.CursorID,
 		arg.Lim,
@@ -419,18 +479,28 @@ func (q *Queries) ListChatActivity(ctx context.Context, arg ListChatActivityPara
 const listChatChannels = `-- name: ListChatChannels :many
 SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name,
     coalesce(s.status, 'active')::text AS store_status,
+    (c.archived_at IS NOT NULL)::bool AS archived,
+    (CASE c.kind
+        WHEN 'general' THEN true
+        WHEN 'admin' THEN $1::bool
+        WHEN 'personal' THEN c.user_id = $2
+        WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = $2)
+        WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = $2)
+        ELSE false
+    END)::bool AS member,
+    (r.followed_at IS NOT NULL)::bool AS following,
     c.last_message_at,
     coalesce(m.body, '')::text AS last_body,
     coalesce(m.author_type, '')::text AS last_author_type,
     coalesce(m.event_type, '')::text AS last_event_type,
     coalesce(m.metadata, '{}')::jsonb AS last_metadata,
-    coalesce(m.author_id = $1, false)::bool AS last_mine,
+    coalesce(m.author_id = $2, false)::bool AS last_mine,
     coalesce(au.full_name, '')::text AS last_author,
     (m.deleted_at IS NOT NULL)::bool AS last_deleted,
     (SELECT count(*) FROM (
         SELECT 1 FROM chat_messages x
         WHERE x.channel_id = c.id AND x.created_at > coalesce(r.last_read_at, '-infinity')
-          AND x.deleted_at IS NULL AND x.author_id IS DISTINCT FROM $1
+          AND x.deleted_at IS NULL AND x.author_id IS DISTINCT FROM $2
         LIMIT 100
     ) unread)::int AS unread,
     -- Who is in it, the same rule as ListChatMembers: the line under its name.
@@ -443,29 +513,33 @@ SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name,
             WHEN 'admin' THEN t.owner_id = ma.user_id OR mx.access IN ('vip', 'admin')
             WHEN 'personal' THEN ma.user_id = c.user_id
             WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = ma.user_id)
+            WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = ma.user_id)
             ELSE false
           END
     )::int AS members
 FROM chat_channels c
 JOIN tenants t ON t.id = c.tenant_id
 LEFT JOIN stores s ON s.id = c.store_id
-LEFT JOIN chat_reads r ON r.channel_id = c.id AND r.user_id = $1
+LEFT JOIN chat_reads r ON r.channel_id = c.id AND r.user_id = $2
 LEFT JOIN chat_messages m ON m.id = c.last_message_id
 LEFT JOIN users au ON au.id = m.author_id
-WHERE c.tenant_id = $2 AND CASE c.kind
-    WHEN 'general' THEN true
-    WHEN 'admin' THEN $3::bool
-    WHEN 'personal' THEN c.user_id = $1
-    WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = $1)
-    ELSE false
-END
+WHERE c.tenant_id = $3 AND (CASE c.kind
+        WHEN 'general' THEN true
+        WHEN 'admin' THEN $1::bool
+        WHEN 'personal' THEN c.user_id = $2
+        WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = $2)
+        WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = $2)
+        ELSE false
+    END
+    OR ($4::bool AND c.kind <> 'personal'))
 ORDER BY c.last_message_at DESC NULLS LAST, c.kind, 3
 `
 
 type ListChatChannelsParams struct {
-	UserID   pgtype.UUID
-	TenantID pgtype.UUID
-	ChatVip  bool
+	ChatVip   bool
+	UserID    pgtype.UUID
+	TenantID  pgtype.UUID
+	ChatAdmin bool
 }
 
 type ListChatChannelsRow struct {
@@ -473,6 +547,9 @@ type ListChatChannelsRow struct {
 	Kind           string
 	Name           string
 	StoreStatus    string
+	Archived       bool
+	Member         bool
+	Following      bool
 	LastMessageAt  pgtype.Timestamptz
 	LastBody       string
 	LastAuthorType string
@@ -486,9 +563,15 @@ type ListChatChannelsRow struct {
 }
 
 // The caller's channels, the newest message first: the name (a store's read live), the last
-// message, and how many unread (stops at 100: "99+").
+// message, and how many unread (stops at 100: "99+"). A chat admin also gets every other
+// channel but someone's Notifications: member and following say which are theirs.
 func (q *Queries) ListChatChannels(ctx context.Context, arg ListChatChannelsParams) ([]ListChatChannelsRow, error) {
-	rows, err := q.db.Query(ctx, listChatChannels, arg.UserID, arg.TenantID, arg.ChatVip)
+	rows, err := q.db.Query(ctx, listChatChannels,
+		arg.ChatVip,
+		arg.UserID,
+		arg.TenantID,
+		arg.ChatAdmin,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -501,6 +584,9 @@ func (q *Queries) ListChatChannels(ctx context.Context, arg ListChatChannelsPara
 			&i.Kind,
 			&i.Name,
 			&i.StoreStatus,
+			&i.Archived,
+			&i.Member,
+			&i.Following,
 			&i.LastMessageAt,
 			&i.LastBody,
 			&i.LastAuthorType,
@@ -522,10 +608,42 @@ func (q *Queries) ListChatChannels(ctx context.Context, arg ListChatChannelsPara
 	return items, nil
 }
 
+const listChatGroupMembers = `-- name: ListChatGroupMembers :many
+SELECT user_id FROM chat_channel_members WHERE channel_id = $1
+`
+
+func (q *Queries) ListChatGroupMembers(ctx context.Context, channelID pgtype.UUID) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, listChatGroupMembers, channelID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []pgtype.UUID
+	for rows.Next() {
+		var user_id pgtype.UUID
+		if err := rows.Scan(&user_id); err != nil {
+			return nil, err
+		}
+		items = append(items, user_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listChatMembers = `-- name: ListChatMembers :many
 SELECT u.id, u.full_name, coalesce(u.avatar_url, '')::text AS avatar_url, r.last_read_at,
     coalesce(t.owner_id = a.user_id OR x.access = 'admin', false)::bool AS chat_admin,
-    coalesce(t.owner_id = a.user_id OR x.access IN ('vip', 'admin'), false)::bool AS chat_vip
+    coalesce(t.owner_id = a.user_id OR x.access IN ('vip', 'admin'), false)::bool AS chat_vip,
+    (NOT CASE c.kind
+        WHEN 'general' THEN true
+        WHEN 'admin' THEN t.owner_id = a.user_id OR x.access IN ('vip', 'admin')
+        WHEN 'personal' THEN a.user_id = c.user_id
+        WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = a.user_id)
+        WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = a.user_id)
+        ELSE false
+    END)::bool AS follower
 FROM chat_channels c
 JOIN tenants t ON t.id = c.tenant_id
 JOIN user_tenant_assignments a ON a.tenant_id = c.tenant_id AND a.status = 'active'
@@ -534,13 +652,14 @@ LEFT JOIN user_app_access x ON x.tenant_id = c.tenant_id AND x.user_id = a.user_
 LEFT JOIN chat_reads r ON r.channel_id = c.id AND r.user_id = a.user_id
 WHERE c.id = $1
   AND (t.owner_id = a.user_id OR x.access IS NOT NULL)
-  AND CASE c.kind
+  AND (CASE c.kind
     WHEN 'general' THEN true
     WHEN 'admin' THEN t.owner_id = a.user_id OR x.access IN ('vip', 'admin')
     WHEN 'personal' THEN a.user_id = c.user_id
     WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = a.user_id)
+    WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = a.user_id)
     ELSE false
-  END
+  END OR (r.followed_at IS NOT NULL AND c.kind <> 'personal' AND (t.owner_id = a.user_id OR x.access = 'admin')))
 ORDER BY u.full_name
 `
 
@@ -551,9 +670,11 @@ type ListChatMembersRow struct {
 	LastReadAt pgtype.Timestamptz
 	ChatAdmin  bool
 	ChatVip    bool
+	Follower   bool
 }
 
-// Everyone in a channel, with how far they have read: Seen by, Not yet, and who to tell.
+// Everyone in a channel, with how far they have read: Seen by, Not yet, and who to tell. A chat
+// admin following it is told too (follower: not one of its members).
 func (q *Queries) ListChatMembers(ctx context.Context, channelID pgtype.UUID) ([]ListChatMembersRow, error) {
 	rows, err := q.db.Query(ctx, listChatMembers, channelID)
 	if err != nil {
@@ -570,6 +691,7 @@ func (q *Queries) ListChatMembers(ctx context.Context, channelID pgtype.UUID) ([
 			&i.LastReadAt,
 			&i.ChatAdmin,
 			&i.ChatVip,
+			&i.Follower,
 		); err != nil {
 			return nil, err
 		}
@@ -749,6 +871,43 @@ func (q *Queries) ListChatMessagesSince(ctx context.Context, arg ListChatMessage
 	return items, nil
 }
 
+const listChatPeople = `-- name: ListChatPeople :many
+SELECT u.id, u.full_name, coalesce(u.avatar_url, '')::text AS avatar_url
+FROM user_tenant_assignments a
+JOIN tenants t ON t.id = a.tenant_id
+JOIN users u ON u.id = a.user_id
+LEFT JOIN user_app_access x ON x.tenant_id = a.tenant_id AND x.user_id = a.user_id AND x.app = 'chat'
+WHERE a.tenant_id = $1 AND a.status = 'active' AND (t.owner_id = a.user_id OR x.access IS NOT NULL)
+ORDER BY u.full_name
+`
+
+type ListChatPeopleRow struct {
+	ID        pgtype.UUID
+	FullName  string
+	AvatarUrl string
+}
+
+// Everyone in the tenant with a chat level (the owner always): who a group can be made of.
+func (q *Queries) ListChatPeople(ctx context.Context, tenantID pgtype.UUID) ([]ListChatPeopleRow, error) {
+	rows, err := q.db.Query(ctx, listChatPeople, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListChatPeopleRow
+	for rows.Next() {
+		var i ListChatPeopleRow
+		if err := rows.Scan(&i.ID, &i.FullName, &i.AvatarUrl); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listChatPhotos = `-- name: ListChatPhotos :many
 SELECT message_id, position, path, preview_path, width, height
 FROM chat_message_photos
@@ -825,6 +984,52 @@ func (q *Queries) ListChatReactions(ctx context.Context, messageIds []pgtype.UUI
 	return items, nil
 }
 
+const listUserChatGroups = `-- name: ListUserChatGroups :many
+SELECT c.id, coalesce(c.name, '')::text AS name, (c.archived_at IS NOT NULL)::bool AS archived,
+    EXISTS (SELECT 1 FROM chat_channel_members g WHERE g.channel_id = c.id AND g.user_id = $1)::bool AS member
+FROM chat_channels c
+WHERE c.tenant_id = $2 AND c.kind = 'group'
+ORDER BY c.archived_at IS NOT NULL, lower(c.name)
+`
+
+type ListUserChatGroupsParams struct {
+	UserID   pgtype.UUID
+	TenantID pgtype.UUID
+}
+
+type ListUserChatGroupsRow struct {
+	ID       pgtype.UUID
+	Name     string
+	Archived bool
+	Member   bool
+}
+
+// UAC: every group of the tenant, and whether this person is in it.
+func (q *Queries) ListUserChatGroups(ctx context.Context, arg ListUserChatGroupsParams) ([]ListUserChatGroupsRow, error) {
+	rows, err := q.db.Query(ctx, listUserChatGroups, arg.UserID, arg.TenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUserChatGroupsRow
+	for rows.Next() {
+		var i ListUserChatGroupsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Archived,
+			&i.Member,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const markChatRead = `-- name: MarkChatRead :one
 WITH before AS (
     SELECT last_read_at FROM chat_reads WHERE user_id = $1 AND channel_id = $2
@@ -881,6 +1086,90 @@ func (q *Queries) SetChatChannelLast(ctx context.Context, arg SetChatChannelLast
 	return err
 }
 
+const setChatFollow = `-- name: SetChatFollow :exec
+INSERT INTO chat_reads (user_id, channel_id, last_read_at, followed_at)
+VALUES ($1, $2, now(), CASE WHEN $3::bool THEN now() END)
+ON CONFLICT (user_id, channel_id) DO UPDATE
+SET followed_at = CASE WHEN $3::bool THEN coalesce(chat_reads.followed_at, now()) END, updated_at = now()
+`
+
+type SetChatFollowParams struct {
+	UserID    pgtype.UUID
+	ChannelID pgtype.UUID
+	Follow    bool
+}
+
+// A chat admin follows a channel (or stops): its badge counts from now, not its whole history.
+func (q *Queries) SetChatFollow(ctx context.Context, arg SetChatFollowParams) error {
+	_, err := q.db.Exec(ctx, setChatFollow, arg.UserID, arg.ChannelID, arg.Follow)
+	return err
+}
+
+const setChatGroupMembers = `-- name: SetChatGroupMembers :exec
+WITH keep AS (SELECT unnest($4::uuid[]) AS user_id),
+gone AS (
+    DELETE FROM chat_channel_members g
+    WHERE g.channel_id = $1 AND g.user_id NOT IN (SELECT user_id FROM keep)
+)
+INSERT INTO chat_channel_members (channel_id, user_id, added_by)
+SELECT $1, k.user_id, $2
+FROM keep k
+JOIN user_tenant_assignments a ON a.user_id = k.user_id AND a.tenant_id = $3 AND a.status = 'active'
+ON CONFLICT DO NOTHING
+`
+
+type SetChatGroupMembersParams struct {
+	ChannelID pgtype.UUID
+	AddedBy   pgtype.UUID
+	TenantID  pgtype.UUID
+	UserIds   []pgtype.UUID
+}
+
+// A group's people, the whole list: whoever is not in it leaves, only the tenant's active people join.
+func (q *Queries) SetChatGroupMembers(ctx context.Context, arg SetChatGroupMembersParams) error {
+	_, err := q.db.Exec(ctx, setChatGroupMembers,
+		arg.ChannelID,
+		arg.AddedBy,
+		arg.TenantID,
+		arg.UserIds,
+	)
+	return err
+}
+
+const setUserChatGroups = `-- name: SetUserChatGroups :exec
+WITH want AS (SELECT unnest($4::uuid[]) AS id),
+gone AS (
+    DELETE FROM chat_channel_members g
+    USING chat_channels c
+    WHERE c.id = g.channel_id AND c.tenant_id = $3 AND c.kind = 'group'
+      AND g.user_id = $1 AND g.channel_id NOT IN (SELECT id FROM want)
+)
+INSERT INTO chat_channel_members (channel_id, user_id, added_by)
+SELECT c.id, $1, $2
+FROM chat_channels c
+JOIN want w ON w.id = c.id
+WHERE c.tenant_id = $3 AND c.kind = 'group'
+ON CONFLICT DO NOTHING
+`
+
+type SetUserChatGroupsParams struct {
+	UserID     pgtype.UUID
+	AddedBy    pgtype.UUID
+	TenantID   pgtype.UUID
+	ChannelIds []pgtype.UUID
+}
+
+// UAC: the groups this person is in, the whole list; the same rows a group's own screen writes.
+func (q *Queries) SetUserChatGroups(ctx context.Context, arg SetUserChatGroupsParams) error {
+	_, err := q.db.Exec(ctx, setUserChatGroups,
+		arg.UserID,
+		arg.AddedBy,
+		arg.TenantID,
+		arg.ChannelIds,
+	)
+	return err
+}
+
 const touchChatMessage = `-- name: TouchChatMessage :exec
 UPDATE chat_messages SET changed_at = now() WHERE id = $1
 `
@@ -888,4 +1177,35 @@ UPDATE chat_messages SET changed_at = now() WHERE id = $1
 func (q *Queries) TouchChatMessage(ctx context.Context, id pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, touchChatMessage, id)
 	return err
+}
+
+const updateChatGroup = `-- name: UpdateChatGroup :one
+UPDATE chat_channels SET
+    name = coalesce($1::text, name),
+    archived_at = CASE
+        WHEN $2::bool IS NULL THEN archived_at
+        WHEN $2::bool THEN coalesce(archived_at, now())
+    END
+WHERE id = $3 AND tenant_id = $4 AND kind = 'group'
+RETURNING id
+`
+
+type UpdateChatGroupParams struct {
+	Name     pgtype.Text
+	Archived pgtype.Bool
+	ID       pgtype.UUID
+	TenantID pgtype.UUID
+}
+
+// Renames a group, or archives it (read only, history kept) and back; a nil leaves it as it is.
+func (q *Queries) UpdateChatGroup(ctx context.Context, arg UpdateChatGroupParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, updateChatGroup,
+		arg.Name,
+		arg.Archived,
+		arg.ID,
+		arg.TenantID,
+	)
+	var id pgtype.UUID
+	err := row.Scan(&id)
+	return id, err
 }
