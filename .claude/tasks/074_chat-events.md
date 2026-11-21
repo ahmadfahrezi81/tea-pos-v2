@@ -1,62 +1,46 @@
 # Task 074 — Chat: what chat says by itself
 
-**Status: planned 2026-11-21, waiting on the owner's review. Before chat's production release.**
+**Status: planned 2026-11-21, contents agreed with the owner. Before chat's production release, after Steps 70 and 76.**
 
 ## The goal
 
-Step 74 of [RFC: Chat (v2)](https://app.notion.com/p/40595a71540581e7b86edc272f66b0c1) (System events): the app's own messages for every event that can fire today.
+Step 74 of [RFC: Chat (v2)](https://app.notion.com/p/40595a71540581e7b86edc272f66b0c1) (System events): the app's own messages, in each reader's language.
 
 ## The plan
 
-1. **One way to post an event** (`api/internal/chatevent`). `Post(ctx, q, tenant, where, type, data)`, called inside the change's own transaction, does the following:
-   - makes the channel if it does not exist yet (the store's, the person's Notifications, VIP, General);
-   - writes a `system` message with `event_type` and its numbers in `metadata` (never finished text; `body` holds English, kept only as a fallback);
+1. **One way to post an event** (`api/internal/chatevent`). `Post(ctx, q, tenant, where, type, data)` runs inside the change's own transaction and does the following:
+   - makes the channel if it does not exist yet;
+   - writes a `system` message with `event_type` and its numbers in `metadata`, never finished text (`body` holds English, kept only as a fallback);
    - moves the channel's last message;
-   - announces it, and queues the push.
+   - announces it and queues the push.
+2. **The events** (English and Indonesian examples; numbers made up):
 
-   The push follows the existing rules (everyone but someone who has already read it).
-2. **The events:**
+   | Event | Fired by | Channel | Says |
+   | --- | --- | --- | --- |
+   | `day_summary` | nightly River schedule, 23:30 WIB; reads the database, so stores on v1 get it too; skipped if that day's exists | the store's | 📊 Today: 142 cups · Rp 1.420.000 sales · +12 cups on yesterday · 8% above the 7-day average |
+   | `rain_started`, `rain_stopped` | the weather job (Step 76), after each fetch, while the store is open: the chance over this hour and the next two crossing 20% either way, against the channel's last rain message | the store's | 🌧 Rain likely in the next 2 hours (70%) / ☀️ Rain chance down to 10% |
+   | `payout_paid` | `settlePayout` (paid) | the person's Notifications; VIP | 💰 Your pay for 17–23 Nov was paid: Rp 1.240.000, with the transfer screenshot / VIP: 💰 Ahmad paid Budi Rp 1.240.000 for 17–23 Nov |
+   | `pay_total` | River schedule, 08:00 WIB the morning after a pay period ends (the tenant's pay frequency) | VIP | 💼 Pay for 17–23 Nov: Rp 7.450.000 for 6 people, linking to that period's Pay page (Step 75) |
+   | `release` | the worker on start: the newest entry of `whats-new.json`, if General has no message for that version yet | General | 🎉 Tea-Office 2026.11.4 is out, then its "For users" lines |
 
-   | Event | Fired by | Channel |
-   | --- | --- | --- |
-   | `payout_paid` | `settlePayout` (paid) | the person's Notifications, and VIP |
-   | `claim_approved`, `claim_rejected` | `decideClaim`, `reviewDay` (one message per claim) | the claimant's Notifications |
-   | `store_opened`, `store_closed` | `openStore`, `closeStoreDay` (v2 stores only: v1 writes nothing) | the store's |
-   | `expense_added` | `createExpense` | the store's |
-   | `day_summary` | nightly River schedule, after the last store closes: cups, waste, against yesterday and the last 7 days; skips a store whose summary for that day exists (so a rerun is harmless); reads the database, so it works for stores still on v1 | the store's |
-   | `pay_total` | weekly River schedule: what the period just ended pays in all, for the business-account transfer | VIP |
-   | `release` | the worker on start: the newest entry of `whats-new.json`, if General has no message for that version yet | General |
-
-   The payout and claim messages carry `{ refTable, refId }`, so Step 75 makes them tappable.
-3. **Release notes reach Go:** `pnpm --filter @tea-pos/api generate` copies `packages/shell/whats-new.json` to `api/internal/chatevent/whats-new.json` (embedded); CI fails if the copy is stale, as it does for `openapi.yaml`.
-4. **The phone writes each event in its own language** (`packages/chat`): the system-message `systemText` gets one line per event type in `chat.en` and `chat.id` (Indonesian by default), with names, times and money formatted by `@tea-pos/format`. A type this build does not know shows `body`.
-5. **Activity:** a message in my Notifications channel already shows there; nothing new.
-6. **Tests** (integration):
+   Dropped (owner, 2026-11-21): claim decisions, which are approved in bulk every day. Moved to their own RFC, built just before the sellers move to v2 (owner, 2026-11-21: nobody sells on v2 yet): store opened, expense added, store closed.
+3. **Release notes reach Go:** `pnpm --filter @tea-pos/api generate` copies `packages/shell/whats-new.json` to `api/internal/chatevent/whats-new.json` (embedded), and CI fails on a stale copy, as it does for `openapi.yaml`.
+4. **On the phone** (`packages/chat`): `systemText` gets one line per event in `chat.en` and `chat.id`, with money and times from `@tea-pos/format`, plus a photo where the event has one. A type this build does not know shows `body`.
+5. **Tests** (integration):
    - Each event lands once, in the right channel.
-   - The nightly job run twice posts once.
-   - A payout's message is not visible to another seller (`personal`).
+   - The nightly and pay-total jobs run twice post once.
+   - A payout's message is not visible to another seller.
    - VIP sees `pay_total`; a member does not.
-
-## Open questions
-
-- **Schedules' timing**, as proposed:
-  - `day_summary` at 23:30 store time in production, by hand on staging;
-  - `pay_total` Monday 08:00 for the week before.
-
-  Are these right, or should the pay total follow the tenant's pay frequency?
 
 ## Done when
 
 - The tests above pass.
 - Tried locally:
-  - open and close a demo store's day, add an expense;
-  - settle a payout, decide a claim;
-  - run both schedules by hand.
+  - settle a payout;
+  - run the schedules and a weather fetch by hand.
 
-  Each message appears in Indonesian and in English.
+  Each message reads right in Indonesian and English.
 
 ## Not in this task
 
-- Rain (production's weather job is off until Step 45).
-- Milestones.
-- Links opening a screen (Step 75).
+Milestones; links that open a screen (Step 75); store opened, expense added, store closed (their own RFC, before the sellers move).

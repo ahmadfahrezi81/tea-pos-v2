@@ -10,6 +10,7 @@ Step 75 of [RFC: Chat (v2)](https://app.notion.com/p/40595a71540581e7b86edc272f6
 
 1. **What can be shared** (one list, `packages/chat/links.ts` and Go's twin):
    - a store's day (`store_days`): opens `store/$storeId/analytics/days/$dayId`;
+   - a pay period (`pay_periods`, by its start date): opens `pay/$start`. The owner's main reason for this step: each week's pay, kept in the VIP chat;
    - a payout (`payouts`): opens `pay/$start/$userId`.
 
    A new kind later is one line in each list.
@@ -21,13 +22,17 @@ Step 75 of [RFC: Chat (v2)](https://app.notion.com/p/40595a71540581e7b86edc272f6
    - a payout: the person, the period and the total.
 
    A link the reader may not see comes back as a plain chip with no details.
-4. **The share button:** the header of those two backoffice screens gets **Share**.
+4. **The share button:** the header of those three backoffice screens gets **Share**.
    - It opens a sheet: my channels (search as in Chats), an optional message, then Send.
    - After sending, a toast says "Shared to #Pagelaran" and offers **Open**.
 5. **In a bubble:** a link is a small card (icon, title, one line).
    - In the backoffice a tap opens the screen.
    - In the seller app it is a plain chip until Step 71.
-6. **Events from Step 74:** `payout_paid` carries the payout's link, so it opens the payout in the backoffice. A claim decision links to its payout.
+6. **Events from Step 74:**
+   - `payout_paid` carries the payout's link;
+   - `pay_total` carries the pay period's link.
+
+   Both open in the backoffice.
 7. **Tests** (integration):
    - Posting a link to something the caller cannot see is refused.
    - A reader without access gets the chip, not the details.
