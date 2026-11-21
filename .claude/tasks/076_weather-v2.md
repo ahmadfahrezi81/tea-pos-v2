@@ -25,7 +25,9 @@ This is proven by the integration test against a fake Tomorrow.io, not by a run:
 
 ## Owner's part
 
-- **Never both fetching** (owner, task 017): within the hour after the release deploys, delete every weather job on the cron website (console.cron-job.org). That is production's hourly forecast, production's 20-minute current weather, and staging's 21:00 call. Both schedules share one key and the free plan's 25 calls an hour.
+- **Never both fetching** (owner, task 017), on the cron website (console.cron-job.org). Both schedules share one key and the free plan's 25 calls an hour.
+  - When this PR merges into `staging`: delete staging's 21:00 call.
+  - Within the hour after the release deploys: delete production's hourly forecast and its 20-minute current weather.
 - `TOMORROW_IO_API_KEY` is in Infisical `prod` and `staging` `/app` (checked 2026-11-21).
 
 ## Done when
