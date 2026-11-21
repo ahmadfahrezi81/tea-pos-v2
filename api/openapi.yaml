@@ -187,6 +187,9 @@ components:
         id:
           format: uuid
           type: string
+        link:
+          $ref: "#/components/schemas/ChatLink"
+          description: "What it points at: a card that opens it, or a plain chip"
         mentionsMe:
           description: "@ the caller's name, or @everyone"
           type: boolean
@@ -373,6 +376,69 @@ components:
       required:
         - id
       type: object
+    ChatLink:
+      additionalProperties: false
+      properties:
+        cups:
+          format: int64
+          type: integer
+        date:
+          format: date
+          type: string
+        end:
+          format: date
+          type: string
+        id:
+          description: A day's or a payout's id, a pay period's first day, a version
+          type: string
+        kind:
+          enum:
+            - day
+            - pay_period
+            - payout
+            - whats_new
+          type: string
+        open:
+          type: boolean
+        people:
+          format: int64
+          type: integer
+        person:
+          type: string
+        start:
+          format: date
+          type: string
+        store:
+          type: string
+        storeId:
+          format: uuid
+          type: string
+        total:
+          format: int64
+          type: integer
+        userId:
+          format: uuid
+          type: string
+      required:
+        - kind
+        - id
+      type: object
+    ChatLinkInput:
+      additionalProperties: false
+      properties:
+        id:
+          maxLength: 100
+          type: string
+        kind:
+          enum:
+            - day
+            - pay_period
+            - payout
+          type: string
+      required:
+        - kind
+        - id
+      type: object
     ChatMember:
       additionalProperties: false
       properties:
@@ -431,6 +497,9 @@ components:
         id:
           format: uuid
           type: string
+        link:
+          $ref: "#/components/schemas/ChatLink"
+          description: "What it points at: a card that opens it, or a plain chip"
         photos:
           items:
             $ref: "#/components/schemas/ChatPhoto"
@@ -1247,6 +1316,7 @@ components:
             - idempotency_key_required
             - idempotency_key_reused
             - internal
+            - link_not_found
             - maintenance
             - message_not_found
             - no_session
@@ -2151,6 +2221,9 @@ components:
           description: May be empty with photos
           maxLength: 4000
           type: string
+        link:
+          $ref: "#/components/schemas/ChatLinkInput"
+          description: A backoffice screen shared here; the text may then be empty
         photos:
           items:
             $ref: "#/components/schemas/ChatPhotoInput"

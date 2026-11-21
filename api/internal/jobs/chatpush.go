@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"unicode/utf8"
@@ -11,6 +12,7 @@ import (
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/rivertype"
 
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/chatevent"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/push"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
 )
@@ -138,6 +140,14 @@ func pushTitle(m store.LatestChatMessageRow, lang string) string {
 // enough for a lock screen. A web notification has only a title and a text.
 func pushBody(m store.LatestChatMessageRow, lang string) string {
 	text := m.Body
+	if m.AuthorType == "system" {
+		var d map[string]any
+		if json.Unmarshal(m.Metadata, &d) == nil {
+			if t := chatevent.Text(m.EventType, d, lang); t != "" {
+				text = t
+			}
+		}
+	}
 	if text == "" && m.Photos > 0 {
 		text = "📷 Foto"
 		if lang == "en" {

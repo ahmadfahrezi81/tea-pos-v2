@@ -12,6 +12,7 @@ A release promotes exactly what `staging` runs to production. Only the owner dec
 - `staging`'s API end-to-end tests are green on its latest commit (the release PR requires it)
 - No PR the owner wants in this release is still open
 - List what is going out: `git log --oneline --first-parent origin/main..origin/staging`
+- **What's new first:** run the `patch-notes` skill; its small PR into `staging` merges before the release PR, so the release posts its own link in chat
 
 ## The PR
 

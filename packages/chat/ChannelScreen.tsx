@@ -1,7 +1,6 @@
 import { api } from "@tea-pos/api-client";
 import { useMe } from "@tea-pos/api-client/me";
 import { addDays, formatDate, formatTime, localDate } from "@tea-pos/format";
-import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { FooterSlot } from "@tea-pos/shell/FooterSlotContext";
 import { useSearchParam } from "@tea-pos/shell/searchParam";
@@ -32,7 +31,9 @@ import {
 import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import { ChannelHeader } from "./ChannelInfo";
+import { eventText } from "./events";
 import { channelName } from "./labels";
+import { LinkCard } from "./links";
 import { doneTyping, sayTyping, stoppedTyping, useTyping } from "./typing";
 import { forget, retry, send, snapshot, subscribe, type Pending } from "./outbox";
 import { FailedMenu, MessageMenu, useHold } from "./menu";
@@ -430,9 +431,11 @@ function Message({
     if (m.event)
         return (
             <div className="flex justify-center py-1">
-                <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-medium text-gray-700">
-                    {systemText(m, t)} · {formatTime(m.at, locale)}
-                </span>
+                <div className="max-w-[92%] rounded-2xl bg-slate-200 px-3 py-1.5 text-center text-[13px] font-medium leading-5 text-gray-800">
+                    {eventText(m, t, locale)}
+                    <span className="text-gray-600"> · {formatTime(m.at, locale)}</span>
+                    {m.link && <LinkCard link={m.link} />}
+                </div>
             </div>
         );
     const time = formatTime(m.at, locale);
@@ -518,6 +521,7 @@ function Message({
             )}
             {!m.deleted && quote}
             {photos}
+            {!m.deleted && m.link && <LinkCard link={m.link} />}
             {body || (!photos && <div className="flex justify-end pb-0.5">{stamp}</div>)}
             {/* Reactions belong to the bubble: inside it, under the text. */}
             {!m.deleted && !!m.reactions?.length && (
@@ -542,12 +546,6 @@ function Message({
             </div>
         </div>
     );
-}
-
-/** A system message in the reader's language; an event this build does not know shows its body. */
-function systemText(m: ChatMessage, t: (key: MessageKey) => string): string {
-    void t;
-    return m.body || m.event || "";
 }
 
 /**

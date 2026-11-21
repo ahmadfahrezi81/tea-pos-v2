@@ -11,7 +11,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
 
+import { eventText } from "./events";
 import { channelName, KIND_ICON, listTime } from "./labels";
+import { linkLabel } from "./links";
 
 type Activity = components["schemas"]["ChatActivity"];
 
@@ -93,7 +95,11 @@ function ActivityRow({ a }: { a: Activity }) {
     const system = !a.authorId;
     const Icon = KIND_ICON[a.channelKind];
     const where = channelName({ kind: a.channelKind, name: a.channelName }, t);
-    const text = a.deleted ? t("chat.deleted") : a.body || a.event || t("chat.photo");
+    const text = a.deleted
+        ? t("chat.deleted")
+        : a.event
+          ? eventText(a, t, locale)
+          : a.body || (a.link ? t(linkLabel(a.link.kind)) : t("chat.photo"));
     return (
         // As Slack's: the person with where it came from in the photo's corner; where it was
         // posted; the message at the size it has in its chat.

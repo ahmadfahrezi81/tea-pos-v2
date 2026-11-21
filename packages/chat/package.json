@@ -4,7 +4,8 @@
     "type": "module",
     "exports": {
         "./ChatsScreen": "./ChatsScreen.tsx",
-        "./ChannelScreen": "./ChannelScreen.tsx"
+        "./ChannelScreen": "./ChannelScreen.tsx",
+        "./ShareAction": "./ShareAction.tsx"
     },
     "scripts": {
         "lint": "eslint .",

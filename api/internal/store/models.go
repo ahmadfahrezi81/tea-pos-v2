@@ -101,6 +101,7 @@ type ChatMessage struct {
 	DeletedAt    pgtype.Timestamptz
 	CreatedAt    pgtype.Timestamptz
 	ChangedAt    pgtype.Timestamptz
+	EventKey     pgtype.Text
 }
 
 type ChatMessagePhoto struct {

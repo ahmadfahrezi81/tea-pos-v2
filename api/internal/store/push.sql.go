@@ -139,6 +139,7 @@ func (q *Queries) DeletePushSubscription(ctx context.Context, arg DeletePushSubs
 
 const latestChatMessage = `-- name: LatestChatMessage :one
 SELECT m.id, m.author_type, m.author_id, m.body, m.created_at,
+    coalesce(m.event_type, '')::text AS event_type, m.metadata,
     coalesce(u.full_name, '')::text AS author_name, coalesce(u.avatar_url, '')::text AS author_avatar,
     (SELECT count(*) FROM chat_message_photos p WHERE p.message_id = m.id)::int AS photos,
     c.kind, coalesce(s.name, c.name, '')::text AS channel_name, t.slug
@@ -158,6 +159,8 @@ type LatestChatMessageRow struct {
 	AuthorID     pgtype.UUID
 	Body         string
 	CreatedAt    pgtype.Timestamptz
+	EventType    string
+	Metadata     []byte
 	AuthorName   string
 	AuthorAvatar string
 	Photos       int32
@@ -176,6 +179,8 @@ func (q *Queries) LatestChatMessage(ctx context.Context, channelID pgtype.UUID) 
 		&i.AuthorID,
 		&i.Body,
 		&i.CreatedAt,
+		&i.EventType,
+		&i.Metadata,
 		&i.AuthorName,
 		&i.AuthorAvatar,
 		&i.Photos,

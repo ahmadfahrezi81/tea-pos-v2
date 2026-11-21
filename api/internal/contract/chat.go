@@ -85,6 +85,31 @@ type ChatMessage struct {
 	Photos    []ChatPhoto    `json:"photos,omitempty"`
 	ReplyTo   *ChatQuote     `json:"replyTo,omitempty" doc:"The message this one answers, quoted above it"`
 	Reactions []ChatReaction `json:"reactions,omitempty" doc:"Each emoji used, in the order first used"`
+	Link      *ChatLink      `json:"link,omitempty" doc:"What it points at: a card that opens it, or a plain chip"`
+}
+
+// ChatLink is a shared screen (Step 75). With Open, the reader may open it and the card's
+// details are filled; without, the phone shows a plain chip.
+type ChatLink struct {
+	Kind    string `json:"kind" enum:"day,pay_period,payout,whats_new"`
+	ID      string `json:"id" doc:"A day's or a payout's id, a pay period's first day, a version"`
+	Open    bool   `json:"open,omitempty"`
+	Store   string `json:"store,omitempty"`
+	StoreID string `json:"storeId,omitempty" format:"uuid"`
+	Date    string `json:"date,omitempty" format:"date"`
+	Cups    *int64 `json:"cups,omitempty"`
+	Person  string `json:"person,omitempty"`
+	UserID  string `json:"userId,omitempty" format:"uuid"`
+	Start   string `json:"start,omitempty" format:"date"`
+	End     string `json:"end,omitempty" format:"date"`
+	Total   *int64 `json:"total,omitempty"`
+	People  *int64 `json:"people,omitempty"`
+}
+
+// ChatLinkInput is a screen shared into a chat.
+type ChatLinkInput struct {
+	Kind string `json:"kind" enum:"day,pay_period,payout"`
+	ID   string `json:"id" maxLength:"100"`
 }
 
 // ChatReaction is one emoji on a message: who used it, and whether the caller did.
@@ -127,6 +152,7 @@ type PostChatMessageInput struct {
 		Body    string           `json:"body" maxLength:"4000" doc:"May be empty with photos"`
 		Photos  []ChatPhotoInput `json:"photos,omitempty" maxItems:"4"`
 		ReplyTo string           `json:"replyTo,omitempty" format:"uuid" doc:"A message of the same channel this one answers"`
+		Link    *ChatLinkInput   `json:"link,omitempty" doc:"A backoffice screen shared here; the text may then be empty"`
 	}
 }
 

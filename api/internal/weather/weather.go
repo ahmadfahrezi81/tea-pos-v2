@@ -33,6 +33,9 @@ const (
 	defaultWeatherCode = 1000
 )
 
+// V1Cell is the old app's fixed point's cell: the weather of a store with no place yet.
+func V1Cell() string { return domain.Cell(v1Lat, v1Lng) }
+
 type Fetcher struct {
 	Key      string
 	Queries  *store.Queries
