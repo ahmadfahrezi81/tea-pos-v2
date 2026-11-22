@@ -28,6 +28,7 @@ Fix what the owner finds once chat is in production. One item per line below, ea
 
 3. **The app's own messages look like a person's** (owner): today they are a grey pill in the middle. Instead, a bubble on the left like anyone's, from **System** (Indonesian: Sistem) with a round icon from lucide as its photo (`Bot`), its text in the bubble and its card (day, pay, release) under it. Same on Activity's rows and in a reply's quote.
 4. **Faces under a chat's name** (owner, "as Slack's threads"): on the Chats list, each row's second line shows the faces of the last 3–4 people who wrote there, overlapping, before "2 members · 19 Nov". Go returns them with each channel (the last distinct authors, one read for the whole list).
+4b. **A Chats row as WhatsApp's** (owner chose layout B from two drawn): the name and the time (bold brand while unread); the last message ("You: …", "Budi: …", System's own words, Photo) and the unread count; the faces (22 px) and how many are in it. The icon grows to 48 px. Replaces the date beside the members.
 5. **How many messages a chat has** (owner: "only if it's worth it"). Suggestion: not on the list, where unread already says what matters, but in a chat's info ("1.234 messages"), counted when the info opens. The owner may strike it out.
 
 6. **One action at the top right of a root page** (owner: Share beside the account photo on the Pay tab looks awkward). The rule for every app: a tab's root page shows one thing at the top right.

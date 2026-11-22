@@ -4,6 +4,7 @@ import {
     useChatChannels,
     type ChatChannel,
 } from "@tea-pos/api-client/chat";
+import type { Locale } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { useTurnPushOn } from "@tea-pos/shell/push";
 import { useSlug, useTenant } from "@tea-pos/shell/tenant";
@@ -19,6 +20,7 @@ import { Bell, ChevronDown, Lock, MessagesSquare, Plus, Search } from "lucide-re
 import { useEffect, useState } from "react";
 
 import { ActivityList, useActivityUnread } from "./ActivityList";
+import { eventText } from "./events";
 import { NewGroupSheet, useChatAdmin, useFollow } from "./groups";
 import { channelName, KIND_ICON, listTime } from "./labels";
 import { useTyping } from "./typing";
@@ -228,59 +230,67 @@ function ChannelRow({ channel: c }: { channel: ChatChannel }) {
     const Icon = KIND_ICON[c.kind];
     const typing = useTyping(c.id).length > 0;
     const locale = useLocale();
+    const unread = c.mine && c.unread > 0;
     return (
         <ListRow
             top
             leading={
-                <span className="flex size-10 items-center justify-center rounded-xl bg-slate-100">
-                    <Icon size={20} className="text-gray-900" />
+                <span className="flex size-12 items-center justify-center rounded-xl bg-slate-100">
+                    <Icon size={22} className="text-gray-900" />
                 </span>
             }
-            // One grid: the name and the time on one line, the message and the count on the next.
+            // As WhatsApp (owner, task 077): the name and the time; the last message and the count;
+            // who wrote lately and how many are in it.
             title={
                 <span className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-0.5">
                     <span
-                        className={`truncate text-gray-900 ${c.mine && c.unread ? "font-semibold" : "font-medium"}`}
+                        className={`truncate text-gray-900 ${unread ? "font-semibold" : "font-medium"}`}
                     >
                         {channelName(c, t)}
                     </span>
-                    {/* Top right: how many are unread, not the time (a group is opened, not scanned). */}
-                    <span className="flex h-5 justify-end">
+                    <span className="flex h-5 items-center justify-end">
                         {!c.mine ? (
                             <FollowButton id={c.id} />
                         ) : (
-                            c.unread > 0 && (
-                                <span className="min-w-7 h-5 px-2 rounded-full bg-brand text-white text-xs font-bold leading-5 text-center">
-                                    {c.unread > 99 ? "99+" : c.unread}
+                            c.lastAt && (
+                                <span
+                                    className={`text-xs tabular-nums ${unread ? "font-semibold text-brand" : "font-normal text-gray-600"}`}
+                                >
+                                    {listTime(c.lastAt, locale)}
                                 </span>
                             )
                         )}
                     </span>
-                    {/* A group chat: who is in it, not its last message (that is the chat's or Activity's). */}
                     <span
-                        className={`flex min-w-0 items-center gap-1.5 text-sm font-normal ${typing ? "text-brand" : "text-gray-600"}`}
+                        className={`truncate text-sm ${typing ? "font-normal text-brand" : unread ? "font-semibold text-gray-900" : "font-normal text-gray-600"}`}
                     >
-                        {/* Who wrote lately, overlapping (owner: as Slack's threads). */}
-                        {!typing && !!c.faces?.length && (
+                        {typing ? t("chat.typing") : lastLine(c, t, locale)}
+                    </span>
+                    <span className="flex h-5 justify-end">
+                        {unread && (
+                            <span className="min-w-6 h-5 px-1.5 rounded-full bg-brand text-white text-xs font-bold leading-5 text-center">
+                                {c.unread > 99 ? "99+" : c.unread}
+                            </span>
+                        )}
+                    </span>
+                    <span className="flex min-w-0 items-center gap-1.5 pt-0.5 text-sm font-normal text-gray-600">
+                        {!!c.faces?.length && (
                             <span className="flex shrink-0 -space-x-1.5">
                                 {c.faces.map((f, i) => (
                                     <span key={i} className="rounded-[28.6%] ring-2 ring-white">
-                                        <Avatar url={f.avatar} size={18} />
+                                        <Avatar url={f.avatar} size={22} />
                                     </span>
                                 ))}
                             </span>
                         )}
                         <span className="truncate">
-                            {typing
-                                ? t("chat.typing")
-                                : [
-                                      ...(c.archived ? [t("chat.archived")] : []),
-                                      t(
-                                          c.members === 1 ? "chat.oneMember" : "chat.memberCount",
-                                      ).replace("{n}", String(c.members ?? 0)),
-                                      // When it was last active, beside who is in it.
-                                      ...(c.lastAt ? [listTime(c.lastAt, locale)] : []),
-                                  ].join(" · ")}
+                            {[
+                                ...(c.archived ? [t("chat.archived")] : []),
+                                t(c.members === 1 ? "chat.oneMember" : "chat.memberCount").replace(
+                                    "{n}",
+                                    String(c.members ?? 0),
+                                ),
+                            ].join(" · ")}
                         </span>
                     </span>
                     <span />
@@ -290,6 +300,16 @@ function ChannelRow({ channel: c }: { channel: ChatChannel }) {
             trailing={false}
         />
     );
+}
+
+/** The last message in one line: "You: …", "Budi: …", System's own words, or Photo. */
+function lastLine(c: ChatChannel, t: ReturnType<typeof useT>, locale: Locale): string {
+    const m = c.last;
+    if (!m) return t("chat.noMessages");
+    if (m.deleted) return t("chat.deleted");
+    if (m.event) return eventText({ event: m.event, data: m.data, body: m.body ?? "" }, t, locale);
+    const text = m.body || `📷 ${t("chat.photo")}`;
+    return `${m.mine ? t("chat.you") : m.author}: ${text}`;
 }
 
 /** Someone on chat None who reached the address anyway; the tab itself is hidden for them. */
