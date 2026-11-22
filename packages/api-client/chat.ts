@@ -61,8 +61,8 @@ async function serverKey(): Promise<Uint8Array<ArrayBuffer> | null> {
     return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)) as Uint8Array<ArrayBuffer>;
 }
 
-/** Saves this phone's subscription; throws when the server did not keep it (a phone that thinks
- * it is on, but is never sent anything, is the worst case). */
+/** Saves this phone's subscription; throws when the server did not keep it: a phone that thinks
+ * it is on but is never sent anything is the worst case. */
 async function save(sub: PushSubscription) {
     const json = sub.toJSON();
     const { error } = await api.PUT("/push/subscription", {
@@ -123,19 +123,19 @@ function within<T>(p: Promise<T>, ms: number, what: string): Promise<T> {
     ]);
 }
 
-// Turned off in Account on this phone: the start's healing must not turn it back on.
-const OFF_KEY = "tea-pos:push-off";
-function markOff(off: boolean) {
+// What this phone chose in the app: "on" after Turn on, "off" after Account's switch. Only "on"
+// is healed on start, so allowing notifications in the phone alone never subscribes anyone.
+const CHOICE_KEY = "tea-pos:push";
+function choose(choice: "on" | "off") {
     try {
-        if (off) localStorage.setItem(OFF_KEY, "1");
-        else localStorage.removeItem(OFF_KEY);
+        localStorage.setItem(CHOICE_KEY, choice);
     } catch {
-        // No storage: healing may turn it on again, which is the safer side.
+        // No storage: no healing on start; the Chats card asks again if it is lost.
     }
 }
-function turnedOff() {
+function chosenOn() {
     try {
-        return localStorage.getItem(OFF_KEY) === "1";
+        return localStorage.getItem(CHOICE_KEY) === "on";
     } catch {
         return false;
     }
@@ -143,6 +143,22 @@ function turnedOff() {
 
 const sameKey = (a: ArrayBuffer | null | undefined, b: Uint8Array) =>
     !!a && a.byteLength === b.byteLength && new Uint8Array(a).every((x, i) => x === b[i]);
+
+/** This phone's subscription for the server's key, made anew when missing or made with another
+ * key (never delivered), then saved. Allowed already: it asks nothing. */
+async function subscribe(reg: ServiceWorkerRegistration, key: Uint8Array<ArrayBuffer>) {
+    let sub = await reg.pushManager.getSubscription();
+    if (sub && !sameKey(sub.options.applicationServerKey, key)) {
+        await sub.unsubscribe().catch(() => {});
+        sub = null;
+    }
+    sub ??= await within(
+        reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key }),
+        20_000,
+        "subscribe",
+    );
+    await save(sub);
+}
 
 /**
  * Asks the phone and subscribes; throws PushNotOn, never stays silent (task 077: on a Samsung M11
@@ -160,54 +176,32 @@ export async function turnPushOn(): Promise<void> {
     const key = await serverKey().catch(() => null);
     if (!key) throw new PushNotOn("failed", "no server key");
     try {
-        const reg = await within(navigator.serviceWorker.ready, 15_000, "service worker");
-        let sub = await reg.pushManager.getSubscription();
-        // One made with another key (keys changed) is never delivered: make a new one.
-        if (sub && !sameKey(sub.options.applicationServerKey, key)) {
-            await sub.unsubscribe().catch(() => {});
-            sub = null;
-        }
-        sub ??= await within(
-            reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key }),
-            20_000,
-            "subscribe",
-        );
-        await save(sub);
-        markOff(false);
+        await subscribe(await within(navigator.serviceWorker.ready, 15_000, "service worker"), key);
+        choose("on");
     } catch (e) {
         throw new PushNotOn("failed", e instanceof Error ? `${e.name}: ${e.message}` : String(e));
     }
 }
 
-/** Account → Notifications only, deep in the settings (owner): this phone gets no more pushes. */
+/** Account → Permissions only, deep in the settings (owner): this phone gets no more pushes. */
 export async function turnPushOff() {
-    markOff(true);
+    choose("off");
     const sub = await subscription();
     if (!sub) return;
     await api.POST("/push/subscription/off", { body: { endpoint: sub.endpoint } }).catch(() => {});
     await sub.unsubscribe();
 }
 
-/** On every start: the subscription saved again, which heals a cleared site without a word. */
+/** On every start, for a phone that turned them on: its subscription made again if lost
+ * (iPhones drop them) or made with another key, and saved again (a cleared site heals). */
 export async function renewPush() {
-    if (!pushSupported() || Notification.permission !== "granted" || turnedOff()) return;
-    const reg = await worker();
-    if (!reg) return;
+    if (!pushSupported() || Notification.permission !== "granted") return;
     try {
-        let sub = await reg.pushManager.getSubscription();
+        const reg = await worker();
+        // Turned on here, or before the choice was kept (a subscription already there).
+        if (!reg || (!chosenOn() && !(await reg.pushManager.getSubscription()))) return;
         const key = await serverKey();
-        if (!key) return;
-        // Heals quietly what a phone loses (iPhones drop subscriptions) or a key change breaks:
-        // allowed already, so no question is needed.
-        if (sub && !sameKey(sub.options.applicationServerKey, key)) {
-            await sub.unsubscribe().catch(() => {});
-            sub = null;
-        }
-        sub ??= await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: key,
-        });
-        await save(sub);
+        if (key) await subscribe(reg, key);
     } catch {
         // Tried again next start; Turn on says why if it keeps failing.
     }

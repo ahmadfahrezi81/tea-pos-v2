@@ -7,7 +7,7 @@ import {
 import type { Locale } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { useTurnPushOn } from "@tea-pos/shell/push";
-import { showPermissionHelp } from "@tea-pos/ui/permissions";
+import { isInstalled, isIPhone, showPermissionHelp } from "@tea-pos/ui/permissions";
 import { useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { useSearchParam, useSearchText } from "@tea-pos/shell/searchParam";
 import { Avatar } from "@tea-pos/ui/Avatar";
@@ -198,10 +198,7 @@ function PushCard() {
         void pushState().then(setState);
     }, []);
     // An iPhone in Safari: notifications come only once the app is on the Home Screen.
-    const iphoneTab =
-        state === "unsupported" &&
-        /iPhone|iPad|iPod/.test(navigator.userAgent) &&
-        !matchMedia("(display-mode: standalone)").matches;
+    const iphoneTab = state === "unsupported" && isIPhone() && !isInstalled();
     if (state !== "off" && state !== "blocked" && !iphoneTab) return null;
     return (
         <div className="mt-3 flex items-start gap-3 rounded-2xl bg-white p-4">

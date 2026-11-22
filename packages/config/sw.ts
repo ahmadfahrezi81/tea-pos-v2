@@ -61,6 +61,7 @@ self.addEventListener("message", (event) => {
 });
 
 registerRoute(new PrecacheRoute(precache));
+
 /** The last resort, with no saved copy and no network: a page that says so and tries again. */
 function offline() {
     const html = `<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><body style="font:16px system-ui;margin:0;display:grid;place-items:center;height:100vh;text-align:center;padding:0 24px"><div><p>No connection right now.<br>Tidak ada koneksi.</p><p><a href="" onclick="location.reload();return false" style="display:inline-block;padding:12px 24px;border-radius:12px;background:#111;color:#fff;text-decoration:none">Try again · Coba lagi</a></p></div>`;

@@ -1,9 +1,14 @@
 import type { MessageKey } from "@tea-pos/i18n";
 import { useT } from "@tea-pos/i18n/react";
-import { closePermissionHelp, isIPhone, usePermissionHelp } from "@tea-pos/ui/permissions";
+import {
+    closePermissionHelp,
+    isInstalled,
+    isIPhone,
+    isSamsungInternet,
+    usePermissionHelp,
+    type PermissionKind,
+} from "@tea-pos/ui/permissions";
 import { Sheet } from "@tea-pos/ui/Sheet";
-
-const installed = () => matchMedia("(display-mode: standalone)").matches;
 
 /**
  * The backup when the question never shows (task 077): this page in Chrome itself, where Chrome
@@ -16,30 +21,34 @@ function openInChrome() {
     location.href = `intent://${host}${pathname}${search}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(href)};end`;
 }
 
-/** Installed from Samsung Internet: its own menus, and no Chrome to send them to. */
-const samsung = () => /SamsungBrowser/.test(navigator.userAgent);
+/** The steps per phone and permission; each ends with trying again. */
+const STEPS: Record<"android" | "iphone" | "samsung", Record<PermissionKind, MessageKey[]>> = {
+    android: {
+        notifications: [
+            "permission.androidNotifications1",
+            "permission.androidNotifications2",
+            "permission.again",
+        ],
+        camera: ["permission.androidCamera1", "permission.androidCamera2", "permission.again"],
+    },
+    iphone: {
+        notifications: ["permission.iphoneNotifications", "permission.again"],
+        camera: ["permission.iphoneCamera", "permission.again"],
+    },
+    samsung: {
+        notifications: ["permission.samsung", "permission.again"],
+        camera: ["permission.samsung", "permission.again"],
+    },
+};
 
 /** Mounted once by the shell: what happened, the steps for this phone, and the backup. */
 export function PermissionHelpHost() {
     const t = useT();
     const help = usePermissionHelp();
     if (!help) return null;
-    const camera = help.kind === "camera";
-    const iphone = isIPhone();
-    const steps: string[] = samsung()
-        ? [t("permission.samsung").replace("{site}", location.host), t("permission.again")]
-        : iphone
-          ? [
-                t(camera ? "permission.iphoneCamera" : "permission.iphoneNotifications"),
-                t("permission.again"),
-            ]
-          : [
-                t(camera ? "permission.androidCamera1" : "permission.androidNotifications1"),
-                t(
-                    camera ? "permission.androidCamera2" : "permission.androidNotifications2",
-                ).replace("{site}", location.host),
-                t("permission.again"),
-            ];
+    const phone = isSamsungInternet() ? "samsung" : isIPhone() ? "iphone" : "android";
+    const site = (key: MessageKey) => t(key).replace("{site}", location.host);
+    const steps = STEPS[phone][help.kind].map(site);
     const said: Record<typeof help.problem, MessageKey> = {
         blocked: "permission.blocked",
         notAsked: "permission.notAsked",
@@ -49,7 +58,9 @@ export function PermissionHelpHost() {
         <Sheet
             open
             onClose={closePermissionHelp}
-            title={t(camera ? "permission.titleCamera" : "permission.titleNotifications")}
+            title={t(
+                help.kind === "camera" ? "permission.titleCamera" : "permission.titleNotifications",
+            )}
         >
             <div className="space-y-4 pb-2">
                 <p className="text-[15px] text-gray-700">{t(said[help.problem])}</p>
@@ -60,7 +71,7 @@ export function PermissionHelpHost() {
                         ))}
                     </ol>
                 )}
-                {!iphone && !samsung() && installed() && help.problem !== "failed" && (
+                {phone === "android" && isInstalled() && help.problem !== "failed" && (
                     <div className="space-y-1.5">
                         <button
                             type="button"

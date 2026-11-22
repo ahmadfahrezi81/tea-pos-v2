@@ -9,7 +9,16 @@ export type PermissionState = "granted" | "prompt" | "denied" | "unsupported";
 /** blocked: the phone said no; notAsked: it never showed the question; failed: anything else. */
 export type PermissionProblem = "blocked" | "notAsked" | "failed";
 
-export const isIPhone = () => /iPhone|iPad|iPod/.test(navigator.userAgent);
+/** An iPhone or iPad (which calls itself a Mac, but has a touch screen). */
+export const isIPhone = () =>
+    /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+    (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+/** Installed from Samsung Internet: its own menus, and no Chrome to send them to. */
+export const isSamsungInternet = () => /SamsungBrowser/.test(navigator.userAgent);
+/** Opened from the home screen as an app (no address bar), not in a browser tab. */
+export const isInstalled = () =>
+    matchMedia("(display-mode: standalone)").matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true;
 
 /** Where the phone stands, without asking; "prompt" also when the browser cannot tell. */
 export async function permissionState(kind: PermissionKind): Promise<PermissionState> {

@@ -46,11 +46,12 @@ Fix what the owner finds once chat is in production. One item per line below, ea
     - Nothing can hang the button: the worker's readiness (15 s) and subscribing (20 s) have limits, as the question has.
     - A subscription the server did not keep was shown as On: saving now fails loudly, and Turn on says so.
     - A subscription made with another key is never delivered: Turn on and every start make a new one.
-    - Every start heals a lost subscription (iPhones drop them) when notifications are allowed, unless the person turned them off in Account (remembered on the phone).
+    - Every start heals a lost subscription (iPhones drop them), only for a phone that turned them on in the app (its choice kept on the phone, or a subscription already there): allowing notifications in the phone alone never subscribes anyone, and Account's Off stays off.
     - A screen with no saved copy and no network shows "No connection, Try again" instead of Chrome's error page.
     - Open in Chrome falls back to the phone's own browser when Chrome is missing; an app installed from Samsung Internet gets its own steps and no Chrome button.
     - The steps add the phone's own settings for Chrome (Apps → Chrome → Notifications / Camera) where Chrome's menu has none.
     - The Chats card: a blocked phone gets "Show me how"; an iPhone in Safari is told to add the app to the Home Screen first.
+    - Cleanup: Turn on and the start's healing share one `subscribe`; one place says which phone this is (`isIPhone`, which now counts iPads that call themselves Macs, `isSamsungInternet`, `isInstalled`); the help sheet's steps are a table per phone and permission.
     - Not changed: the build already needs Chrome 107 / Safari 16 (Vite's default); Chrome updates itself on old Android, so nothing new is required.
 
 ## Done when
