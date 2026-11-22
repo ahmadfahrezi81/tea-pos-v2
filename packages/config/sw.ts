@@ -61,10 +61,20 @@ self.addEventListener("message", (event) => {
 });
 
 registerRoute(new PrecacheRoute(precache));
+// Every screen is index.html, saved; if the saved copy cannot answer (an update half done), the
+// network does, never the browser's error page (task 077: a tapped notification showed ERR_FAILED).
+const appShell = precache.createHandlerBoundToURL("/index.html");
 registerRoute(
-    new NavigationRoute(precache.createHandlerBoundToURL("/index.html"), {
-        denylist: [/^\/api\//],
-    }),
+    new NavigationRoute(
+        async (options) => {
+            try {
+                return await appShell(options);
+            } catch {
+                return fetch(options.request);
+            }
+        },
+        { denylist: [/^\/api\//] },
+    ),
 );
 
 // Chat's notifications (Step 68): one line per channel that updates (the tag), not one per message.
@@ -105,10 +115,10 @@ self.addEventListener("notificationclick", (event) => {
             });
             const open = windows.find((w) => new URL(w.url).origin === self.location.origin);
             if (open) {
-                await open.focus();
-                return void (await open
-                    .navigate(url)
-                    .catch(() => open.postMessage({ type: "OPEN", url })));
+                // The open app changes screen itself (shell's startApp): no reload, which failed
+                // on a Samsung M11 with ERR_FAILED (task 077).
+                await open.focus().catch(() => {});
+                return open.postMessage({ type: "OPEN", url });
             }
             await self.clients.openWindow(url);
         })(),

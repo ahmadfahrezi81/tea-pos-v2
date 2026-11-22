@@ -35,6 +35,12 @@ Fix what the owner finds once chat is in production. One item per line below, ea
    - Suggested: Share leaves the Pay tab's header and becomes a small share icon in the week's card (beside ‹ Week 46 ›), so the header keeps only the account photo. The day and payslip screens are not roots: their Share stays in the header.
    - The owner's other way: on a root page, Share takes the account photo's place. The shell enforces either one (`HeaderActions` on a root route).
 
+7. **The M11's real switch was Chrome's own** (owner, testing production): the app's notification setting leads to Chrome's page for this site, but notifications were off for Chrome as a whole. The help sheet's Android steps now start there: Chrome → Settings → Notifications → Show notifications, then the site's settings.
+8. **A tapped notification showed "This site can't be reached" (ERR_FAILED)** while the app opened. With the app open, the worker reloaded its page (`navigate`), and on the M11 that load failed. Now:
+   - the worker asks the open app to change screen (`OPEN` message), and the shell's `startApp` listens (it never did, so the old fallback did nothing);
+   - a screen the saved copy cannot answer falls back to the network, never the browser's error page.
+9. **Faces even before anyone writes** (owner: in production nobody had written, so no faces): who wrote last first, then the other members, up to 4.
+
 ## Done when
 
 - Each item above is fixed, or moved to a later step with the owner's OK.
