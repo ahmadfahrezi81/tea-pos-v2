@@ -12,6 +12,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
 
 import { eventText } from "./events";
+import { SystemFace } from "./SystemFace";
 import { channelName, KIND_ICON, listTime } from "./labels";
 import { linkLabel } from "./links";
 
@@ -111,13 +112,7 @@ function ActivityRow({ a }: { a: Activity }) {
             className="group flex w-full items-start gap-3 text-left active:opacity-70"
         >
             <span className="relative mt-3 shrink-0">
-                {system ? (
-                    <span className="flex size-9 items-center justify-center rounded-full bg-slate-100">
-                        <Bell size={18} className="text-gray-900" />
-                    </span>
-                ) : (
-                    <Avatar url={a.avatar} size={36} />
-                )}
+                {system ? <SystemFace size={36} /> : <Avatar url={a.avatar} size={36} />}
                 <span className="absolute -right-1 -bottom-1 flex size-[18px] items-center justify-center rounded-full bg-white ring-2 ring-white">
                     <Icon size={12} strokeWidth={2.5} className="text-gray-900" />
                 </span>
@@ -127,7 +122,7 @@ function ActivityRow({ a }: { a: Activity }) {
                     <span
                         className={`min-w-0 flex-1 truncate text-[14px] leading-5 text-gray-900 ${a.unread ? "font-bold" : "font-semibold"}`}
                     >
-                        {system ? where : a.author}
+                        {system ? t("chat.system") : a.author}
                     </span>
                     <span className="shrink-0 text-[12px] leading-4 text-gray-600 tabular-nums">
                         {listTime(a.at, locale)}

@@ -1,3 +1,4 @@
+import { formatCount } from "@tea-pos/format";
 import type { components } from "@tea-pos/api-client";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
@@ -150,8 +151,13 @@ function ChannelInfo({
                     <p className="pt-1 text-xl font-bold text-gray-900">
                         {channelName(channel, t)}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-600">
                         {channel.archived ? t("chat.archivedGroup") : t(WHO[channel.kind])}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                        {t(
+                            channel.messages === 1 ? "chat.oneMessage" : "chat.messageCount",
+                        ).replace("{n}", formatCount(channel.messages ?? 0))}
                     </p>
                 </div>
                 {(group ||

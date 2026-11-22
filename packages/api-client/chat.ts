@@ -87,18 +87,50 @@ export async function pushState(): Promise<PushState> {
     return (await pushOn()) ? "on" : "off";
 }
 
-/** Asks the phone (it must be a tap: browsers allow the question only then) and subscribes. */
-export async function turnPushOn(): Promise<boolean> {
-    if (!pushSupported() || !(await worker())) return false;
-    if ((await Notification.requestPermission()) !== "granted") return false;
+/** Why Turn on did not turn them on: the sheet says what to do, and the event says why. */
+export class PushNotOn extends Error {
+    constructor(
+        readonly reason: "blocked" | "notAsked" | "failed",
+        detail: string,
+    ) {
+        super(`push ${reason}: ${detail}`);
+        this.name = "PushNotOn";
+    }
+}
+
+/** Chrome's quiet question can never show in an installed app: past this, it is not coming. */
+const ASK_TIMEOUT_MS = 15_000;
+
+async function ask(): Promise<NotificationPermission | "timeout"> {
+    if (Notification.permission !== "default") return Notification.permission;
+    return Promise.race([
+        Notification.requestPermission(),
+        new Promise<"timeout">((done) => setTimeout(() => done("timeout"), ASK_TIMEOUT_MS)),
+    ]);
+}
+
+/**
+ * Asks the phone (it must be a tap: browsers allow the question only then) and subscribes;
+ * throws PushNotOn, never stays silent (task 077: on a Samsung M11 the question never showed).
+ */
+export async function turnPushOn(): Promise<void> {
+    if (!pushSupported() || !(await worker())) throw new PushNotOn("failed", "no push support");
+    if (Notification.permission === "denied")
+        throw new PushNotOn("blocked", "denied before asking");
+    const answer = await ask();
+    if (answer === "denied") throw new PushNotOn("blocked", "denied when asked");
+    if (answer !== "granted") throw new PushNotOn("notAsked", `answer ${answer}`);
     const key = await serverKey();
-    if (!key) return false;
-    const reg = await navigator.serviceWorker.ready;
-    const sub =
-        (await reg.pushManager.getSubscription()) ??
-        (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key }));
-    await save(sub);
-    return true;
+    if (!key) throw new PushNotOn("failed", "no server key");
+    try {
+        const reg = await navigator.serviceWorker.ready;
+        const sub =
+            (await reg.pushManager.getSubscription()) ??
+            (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key }));
+        await save(sub);
+    } catch (e) {
+        throw new PushNotOn("failed", e instanceof Error ? `${e.name}: ${e.message}` : String(e));
+    }
 }
 
 /** Account → Notifications only, deep in the settings (owner): this phone gets no more pushes. */

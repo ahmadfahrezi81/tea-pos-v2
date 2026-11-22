@@ -70,7 +70,15 @@
         "onThisPhone": "On for this phone",
         "offThisPhone": "Off for this phone",
         "notificationsBlocked": "Blocked: allow notifications in the phone's settings",
-        "notificationsUnsupported": "This phone can't get them here (on an iPhone: install the app first)"
+        "notificationsUnsupported": "This phone can't get them here (on an iPhone: install the app first)",
+        "permissions": "Permissions",
+        "camera": "Camera",
+        "cameraState": {
+            "granted": "Allowed",
+            "prompt": "Asks when you take a photo",
+            "denied": "Blocked: tap to see how to allow it",
+            "unsupported": "This phone can't use it here"
+        }
     },
     "more": {
         "workDays": "Work Days",
@@ -322,5 +330,22 @@
         "failing": "Can't reach the server",
         "slow": "Slow connection",
         "backOnline": "Back online"
+    },
+    "permission": {
+        "titleNotifications": "Allow notifications",
+        "titleCamera": "Allow the camera",
+        "blocked": "Your phone has said no for this app. Allow it once, then try again.",
+        "notAsked": "Your phone didn't show the question. Allow it once, then try again.",
+        "failed": "Your phone couldn't turn it on just now. Try again in a moment; if it keeps failing, restart the phone.",
+        "androidNotifications1": "Open Chrome, tap ⋮, then Settings → Site settings → Notifications.",
+        "androidNotifications2": "Turn off Use quieter messaging, and set {site} to Allow if it's listed.",
+        "androidCamera1": "Open Chrome, tap ⋮, then Settings → Site settings → Camera.",
+        "androidCamera2": "Set {site} to Allow if it's listed as blocked.",
+        "iphoneNotifications": "Open Settings → Notifications, find the app, and turn on Allow Notifications.",
+        "iphoneCamera": "Open Settings → Safari → Camera, and choose Ask or Allow.",
+        "again": "Come back to the app and try again.",
+        "openInChrome": "Open in Chrome",
+        "openInChromeSub": "Chrome can ask there. Allowing it there allows the app too.",
+        "gotIt": "Got it"
     }
 }

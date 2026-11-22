@@ -3,6 +3,7 @@ import { useRef, useState, type ReactNode } from "react";
 
 import { ImagePreview } from "../feedback/ImagePreview";
 import { Picture } from "../feedback/Picture";
+import { cameraCameBackEmpty, openCamera } from "../lib/permissions";
 
 type State =
     | { at: "idle" }
@@ -58,8 +59,14 @@ export function PhotoInput({
         }
     };
 
+    // The camera checks its permission first, as v1's task 030; a screenshot needs none.
+    const pickPhoto = () => (screenshot ? input.current?.click() : openCamera(input.current));
+
     const take = async (file: File | undefined) => {
-        if (!file) return;
+        if (!file) {
+            if (!screenshot) cameraCameBackEmpty();
+            return;
+        }
         onRemove();
         setState({ at: "shrinking" });
         const { shrinkPhoto } = await import("./shrink");
@@ -89,7 +96,7 @@ export function PhotoInput({
                         ? setOpen(true)
                         : state.at === "failed"
                           ? void send(state.photo)
-                          : input.current?.click()
+                          : pickPhoto()
                 }
             >
                 {state.at === "done" ? (
@@ -116,7 +123,7 @@ export function PhotoInput({
             </button>
             {(state.at === "done" || state.at === "failed") && (
                 <div className="grid grid-cols-2 gap-2">
-                    <button type="button" className={button} onClick={() => input.current?.click()}>
+                    <button type="button" className={button} onClick={pickPhoto}>
                         <RotateCcw size={18} strokeWidth={2.5} />
                         {retakeLabel}
                     </button>

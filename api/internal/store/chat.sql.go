@@ -107,6 +107,18 @@ func (q *Queries) CountChatActivityUnread(ctx context.Context, arg CountChatActi
 	return column_1, err
 }
 
+const countChatMessages = `-- name: CountChatMessages :one
+SELECT count(*)::int FROM chat_messages WHERE channel_id = $1 AND deleted_at IS NULL
+`
+
+// How many messages a chat has, for its info (task 077).
+func (q *Queries) CountChatMessages(ctx context.Context, channelID pgtype.UUID) (int32, error) {
+	row := q.db.QueryRow(ctx, countChatMessages, channelID)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const createChatGroup = `-- name: CreateChatGroup :one
 INSERT INTO chat_channels (tenant_id, kind, name, created_by)
 VALUES ($1, 'group', $2, $3)
@@ -518,7 +530,16 @@ SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name,
             WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = ma.user_id)
             ELSE false
           END
-    )::int AS members
+    )::int AS members,
+    -- The faces of the last people who wrote (owner: as Slack's threads), from the newest 50 messages.
+    coalesce((SELECT jsonb_agg(jsonb_build_object('name', fu.full_name, 'avatar', coalesce(fu.avatar_url, '')) ORDER BY f.at DESC)
+        FROM (
+            SELECT w.author_id, max(w.created_at) AS at
+            FROM (SELECT x.author_id, x.created_at FROM chat_messages x
+                WHERE x.channel_id = c.id AND x.author_type = 'user' AND x.deleted_at IS NULL
+                ORDER BY x.created_at DESC LIMIT 50) w
+            GROUP BY w.author_id ORDER BY at DESC LIMIT 4
+        ) f JOIN users fu ON fu.id = f.author_id), '[]')::jsonb AS faces
 FROM chat_channels c
 JOIN tenants t ON t.id = c.tenant_id
 LEFT JOIN stores s ON s.id = c.store_id
@@ -562,6 +583,7 @@ type ListChatChannelsRow struct {
 	LastDeleted    bool
 	Unread         int32
 	Members        int32
+	Faces          []byte
 }
 
 // The caller's channels, the newest message first: the name (a store's read live), the last
@@ -599,6 +621,7 @@ func (q *Queries) ListChatChannels(ctx context.Context, arg ListChatChannelsPara
 			&i.LastDeleted,
 			&i.Unread,
 			&i.Members,
+			&i.Faces,
 		); err != nil {
 			return nil, err
 		}

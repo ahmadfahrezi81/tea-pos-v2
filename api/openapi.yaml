@@ -245,6 +245,12 @@ components:
         archived:
           description: "An archived group: read only, its history kept"
           type: boolean
+        faces:
+          items:
+            $ref: "#/components/schemas/ChatFace"
+          type:
+            - array
+            - "null"
         following:
           description: A chat admin following a channel they are not in
           type: boolean
@@ -293,6 +299,12 @@ components:
         archived:
           description: "An archived group: read only, its history kept"
           type: boolean
+        faces:
+          items:
+            $ref: "#/components/schemas/ChatFace"
+          type:
+            - array
+            - "null"
         following:
           description: A chat admin following a channel they are not in
           type: boolean
@@ -317,6 +329,10 @@ components:
           items:
             $ref: "#/components/schemas/ChatMember"
           type: array
+        messages:
+          description: How many messages it has, for its info
+          format: int64
+          type: integer
         mine:
           description: "In it or following: its badge and pushes count"
           type: boolean
@@ -331,6 +347,7 @@ components:
           type: integer
       required:
         - members
+        - messages
         - id
         - kind
         - readOnly
@@ -347,6 +364,16 @@ components:
           type: array
       required:
         - channels
+      type: object
+    ChatFace:
+      additionalProperties: false
+      properties:
+        avatar:
+          type: string
+        name:
+          type: string
+      required:
+        - name
       type: object
     ChatGroupBody:
       additionalProperties: false

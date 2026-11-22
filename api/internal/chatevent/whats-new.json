@@ -1,5 +1,41 @@
 [
     {
+        "version": "2026.11.16",
+        "date": "2026-11-22",
+        "apps": ["backoffice"],
+        "lines": {
+            "en": [
+                "Turning on notifications now shows you how to allow them when your phone doesn't ask.",
+                "Account → Permissions shows what the app may use, and how to allow it.",
+                "The camera now tells you when it's blocked, instead of doing nothing.",
+                "The chat list shows each chat's latest message and who wrote lately.",
+                "The app's own messages in chat now come from System, like anyone else's."
+            ],
+            "id": [
+                "Menyalakan notifikasi sekarang menunjukkan cara mengizinkannya kalau HP kamu tidak bertanya.",
+                "Akun → Izin menunjukkan apa saja yang boleh dipakai aplikasi, dan cara mengizinkannya.",
+                "Kamera sekarang memberi tahu kalau diblokir, bukan diam saja.",
+                "Daftar chat menunjukkan pesan terbaru tiap chat dan siapa yang baru menulis.",
+                "Pesan dari aplikasi di chat sekarang datang dari Sistem, seperti pesan orang lain."
+            ]
+        }
+    },
+    {
+        "version": "2026.11.16",
+        "date": "2026-11-22",
+        "apps": ["seller"],
+        "lines": {
+            "en": [
+                "The camera now tells you when it's blocked, instead of doing nothing.",
+                "Account → Permissions shows what the app may use, and how to allow it."
+            ],
+            "id": [
+                "Kamera sekarang memberi tahu kalau diblokir, bukan diam saja.",
+                "Akun → Izin menunjukkan apa saja yang boleh dipakai aplikasi, dan cara mengizinkannya."
+            ]
+        }
+    },
+    {
         "version": "2026.11.15",
         "date": "2026-11-21",
         "apps": ["backoffice"],

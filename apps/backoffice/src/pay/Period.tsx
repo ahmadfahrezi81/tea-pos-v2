@@ -112,7 +112,6 @@ export function PeriodHome({ start }: { start: string }) {
 
     return (
         <div className="space-y-4">
-            <ShareAction link={{ kind: "pay_period", id: p.start }} />
             <div
                 ref={card}
                 onPointerDown={swipe.start}
@@ -134,8 +133,10 @@ export function PeriodHome({ start }: { start: string }) {
                         <span className="size-11 shrink-0" />
                     )}
                     <div className="text-center">
-                        <p className="font-mono text-xs font-bold uppercase tracking-widest text-gray-900">
+                        <p className="flex items-center justify-center gap-1 font-mono text-xs font-bold uppercase tracking-widest text-gray-900">
                             {weeks(p.start, p.end, t("pay.week"))}
+                            {/* A tab's root keeps one thing at the top right: Share lives here (task 077). */}
+                            <ShareAction inline link={{ kind: "pay_period", id: p.start }} />
                         </p>
                         <p className="text-lg font-bold text-gray-900">
                             {formatCalendarDay(p.start, locale, "short")} –{" "}

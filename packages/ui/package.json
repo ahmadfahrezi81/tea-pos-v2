@@ -38,6 +38,7 @@
         "./Sheet": "./layout/Sheet.tsx",
         "./Skeleton": "./feedback/Skeleton.tsx",
         "./Tile": "./controls/Tile.tsx",
+        "./permissions": "./lib/permissions.ts",
         "./toast": "./toast/Toast.tsx",
         "./weather": "./lib/weather.ts"
     },

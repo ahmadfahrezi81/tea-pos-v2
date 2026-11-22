@@ -128,6 +128,9 @@
             "pending": "Pending",
             "skipped": "Skipped"
         },
-        "andMore": "and {n} more"
+        "andMore": "and {n} more",
+        "oneMessage": "1 message",
+        "messageCount": "{n} messages",
+        "system": "System"
     }
 }
