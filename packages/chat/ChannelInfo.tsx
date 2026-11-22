@@ -123,7 +123,6 @@ export default function ChannelInfoScreen({ channelId }: { channelId: string }) 
     const slug = useSlug();
     const { data: channel } = useChannel(slug, channelId);
     const { data: media } = useMedia(channelId);
-    const [menu, setMenu] = useState(false);
     const [allMembers, setAllMembers] = useState(false);
     const [allPhotos, setAllPhotos] = useState(false);
     const [allShared, setAllShared] = useState(false);
@@ -146,7 +145,6 @@ export default function ChannelInfoScreen({ channelId }: { channelId: string }) 
     const shared = media?.shared ?? [];
     return (
         <div className="chat space-y-5 pb-6">
-            <HeaderActions actions={[{ kind: "more", onClick: () => setMenu(true) }]} />
             <div className="flex items-center gap-3 rounded-2xl bg-white p-4">
                 <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-slate-100">
                     <Icon size={24} className="text-gray-900" />
@@ -245,7 +243,8 @@ export default function ChannelInfoScreen({ channelId }: { channelId: string }) 
             )}
 
             {photo && <ImagePreview open onClose={() => setPhoto(null)} src={photo} title="" />}
-            <InfoMenu channel={channel} open={menu} onClose={() => setMenu(false)} />
+            {/* What changes the chat, at the bottom, each only for who may (owner: no ⋯ here). */}
+            <InfoActions channel={channel} />
         </div>
     );
 }
@@ -305,18 +304,10 @@ function useClearChat(id: string) {
 }
 
 /**
- * The ⋯ menu: what changes the chat, each only for who may. Rename, members and archive: a chat
+ * What changes the chat, at the bottom of its info, each only for who may. Rename, members and archive: a chat
  * admin, on a group. Unfollow: a chat admin following a chat they are not in. Clear: the owner.
  */
-function InfoMenu({
-    channel,
-    open,
-    onClose,
-}: {
-    channel: Channel;
-    open: boolean;
-    onClose: () => void;
-}) {
+function InfoActions({ channel }: { channel: Channel }) {
     const t = useT();
     const admin = useChatAdmin();
     const { owner } = useAccess();
@@ -328,11 +319,8 @@ function InfoMenu({
     const [name, setName] = useState(channel.name ?? "");
     const [picked, setPicked] = useState<string[] | null>(null);
     const group = admin && channel.kind === "group";
-    const close = () => {
-        setView("menu");
-        onClose();
-    };
-    const back = () => setView("menu");
+    const close = () => setView("menu");
+    const back = close;
     const rows: { icon: LucideIcon; label: MessageKey; onClick: () => void; danger?: boolean }[] = [
         ...(group
             ? [
@@ -379,7 +367,6 @@ function InfoMenu({
               ]
             : []),
     ];
-    if (!open) return null;
     if (view === "clear")
         return (
             <ConfirmSheet
@@ -430,33 +417,21 @@ function InfoMenu({
                 </div>
             </Sheet>
         );
+    if (rows.length === 0) return null;
     return (
-        <Sheet open onClose={close} title={channelName(channel, t)}>
-            <div className="chat pb-2">
-                {rows.length === 0 ? (
-                    <p className="py-4 text-center text-[15px] text-gray-600">
-                        {t("chat.nothingToChange")}
-                    </p>
-                ) : (
-                    <div className="overflow-hidden rounded-2xl bg-slate-100">
-                        {rows.map(({ icon: Icon, label, onClick, danger }) => (
-                            <button
-                                key={label}
-                                type="button"
-                                onClick={onClick}
-                                className={`flex w-full items-center gap-3 border-b border-white px-4 py-3.5 text-left text-[16px] font-medium last:border-b-0 active:opacity-70 ${danger ? "text-red-600" : "text-gray-900"}`}
-                            >
-                                <Icon
-                                    size={20}
-                                    className={danger ? "text-red-600" : "text-gray-700"}
-                                />
-                                {t(label)}
-                            </button>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </Sheet>
+        <div className="overflow-hidden rounded-2xl bg-white">
+            {rows.map(({ icon: Icon, label, onClick, danger }) => (
+                <button
+                    key={label}
+                    type="button"
+                    onClick={onClick}
+                    className={`flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3.5 text-left text-[16px] font-medium last:border-b-0 active:bg-slate-50 ${danger ? "text-red-600" : "text-gray-900"}`}
+                >
+                    <Icon size={20} className={danger ? "text-red-600" : "text-gray-700"} />
+                    {t(label)}
+                </button>
+            ))}
+        </div>
     );
 }
 
