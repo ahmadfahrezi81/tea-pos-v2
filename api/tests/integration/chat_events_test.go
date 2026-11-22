@@ -253,6 +253,10 @@ func TestChatFacesAndCount(t *testing.T) {
 	giveChat(t, pool, testkit.AdminA, "admin")
 	a := testkit.NewAPI(t, pool, "")
 	general := channelOf(t, a, testkit.SellerA, "seller", "general", "")
+	// Nobody wrote yet: the members' faces still show.
+	if c := channelByID(chatChannels(t, a, testkit.AdminA, "backoffice"), general); c == nil || len(c.Faces) != 2 {
+		t.Fatalf("faces before any message: %+v", c)
+	}
 	for i, who := range []string{testkit.SellerA, testkit.AdminA, testkit.SellerA} {
 		app := "seller"
 		if who == testkit.AdminA {
