@@ -4,6 +4,7 @@ package integration
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"testing"
 	"time"
@@ -242,5 +243,35 @@ func TestChatShareLink(t *testing.T) {
 	seller := messages(t, a, testkit.SellerA, "seller", general, "")
 	if len(seller) != 2 || seller[1].Link == nil || seller[1].Link.Open || seller[1].Link.Store != "" || seller[1].Link.Preview != nil {
 		t.Errorf("in the seller app: %+v", seller[1].Link)
+	}
+}
+
+// TestChatFacesAndCount: the list shows who wrote last, newest first; a chat's info counts its messages.
+func TestChatFacesAndCount(t *testing.T) {
+	pool := testkit.DB(t)
+	giveChat(t, pool, testkit.SellerA, "member")
+	giveChat(t, pool, testkit.AdminA, "admin")
+	a := testkit.NewAPI(t, pool, "")
+	general := channelOf(t, a, testkit.SellerA, "seller", "general", "")
+	for i, who := range []string{testkit.SellerA, testkit.AdminA, testkit.SellerA} {
+		app := "seller"
+		if who == testkit.AdminA {
+			app = "backoffice"
+		}
+		if resp, _ := post(t, a, who, app, general, "hi", "faces-key-"+string(rune('a'+i))+"-0000"); resp.StatusCode != http.StatusOK {
+			t.Fatalf("post %d: %d", i, resp.StatusCode)
+		}
+	}
+	c := channelByID(chatChannels(t, a, testkit.AdminA, "backoffice"), general)
+	if c == nil || len(c.Faces) != 2 || c.Faces[0].Name != "Seller A" || c.Faces[1].Name != "Admin A" {
+		t.Fatalf("faces: %+v", c)
+	}
+	resp := a.Request(t, http.MethodGet, "/tenants/tenant-a/chat/channels/"+general, "seller", testkit.Session(a.SignIn(t, testkit.SellerA, "seller")))
+	var out contract.ChatChannelOutput
+	if err := json.NewDecoder(resp.Body).Decode(&out.Body); err != nil {
+		t.Fatal(err)
+	}
+	if out.Body.Messages != 3 {
+		t.Errorf("messages: %d, want 3", out.Body.Messages)
 	}
 }

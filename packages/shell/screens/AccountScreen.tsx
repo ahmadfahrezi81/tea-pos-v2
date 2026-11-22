@@ -2,13 +2,13 @@ import { useMe } from "@tea-pos/api-client/me";
 import { useT } from "@tea-pos/i18n/react";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bell, Globe, Pencil } from "lucide-react";
+import { Globe, Pencil, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 
 import { ConfirmSheet } from "../frame/FormFooter";
 import { signOut } from "../session/session";
 import { LogOutButton, rowIcon, SettingsRow } from "../frame/Settings";
-import { useSlug, useTenant } from "../session/tenant";
+import { useSlug } from "../session/tenant";
 import { currentVersion } from "../frame/update/AppUpdate";
 
 /**
@@ -20,7 +20,6 @@ export function AccountScreen() {
     const queryClient = useQueryClient();
     const me = useMe().data;
     const slug = useSlug();
-    const hasChat = !!useTenant()?.tenant.access.chat;
     const [confirm, setConfirm] = useState(false);
     if (!me || !slug) return null;
     const { user } = me;
@@ -49,13 +48,11 @@ export function AccountScreen() {
                         icon={<Globe {...rowIcon} />}
                         label={t("account.language")}
                     />
-                    {hasChat && (
-                        <SettingsRow
-                            to={`/${slug}/account/notifications`}
-                            icon={<Bell {...rowIcon} />}
-                            label={t("account.notifications")}
-                        />
-                    )}
+                    <SettingsRow
+                        to={`/${slug}/account/permissions`}
+                        icon={<ShieldCheck {...rowIcon} />}
+                        label={t("account.permissions")}
+                    />
                 </div>
             </div>
 

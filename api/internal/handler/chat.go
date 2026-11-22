@@ -85,6 +85,7 @@ func registerChat(api huma.API, d Deps) {
 					ReadOnly: readOnly(r.Kind, r.StoreStatus, r.Archived),
 					Mine:     r.Member || r.Following, Following: r.Following && !r.Member, Archived: r.Archived,
 				}
+				_ = json.Unmarshal(r.Faces, &c.Faces)
 				if r.LastMessageAt.Valid {
 					c.LastAt = nano(r.LastMessageAt)
 					c.Last = &contract.ChatPreview{
@@ -113,7 +114,12 @@ func registerChat(api huma.API, d Deps) {
 			if err != nil {
 				return nil, err
 			}
+			count, err := d.Queries.CountChatMessages(ctx, ch.ID)
+			if err != nil {
+				return nil, err
+			}
 			out := &contract.ChatChannelOutput{}
+			out.Body.Messages = int(count)
 			out.Body.ChatChannel = contract.ChatChannel{
 				ID: ch.ID.String(), Kind: ch.Kind, Name: ch.Name, ReadOnly: readOnly(ch.Kind, ch.StoreStatus, ch.Archived),
 				Mine: ch.Member || ch.Following, Following: ch.Following && !ch.Member, Archived: ch.Archived,

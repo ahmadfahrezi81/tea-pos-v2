@@ -1,6 +1,6 @@
 # Task 077 — Chat: feedback after the release
 
-**Status: collecting 2026-11-22, the owner's feedback after release 2026.11.15 (chat in the backoffice, for the family).**
+**Status: items 1–6 built 2026-11-22 on `fix/chat-release-feedback` (owner: "update all, one PR, then release"). Item 6 as suggested (Share in the week's card). Typecheck, lint, both builds, bundle size and the Go tests pass (but the known `TestSellerCloseDay`); not tried on a phone.**
 
 ## The goal
 

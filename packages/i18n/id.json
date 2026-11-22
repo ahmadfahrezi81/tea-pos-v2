@@ -70,7 +70,15 @@
         "onThisPhone": "Nyala di HP ini",
         "offThisPhone": "Mati di HP ini",
         "notificationsBlocked": "Diblokir: izinkan notifikasi di pengaturan HP",
-        "notificationsUnsupported": "HP ini belum bisa menerimanya di sini (di iPhone: pasang aplikasinya dulu)"
+        "notificationsUnsupported": "HP ini belum bisa menerimanya di sini (di iPhone: pasang aplikasinya dulu)",
+        "permissions": "Izin",
+        "camera": "Kamera",
+        "cameraState": {
+            "granted": "Diizinkan",
+            "prompt": "Ditanyakan saat kamu mengambil foto",
+            "denied": "Diblokir: ketuk untuk lihat cara mengizinkannya",
+            "unsupported": "HP ini tidak bisa memakainya di sini"
+        }
     },
     "more": {
         "workDays": "Hari Kerja",
@@ -323,15 +331,21 @@
         "slow": "Koneksi lambat",
         "backOnline": "Kembali online"
     },
-    "push": {
-        "title": "Izinkan notifikasi",
-        "notAllowed": "HP kamu tidak mengizinkan aplikasi menyalakannya. Izinkan sekali, lalu ketuk Nyalakan lagi.",
-        "android1": "Buka Chrome, ketuk ⋮, lalu Setelan → Setelan situs → Notifikasi.",
-        "android2": "Matikan Gunakan pesan yang lebih senyap, dan atur tea-office.lykostech.app ke Izinkan kalau ada di daftar.",
-        "android3": "Kembali ke aplikasi dan ketuk Nyalakan lagi.",
-        "iphone1": "Buka Pengaturan → Notifikasi, cari aplikasinya, dan nyalakan Izinkan Notifikasi.",
-        "iphone2": "Kembali ke aplikasi dan ketuk Nyalakan lagi.",
+    "permission": {
+        "titleNotifications": "Izinkan notifikasi",
+        "titleCamera": "Izinkan kamera",
+        "blocked": "HP kamu menolaknya untuk aplikasi ini. Izinkan sekali, lalu coba lagi.",
+        "notAsked": "HP kamu tidak menampilkan pertanyaannya. Izinkan sekali, lalu coba lagi.",
         "failed": "HP kamu belum bisa menyalakannya. Coba lagi sebentar lagi; kalau terus gagal, restart HP-nya.",
+        "androidNotifications1": "Buka Chrome, ketuk ⋮, lalu Setelan → Setelan situs → Notifikasi.",
+        "androidNotifications2": "Matikan Gunakan pesan yang lebih senyap, dan atur {site} ke Izinkan kalau ada di daftar.",
+        "androidCamera1": "Buka Chrome, ketuk ⋮, lalu Setelan → Setelan situs → Kamera.",
+        "androidCamera2": "Atur {site} ke Izinkan kalau tertulis diblokir.",
+        "iphoneNotifications": "Buka Pengaturan → Notifikasi, cari aplikasinya, dan nyalakan Izinkan Notifikasi.",
+        "iphoneCamera": "Buka Pengaturan → Safari → Kamera, lalu pilih Tanya atau Izinkan.",
+        "again": "Kembali ke aplikasi dan coba lagi.",
+        "openInChrome": "Buka di Chrome",
+        "openInChromeSub": "Chrome bisa menanyakannya di sana. Mengizinkannya di sana juga mengizinkan aplikasinya.",
         "gotIt": "Oke"
     }
 }

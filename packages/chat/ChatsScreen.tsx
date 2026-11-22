@@ -8,6 +8,7 @@ import { useLocale, useT } from "@tea-pos/i18n/react";
 import { useTurnPushOn } from "@tea-pos/shell/push";
 import { useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { useSearchParam, useSearchText } from "@tea-pos/shell/searchParam";
+import { Avatar } from "@tea-pos/ui/Avatar";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { Segmented } from "@tea-pos/ui/form/Segmented";
 import { ListCard, ListRow, ListRowSkeleton } from "@tea-pos/ui/ListRow";
@@ -189,7 +190,7 @@ function FollowButton({ id }: { id: string }) {
 function PushCard() {
     const t = useT();
     const [state, setState] = useState<PushState | null>(null);
-    const { turnOn, busy, sheet } = useTurnPushOn(setState);
+    const { turnOn, busy } = useTurnPushOn(setState);
     useEffect(() => {
         void pushState().then(setState);
     }, []);
@@ -216,7 +217,6 @@ function PushCard() {
                     </button>
                 )}
             </span>
-            {sheet}
         </div>
     );
 }
@@ -258,18 +258,30 @@ function ChannelRow({ channel: c }: { channel: ChatChannel }) {
                     </span>
                     {/* A group chat: who is in it, not its last message (that is the chat's or Activity's). */}
                     <span
-                        className={`truncate text-sm font-normal ${typing ? "text-brand" : "text-gray-600"}`}
+                        className={`flex min-w-0 items-center gap-1.5 text-sm font-normal ${typing ? "text-brand" : "text-gray-600"}`}
                     >
-                        {typing
-                            ? t("chat.typing")
-                            : [
-                                  ...(c.archived ? [t("chat.archived")] : []),
-                                  t(
-                                      c.members === 1 ? "chat.oneMember" : "chat.memberCount",
-                                  ).replace("{n}", String(c.members ?? 0)),
-                                  // When it was last active, beside who is in it.
-                                  ...(c.lastAt ? [listTime(c.lastAt, locale)] : []),
-                              ].join(" · ")}
+                        {/* Who wrote lately, overlapping (owner: as Slack's threads). */}
+                        {!typing && !!c.faces?.length && (
+                            <span className="flex shrink-0 -space-x-1.5">
+                                {c.faces.map((f, i) => (
+                                    <span key={i} className="rounded-[28.6%] ring-2 ring-white">
+                                        <Avatar url={f.avatar} size={18} />
+                                    </span>
+                                ))}
+                            </span>
+                        )}
+                        <span className="truncate">
+                            {typing
+                                ? t("chat.typing")
+                                : [
+                                      ...(c.archived ? [t("chat.archived")] : []),
+                                      t(
+                                          c.members === 1 ? "chat.oneMember" : "chat.memberCount",
+                                      ).replace("{n}", String(c.members ?? 0)),
+                                      // When it was last active, beside who is in it.
+                                      ...(c.lastAt ? [listTime(c.lastAt, locale)] : []),
+                                  ].join(" · ")}
+                        </span>
                     </span>
                     <span />
                 </span>

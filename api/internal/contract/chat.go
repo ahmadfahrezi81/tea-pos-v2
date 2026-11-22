@@ -23,6 +23,14 @@ type ChatChannel struct {
 	Mine      bool `json:"mine" doc:"In it or following: its badge and pushes count"`
 	Following bool `json:"following,omitempty" doc:"A chat admin following a channel they are not in"`
 	Archived  bool `json:"archived,omitempty" doc:"An archived group: read only, its history kept"`
+	// The list only: the last people who wrote, newest first (at most 4).
+	Faces []ChatFace `json:"faces,omitempty"`
+}
+
+// ChatFace is someone who wrote lately, as a small overlapping photo on the list.
+type ChatFace struct {
+	Name   string `json:"name"`
+	Avatar string `json:"avatar,omitempty"`
 }
 
 // ChatPreview is a channel's last message, one line on the list.
@@ -43,7 +51,8 @@ type ChatChannelInput struct {
 type ChatChannelOutput struct {
 	Body struct {
 		ChatChannel
-		Members []ChatMember `json:"members" nullable:"false" doc:"Everyone in it, with how far each has read: Seen by"`
+		Members  []ChatMember `json:"members" nullable:"false" doc:"Everyone in it, with how far each has read: Seen by"`
+		Messages int          `json:"messages" doc:"How many messages it has, for its info"`
 	}
 }
 
