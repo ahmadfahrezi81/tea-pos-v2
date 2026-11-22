@@ -21,7 +21,7 @@ Fix what the owner finds using chat in production. One item per line below, buil
 5. **A release shows its notes** (owner): the release message lists that version's What's new lines in the chat, as bullet points, not only a link.
 6. **What's new without the highlight** (owner: "ugly"): opening it from chat goes to the page at that version, with no ring around it.
 
-7. **System looks like the system** (owner): its photo becomes Lucide's `Megaphone` (the owner likes a robot, but Lucide's `Bot` does not read as one), its name stays **System** (one name for every app, since chat is its own app), and a small badge beside the name makes it obvious it is not a person (as Slack's APP). The badge's word is drawn in ASCII first.
+7. **System looks like the system** (owner, decided): its photo becomes Lucide's `BotMessageSquare` (a robot as a chat bubble; Lucide's `Bot` did not read as a robot), its name stays **System** (Sistem), and a small **BOT** badge beside the name, as Slack's APP, so it is never taken for a person. Everywhere it shows: the chat, Activity, a reply's quote.
 
 **How we work from here (owner):** every event or chat card is drawn in ASCII first and agreed before it is built.
 
