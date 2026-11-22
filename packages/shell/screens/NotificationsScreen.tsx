@@ -1,10 +1,11 @@
-import { pushState, turnPushOff, turnPushOn, type PushState } from "@tea-pos/api-client/chat";
+import { pushState, turnPushOff, type PushState } from "@tea-pos/api-client/chat";
 import { useT } from "@tea-pos/i18n/react";
 import { Switch } from "@tea-pos/ui/form/Switch";
 import { Bell } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { rowIcon, SettingsRow } from "../frame/Settings";
+import { useTurnPushOn } from "../session/push";
 
 const SUBLABEL = {
     on: "account.onThisPhone",
@@ -21,6 +22,7 @@ export function NotificationsScreen() {
     const t = useT();
     const [state, setState] = useState<PushState | null>(null);
     const [busy, setBusy] = useState(false);
+    const on = useTurnPushOn(setState);
     useEffect(() => {
         void pushState().then(setState);
     }, []);
@@ -36,9 +38,10 @@ export function NotificationsScreen() {
                             on={state === "on"}
                             label={t("account.chatNotifications")}
                             onChange={(want) => {
+                                if (want) return void on.turnOn();
                                 if (busy) return;
                                 setBusy(true);
-                                void (want ? turnPushOn() : turnPushOff())
+                                void turnPushOff()
                                     .catch(() => {})
                                     .then(pushState)
                                     .then(setState)
@@ -48,6 +51,7 @@ export function NotificationsScreen() {
                     ) : undefined
                 }
             />
+            {on.sheet}
         </div>
     );
 }

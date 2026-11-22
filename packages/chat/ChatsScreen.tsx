@@ -1,11 +1,11 @@
 import {
     pushState,
-    turnPushOn,
     type PushState,
     useChatChannels,
     type ChatChannel,
 } from "@tea-pos/api-client/chat";
 import { useLocale, useT } from "@tea-pos/i18n/react";
+import { useTurnPushOn } from "@tea-pos/shell/push";
 import { useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { useSearchParam, useSearchText } from "@tea-pos/shell/searchParam";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
@@ -189,7 +189,7 @@ function FollowButton({ id }: { id: string }) {
 function PushCard() {
     const t = useT();
     const [state, setState] = useState<PushState | null>(null);
-    const [busy, setBusy] = useState(false);
+    const { turnOn, busy, sheet } = useTurnPushOn(setState);
     useEffect(() => {
         void pushState().then(setState);
     }, []);
@@ -209,20 +209,14 @@ function PushCard() {
                 {state === "off" && (
                     <button
                         disabled={busy}
-                        onClick={() => {
-                            setBusy(true);
-                            void turnPushOn()
-                                .catch(() => {})
-                                .then(pushState)
-                                .then(setState)
-                                .finally(() => setBusy(false));
-                        }}
+                        onClick={() => void turnOn()}
                         className="mt-3 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white active:opacity-80 disabled:opacity-50"
                     >
                         {t("chat.pushTurnOn")}
                     </button>
                 )}
             </span>
+            {sheet}
         </div>
     );
 }

@@ -322,5 +322,16 @@
         "failing": "Tidak bisa terhubung ke server",
         "slow": "Koneksi lambat",
         "backOnline": "Kembali online"
+    },
+    "push": {
+        "title": "Izinkan notifikasi",
+        "notAllowed": "HP kamu tidak mengizinkan aplikasi menyalakannya. Izinkan sekali, lalu ketuk Nyalakan lagi.",
+        "android1": "Buka Chrome, ketuk ⋮, lalu Setelan → Setelan situs → Notifikasi.",
+        "android2": "Matikan Gunakan pesan yang lebih senyap, dan atur tea-office.lykostech.app ke Izinkan kalau ada di daftar.",
+        "android3": "Kembali ke aplikasi dan ketuk Nyalakan lagi.",
+        "iphone1": "Buka Pengaturan → Notifikasi, cari aplikasinya, dan nyalakan Izinkan Notifikasi.",
+        "iphone2": "Kembali ke aplikasi dan ketuk Nyalakan lagi.",
+        "failed": "HP kamu belum bisa menyalakannya. Coba lagi sebentar lagi; kalau terus gagal, restart HP-nya.",
+        "gotIt": "Oke"
     }
 }

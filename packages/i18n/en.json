@@ -322,5 +322,16 @@
         "failing": "Can't reach the server",
         "slow": "Slow connection",
         "backOnline": "Back online"
+    },
+    "push": {
+        "title": "Allow notifications",
+        "notAllowed": "Your phone didn't let the app turn them on. Allow them once, then tap Turn on again.",
+        "android1": "Open Chrome, tap ⋮, then Settings → Site settings → Notifications.",
+        "android2": "Turn off Use quieter messaging, and set tea-office.lykostech.app to Allow if it's listed.",
+        "android3": "Come back to the app and tap Turn on again.",
+        "iphone1": "Open Settings → Notifications, find the app, and turn on Allow Notifications.",
+        "iphone2": "Come back to the app and tap Turn on again.",
+        "failed": "Your phone couldn't turn them on just now. Try again in a moment; if it keeps failing, restart the phone.",
+        "gotIt": "Got it"
     }
 }

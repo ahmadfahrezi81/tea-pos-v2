@@ -21,6 +21,7 @@
         "./NotificationsScreen": "./screens/NotificationsScreen.tsx",
         "./OrderCard": "./views/OrderCard.tsx",
         "./PersonalDetailsScreen": "./screens/PersonalDetailsScreen.tsx",
+        "./push": "./session/push.tsx",
         "./ScreenLabScreen": "./screens/ScreenLabScreen.tsx",
         "./searchParam": "./session/searchParam.ts",
         "./Sellers": "./views/Sellers.tsx",
