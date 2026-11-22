@@ -1,6 +1,6 @@
 # Task 078 — Chat: feedback after 2026.11.17
 
-**Status: collecting 2026-11-22, the owner's feedback after release 2026.11.17.**
+**Status: feedback collected 2026-11-22 (9 items); designs for items 3–6 agreed in ASCII (the owner: "exactly what I want"). Weather: stores have no coordinates yet, so every store uses v1's point (Ciomas), which is right for now; the owner adds them later.**
 
 ## The goal
 
@@ -26,6 +26,8 @@ Fix what the owner finds using chat in production. One item per line below, buil
 7. **System looks like the system** (owner, decided): its photo becomes Lucide's `BotMessageSquare` (a robot as a chat bubble; Lucide's `Bot` did not read as a robot), its name stays **System** (Sistem), and a small **BOT** badge beside the name, as Slack's APP, so it is never taken for a person. Everywhere it shows: the chat, Activity, a reply's quote.
 
 8. **Faces side by side, not overlapping** (owner, as Slack now): on the Chats list the last writers' faces sit next to each other with a thin gap (2 px), no white ring, instead of overlapping.
+
+9. **Store settings: each status its own colour** (owner): Active, Demo and Inactive badges look the same today. Active green, Demo amber, Inactive grey, the darker shade of each for its text.
 
 **How we work from here (owner):** every event or chat card is drawn in ASCII first and agreed before it is built.
 
