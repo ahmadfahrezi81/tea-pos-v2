@@ -299,6 +299,9 @@ components:
         archived:
           description: "An archived group: read only, its history kept"
           type: boolean
+        clearedAt:
+          format: date-time
+          type: string
         faces:
           items:
             $ref: "#/components/schemas/ChatFace"

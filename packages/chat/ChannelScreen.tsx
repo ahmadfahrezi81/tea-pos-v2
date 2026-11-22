@@ -71,7 +71,10 @@ function Channel({ channelId }: { channelId: string }) {
     const channel = useChannel(slug, channelId).data;
     const thread = useThread(slug, channelId);
     const outbox = useSyncExternalStore(subscribe, snapshot).filter((p) => p.channel === channelId);
-    const items = thread.data?.items ?? [];
+    // A chat the owner cleared: what this phone saved from before it is hidden too, not only what
+    // the server sends (task 078: a saved copy survived the clear, even past a restart).
+    const cleared = channel?.clearedAt ? Date.parse(channel.clearedAt) : 0;
+    const items = (thread.data?.items ?? []).filter((m) => !cleared || Date.parse(m.at) > cleared);
 
     // Where I had read to when I opened it: the New messages line stays put while I am here.
     const [readAtOpen, setReadAtOpen] = useState<string | null>(null);
