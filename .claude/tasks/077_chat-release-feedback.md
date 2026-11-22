@@ -19,6 +19,17 @@ Fix what the owner finds once chat is in production. One item per line below, ea
    - Built: `turnPushOn` waits 15 s at most for the question and throws `PushNotOn` (blocked, notAsked, failed) instead of returning quietly; `useTurnPushOn` (`@tea-pos/shell/push`) reports it and opens a sheet with the steps (Chrome: Site settings → Notifications, quieter messaging off, the site to Allow; iPhone: Settings → Notifications), as v1's camera does. Used by the Chats card and Account → Notifications.
    - Note: nobody is notified of their own messages; try with someone else writing.
 
+2. **Permissions, robust everywhere** (owner: "robust from our end, and in the worst case a backup"). Today only notifications got it (item 1); the camera still fails silently, as v1's did before its task 030 (`PhotoInput` returns quietly on an empty pick).
+   - **One way for every permission** (`packages/shell`): for notifications and the camera, check the state first (`navigator.permissions`, with a fallback where it is missing), ask with a time limit, and never fail quietly. A failure is reported with its reason.
+   - **One help sheet, shown from anywhere** (as the toast: `showPermissionHelp("camera")` in `packages/ui`, the sheet mounted once by the shell): what happened, the steps for this phone (Android with Chrome, iPhone), and the backup:
+     - **Open in Chrome**: the app's own address in a Chrome tab, where Chrome shows its question in the address bar (an installed app has none). Allowing it there allows the app too, since it is the same site.
+   - **The camera**: before opening it, a blocked camera opens the sheet; one never asked is asked first (as v1). An empty pick only opens the sheet when the camera is blocked, so cancelling is still quiet.
+   - **Account → Permissions** (in place of Notifications): Notifications and Camera, each Allowed, Not asked or Blocked; tapping asks again or opens the sheet. Notifications keeps its switch.
+
+3. **The app's own messages look like a person's** (owner): today they are a grey pill in the middle. Instead, a bubble on the left like anyone's, from **System** (Indonesian: Sistem) with a round icon from lucide as its photo (`Bot`), its text in the bubble and its card (day, pay, release) under it. Same on Activity's rows and in a reply's quote.
+4. **Faces under a chat's name** (owner, "as Slack's threads"): on the Chats list, each row's second line shows the faces of the last 3–4 people who wrote there, overlapping, before "2 members · 19 Nov". Go returns them with each channel (the last distinct authors, one read for the whole list).
+5. **How many messages a chat has** (owner: "only if it's worth it"). Suggestion: not on the list, where unread already says what matters, but in a chat's info ("1.234 messages"), counted when the info opens. The owner may strike it out.
+
 ## Done when
 
 - Each item above is fixed, or moved to a later step with the owner's OK.
