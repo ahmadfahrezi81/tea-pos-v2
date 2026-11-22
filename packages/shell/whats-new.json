@@ -1,5 +1,26 @@
 [
     {
+        "version": "2026.11.18",
+        "date": "2026-11-22",
+        "apps": ["backoffice"],
+        "lines": {
+            "en": [
+                "A shared day, pay period or payslip now shows the screen itself in the chat, with a button to open it.",
+                "Rain messages now show the coming hours, and when the rain starts, ends and peaks.",
+                "A chat's info is now its own page, with its photos, what was shared, and its members.",
+                "The chat list shows two lines of the latest message.",
+                "Store settings show each status in its own colour."
+            ],
+            "id": [
+                "Hari toko, periode gaji, atau slip gaji yang dibagikan sekarang tampil langsung di chat, dengan tombol untuk membukanya.",
+                "Pesan hujan sekarang menunjukkan jam-jam ke depan, dan kapan hujan mulai, berhenti, dan paling deras.",
+                "Info chat sekarang jadi halaman sendiri, dengan foto, yang dibagikan, dan anggotanya.",
+                "Daftar chat menunjukkan dua baris pesan terbaru.",
+                "Setelan toko menunjukkan tiap status dengan warnanya sendiri."
+            ]
+        }
+    },
+    {
         "version": "2026.11.17",
         "date": "2026-11-22",
         "apps": ["backoffice"],
