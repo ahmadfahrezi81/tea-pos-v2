@@ -7,6 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import type { MessageKey } from "@tea-pos/i18n";
 import { ToastHost } from "@tea-pos/ui/toast";
 
+import { PermissionHelpHost } from "./PermissionHelp";
+
 import { ErrorSheetHost } from "./ErrorSheet";
 import { MoreHorizontal, type LucideIcon } from "lucide-react";
 
@@ -84,6 +86,7 @@ function ShellLayout({ tabs }: { tabs: AppTab[] }) {
                 <BootScreen state="failed" error={me.error} onRetry={() => void me.refetch()} />
             )}
             <ToastHost />
+            <PermissionHelpHost />
             <ErrorSheetHost />
         </TenantProvider>
     );

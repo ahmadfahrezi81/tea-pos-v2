@@ -10,6 +10,7 @@ import { Avatar } from "@tea-pos/ui/Avatar";
 import { Badge } from "@tea-pos/ui/Badge";
 import { EmptyState } from "@tea-pos/ui/EmptyState";
 import { ImagePreview } from "@tea-pos/ui/ImagePreview";
+import { cameraCameBackEmpty, openCamera } from "@tea-pos/ui/permissions";
 import { Sheet } from "@tea-pos/ui/Sheet";
 import { Skeleton } from "@tea-pos/ui/Skeleton";
 import { useQueryClient } from "@tanstack/react-query";
@@ -32,6 +33,7 @@ import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type React
 
 import { ChannelHeader } from "./ChannelInfo";
 import { eventText } from "./events";
+import { SystemFace } from "./SystemFace";
 import { channelName } from "./labels";
 import { LinkCard } from "./links";
 import { doneTyping, sayTyping, stoppedTyping, useTyping } from "./typing";
@@ -428,13 +430,32 @@ function Message({
     const t = useT();
     const locale = useLocale();
     const { handlers: hold, pressing } = useHold(onHold);
+    // The app's own message, as anyone's (owner, task 077): from System, a robot for its photo.
     if (m.event)
         return (
-            <div className="flex justify-center py-1">
-                <div className="max-w-[92%] rounded-2xl bg-slate-200 px-3 py-1.5 text-center text-[13px] font-medium leading-5 text-gray-800">
-                    {eventText(m, t, locale)}
-                    <span className="text-gray-600"> · {formatTime(m.at, locale)}</span>
-                    {m.link && <LinkCard link={m.link} />}
+            <div
+                data-message-id={m.id}
+                data-at={m.at}
+                className={`-mx-4 flex items-start gap-2 px-4 ${grouped ? "" : "pt-2"}`}
+            >
+                <span className="w-8 shrink-0">{!grouped && <SystemFace />}</span>
+                <div className="flex min-w-0 flex-1 flex-col items-start">
+                    <div className={`max-w-full ${BUBBLE} text-left`}>
+                        {!grouped && (
+                            <p className="text-[14px] font-semibold leading-5 text-brand">
+                                {t("chat.system")}
+                            </p>
+                        )}
+                        <p className="text-[15px] leading-5 whitespace-pre-wrap break-words">
+                            {eventText(m, t, locale)}
+                        </p>
+                        {m.link && <LinkCard link={m.link} />}
+                        <div className="flex justify-end pb-0.5">
+                            <span className="text-[11px] leading-none text-gray-500">
+                                {formatTime(m.at, locale)}
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -475,7 +496,7 @@ function Message({
             <span className="w-1 shrink-0 bg-brand" />
             <span className="min-w-0 flex-1 px-2 py-1">
                 <span className="block truncate font-semibold text-brand">
-                    {q.author || t("chat.message")}
+                    {q.author || t("chat.system")}
                 </span>
                 <span className={`line-clamp-2 text-gray-600 ${q.deleted ? "italic" : ""}`}>
                     {q.deleted ? t("chat.deleted") : q.body || t("chat.photo")}
@@ -617,7 +638,7 @@ function Outgoing({
                                 <span className="w-1 shrink-0 bg-brand" />
                                 <span className="min-w-0 flex-1 px-2 py-1">
                                     <span className="block truncate font-semibold text-brand">
-                                        {q.author || t("chat.message")}
+                                        {q.author || t("chat.system")}
                                     </span>
                                     <span className="line-clamp-2 text-gray-600">
                                         {q.body || t("chat.photo")}
@@ -933,7 +954,7 @@ function Composer({
                                         <span className="block truncate font-semibold text-brand">
                                             {t("chat.replyingTo").replace(
                                                 "{name}",
-                                                replyTo.author || t("chat.message"),
+                                                replyTo.author || t("chat.system"),
                                             )}
                                         </span>
                                         <span className="line-clamp-1 text-gray-600">
@@ -1024,6 +1045,7 @@ function Composer({
                                     capture="environment"
                                     hidden
                                     onChange={(e) => {
+                                        if (!e.target.files?.length) cameraCameBackEmpty();
                                         pick(e.target.files);
                                         e.target.value = "";
                                     }}
@@ -1088,7 +1110,9 @@ function Composer({
                                             key={key}
                                             onClick={() => {
                                                 setAdding(false);
-                                                input.current?.click();
+                                                // The camera checks its permission first; the gallery needs none.
+                                                if (input === camera) openCamera(input.current);
+                                                else input.current?.click();
                                             }}
                                             className="flex w-full items-center gap-3 rounded-2xl bg-slate-100 px-4 py-3.5 text-left text-[16px] font-medium text-gray-900 active:opacity-70"
                                         >

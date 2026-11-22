@@ -1471,6 +1471,7 @@ export interface components {
         ChatChannel: {
             /** @description An archived group: read only, its history kept */
             archived?: boolean;
+            faces?: components["schemas"]["ChatFace"][] | null;
             /** @description A chat admin following a channel they are not in */
             following?: boolean;
             /** Format: uuid */
@@ -1499,6 +1500,7 @@ export interface components {
         ChatChannelOutputBody: {
             /** @description An archived group: read only, its history kept */
             archived?: boolean;
+            faces?: components["schemas"]["ChatFace"][] | null;
             /** @description A chat admin following a channel they are not in */
             following?: boolean;
             /** Format: uuid */
@@ -1510,6 +1512,11 @@ export interface components {
             lastAt?: string;
             /** @description Everyone in it, with how far each has read: Seen by */
             members: components["schemas"]["ChatMember"][];
+            /**
+             * Format: int64
+             * @description How many messages it has, for its info
+             */
+            messages: number;
             /** @description In it or following: its badge and pushes count */
             mine: boolean;
             name?: string;
@@ -1524,6 +1531,10 @@ export interface components {
         ChatChannelsOutputBody: {
             /** @description The caller's channels, the newest message first */
             channels: components["schemas"]["ChatChannel"][];
+        };
+        ChatFace: {
+            avatar?: string;
+            name: string;
         };
         ChatGroupBody: {
             /** @description Everyone in it; the tenant's active people only */

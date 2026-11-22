@@ -72,7 +72,16 @@ SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name,
             WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = ma.user_id)
             ELSE false
           END
-    )::int AS members
+    )::int AS members,
+    -- The faces of the last people who wrote (owner: as Slack's threads), from the newest 50 messages.
+    coalesce((SELECT jsonb_agg(jsonb_build_object('name', fu.full_name, 'avatar', coalesce(fu.avatar_url, '')) ORDER BY f.at DESC)
+        FROM (
+            SELECT w.author_id, max(w.created_at) AS at
+            FROM (SELECT x.author_id, x.created_at FROM chat_messages x
+                WHERE x.channel_id = c.id AND x.author_type = 'user' AND x.deleted_at IS NULL
+                ORDER BY x.created_at DESC LIMIT 50) w
+            GROUP BY w.author_id ORDER BY at DESC LIMIT 4
+        ) f JOIN users fu ON fu.id = f.author_id), '[]')::jsonb AS faces
 FROM chat_channels c
 JOIN tenants t ON t.id = c.tenant_id
 LEFT JOIN stores s ON s.id = c.store_id
@@ -377,3 +386,7 @@ FROM chat_channels c
 JOIN want w ON w.id = c.id
 WHERE c.tenant_id = @tenant_id AND c.kind = 'group'
 ON CONFLICT DO NOTHING;
+
+-- name: CountChatMessages :one
+-- How many messages a chat has, for its info (task 077).
+SELECT count(*)::int FROM chat_messages WHERE channel_id = @channel_id AND deleted_at IS NULL;

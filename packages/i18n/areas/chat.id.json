@@ -128,6 +128,9 @@
             "pending": "Menunggu",
             "skipped": "Dilewati"
         },
-        "andMore": "dan {n} lainnya"
+        "andMore": "dan {n} lainnya",
+        "oneMessage": "1 pesan",
+        "messageCount": "{n} pesan",
+        "system": "Sistem"
     }
 }
