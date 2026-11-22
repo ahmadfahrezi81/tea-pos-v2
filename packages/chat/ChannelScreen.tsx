@@ -548,6 +548,12 @@ function Message({
     );
 }
 
+/** A picked photo's preview: only ever the phone's own blob: address, never text from the page. */
+function preview(file: File): { file: File; url: string }[] {
+    const url = URL.createObjectURL(file);
+    return url.startsWith("blob:") ? [{ file, url }] : [];
+}
+
 /**
  * A message on its way, drawn exactly as the sent one will be (task 068d: the swap crumpled
  * it): the same row and bubble, the time inside with a clock, a photo in its own shape from
@@ -833,11 +839,10 @@ function Composer({
         if (box.current) box.current.style.height = "";
     };
     const pick = (files: FileList | null) => {
-        const chosen = [...(files ?? [])].slice(0, MAX_PHOTOS - photos.length);
-        setPhotos((now) => [
-            ...now,
-            ...chosen.map((file) => ({ file, url: URL.createObjectURL(file) })),
-        ]);
+        const chosen = [...(files ?? [])]
+            .filter((file) => file.type.startsWith("image/"))
+            .slice(0, MAX_PHOTOS - photos.length);
+        setPhotos((now) => [...now, ...chosen.flatMap(preview)]);
     };
     return (
         <FooterSlot>
