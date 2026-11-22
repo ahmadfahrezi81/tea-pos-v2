@@ -1,6 +1,6 @@
 # Task 078 — Chat: feedback after 2026.11.17
 
-**Status: items 1–9 built 2026-11-22 on `fix/chat-feedback-078` (owner: "build everything in one PR"); item 10 waits on the owner. Designs as agreed in ASCII. New: `cleared_at` (migration `chat_clear`), `POST …/clear` (owner only), `GET …/media`, per-kind screens on `ChatLink` (day, period, payslip, notes), rain hours with from/to/peak. Go tests pass (but the known `TestSellerCloseDay`), typecheck, lint, both builds; not tried on a phone. The weather card has no Open button: the weather is a sheet in More, not a page. "Since 15 Nov" on the info page is left out: the API does not return when a chat was made.**
+**Status: items 1–9 built 2026-11-22 on `fix/chat-feedback-078` (owner: "build everything in one PR"); item 10 dropped (not an issue). Designs as agreed in ASCII. New: `cleared_at` (migration `chat_clear`), `POST …/clear` (owner only), `GET …/media`, per-kind screens on `ChatLink` (day, period, payslip, notes), rain hours with from/to/peak. Go tests pass (but the known `TestSellerCloseDay`), typecheck, lint, both builds; not tried on a phone. The weather card has no Open button: the weather is a sheet in More, not a page. "Since 15 Nov" on the info page is left out: the API does not return when a chat was made.**
 
 ## The goal
 
@@ -29,7 +29,7 @@ Fix what the owner finds using chat in production. One item per line below, buil
 
 9. **Store settings: each status its own colour** (owner): Active, Demo and Inactive badges look the same today. Active green, Demo amber, Inactive grey, the darker shade of each for its text.
 
-10. **Notifications in the app's language** (owner, asked while building): in the app, the app's own messages are written on the phone, in the language picked in that app; a notification is written by Go in the account's `preferred_language`, which can differ. Suggested, waiting on the owner: keep the language with each phone's subscription (from the app it turned on in), and write that phone's notifications in it. Not built.
+10. ~~Notifications in the app's language~~: not an issue (owner). The language is the account's (`PATCH /me` saves `preferred_language`; every app reads it back from `/me`), and notifications use the same one.
 
 **How we work from here (owner):** every event or chat card is drawn in ASCII first and agreed before it is built.
 
