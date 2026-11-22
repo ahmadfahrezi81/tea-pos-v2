@@ -32,6 +32,7 @@
         "./Panel": "./layout/Panel.tsx",
         "./Picture": "./feedback/Picture.tsx",
         "./PhotoInput": "./photo/PhotoInput.tsx",
+        "./shrink": "./photo/shrink.ts",
         "./SearchBox": "./controls/SearchBox.tsx",
         "./SectionLabel": "./layout/SectionLabel.tsx",
         "./Sheet": "./layout/Sheet.tsx",

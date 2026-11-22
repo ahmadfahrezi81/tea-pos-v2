@@ -37,7 +37,7 @@ func (q *Queries) CreatePendingUser(ctx context.Context, arg CreatePendingUserPa
 }
 
 const getTestUser = `-- name: GetTestUser :one
-SELECT u.id, u.role, u.status, coalesce(ARRAY(SELECT DISTINCT x.app FROM user_app_access x WHERE x.user_id = u.id), '{}')::text[] AS apps
+SELECT u.id, u.role, u.status, coalesce(ARRAY(SELECT DISTINCT x.app FROM user_app_access x WHERE x.user_id = u.id AND x.app <> 'chat'), '{}')::text[] AS apps
 FROM users u
 WHERE u.email = $1
   AND EXISTS (
@@ -71,7 +71,7 @@ func (q *Queries) GetTestUser(ctx context.Context, email string) (GetTestUserRow
 }
 
 const getUserForSignIn = `-- name: GetUserForSignIn :one
-SELECT u.id, u.role, u.status, coalesce(ARRAY(SELECT DISTINCT x.app FROM user_app_access x WHERE x.user_id = u.id), '{}')::text[] AS apps
+SELECT u.id, u.role, u.status, coalesce(ARRAY(SELECT DISTINCT x.app FROM user_app_access x WHERE x.user_id = u.id AND x.app <> 'chat'), '{}')::text[] AS apps
 FROM users u WHERE u.id = $1
 `
 
@@ -101,8 +101,12 @@ SELECT t.id, a.status, coalesce(t.owner_id = a.user_id, false)::bool AS is_owner
         WHERE x.tenant_id = t.id AND x.user_id = a.user_id AND x.app = $1::text
     ), '')::text AS access,
     (a.levels_set OR EXISTS (
-        SELECT 1 FROM user_app_access x WHERE x.tenant_id = t.id AND x.user_id = a.user_id
+        SELECT 1 FROM user_app_access x WHERE x.tenant_id = t.id AND x.user_id = a.user_id AND x.app <> 'chat'
     ))::bool AS has_levels,
+    coalesce((
+        SELECT x.access FROM user_app_access x
+        WHERE x.tenant_id = t.id AND x.user_id = a.user_id AND x.app = 'chat'
+    ), '')::text AS chat_access,
     (SELECT u.status FROM users u WHERE u.id = a.user_id)::text AS user_status
 FROM tenants t
 JOIN user_tenant_assignments a ON a.tenant_id = t.id
@@ -121,12 +125,14 @@ type GetUserTenantRow struct {
 	IsOwner    bool
 	Access     string
 	HasLevels  bool
+	ChatAccess string
 	UserStatus string
 }
 
 // The tenant behind a slug, only if the user is assigned to it, with their membership, whether they
 // own it, their level in the app (” for none) and whether their levels were ever set there
-// (people v1 added after the backfill have not: Go falls back to users.role for them).
+// (people v1 added after the backfill have not: Go falls back to users.role for them), and their chat
+// level. Chat is never a sign-in app nor counts as levels set, so it changes nobody's fallback.
 func (q *Queries) GetUserTenant(ctx context.Context, arg GetUserTenantParams) (GetUserTenantRow, error) {
 	row := q.db.QueryRow(ctx, getUserTenant, arg.App, arg.Slug, arg.UserID)
 	var i GetUserTenantRow
@@ -136,6 +142,7 @@ func (q *Queries) GetUserTenant(ctx context.Context, arg GetUserTenantParams) (G
 		&i.IsOwner,
 		&i.Access,
 		&i.HasLevels,
+		&i.ChatAccess,
 		&i.UserStatus,
 	)
 	return i, err

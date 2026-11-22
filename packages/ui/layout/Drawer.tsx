@@ -1,4 +1,4 @@
-import { type PointerEvent as ReactPointerEvent, type ReactNode, useRef } from "react";
+import { type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import { usePresence } from "../lib/motion";
@@ -29,6 +29,17 @@ export function Drawer({
 }) {
     const { shown, leaving } = usePresence(open);
     const wrapper = useRef<HTMLDivElement>(null);
+    // As WhatsApp's attach sheet: the sheet replaces the keyboard, which would cover it.
+    useEffect(() => {
+        if (!open) return;
+        const el = document.activeElement;
+        if (
+            el instanceof HTMLElement &&
+            el.matches("input, textarea, [contenteditable]") &&
+            !wrapper.current?.contains(el)
+        )
+            el.blur();
+    }, [open]);
     if (!shown) return null;
 
     const startDrag = (e: ReactPointerEvent) => {
@@ -67,7 +78,7 @@ export function Drawer({
                 aria-hidden
                 className={`absolute inset-0 ${dim} ${leaving ? "animate-fade-out" : "animate-fade-in"}`}
             />
-            <div ref={wrapper} className="relative mx-auto w-full max-w-[480px]">
+            <div ref={wrapper} className="relative mx-auto w-full max-w-(--app-max-width)">
                 <div
                     role="dialog"
                     aria-label={label}

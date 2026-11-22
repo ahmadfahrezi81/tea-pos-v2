@@ -7,6 +7,9 @@
         "apps": "Aplikasi",
         "seller": "Seller",
         "backoffice": "Backoffice",
+        "chat": "Chat",
+        "chatMemberHint": "Membaca dan mengirim di chat-nya",
+        "chatAdminHint": "Semua chat, chat VIP, bisa menghapus pesan siapa pun",
         "none": "Tidak ada",
         "member": "Anggota",
         "guest": "Tamu",
@@ -89,6 +92,11 @@
         "logoutOneTitle": "Logout {device}?",
         "logoutOneBody": "{name} logout dari {app} di device ini. Mereka bisa masuk lagi.",
         "logoutEverywhere": "Logout di semua device",
-        "sessionEnded": "{device} sudah logout."
+        "sessionEnded": "{device} sudah logout.",
+        "vip": "VIP",
+        "chatVipHint": "Lencana VIP dan chat VIP",
+        "groupChats": "Grup chat",
+        "noGroupChats": "Tidak ada grup chat",
+        "archived": "Diarsipkan"
     }
 }

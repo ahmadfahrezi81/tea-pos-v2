@@ -1,0 +1,143 @@
+//go:build integration
+
+package integration
+
+import (
+	"encoding/json"
+	"net/http"
+	"testing"
+	"time"
+
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/tests/testkit"
+)
+
+func reply(t *testing.T, a *testkit.API, user, app, channel, body, to, key string) (*http.Response, contract.ChatMessage) {
+	t.Helper()
+	resp := a.Send(t, http.MethodPost, "/tenants/tenant-a/chat/channels/"+channel+"/messages", app,
+		`{"body":`+string(must(json.Marshal(body)))+`,"replyTo":"`+to+`"}`, []string{"Idempotency-Key: " + key}, testkit.Session(a.SignIn(t, user, app)))
+	var m contract.ChatMessage
+	if resp.StatusCode == http.StatusOK {
+		if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return resp, m
+}
+
+func activity(t *testing.T, a *testkit.API, user, app string) contract.ChatActivityOutput {
+	t.Helper()
+	resp := a.Request(t, http.MethodGet, "/tenants/tenant-a/chat/activity", app, testkit.Session(a.SignIn(t, user, app)))
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("activity: status %d, code %q", resp.StatusCode, code(t, resp))
+	}
+	var out contract.ChatActivityOutput
+	if err := json.NewDecoder(resp.Body).Decode(&out.Body); err != nil {
+		t.Fatal(err)
+	}
+	return out
+}
+
+func deleteMessage(t *testing.T, a *testkit.API, user, app, channel, id string) *http.Response {
+	t.Helper()
+	return a.Send(t, http.MethodDelete, "/tenants/tenant-a/chat/channels/"+channel+"/messages/"+id, app, "", nil, testkit.Session(a.SignIn(t, user, app)))
+}
+
+func TestChatReplyDeleteAndActivity(t *testing.T) {
+	db := testkit.DB(t)
+	giveChat(t, db, testkit.SellerA, "member")
+	giveChat(t, db, testkit.GuestA, "member")
+	giveChat(t, db, testkit.AdminA, "admin")
+	a := testkit.NewAPI(t, db, "")
+	general := channelOf(t, a, testkit.SellerA, "seller", "general", "")
+	admin := channelOf(t, a, testkit.AdminA, "backoffice", "admin", "")
+
+	_, root := post(t, a, testkit.SellerA, "seller", general, "Gelas habis", "key-00000001")
+	resp, answer := reply(t, a, testkit.GuestA, "seller", general, "Dikirim jam 9", root.ID, "key-00000002")
+	if resp.StatusCode != http.StatusOK || answer.ReplyTo == nil || answer.ReplyTo.ID != root.ID {
+		t.Fatalf("reply: %d %+v", resp.StatusCode, answer.ReplyTo)
+	}
+	got := messages(t, a, testkit.SellerA, "seller", general, "")
+	if q := got[0].ReplyTo; q == nil || q.Author != "Seller A" || q.Body != "Gelas habis" {
+		t.Fatalf("quote: %+v", q)
+	}
+
+	// A reply answers a message of its own channel, never one elsewhere.
+	if resp, _ := reply(t, a, testkit.AdminA, "backoffice", admin, "hm", root.ID, "key-00000003"); resp.StatusCode != http.StatusNotFound || code(t, resp) != "message_not_found" {
+		t.Fatalf("other channel: %d", resp.StatusCode)
+	}
+
+	// Activity is everyone else's messages: Seller A sees Guest A's reply, marked as to them and
+	// unread; Guest A sees Seller A's message, not their own.
+	act := activity(t, a, testkit.SellerA, "seller")
+	if len(act.Body.Items) != 1 || act.Body.Items[0].ID != answer.ID || !act.Body.Items[0].Unread || !act.Body.Items[0].ToMe || act.Body.Unread != 1 || act.Body.Items[0].ChannelID != general {
+		t.Fatalf("activity: %+v", act.Body)
+	}
+	if act := activity(t, a, testkit.GuestA, "seller"); len(act.Body.Items) != 1 || act.Body.Items[0].ID != root.ID || act.Body.Items[0].ToMe {
+		t.Fatalf("guest's activity: %+v", act.Body.Items)
+	}
+
+	// Only the author or a chat admin deletes.
+	if resp := deleteMessage(t, a, testkit.GuestA, "seller", general, root.ID); resp.StatusCode != http.StatusForbidden || code(t, resp) != "not_your_message" {
+		t.Fatalf("not theirs: %d", resp.StatusCode)
+	}
+	time.Sleep(10 * time.Millisecond)
+	if resp := deleteMessage(t, a, testkit.AdminA, "backoffice", general, root.ID); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("admin delete: %d", resp.StatusCode)
+	}
+	// Twice is harmless.
+	if resp := deleteMessage(t, a, testkit.SellerA, "seller", general, root.ID); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("again: %d", resp.StatusCode)
+	}
+	got = messages(t, a, testkit.GuestA, "seller", general, "")
+	if !got[1].Deleted || got[1].Body != "" || got[0].ReplyTo == nil || !got[0].ReplyTo.Deleted || got[0].ReplyTo.Body != "" {
+		t.Fatalf("deleted: %+v / %+v", got[1], got[0].ReplyTo)
+	}
+	// A phone holding both hears of the deletion through since.
+	since := messages(t, a, testkit.GuestA, "seller", general, "?since="+answer.At)
+	if len(since) != 1 || since[0].ID != root.ID || !since[0].Deleted {
+		t.Fatalf("since: %+v", since)
+	}
+}
+
+// A VIP is a member with the badge who is in the VIP chat (kind admin); deleting someone
+// else's message stays an admin's.
+func TestChatVIP(t *testing.T) {
+	db := testkit.DB(t)
+	giveChat(t, db, testkit.SellerA, "member")
+	giveChat(t, db, testkit.GuestA, "vip")
+	a := testkit.NewAPI(t, db, "")
+	vipChat := channelOf(t, a, testkit.GuestA, "seller", "admin", "")
+	// The list's count is the channel's own members: the VIP, not the member.
+	resp0 := a.Request(t, http.MethodGet, "/tenants/tenant-a/chat/channels/"+vipChat, "seller", testkit.Session(a.SignIn(t, testkit.GuestA, "seller")))
+	var vc contract.ChatChannelOutput
+	if err := json.NewDecoder(resp0.Body).Decode(&vc.Body); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range chatChannels(t, a, testkit.GuestA, "seller") {
+		if c.Kind == "admin" && (c.Members != len(vc.Body.Members) || c.Members == 0) {
+			t.Fatalf("VIP chat members: %d, its list %d", c.Members, len(vc.Body.Members))
+		}
+	}
+	general := channelOf(t, a, testkit.GuestA, "seller", "general", "")
+	if resp, _ := post(t, a, testkit.GuestA, "seller", vipChat, "hi VIPs", "key-00000001"); resp.StatusCode != http.StatusOK {
+		t.Fatalf("VIP posts in the VIP chat: %d", resp.StatusCode)
+	}
+	resp := a.Request(t, http.MethodGet, "/tenants/tenant-a/chat/channels/"+general, "seller", testkit.Session(a.SignIn(t, testkit.SellerA, "seller")))
+	var ch contract.ChatChannelOutput
+	if err := json.NewDecoder(resp.Body).Decode(&ch.Body); err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range ch.Body.Members {
+		if m.Name == "Guest A" && (!m.VIP || m.Admin) {
+			t.Fatalf("guest: %+v", m)
+		}
+		if m.Name == "Seller A" && m.VIP {
+			t.Fatalf("seller: %+v", m)
+		}
+	}
+	_, msg := post(t, a, testkit.SellerA, "seller", general, "mine", "key-00000002")
+	if resp := deleteMessage(t, a, testkit.GuestA, "seller", general, msg.ID); resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("VIP deletes another's: %d", resp.StatusCode)
+	}
+}

@@ -1,5 +1,5 @@
 import { useT } from "@tea-pos/i18n/react";
-import { Info, ScrollText } from "lucide-react";
+import { Info, Ruler, ScrollText } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 
 import { currentVersion, useAppUpdate, useUpdateState } from "../frame/update/AppUpdate";
@@ -8,6 +8,7 @@ import { UpdateNow } from "../frame/update/UpdateNow";
 import { useUpdateText } from "../frame/update/useUpdateText";
 import { useSlug } from "../session/tenant";
 import { LATEST, seen } from "../lib/whatsNew";
+import { APP_VERSION } from "../lib/version";
 
 /**
  * The More tab, as the old apps: what the app puts `before`, then General, the app's own rows
@@ -44,6 +45,14 @@ export function MoreScreen({ rows, before }: { rows?: ReactNode; before?: ReactN
                     sublabel={[currentVersion(), stateText].filter(Boolean).join(" · ")}
                     below={state === "available" ? <UpdateNow /> : undefined}
                 />
+                {/* The Screen lab (task 073): staging, previews and the dev server only. */}
+                {["staging", "preview", "dev"].includes(APP_VERSION) && (
+                    <SettingsRow
+                        to={`/${slug}/screen-lab`}
+                        icon={<Ruler {...rowIcon} />}
+                        label={t("more.screenLab")}
+                    />
+                )}
             </SettingsGroup>
         </div>
     );

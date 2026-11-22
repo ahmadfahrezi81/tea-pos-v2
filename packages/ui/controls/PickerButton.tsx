@@ -98,7 +98,7 @@ export function PickerButton({
                 onClick={onClick}
                 heading={heading}
                 icon={withStore ? StoreCalendarIcon : CalendarDays}
-                iconSize={withStore ? 40 : 30}
+                iconSize={withStore ? 34 : 30}
             />
         </div>
     );

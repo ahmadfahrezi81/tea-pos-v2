@@ -142,6 +142,512 @@ components:
         name:
           type: string
       type: object
+    ChatActivity:
+      additionalProperties: false
+      properties:
+        at:
+          format: date-time
+          type: string
+        author:
+          type: string
+        authorId:
+          description: Absent on a system message
+          format: uuid
+          type: string
+        avatar:
+          type: string
+        body:
+          type: string
+        channelId:
+          format: uuid
+          type: string
+        channelKind:
+          enum:
+            - general
+            - store
+            - group
+            - admin
+            - personal
+          type: string
+        channelName:
+          type: string
+        clientKey:
+          type: string
+        data:
+          additionalProperties: {}
+          type: object
+        deleted:
+          type: boolean
+        editedAt:
+          format: date-time
+          type: string
+        event:
+          description: A system message's kind, written in the reader's language
+          type: string
+        id:
+          format: uuid
+          type: string
+        link:
+          $ref: "#/components/schemas/ChatLink"
+          description: "What it points at: a card that opens it, or a plain chip"
+        mentionsMe:
+          description: "@ the caller's name, or @everyone"
+          type: boolean
+        photos:
+          items:
+            $ref: "#/components/schemas/ChatPhoto"
+          type:
+            - array
+            - "null"
+        reactions:
+          description: Each emoji used, in the order first used
+          items:
+            $ref: "#/components/schemas/ChatReaction"
+          type:
+            - array
+            - "null"
+        replyTo:
+          $ref: "#/components/schemas/ChatQuote"
+          description: The message this one answers, quoted above it
+        toMe:
+          description: A reply to one of the caller's messages
+          type: boolean
+        unread:
+          type: boolean
+      required:
+        - channelId
+        - channelKind
+        - unread
+        - id
+        - body
+        - at
+      type: object
+    ChatActivityOutputBody:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/ChatActivity"
+          type: array
+        next:
+          type: string
+        unread:
+          description: "How many are unread, stops at 100: the Activity switch's count"
+          format: int64
+          type: integer
+      required:
+        - unread
+        - items
+      type: object
+    ChatChannel:
+      additionalProperties: false
+      properties:
+        archived:
+          description: "An archived group: read only, its history kept"
+          type: boolean
+        following:
+          description: A chat admin following a channel they are not in
+          type: boolean
+        id:
+          format: uuid
+          type: string
+        kind:
+          enum:
+            - general
+            - store
+            - group
+            - admin
+            - personal
+          type: string
+        last:
+          $ref: "#/components/schemas/ChatPreview"
+        lastAt:
+          format: date-time
+          type: string
+        members:
+          description: How many are in it (the list; absent on one channel's own read)
+          format: int64
+          type: integer
+        mine:
+          description: "In it or following: its badge and pushes count"
+          type: boolean
+        name:
+          type: string
+        readOnly:
+          description: "Nobody posts: Notifications, or a store no longer open"
+          type: boolean
+        unread:
+          description: "Stops at 100: show 99+"
+          format: int64
+          type: integer
+      required:
+        - id
+        - kind
+        - readOnly
+        - unread
+        - mine
+      type: object
+    ChatChannelOutputBody:
+      additionalProperties: false
+      properties:
+        archived:
+          description: "An archived group: read only, its history kept"
+          type: boolean
+        following:
+          description: A chat admin following a channel they are not in
+          type: boolean
+        id:
+          format: uuid
+          type: string
+        kind:
+          enum:
+            - general
+            - store
+            - group
+            - admin
+            - personal
+          type: string
+        last:
+          $ref: "#/components/schemas/ChatPreview"
+        lastAt:
+          format: date-time
+          type: string
+        members:
+          description: "Everyone in it, with how far each has read: Seen by"
+          items:
+            $ref: "#/components/schemas/ChatMember"
+          type: array
+        mine:
+          description: "In it or following: its badge and pushes count"
+          type: boolean
+        name:
+          type: string
+        readOnly:
+          description: "Nobody posts: Notifications, or a store no longer open"
+          type: boolean
+        unread:
+          description: "Stops at 100: show 99+"
+          format: int64
+          type: integer
+      required:
+        - members
+        - id
+        - kind
+        - readOnly
+        - unread
+        - mine
+      type: object
+    ChatChannelsOutputBody:
+      additionalProperties: false
+      properties:
+        channels:
+          description: The caller's channels, the newest message first
+          items:
+            $ref: "#/components/schemas/ChatChannel"
+          type: array
+      required:
+        - channels
+      type: object
+    ChatGroupBody:
+      additionalProperties: false
+      properties:
+        members:
+          description: Everyone in it; the tenant's active people only
+          items:
+            type: string
+          maxItems: 500
+          type:
+            - array
+            - "null"
+        name:
+          maxLength: 60
+          minLength: 1
+          type: string
+      required:
+        - name
+        - members
+      type: object
+    ChatGroupOutputBody:
+      additionalProperties: false
+      properties:
+        id:
+          format: uuid
+          type: string
+      required:
+        - id
+      type: object
+    ChatLink:
+      additionalProperties: false
+      properties:
+        cups:
+          format: int64
+          type: integer
+        date:
+          format: date
+          type: string
+        end:
+          format: date
+          type: string
+        id:
+          description: A day's or a payout's id, a pay period's first day, a version
+          type: string
+        kind:
+          enum:
+            - day
+            - pay_period
+            - payout
+            - whats_new
+          type: string
+        open:
+          type: boolean
+        people:
+          format: int64
+          type: integer
+        person:
+          type: string
+        preview:
+          $ref: "#/components/schemas/LinkPreview"
+        start:
+          format: date
+          type: string
+        store:
+          type: string
+        storeId:
+          format: uuid
+          type: string
+        total:
+          format: int64
+          type: integer
+        userId:
+          format: uuid
+          type: string
+      required:
+        - kind
+        - id
+      type: object
+    ChatLinkInput:
+      additionalProperties: false
+      properties:
+        id:
+          maxLength: 100
+          type: string
+        kind:
+          enum:
+            - day
+            - pay_period
+            - payout
+          type: string
+      required:
+        - kind
+        - id
+      type: object
+    ChatMember:
+      additionalProperties: false
+      properties:
+        admin:
+          description: "A chat admin (the owner, or chat level admin): deletes anyone's message"
+          type: boolean
+        avatar:
+          type: string
+        follower:
+          type: boolean
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        readAt:
+          description: "Read everything up to here; absent: never opened"
+          format: date-time
+          type: string
+        vip:
+          description: "A VIP or an admin: the VIP badge"
+          type: boolean
+      required:
+        - id
+        - name
+      type: object
+    ChatMessage:
+      additionalProperties: false
+      properties:
+        at:
+          format: date-time
+          type: string
+        author:
+          type: string
+        authorId:
+          description: Absent on a system message
+          format: uuid
+          type: string
+        avatar:
+          type: string
+        body:
+          type: string
+        clientKey:
+          type: string
+        data:
+          additionalProperties: {}
+          type: object
+        deleted:
+          type: boolean
+        editedAt:
+          format: date-time
+          type: string
+        event:
+          description: A system message's kind, written in the reader's language
+          type: string
+        id:
+          format: uuid
+          type: string
+        link:
+          $ref: "#/components/schemas/ChatLink"
+          description: "What it points at: a card that opens it, or a plain chip"
+        photos:
+          items:
+            $ref: "#/components/schemas/ChatPhoto"
+          type:
+            - array
+            - "null"
+        reactions:
+          description: Each emoji used, in the order first used
+          items:
+            $ref: "#/components/schemas/ChatReaction"
+          type:
+            - array
+            - "null"
+        replyTo:
+          $ref: "#/components/schemas/ChatQuote"
+          description: The message this one answers, quoted above it
+      required:
+        - id
+        - body
+        - at
+      type: object
+    ChatPeopleOutputBody:
+      additionalProperties: false
+      properties:
+        people:
+          description: "Everyone with a chat level: who a group can be made of"
+          items:
+            $ref: "#/components/schemas/ChatPerson"
+          type: array
+      required:
+        - people
+      type: object
+    ChatPerson:
+      additionalProperties: false
+      properties:
+        avatar:
+          type: string
+        id:
+          format: uuid
+          type: string
+        in:
+          type: boolean
+        name:
+          type: string
+      required:
+        - id
+        - name
+      type: object
+    ChatPhoto:
+      additionalProperties: false
+      properties:
+        height:
+          format: int64
+          type: integer
+        previewUrl:
+          type: string
+        url:
+          type: string
+        width:
+          format: int64
+          type: integer
+      required:
+        - url
+        - previewUrl
+        - width
+        - height
+      type: object
+    ChatPhotoInput:
+      additionalProperties: false
+      properties:
+        height:
+          format: int64
+          maximum: 4096
+          minimum: 1
+          type: integer
+        path:
+          maxLength: 300
+          type: string
+        previewPath:
+          maxLength: 300
+          type: string
+        width:
+          format: int64
+          maximum: 4096
+          minimum: 1
+          type: integer
+      required:
+        - path
+        - previewPath
+        - width
+        - height
+      type: object
+    ChatPreview:
+      additionalProperties: false
+      properties:
+        author:
+          type: string
+        body:
+          type: string
+        data:
+          additionalProperties: {}
+          description: A system message's numbers
+          type: object
+        deleted:
+          type: boolean
+        event:
+          description: A system message's kind, written in the reader's language
+          type: string
+        mine:
+          type: boolean
+      required:
+        - mine
+      type: object
+    ChatQuote:
+      additionalProperties: false
+      properties:
+        author:
+          type: string
+        body:
+          type: string
+        deleted:
+          type: boolean
+        id:
+          format: uuid
+          type: string
+        photo:
+          description: "It had photos: the quote says Photo when there is no text"
+          type: boolean
+      required:
+        - id
+      type: object
+    ChatReaction:
+      additionalProperties: false
+      properties:
+        emoji:
+          type: string
+        mine:
+          type: boolean
+        names:
+          items:
+            type: string
+          type: array
+      required:
+        - emoji
+        - names
+      type: object
     ClaimEligibleOutputBody:
       additionalProperties: false
       properties:
@@ -762,6 +1268,15 @@ components:
           format: int64
           type: integer
       type: object
+    EditChatMessageInputBody:
+      additionalProperties: false
+      properties:
+        body:
+          maxLength: 4000
+          type: string
+      required:
+        - body
+      type: object
     Error:
       additionalProperties: false
       properties:
@@ -779,7 +1294,12 @@ components:
             - bad_range
             - bad_receipt
             - bad_request
+            - blank_group_name
+            - blank_message
             - blank_name
+            - channel_not_found
+            - channel_read_only
+            - chat_too_fast
             - claim_done
             - claim_not_eligible
             - claim_not_found
@@ -791,19 +1311,24 @@ components:
             - day_closed
             - day_not_found
             - day_not_in_payout
+            - edit_closed
             - error
             - files_unavailable
             - forbidden
             - idempotency_key_required
             - idempotency_key_reused
             - internal
+            - link_not_found
             - maintenance
+            - message_not_found
             - no_session
             - no_work_that_day
             - not_allowed
+            - not_author
             - not_found
             - not_in_tenant
             - not_signed_in
+            - not_your_message
             - not_your_store
             - not_yourself
             - old_day_open
@@ -914,6 +1439,34 @@ components:
         - quantity
         - unitPrice
       type: object
+    LinkPreview:
+      additionalProperties: false
+      properties:
+        more:
+          description: Rows left out of the list
+          format: int64
+          type: integer
+        rows:
+          items:
+            $ref: "#/components/schemas/PreviewRow"
+          type:
+            - array
+            - "null"
+        stats:
+          items:
+            $ref: "#/components/schemas/PreviewStat"
+          type: array
+        status:
+          enum:
+            - open
+            - closed
+            - paid
+            - pending
+            - skipped
+          type: string
+      required:
+        - stats
+      type: object
     Me:
       additionalProperties: false
       properties:
@@ -945,6 +1498,9 @@ components:
       properties:
         backoffice:
           description: guest, admin, or '' for none
+          type: string
+        chat:
+          description: "member, admin, or '' for none: shown inside either app"
           type: string
         seller:
           description: member, or '' for none
@@ -1288,6 +1844,18 @@ components:
         - quantity
         - unitPrice
         - totalPrice
+      type: object
+    OutputChatMessage:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+          type: array
+        next:
+          type: string
+      required:
+        - items
       type: object
     OutputOrder:
       additionalProperties: false
@@ -1676,6 +2244,87 @@ components:
         - ratePerCup
         - amount
       type: object
+    PostChatMessageInputBody:
+      additionalProperties: false
+      properties:
+        body:
+          description: May be empty with photos
+          maxLength: 4000
+          type: string
+        link:
+          $ref: "#/components/schemas/ChatLinkInput"
+          description: A backoffice screen shared here; the text may then be empty
+        photos:
+          items:
+            $ref: "#/components/schemas/ChatPhotoInput"
+          maxItems: 4
+          type:
+            - array
+            - "null"
+        replyTo:
+          description: A message of the same channel this one answers
+          format: uuid
+          type: string
+      required:
+        - body
+      type: object
+    PreviewRow:
+      additionalProperties: false
+      properties:
+        avatar:
+          type: string
+        name:
+          type: string
+        status:
+          enum:
+            - paid
+            - pending
+            - skipped
+          type: string
+        unit:
+          enum:
+            - money
+            - cups
+          type: string
+        value:
+          format: int64
+          type: integer
+      required:
+        - name
+        - value
+        - unit
+      type: object
+    PreviewStat:
+      additionalProperties: false
+      properties:
+        label:
+          enum:
+            - sales
+            - cups
+            - orders
+            - expenses
+            - expected
+            - counted
+            - total
+            - paid
+            - toPay
+            - people
+            - commissions
+            - claims
+          type: string
+        unit:
+          enum:
+            - money
+            - count
+          type: string
+        value:
+          format: int64
+          type: integer
+      required:
+        - label
+        - value
+        - unit
+      type: object
     Product:
       additionalProperties: false
       properties:
@@ -1707,6 +2356,53 @@ components:
           type: array
       required:
         - products
+      type: object
+    PushKeyOutputBody:
+      additionalProperties: false
+      properties:
+        key:
+          description: The VAPID public key a phone subscribes with; empty while push is off
+          type: string
+      required:
+        - key
+      type: object
+    PushOffInputBody:
+      additionalProperties: false
+      properties:
+        endpoint:
+          format: uri
+          maxLength: 1000
+          type: string
+      required:
+        - endpoint
+      type: object
+    PushSubscriptionInputBody:
+      additionalProperties: false
+      properties:
+        auth:
+          maxLength: 100
+          type: string
+        endpoint:
+          format: uri
+          maxLength: 1000
+          type: string
+        p256dh:
+          maxLength: 200
+          type: string
+      required:
+        - endpoint
+        - p256dh
+        - auth
+      type: object
+    ReadChatInputBody:
+      additionalProperties: false
+      properties:
+        at:
+          description: Everything up to this message's time is read; only ever moves forward
+          format: date-time
+          type: string
+      required:
+        - at
       type: object
     RejectRequestInputBody:
       additionalProperties: false
@@ -1864,6 +2560,20 @@ components:
           maxLength: 1000
           type: string
       type: object
+    SetChatGroupMembersInputBody:
+      additionalProperties: false
+      properties:
+        members:
+          description: Everyone in it, the whole list
+          items:
+            type: string
+          maxItems: 500
+          type:
+            - array
+            - "null"
+      required:
+        - members
+      type: object
     SetClaimEligibleInputBody:
       additionalProperties: false
       properties:
@@ -1925,6 +2635,20 @@ components:
       required:
         - fullName
         - phone
+      type: object
+    SetUserChatGroupsInputBody:
+      additionalProperties: false
+      properties:
+        groups:
+          description: Every group the person is in, the whole list
+          items:
+            type: string
+          maxItems: 500
+          type:
+            - array
+            - "null"
+      required:
+        - groups
       type: object
     SettlePayoutInputBody:
       additionalProperties: false
@@ -2385,6 +3109,17 @@ components:
       required:
         - sessions
       type: object
+    UpdateChatGroupInputBody:
+      additionalProperties: false
+      properties:
+        archived:
+          description: "Archived: read only, its history kept"
+          type: boolean
+        name:
+          maxLength: 60
+          minLength: 1
+          type: string
+      type: object
     UpdateClaimTypeInputBody:
       additionalProperties: false
       properties:
@@ -2426,6 +3161,7 @@ components:
             - reimbursement
             - payroll_proof
             - product_image
+            - chat_photo
           type: string
         size:
           description: Bytes, after the phone shrank it
@@ -2458,6 +3194,33 @@ components:
         - uploadUrl
         - path
         - url
+      type: object
+    UserChatGroup:
+      additionalProperties: false
+      properties:
+        archived:
+          type: boolean
+        id:
+          format: uuid
+          type: string
+        member:
+          type: boolean
+        name:
+          type: string
+      required:
+        - id
+        - name
+        - member
+      type: object
+    UserChatGroupsOutputBody:
+      additionalProperties: false
+      properties:
+        groups:
+          items:
+            $ref: "#/components/schemas/UserChatGroup"
+          type: array
+      required:
+        - groups
       type: object
     WeatherHour:
       additionalProperties: false
@@ -2750,6 +3513,784 @@ paths:
         - me
       x-access:
         repeatable: true
+        signedIn: true
+  /push/key:
+    get:
+      operationId: getPushKey
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PushKeyOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: The public key phones subscribe with
+      tags:
+        - push
+      x-access:
+        signedIn: true
+  /push/subscription:
+    put:
+      operationId: putPushSubscription
+      parameters:
+        - in: header
+          name: User-Agent
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushSubscriptionInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: This phone's subscription, kept per endpoint
+      tags:
+        - push
+      x-access:
+        repeatable: true
+        signedIn: true
+  /push/subscription/off:
+    post:
+      operationId: pushOff
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushOffInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: This phone wants no more pushes
+      tags:
+        - push
+      x-access:
+        repeatable: true
+        signedIn: true
+  /tenants/{tenant}/chat/activity:
+    get:
+      operationId: listChatActivity
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - description: From the previous page's next; empty for the first
+          explode: false
+          in: query
+          name: cursor
+          schema:
+            description: From the previous page's next; empty for the first
+            type: string
+        - explode: false
+          in: query
+          name: limit
+          schema:
+            default: 30
+            format: int64
+            maximum: 100
+            minimum: 1
+            type: integer
+        - description: Only rows changed after this (a list catching up)
+          explode: false
+          in: query
+          name: since
+          schema:
+            description: Only rows changed after this (a list catching up)
+            format: date-time
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatActivityOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Every message from others across the caller's channels, newest first; replies to them marked
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/chat/channels:
+    get:
+      operationId: listChatChannels
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatChannelsOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: The caller's channels, made first if missing
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/chat/channels/{id}:
+    get:
+      operationId: getChatChannel
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatChannelOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: One channel and its members, with how far each has read
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        signedIn: true
+  /tenants/{tenant}/chat/channels/{id}/follow:
+    delete:
+      operationId: unfollowChatChannel
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Stop following a channel
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: admin
+        tenant: true
+        repeatable: true
+        signedIn: true
+    put:
+      operationId: followChatChannel
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "A chat admin follows a channel they are not in: its badge and pushes"
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: admin
+        tenant: true
+        repeatable: true
+        signedIn: true
+  /tenants/{tenant}/chat/channels/{id}/messages:
+    get:
+      operationId: listChatMessages
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - description: From the previous page's next; empty for the first
+          explode: false
+          in: query
+          name: cursor
+          schema:
+            description: From the previous page's next; empty for the first
+            type: string
+        - explode: false
+          in: query
+          name: limit
+          schema:
+            default: 30
+            format: int64
+            maximum: 100
+            minimum: 1
+            type: integer
+        - description: Only rows changed after this (a list catching up)
+          explode: false
+          in: query
+          name: since
+          schema:
+            description: Only rows changed after this (a list catching up)
+            format: date-time
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutputChatMessage"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: A page of messages, newest first; with since, only what came after
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        signedIn: true
+    post:
+      operationId: postChatMessage
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: header
+          name: Idempotency-Key
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostChatMessageInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Post a message; the same Idempotency-Key never posts twice
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/chat/channels/{id}/messages/{message}:
+    delete:
+      operationId: deleteChatMessage
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: message
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "Delete a message: its author, or a chat admin; a deleted line stays"
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        repeatable: true
+        signedIn: true
+    patch:
+      operationId: editChatMessage
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: message
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EditChatMessageInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Edit one's own message within 15 minutes; never pushes
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        repeatable: true
+        signedIn: true
+  /tenants/{tenant}/chat/channels/{id}/messages/{message}/reactions/{emoji}:
+    delete:
+      operationId: removeChatReaction
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: message
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: emoji
+          required: true
+          schema:
+            enum:
+              - 👍
+              - ❤️
+              - 😂
+              - 😮
+              - 😢
+              - ✅
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Take one's reaction back
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        repeatable: true
+        signedIn: true
+    put:
+      operationId: addChatReaction
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: message
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: emoji
+          required: true
+          schema:
+            enum:
+              - 👍
+              - ❤️
+              - 😂
+              - 😮
+              - 😢
+              - ✅
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: React to a message with one of the six; twice is once
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        repeatable: true
+        signedIn: true
+  /tenants/{tenant}/chat/channels/{id}/read:
+    post:
+      operationId: readChat
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReadChatInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Everything up to a time is read; only ever moves forward
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        repeatable: true
+        signedIn: true
+  /tenants/{tenant}/chat/channels/{id}/typing:
+    post:
+      operationId: chatTyping
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "The caller is typing in a channel: its other members are told, nothing is saved"
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: member
+        tenant: true
+        repeatable: true
+        signedIn: true
+  /tenants/{tenant}/chat/groups:
+    post:
+      operationId: createChatGroup
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatGroupBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatGroupOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Make a group with its people
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/chat/groups/{id}:
+    patch:
+      operationId: updateChatGroup
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateChatGroupInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Rename a group, or archive it (read only) and back
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: admin
+        tenant: true
+        repeatable: true
+        signedIn: true
+  /tenants/{tenant}/chat/groups/{id}/members:
+    put:
+      operationId: setChatGroupMembers
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetChatGroupMembersInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Set a group's people, the whole list
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: admin
+        tenant: true
+        repeatable: true
+        signedIn: true
+  /tenants/{tenant}/chat/people:
+    get:
+      operationId: listChatPeople
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - description: Mark who is in this group
+          explode: false
+          in: query
+          name: group
+          schema:
+            description: Mark who is in this group
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatPeopleOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: "Everyone with a chat level: who a group can be made of"
+      tags:
+        - chat
+      x-access:
+        app: chat
+        level: admin
+        tenant: true
         signedIn: true
   /tenants/{tenant}/days:
     get:
@@ -4851,6 +6392,84 @@ paths:
                 $ref: "#/components/schemas/Error"
           description: Error
       summary: Set a person's levels per app, stores and status, at once
+      tags:
+        - uac
+      x-access:
+        app: backoffice
+        level: admin
+        tenant: true
+        idempotent: true
+        signedIn: true
+  /tenants/{tenant}/uac/people/{userId}/chat-groups:
+    get:
+      operationId: getUacChatGroups
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserChatGroupsOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Every group chat, and whether this person is in it
+      tags:
+        - uac
+      x-access:
+        app: backoffice
+        level: guest
+        tenant: true
+        signedIn: true
+    put:
+      operationId: setUacChatGroups
+      parameters:
+        - in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            format: uuid
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetUserChatGroupsInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserChatGroupsOutputBody"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Error
+      summary: Set the group chats a person is in, the whole list
       tags:
         - uac
       x-access:

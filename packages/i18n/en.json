@@ -64,7 +64,13 @@
         "title": "Account",
         "signingOut": "Signing out…",
         "confirmSave": "Save your details?",
-        "confirmSaveBody": "Your name changes everywhere it shows, in every app."
+        "confirmSaveBody": "Your name changes everywhere it shows, in every app.",
+        "notifications": "Notifications",
+        "chatNotifications": "Chat notifications",
+        "onThisPhone": "On for this phone",
+        "offThisPhone": "Off for this phone",
+        "notificationsBlocked": "Blocked: allow notifications in the phone's settings",
+        "notificationsUnsupported": "This phone can't get them here (on an iPhone: install the app first)"
     },
     "more": {
         "workDays": "Work Days",
@@ -79,7 +85,8 @@
         "app": "App",
         "updateOffline": "No connection. Try again when you are online.",
         "updateIsLatest": "Latest",
-        "updateNow": "Update now"
+        "updateNow": "Update now",
+        "screenLab": "Screen lab"
     },
     "whatsNew": {
         "title": "What's New",
@@ -104,6 +111,7 @@
         "account": "Account",
         "add": "Add",
         "edit": "Edit",
+        "share": "Share",
         "moreActions": "More actions",
         "maintenance": "Under Maintenance",
         "maintenanceSub": "We're making some updates to improve your experience. We'll be back shortly.",
@@ -157,6 +165,14 @@
         "outdated": "Outdated"
     },
     "errors": {
+        "message_not_found": "That message was not found",
+        "not_your_message": "Only its author or a chat admin can delete it",
+        "not_author": "Only its author can edit it",
+        "edit_closed": "A message can be edited for 15 minutes",
+        "channel_read_only": "Nobody can post in this chat",
+        "blank_message": "Write something first",
+        "chat_too_fast": "Too many messages. Wait a moment.",
+        "channel_not_found": "That chat was not found",
         "account_inactive": "This account isn't active. Ask the owner.",
         "app_too_old": "This version is too old. Updating…",
         "bad_request": "Something in this form isn't right.",
@@ -223,7 +239,9 @@
         "notSavedOffline": "Not saved: no connection. Try again.",
         "session_not_found": "That session has already ended.",
         "bad_hours": "A store has to open before it closes.",
-        "too_far_back": "That date is too far back."
+        "too_far_back": "That date is too far back.",
+        "blank_group_name": "Give the group a name.",
+        "link_not_found": "That screen was not found"
     },
     "store": {
         "week": "Week",

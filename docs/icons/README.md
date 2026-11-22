@@ -21,7 +21,7 @@ Every app in the suite has an icon from the same family, so they read as one set
 ## Files
 
 - `glyphs.json`: each icon's colours and glyph (SVG paths on the 24 grid: `solid` white shapes, `holes` cut-outs, `cut` cut-out lines, `line` white lines, `over` white shapes drawn last)
-- `build.py`: fits each glyph, writes `<name>.svg` (the 1024 master) and, for an app in its `APPS`, `<name>.png` (1024) and the app's `public/icons/icon-192x192.png` and `icon-512x512.png`
+- `build.py`: fits each glyph, writes `<name>.svg` (the 1024 master) and, for an app in its `APPS`, `<name>.png` (1024) the app's `public/icons/icon-192x192.png` and `icon-512x512.png`, and `badge-96x96.png` (the glyph alone, white on transparent: the status-bar badge of a push)
 - `<name>.svg`, `<name>.png`: generated; never edit them, edit `glyphs.json`
 
 ```bash

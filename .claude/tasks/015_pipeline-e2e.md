@@ -1,6 +1,6 @@
 # Task 015 — Test sign-in on staging, and API end-to-end tests
 
-**Status: built 2026-10-24, not committed: the owner reviews the code first. Verified locally: the test sign-in's integration tests pass (and fail when a user in both a test and a real tenant is let through); the production image has no `/auth/test` and the staging-tagged one has it; `seed.sql` runs twice cleanly; the e2e suite passes three times in a row against local Go built with `testlogin` and both apps' production builds, and fails on a wrong commit; `pnpm bench --test-user` signs in without Google. Changed while building: the suite starts from Railway's deployment event, not the push (Railway's Wait for CI would otherwise wait for it forever), and only runs when the API was deployed; `/auth/test` is not rate limited.**
+**Status: done 2026-10-23, PR #30; release 2026.10.5.**
 
 ## The goal
 

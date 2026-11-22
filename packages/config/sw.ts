@@ -66,3 +66,51 @@ registerRoute(
         denylist: [/^\/api\//],
     }),
 );
+
+// Chat's notifications (Step 68): one line per channel that updates (the tag), not one per message.
+self.addEventListener("push", (event) => {
+    const m = (event.data?.json() ?? {}) as {
+        title?: string;
+        body?: string;
+        tag?: string;
+        url?: string;
+        icon?: string;
+    };
+    event.waitUntil(
+        self.registration.showNotification(m.title ?? "", {
+            body: m.body,
+            tag: m.tag,
+            // An update to a channel's line does not buzz again.
+            renotify: false,
+            // The sender's photo where the phone shows one (Android); iOS always shows the app's.
+            icon: m.icon || "/icons/icon-192x192.png",
+            badge: "/icons/badge-96x96.png",
+            data: { url: m.url ?? "/" },
+        } as NotificationOptions),
+    );
+});
+
+// A tap opens the chat: in the app's open window if there is one, else a new one.
+self.addEventListener("notificationclick", (event) => {
+    event.notification.close();
+    const url = new URL(
+        (event.notification.data as { url?: string })?.url ?? "/",
+        self.location.origin,
+    ).href;
+    event.waitUntil(
+        (async () => {
+            const windows = await self.clients.matchAll({
+                type: "window",
+                includeUncontrolled: true,
+            });
+            const open = windows.find((w) => new URL(w.url).origin === self.location.origin);
+            if (open) {
+                await open.focus();
+                return void (await open
+                    .navigate(url)
+                    .catch(() => open.postMessage({ type: "OPEN", url })));
+            }
+            await self.clients.openWindow(url);
+        })(),
+    );
+});

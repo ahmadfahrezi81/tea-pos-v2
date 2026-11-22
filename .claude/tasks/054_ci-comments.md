@@ -1,6 +1,6 @@
 # Task 054 — Every CI result says what happened, in the PR
 
-**Status: in review.** Owner: the comment is the interface, a failure should not mean opening the runner.
+**Status: done 2026-11-01, PR #79; release 2026.11.1, carried on by task 055.** Owner: the comment is the interface, a failure should not mean opening the runner.
 
 - **A failed job names its step and shows its last log lines, open in the comment** (`.github/scripts/failures.mjs`): Checks, Preview, Security, a failed deploy
 - **Workflows that said nothing now report, passed or failed:** Security and Release source; Migrations and Preview also report when they fail; the Railway plan when it fails

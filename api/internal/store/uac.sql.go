@@ -198,7 +198,8 @@ SELECT u.id, u.full_name, u.email, COALESCE(u.avatar_url, '')::text AS avatar_ur
     a.status, coalesce(t.owner_id = u.id, false)::bool AS is_owner,
     coalesce((SELECT x.access FROM user_app_access x WHERE x.tenant_id = a.tenant_id AND x.user_id = u.id AND x.app = 'seller'), '')::text AS seller_access,
     coalesce((SELECT x.access FROM user_app_access x WHERE x.tenant_id = a.tenant_id AND x.user_id = u.id AND x.app = 'backoffice'), '')::text AS backoffice_access,
-    (a.levels_set OR EXISTS (SELECT 1 FROM user_app_access x WHERE x.tenant_id = a.tenant_id AND x.user_id = u.id))::bool AS has_levels,
+    coalesce((SELECT x.access FROM user_app_access x WHERE x.tenant_id = a.tenant_id AND x.user_id = u.id AND x.app = 'chat'), '')::text AS chat_access,
+    (a.levels_set OR EXISTS (SELECT 1 FROM user_app_access x WHERE x.tenant_id = a.tenant_id AND x.user_id = u.id AND x.app <> 'chat'))::bool AS has_levels,
     coalesce(i.bank_name, '')::text AS bank_name,
     coalesce(i.bank_account_number, '')::text AS bank_account_number,
     coalesce(i.bank_account_holder, '')::text AS bank_account_holder,
@@ -240,6 +241,7 @@ type ListTenantPeopleRow struct {
 	IsOwner           bool
 	SellerAccess      string
 	BackofficeAccess  string
+	ChatAccess        string
 	HasLevels         bool
 	BankName          string
 	BankAccountNumber string
@@ -273,6 +275,7 @@ func (q *Queries) ListTenantPeople(ctx context.Context, arg ListTenantPeoplePara
 			&i.IsOwner,
 			&i.SellerAccess,
 			&i.BackofficeAccess,
+			&i.ChatAccess,
 			&i.HasLevels,
 			&i.BankName,
 			&i.BankAccountNumber,

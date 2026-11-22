@@ -1,6 +1,6 @@
 # Task 016c — Real speed from real phones, and errors worth reading
 
-**Status: built 2026-10-24 on branch `feat/field-telemetry` (on top of 016b's `feat/monitoring-versions`), not committed. Checked locally, against a production build of seller on a local Go (staging database):**
+**Status: done 2026-10-24, PRs #37 and #38.**
 - **Against the benchmark:** `pnpm bench` now checks it itself (below): all 6 loads (3 reopens, 3 first visits) reported the bench's own time and the right `open` (`saved`, `network`), `me` (`saved` on reopens, `network` on first visits), `screen: shell`, `hidden: false`
 - **Against a recording:** 3 throttled reopens with screenshots: the first frame that changes comes 40-49 ms (2-3 frames) after the mark: the splash's fade beginning to paint under 20× CPU. Not one frame as planned, but a few milliseconds on a real phone against opens of 0.5-3.5 s, so the mark stays (the bench's too)
 - **Each case by hand:** a reopen `saved`; the first open of a new build `update`; the next `saved`; a load opened behind another tab `hidden: true` (it only becomes ready once shown: the shell waits for a painted frame)

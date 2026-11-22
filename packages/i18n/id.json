@@ -64,7 +64,13 @@
         "title": "Akun",
         "signingOut": "Sedang logout…",
         "confirmSave": "Simpan data Anda?",
-        "confirmSaveBody": "Nama Anda berubah di semua tempat, di setiap aplikasi."
+        "confirmSaveBody": "Nama Anda berubah di semua tempat, di setiap aplikasi.",
+        "notifications": "Notifikasi",
+        "chatNotifications": "Notifikasi chat",
+        "onThisPhone": "Nyala di HP ini",
+        "offThisPhone": "Mati di HP ini",
+        "notificationsBlocked": "Diblokir: izinkan notifikasi di pengaturan HP",
+        "notificationsUnsupported": "HP ini belum bisa menerimanya di sini (di iPhone: pasang aplikasinya dulu)"
     },
     "more": {
         "workDays": "Hari Kerja",
@@ -79,7 +85,8 @@
         "app": "Aplikasi",
         "updateOffline": "Tidak ada koneksi. Coba lagi saat online.",
         "updateIsLatest": "Latest",
-        "updateNow": "Update sekarang"
+        "updateNow": "Update sekarang",
+        "screenLab": "Screen lab"
     },
     "whatsNew": {
         "title": "Yang Baru",
@@ -104,6 +111,7 @@
         "account": "Akun",
         "add": "Tambah",
         "edit": "Ubah",
+        "share": "Bagikan",
         "moreActions": "Aksi lainnya",
         "maintenance": "Sedang Perbaikan",
         "maintenanceSub": "Kami sedang melakukan update untuk meningkatkan pengalaman Anda. Kami akan segera kembali.",
@@ -157,6 +165,14 @@
         "outdated": "Perlu update"
     },
     "errors": {
+        "message_not_found": "Pesan itu tidak ditemukan",
+        "not_your_message": "Hanya pengirimnya atau admin chat yang bisa menghapusnya",
+        "not_author": "Hanya pengirimnya yang bisa mengubahnya",
+        "edit_closed": "Pesan hanya bisa diubah dalam 15 menit",
+        "channel_read_only": "Tidak ada yang bisa mengirim di chat ini",
+        "blank_message": "Tulis sesuatu dulu",
+        "chat_too_fast": "Terlalu banyak pesan. Tunggu sebentar.",
+        "channel_not_found": "Chat itu tidak ditemukan",
         "account_inactive": "Akun ini tidak aktif. Hubungi pemilik.",
         "app_too_old": "Versi ini terlalu lama. Sedang update…",
         "bad_request": "Ada yang belum benar di formulir ini.",
@@ -223,7 +239,9 @@
         "notSavedOffline": "Tidak tersimpan: tidak ada koneksi. Coba lagi.",
         "session_not_found": "Session itu sudah berakhir.",
         "bad_hours": "Jam buka harus sebelum jam tutup.",
-        "too_far_back": "Tanggal itu terlalu jauh ke belakang."
+        "too_far_back": "Tanggal itu terlalu jauh ke belakang.",
+        "blank_group_name": "Beri nama grup.",
+        "link_not_found": "Layar itu tidak ditemukan"
     },
     "store": {
         "week": "Week",

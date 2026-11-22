@@ -1,6 +1,6 @@
 # Task 023 — Paying a payout, and checking it against v1
 
-**Status: built 2026-10-25 overnight, merged to staging when green (decisions in `overnight-log.md`). Checked: integration test (paid needs a screenshot uploaded for this tenant, a pending claim or an unfinished period refused, settling twice refused, the activity log written); v2's pay windows equal v1's for every day of Dec 2024-2027 and each frequency (3,378 windows); v2's payout totals equal v1's arithmetic over every payout on staging (13).**
+**Status: done 2026-10-24, PR #45 (decisions in `overnight-log.md`).**
 
 ## The goal
 

@@ -145,6 +145,10 @@ func TestWeatherByArea(t *testing.T) {
 	if n := count(t, pool, `SELECT count(*) FROM public.weather_hourly`); n != 2 {
 		t.Fatalf("the old app's table: %d hours, want the near area's 2", n)
 	}
+	// v1's table has no guard of its own: its hour now is the reading too.
+	if n := count(t, pool, `SELECT count(*) FROM public.weather_hourly WHERE hour = 12 AND temperature = 30`); n != 1 {
+		t.Fatal("the old app's hour now is the forecast, not the reading")
+	}
 
 	temp.Store(31)
 	if err := f.Run(ctx, wib(20, 30), false); err != nil || calls.Load() != 3 {

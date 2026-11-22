@@ -20,6 +20,7 @@ import { ComeBackRefresh } from "./refresh/ComeBackRefresh";
 import { refreshGate } from "./refresh/refreshGate";
 import { isSubPage, type Tab } from "./routes";
 import { ScrollContext } from "./ScrollContext";
+import { useKeyboardState } from "./screen/keyboard";
 import { useStandaloneViewportHeight } from "./useStandaloneViewportHeight";
 
 /** Pull distance, after resistance, at which letting go refreshes. */
@@ -97,6 +98,7 @@ export function MobileShell({
     const lastRootTabRef = useRef<string>(homePath);
 
     useStandaloneViewportHeight();
+    useKeyboardState();
 
     const navigate = useCallback(
         (path: string) => {
@@ -377,8 +379,8 @@ export function MobileShell({
             <FooterSlotContext value={footerSlotEl}>
                 <HeaderSlotContext value={headerSlotEl}>
                     <HeaderTitleSlotContext value={titleSlotEl}>
-                        {/* svh in a tab (no resize as the URL bar moves); installed, the measured --shell-height. */}
-                        <div className="h-[100svh] [@media(display-mode:standalone)]:h-[var(--shell-height,100dvh)] flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+                        {/* svh in a tab (no resize as the URL bar moves); installed, the measured --shell-height. Less the dev server's fake keyboard. */}
+                        <div className="shell-frame h-[calc(100svh-var(--fake-keyboard,0px))] [@media(display-mode:standalone)]:h-[calc(var(--shell-height,100dvh)-var(--fake-keyboard,0px))] flex flex-col bg-gradient-to-b from-slate-100 to-slate-200 overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
                             <MobileHeader
                                 title={title}
                                 isSubPage={currentIsSubPage}

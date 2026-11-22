@@ -38,7 +38,7 @@ export function ListRow({
                 <div className="flex-1 min-w-0">
                     <div className="text-[17px] font-medium text-gray-900 truncate">{title}</div>
                     {subtitle && (
-                        <div className="text-sm text-gray-400 in-[.panel]:text-gray-900 truncate">
+                        <div className="text-sm text-gray-600 in-[.panel]:text-gray-900 truncate">
                             {subtitle}
                         </div>
                     )}

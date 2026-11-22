@@ -154,7 +154,7 @@ function rank(p: Person): number {
     return p.access.seller ? 3 : 4;
 }
 
-/** What someone reaches, one badge per app with its level: `Seller · Member`, `Office · Admin`. */
+/** What someone reaches, one badge per app with its level: `Seller · Member`, `Office · Admin`, `Chat · VIP`. */
 function Badges({ person: p }: { person: Person }) {
     const t = useT();
     const level = (l: string) => t(`uac.${l}` as MessageKey);
@@ -172,7 +172,7 @@ function Badges({ person: p }: { person: Person }) {
         <span className="block space-y-1 pt-1">
             <span className="flex flex-wrap gap-1.5">
                 {p.owner && <Badge>{t("uac.owner")}</Badge>}
-                {!p.owner && !p.access.seller && !p.access.backoffice && (
+                {!p.owner && !p.access.seller && !p.access.backoffice && !p.access.chat && (
                     <Badge>{t("uac.noAccess")}</Badge>
                 )}
                 {!p.owner && p.access.seller && (
@@ -183,6 +183,11 @@ function Badges({ person: p }: { person: Person }) {
                 {!p.owner && p.access.backoffice && (
                     <Badge>
                         {t("uac.office")} · {level(p.access.backoffice)}
+                    </Badge>
+                )}
+                {!p.owner && p.access.chat && (
+                    <Badge>
+                        {t("uac.chat")} · {level(p.access.chat)}
                     </Badge>
                 )}
             </span>

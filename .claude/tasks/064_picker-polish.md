@@ -1,6 +1,6 @@
 # Task 064 — Picker card polish
 
-**Status: built 2026-11-15 on `feat/picker-polish`, from the owner's look on a phone after task 063; PR open.**
+**Status: done 2026-11-15, PR #142; release 2026.11.14.**
 
 ## The goal
 

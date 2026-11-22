@@ -13,7 +13,9 @@ import (
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
 
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/chatevent"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/domain"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/push"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/weather"
 )
@@ -36,10 +38,22 @@ func Insert(ctx context.Context, c *Client, tx pgx.Tx, args river.JobArgs) error
 	return err
 }
 
+// ChatPushQueue queues a channel's push with c, in the change's transaction (chatevent.Post).
+func ChatPushQueue(c *Client) chatevent.Queue {
+	if c == nil {
+		return nil
+	}
+	return func(ctx context.Context, tx pgx.Tx, channelID string) error {
+		return Insert(ctx, c, tx, ChatPushArgs{ChannelID: channelID})
+	}
+}
+
 // Deps is what the jobs use.
 type Deps struct {
 	Weather *weather.Fetcher
 	Queries *store.Queries
+	// Push sends chat's notifications; nil (no VAPID keys) sends none.
+	Push *push.Sender
 }
 
 // Schedule is one job on v2's cron, with when it runs in each environment; nil is never.
@@ -47,6 +61,8 @@ type Schedule struct {
 	ID                  string
 	Production, Staging river.PeriodicSchedule
 	Args                func(env string) river.JobArgs
+	// OnStart also runs it as the worker starts (after each deploy).
+	OnStart bool
 }
 
 // Schedules is v2's whole cron, in one place: a new one is a line here. Railway runs them
@@ -54,18 +70,32 @@ type Schedule struct {
 var Schedules = []Schedule{
 	{ID: "cleanup", Production: Every(time.Hour), Staging: DailyAt(4),
 		Args: func(string) river.JobArgs { return CleanupArgs{} }},
-	// Off until the old cron website stops fetching (Step 45): then production
-	// Every(20*time.Minute), staging DailyAt(21).
-	{ID: "weather", Production: nil, Staging: nil,
+	// Every 20 minutes around store hours; it also fills v1's weather_hourly, so the old cron
+	// website is turned off once this runs (task 076). Staging: once a day, every area.
+	{ID: "weather", Production: Every(20 * time.Minute), Staging: DailyAt(21),
 		Args: func(env string) river.JobArgs { return WeatherArgs{All: env != "prod"} }},
+	// What chat says by itself (Step 74).
+	{ID: "day_summary", Production: At{23, 30}, Staging: At{23, 30},
+		Args: func(string) river.JobArgs { return DaySummaryArgs{} }},
+	{ID: "pay_total", Production: At{8, 0}, Staging: At{8, 0},
+		Args: func(string) river.JobArgs { return PayTotalArgs{} }},
+	{ID: "release", Production: At{9, 0}, Staging: At{9, 0}, OnStart: true,
+		Args: func(string) river.JobArgs { return ReleaseArgs{} }},
 }
 
 // NewWorker is the worker's client: it runs every kind, and env's schedules when schedule is
 // set ("prod" or "staging", as config.Env).
 func NewWorker(pool *pgxpool.Pool, d Deps, env string, schedule bool) (*Client, error) {
 	workers := river.NewWorkers()
-	river.AddWorker(workers, &WeatherWorker{Fetcher: d.Weather})
+	events := chatevent.Poster{Pool: pool, Queue: func(ctx context.Context) chatevent.Queue {
+		return ChatPushQueue(river.ClientFromContext[pgx.Tx](ctx))
+	}}
+	river.AddWorker(workers, &WeatherWorker{Fetcher: d.Weather, Events: events})
+	river.AddWorker(workers, &DaySummaryWorker{Events: events})
+	river.AddWorker(workers, &PayTotalWorker{Events: events})
+	river.AddWorker(workers, &ReleaseWorker{Events: events})
 	river.AddWorker(workers, &CleanupWorker{Queries: d.Queries})
+	river.AddWorker(workers, &ChatPushWorker{Queries: d.Queries, Push: d.Push})
 
 	var periodic []*river.PeriodicJob
 	for _, s := range Schedules {
@@ -78,7 +108,7 @@ func NewWorker(pool *pgxpool.Pool, d Deps, env string, schedule bool) (*Client, 
 		}
 		periodic = append(periodic, river.NewPeriodicJob(when,
 			func() (river.JobArgs, *river.InsertOpts) { return s.Args(env), nil },
-			&river.PeriodicJobOpts{ID: s.ID}))
+			&river.PeriodicJobOpts{ID: s.ID, RunOnStart: s.OnStart}))
 	}
 	return river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Schema:       Schema,
@@ -108,10 +138,60 @@ func (WeatherArgs) InsertOpts() river.InsertOpts { return river.InsertOpts{MaxAt
 type WeatherWorker struct {
 	river.WorkerDefaults[WeatherArgs]
 	Fetcher *weather.Fetcher
+	Events  chatevent.Poster
 }
 
+// Work fetches, then tells the open stores' chats of rain from what came back, even when a
+// cell failed (the others' forecasts are new).
 func (w *WeatherWorker) Work(ctx context.Context, j *river.Job[WeatherArgs]) error {
-	return w.Fetcher.Run(ctx, time.Now(), j.Args.All)
+	now := time.Now()
+	err := w.Fetcher.Run(ctx, now, j.Args.All)
+	if rain := w.Events.Rain(ctx, now); rain != nil {
+		slog.ErrorContext(ctx, "rain alerts", "err", rain)
+	}
+	return err
+}
+
+// DaySummaryArgs posts each store's day to its chat, at night.
+type DaySummaryArgs struct{}
+
+func (DaySummaryArgs) Kind() string { return "day_summary" }
+
+type DaySummaryWorker struct {
+	river.WorkerDefaults[DaySummaryArgs]
+	Events chatevent.Poster
+}
+
+func (w *DaySummaryWorker) Work(ctx context.Context, _ *river.Job[DaySummaryArgs]) error {
+	return w.Events.DaySummaries(ctx, time.Now().In(domain.WIB))
+}
+
+// PayTotalArgs posts a pay period's total to VIP the morning after it ends.
+type PayTotalArgs struct{}
+
+func (PayTotalArgs) Kind() string { return "pay_total" }
+
+type PayTotalWorker struct {
+	river.WorkerDefaults[PayTotalArgs]
+	Events chatevent.Poster
+}
+
+func (w *PayTotalWorker) Work(ctx context.Context, _ *river.Job[PayTotalArgs]) error {
+	return w.Events.PayTotals(ctx, time.Now())
+}
+
+// ReleaseArgs links the newest What's new in General, once per version.
+type ReleaseArgs struct{}
+
+func (ReleaseArgs) Kind() string { return "release" }
+
+type ReleaseWorker struct {
+	river.WorkerDefaults[ReleaseArgs]
+	Events chatevent.Poster
+}
+
+func (w *ReleaseWorker) Work(ctx context.Context, _ *river.Job[ReleaseArgs]) error {
+	return w.Events.Releases(ctx)
 }
 
 // CleanupArgs drops what is only kept for a while: Idempotency-Keys after 24 hours (017e).
@@ -139,6 +219,18 @@ type Every time.Duration
 func (e Every) Next(now time.Time) time.Time {
 	d := time.Duration(e)
 	return now.In(domain.WIB).Truncate(d).Add(d)
+}
+
+// At runs once a day at Hour:Minute (WIB).
+type At struct{ Hour, Minute int }
+
+func (a At) Next(now time.Time) time.Time {
+	now = now.In(domain.WIB)
+	next := time.Date(now.Year(), now.Month(), now.Day(), a.Hour, a.Minute, 0, 0, domain.WIB)
+	if !next.After(now) {
+		next = next.AddDate(0, 0, 1)
+	}
+	return next
 }
 
 // DailyAt runs once a day at hour (WIB).

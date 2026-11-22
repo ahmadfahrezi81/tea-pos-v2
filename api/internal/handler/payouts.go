@@ -14,10 +14,12 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/auth"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/chatevent"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/contract"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/domain"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/files"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/idem"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/jobs"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
 )
 
@@ -272,8 +274,49 @@ func registerSettle(api huma.API, d Deps) {
 		if n == 0 {
 			return nil, errPayoutSettled // settled a moment ago, elsewhere
 		}
+		if in.Body.Status == "paid" {
+			if err := postPayoutPaid(ctx, d, q, caller, p); err != nil {
+				return nil, err
+			}
+		}
 		return nil, logActivity(ctx, q, caller, pgtype.UUID{}, "payroll_payout_updated", id, "payroll_payouts", map[string]any{"status": in.Body.Status})
 	})
+}
+
+// postPayoutPaid tells the person in their Notifications, and VIP, in the payout's transaction.
+func postPayoutPaid(ctx context.Context, d Deps, q *store.Queries, caller auth.Caller, p store.GetPayoutRow) error {
+	tx, ok := idem.Tx(ctx)
+	if !ok {
+		return nil
+	}
+	total, err := q.PayoutTotal(ctx, p.ID)
+	if err != nil {
+		return err
+	}
+	payer, err := q.UserName(ctx, caller.UserID)
+	if err != nil {
+		return err
+	}
+	data := map[string]any{
+		"payoutId": p.ID.String(), "userId": p.UserID.String(), "name": p.FullName, "payer": payer,
+		"start": day0(p.StartDate), "end": day0(p.EndDate), "total": total,
+		"link": chatevent.Link{Kind: chatevent.LinkPayout, ID: p.ID.String()},
+	}
+	queue := jobs.ChatPushQueue(d.Jobs)
+	key := "payout:" + p.ID.String()
+	if _, err := chatevent.Post(ctx, tx, queue, chatevent.Event{
+		Tenant: caller.TenantID, Where: chatevent.Notifications(p.UserID), Type: chatevent.PayoutPaid, Data: data, Key: key,
+	}); err != nil {
+		return err
+	}
+	vip := map[string]any{"vip": true}
+	for k, v := range data {
+		vip[k] = v
+	}
+	_, err = chatevent.Post(ctx, tx, queue, chatevent.Event{
+		Tenant: caller.TenantID, Where: chatevent.VIP(), Type: chatevent.PayoutPaid, Data: vip, Key: key,
+	})
+	return err
 }
 
 // openForDecisions refuses a decision on a day whose payout is settled (paid or skipped): its

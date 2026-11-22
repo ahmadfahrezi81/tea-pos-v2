@@ -1,6 +1,6 @@
 # Task 048 — Store: the live list and a store's page
 
-**Status: built 2026-10-28, not committed; waiting on the owner's review (built ahead of review, at the owner's ask).**
+**Status: done 2026-10-28, PR #50; release 2026.10.6.**
 
 ## The goal
 

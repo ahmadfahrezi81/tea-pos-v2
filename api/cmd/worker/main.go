@@ -15,6 +15,7 @@ import (
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/config"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/jobs"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/platform"
+	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/push"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/store"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/telemetry"
 	"github.com/ahmadfahrezi81/tea-pos-v2/api/internal/version"
@@ -67,7 +68,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	client, err := jobs.NewWorker(db, jobs.Deps{Weather: fetcher, Queries: q}, cfg.Env, cfg.JobsSchedule)
+	client, err := jobs.NewWorker(db, jobs.Deps{Weather: fetcher, Queries: q, Push: push.New(cfg.VapidPublicKey, cfg.VapidPrivateKey, cfg.VapidSubject)}, cfg.Env, cfg.JobsSchedule)
 	if err != nil {
 		slog.Error("jobs", "err", err)
 		os.Exit(1)

@@ -22,6 +22,10 @@
     /* A toast: slides down from the top, as the old apps. */
     --animate-slide-down: slide-down 300ms ease both;
     --animate-slide-up: slide-up 300ms ease both;
+    /* A pencil writing, while someone types in a chat. */
+    --animate-write: write 1s ease-in-out infinite;
+    /* A message jumped to (a reply's quote, Activity): it lights up once. */
+    --animate-flash: flash 1.2s ease-out both;
 
     @keyframes fade-in {
         from {
@@ -85,10 +89,38 @@
             transform: translateY(-6px) scale(0.98);
         }
     }
+    @keyframes flash {
+        0%,
+        30% {
+            background-color: color-mix(in oklab, var(--accent-primary) 18%, transparent);
+        }
+        100% {
+            background-color: transparent;
+        }
+    }
+    @keyframes write {
+        0%,
+        100% {
+            transform: translate(-3px, 0) rotate(-10deg);
+        }
+        25% {
+            transform: translate(-1px, -2px) rotate(6deg);
+        }
+        50% {
+            transform: translate(1px, 0) rotate(-10deg);
+        }
+        75% {
+            transform: translate(3px, -2px) rotate(6deg);
+        }
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
     [class*="animate-"]:not(.animate-spin) {
         animation-duration: 1ms !important;
+    }
+    /* A loop at 1 ms would flicker: it stands still instead. */
+    .animate-write {
+        animation: none !important;
     }
 }

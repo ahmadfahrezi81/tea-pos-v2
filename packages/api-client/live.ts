@@ -3,11 +3,21 @@ import type { QueryClient, QueryKey } from "@tanstack/react-query";
 import type { Me } from "./me";
 
 /** What the hub sends: something of `kind` changed at `topic` (internal/realtime). */
-interface LiveEvent {
+export interface LiveEvent {
     topic?: string;
     kind?: string;
     id?: string;
+    /** Who did it, for what a phone shows without a refetch (someone typing). */
+    by?: string;
     error?: string;
+}
+
+const listeners = new Set<(e: LiveEvent) => void>();
+
+/** Hears every event as it comes, for what is shown and never fetched (typing); returns the unsubscribe. */
+export function onLive(listener: (e: LiveEvent) => void): () => void {
+    listeners.add(listener);
+    return () => void listeners.delete(listener);
 }
 
 /** A query says which kinds of change it shows: `meta: { live: ["order"] }`. */
@@ -64,6 +74,8 @@ export function startLive(queryClient: QueryClient, onGap: () => void) {
 
     const onEvent = (e: LiveEvent) => {
         if (e.error) return;
+        listeners.forEach((l) => l(e));
+        if (e.kind === "chat_typing") return;
         if (e.kind === "resync") return refetchAll();
         // Signed out somewhere: if it was here, /me answers 401 and sends this phone to sign in.
         if (e.kind === "signed_out")

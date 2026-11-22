@@ -1,0 +1,38 @@
+{
+    "name": "@tea-pos/chat",
+    "private": true,
+    "type": "module",
+    "exports": {
+        "./ChatsScreen": "./ChatsScreen.tsx",
+        "./ChannelScreen": "./ChannelScreen.tsx",
+        "./ShareAction": "./ShareAction.tsx"
+    },
+    "scripts": {
+        "lint": "eslint .",
+        "typecheck": "tsc -p ."
+    },
+    "peerDependencies": {
+        "@tanstack/react-query": "^5",
+        "@tanstack/react-router": "^1",
+        "react": "^19",
+        "react-dom": "^19"
+    },
+    "devDependencies": {
+        "@tanstack/react-query": "5.104.5",
+        "@tanstack/react-router": "1.170.45",
+        "@tea-pos/config": "workspace:*",
+        "@types/react": "19.3.0",
+        "@types/react-dom": "19.3.0",
+        "react": "19.3.1",
+        "react-dom": "19.3.1",
+        "vite": "8.3.5"
+    },
+    "dependencies": {
+        "@tea-pos/api-client": "workspace:*",
+        "@tea-pos/format": "workspace:*",
+        "@tea-pos/i18n": "workspace:*",
+        "@tea-pos/shell": "workspace:*",
+        "@tea-pos/ui": "workspace:*",
+        "lucide-react": "1.61.0"
+    }
+}

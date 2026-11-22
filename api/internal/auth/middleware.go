@@ -28,7 +28,9 @@ type Caller struct {
 	Level    Level
 	// Owner: the caller owns that tenant.
 	Owner bool
-	token string
+	// ChatLevel is the caller's chat level there (tenant routes), whatever the app around it.
+	ChatLevel Level
+	token     string
 }
 
 type callerKey struct{}
@@ -156,12 +158,19 @@ func Middleware(sessions *Sessions, q *store.Queries, limiter, perSession *Limit
 			}
 			level := LevelIn(app, Membership{Status: m.Status, Owner: m.IsOwner, Access: m.Access, HasLevels: m.HasLevels, Role: session.Role})
 			// Seller also needs an active account, read fresh so someone just let in gets in at once.
-			if level == None || (app == "seller" && m.UserStatus != "active") ||
-				(access.App != "" && (access.App != app || !level.AtLeast(access.Level))) {
+			chat := ChatLevel(m.Status, m.IsOwner, m.ChatAccess)
+			ok := level != None && (app != "seller" || m.UserStatus == "active")
+			switch {
+			case access.App == Chat:
+				ok = ok && chat.AtLeast(access.Level)
+			case access.App != "":
+				ok = ok && access.App == app && level.AtLeast(access.Level)
+			}
+			if !ok {
 				write(ctx, errNotAllowed)
 				return
 			}
-			caller.TenantID, caller.Level, caller.Owner = m.ID, level, m.IsOwner
+			caller.TenantID, caller.Level, caller.Owner, caller.ChatLevel = m.ID, level, m.IsOwner, chat
 			info.SetCaller(caller.UserID.String(), m.ID.String())
 		}
 		// After the tenant, so a rule can name one; routes outside a tenant match on role and app only.

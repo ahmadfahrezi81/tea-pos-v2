@@ -93,6 +93,7 @@ func registerMe(api huma.API, d Deps) {
 				Access: contract.MeAccess{
 					Seller:     level("seller", t.SellerAccess),
 					Backoffice: level("backoffice", t.BackofficeAccess),
+					Chat:       string(auth.ChatLevel(t.Status, t.IsOwner, t.ChatAccess)),
 				},
 				Owner:  t.IsOwner,
 				Stores: append([]contract.MeStore{}, byTenant[id]...),

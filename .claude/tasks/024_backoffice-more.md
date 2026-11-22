@@ -1,6 +1,6 @@
 # Task 024 — The backoffice's More: weather, location feedback, patch notes
 
-**Status: built 2026-10-25 overnight, merged to staging when green (decisions in `overnight-log.md`). Checked: integration test (feedback newest first with who wrote it, another tenant's left out, admins only; the weather by hour, rounded, for a seller too); typecheck, lint, bundle.**
+**Status: done 2026-10-24, PR #46 (decisions in `overnight-log.md`).**
 
 ## The goal
 

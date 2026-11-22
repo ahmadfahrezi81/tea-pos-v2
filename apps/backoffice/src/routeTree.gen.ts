@@ -15,16 +15,20 @@ import { Route as ShellIndexRouteImport } from './routes/_shell/index'
 import { Route as ShellTenantRouteImport } from './routes/_shell/$tenant'
 import { Route as ShellTenantIndexRouteImport } from './routes/_shell/$tenant/index'
 import { Route as ShellTenantAppInfoRouteImport } from './routes/_shell/$tenant/app-info'
-import { Route as ShellTenantChatsRouteImport } from './routes/_shell/$tenant/chats'
 import { Route as ShellTenantMoreRouteImport } from './routes/_shell/$tenant/more'
 import { Route as ShellTenantWhatsNewRouteImport } from './routes/_shell/$tenant/whats-new'
 import { Route as ShellTenantAccountIndexRouteImport } from './routes/_shell/$tenant/account/index'
 import { Route as ShellTenantAccountDetailsRouteImport } from './routes/_shell/$tenant/account/details'
 import { Route as ShellTenantAccountLanguageRouteImport } from './routes/_shell/$tenant/account/language'
+import { Route as ShellTenantAccountNotificationsRouteImport } from './routes/_shell/$tenant/account/notifications'
 import { Route as ShellTenantAdvancedIndexRouteImport } from './routes/_shell/$tenant/advanced/index'
 import { Route as ShellTenantAdvancedScheduleRouteImport } from './routes/_shell/$tenant/advanced/schedule'
+import { Route as ShellTenantChatsIndexRouteImport } from './routes/_shell/$tenant/chats/index'
+import { Route as ShellTenantChatsChannelIdRouteImport } from './routes/_shell/$tenant/chats/$channelId'
 import { Route as ShellTenantPayIndexRouteImport } from './routes/_shell/$tenant/pay/index'
 import { Route as ShellTenantPayHelpRouteImport } from './routes/_shell/$tenant/pay/help'
+import { Route as ShellTenantScreenLabIndexRouteImport } from './routes/_shell/$tenant/screen-lab/index'
+import { Route as ShellTenantScreenLabCaseRouteImport } from './routes/_shell/$tenant/screen-lab/$case'
 import { Route as ShellTenantStoreIndexRouteImport } from './routes/_shell/$tenant/store/index'
 import { Route as ShellTenantStoreHelpRouteImport } from './routes/_shell/$tenant/store/help'
 import { Route as ShellTenantUacIndexRouteImport } from './routes/_shell/$tenant/uac/index'
@@ -40,6 +44,7 @@ import { Route as ShellTenantUacUserIdAppsRouteImport } from './routes/_shell/$t
 import { Route as ShellTenantUacUserIdClaimsRouteImport } from './routes/_shell/$tenant/uac/$userId/claims'
 import { Route as ShellTenantUacUserIdCommissionRouteImport } from './routes/_shell/$tenant/uac/$userId/commission'
 import { Route as ShellTenantUacUserIdDetailsRouteImport } from './routes/_shell/$tenant/uac/$userId/details'
+import { Route as ShellTenantUacUserIdGroupChatsRouteImport } from './routes/_shell/$tenant/uac/$userId/group-chats'
 import { Route as ShellTenantUacUserIdSessionsRouteImport } from './routes/_shell/$tenant/uac/$userId/sessions'
 import { Route as ShellTenantUacUserIdStoresRouteImport } from './routes/_shell/$tenant/uac/$userId/stores'
 import { Route as ShellTenantUacRequestsIdRouteImport } from './routes/_shell/$tenant/uac/requests/$id'
@@ -87,11 +92,6 @@ const ShellTenantAppInfoRoute = ShellTenantAppInfoRouteImport.update({
   path: '/app-info',
   getParentRoute: () => ShellTenantRoute,
 } as any)
-const ShellTenantChatsRoute = ShellTenantChatsRouteImport.update({
-  id: '/chats',
-  path: '/chats',
-  getParentRoute: () => ShellTenantRoute,
-} as any)
 const ShellTenantMoreRoute = ShellTenantMoreRouteImport.update({
   id: '/more',
   path: '/more',
@@ -119,6 +119,12 @@ const ShellTenantAccountLanguageRoute =
     path: '/account/language',
     getParentRoute: () => ShellTenantRoute,
   } as any)
+const ShellTenantAccountNotificationsRoute =
+  ShellTenantAccountNotificationsRouteImport.update({
+    id: '/account/notifications',
+    path: '/account/notifications',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
 const ShellTenantAdvancedIndexRoute =
   ShellTenantAdvancedIndexRouteImport.update({
     id: '/advanced/',
@@ -131,6 +137,17 @@ const ShellTenantAdvancedScheduleRoute =
     path: '/advanced/schedule',
     getParentRoute: () => ShellTenantRoute,
   } as any)
+const ShellTenantChatsIndexRoute = ShellTenantChatsIndexRouteImport.update({
+  id: '/chats/',
+  path: '/chats/',
+  getParentRoute: () => ShellTenantRoute,
+} as any)
+const ShellTenantChatsChannelIdRoute =
+  ShellTenantChatsChannelIdRouteImport.update({
+    id: '/chats/$channelId',
+    path: '/chats/$channelId',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
 const ShellTenantPayIndexRoute = ShellTenantPayIndexRouteImport.update({
   id: '/pay/',
   path: '/pay/',
@@ -141,6 +158,18 @@ const ShellTenantPayHelpRoute = ShellTenantPayHelpRouteImport.update({
   path: '/pay/help',
   getParentRoute: () => ShellTenantRoute,
 } as any)
+const ShellTenantScreenLabIndexRoute =
+  ShellTenantScreenLabIndexRouteImport.update({
+    id: '/screen-lab/',
+    path: '/screen-lab/',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantScreenLabCaseRoute =
+  ShellTenantScreenLabCaseRouteImport.update({
+    id: '/screen-lab/$case',
+    path: '/screen-lab/$case',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
 const ShellTenantStoreIndexRoute = ShellTenantStoreIndexRouteImport.update({
   id: '/store/',
   path: '/store/',
@@ -225,6 +254,12 @@ const ShellTenantUacUserIdDetailsRoute =
   ShellTenantUacUserIdDetailsRouteImport.update({
     id: '/uac/$userId/details',
     path: '/uac/$userId/details',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
+const ShellTenantUacUserIdGroupChatsRoute =
+  ShellTenantUacUserIdGroupChatsRouteImport.update({
+    id: '/uac/$userId/group-chats',
+    path: '/uac/$userId/group-chats',
     getParentRoute: () => ShellTenantRoute,
   } as any)
 const ShellTenantUacUserIdSessionsRoute =
@@ -335,19 +370,23 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/$tenant': typeof ShellTenantRouteWithChildren
   '/$tenant/app-info': typeof ShellTenantAppInfoRoute
-  '/$tenant/chats': typeof ShellTenantChatsRoute
   '/$tenant/more': typeof ShellTenantMoreRoute
   '/$tenant/whats-new': typeof ShellTenantWhatsNewRoute
   '/$tenant/': typeof ShellTenantIndexRoute
   '/$tenant/account/details': typeof ShellTenantAccountDetailsRoute
   '/$tenant/account/language': typeof ShellTenantAccountLanguageRoute
+  '/$tenant/account/notifications': typeof ShellTenantAccountNotificationsRoute
   '/$tenant/advanced/schedule': typeof ShellTenantAdvancedScheduleRoute
+  '/$tenant/chats/$channelId': typeof ShellTenantChatsChannelIdRoute
   '/$tenant/pay/help': typeof ShellTenantPayHelpRoute
+  '/$tenant/screen-lab/$case': typeof ShellTenantScreenLabCaseRoute
   '/$tenant/store/help': typeof ShellTenantStoreHelpRoute
   '/$tenant/uac/help': typeof ShellTenantUacHelpRoute
   '/$tenant/account/': typeof ShellTenantAccountIndexRoute
   '/$tenant/advanced/': typeof ShellTenantAdvancedIndexRoute
+  '/$tenant/chats/': typeof ShellTenantChatsIndexRoute
   '/$tenant/pay/': typeof ShellTenantPayIndexRoute
+  '/$tenant/screen-lab/': typeof ShellTenantScreenLabIndexRoute
   '/$tenant/store/': typeof ShellTenantStoreIndexRoute
   '/$tenant/uac/': typeof ShellTenantUacIndexRoute
   '/$tenant/store/settings/$storeId': typeof ShellTenantStoreSettingsStoreIdRoute
@@ -356,6 +395,7 @@ export interface FileRoutesByFullPath {
   '/$tenant/uac/$userId/claims': typeof ShellTenantUacUserIdClaimsRoute
   '/$tenant/uac/$userId/commission': typeof ShellTenantUacUserIdCommissionRoute
   '/$tenant/uac/$userId/details': typeof ShellTenantUacUserIdDetailsRoute
+  '/$tenant/uac/$userId/group-chats': typeof ShellTenantUacUserIdGroupChatsRoute
   '/$tenant/uac/$userId/sessions': typeof ShellTenantUacUserIdSessionsRoute
   '/$tenant/uac/$userId/stores': typeof ShellTenantUacUserIdStoresRoute
   '/$tenant/uac/requests/$id': typeof ShellTenantUacRequestsIdRoute
@@ -383,19 +423,23 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/': typeof ShellIndexRoute
   '/$tenant/app-info': typeof ShellTenantAppInfoRoute
-  '/$tenant/chats': typeof ShellTenantChatsRoute
   '/$tenant/more': typeof ShellTenantMoreRoute
   '/$tenant/whats-new': typeof ShellTenantWhatsNewRoute
   '/$tenant': typeof ShellTenantIndexRoute
   '/$tenant/account/details': typeof ShellTenantAccountDetailsRoute
   '/$tenant/account/language': typeof ShellTenantAccountLanguageRoute
+  '/$tenant/account/notifications': typeof ShellTenantAccountNotificationsRoute
   '/$tenant/advanced/schedule': typeof ShellTenantAdvancedScheduleRoute
+  '/$tenant/chats/$channelId': typeof ShellTenantChatsChannelIdRoute
   '/$tenant/pay/help': typeof ShellTenantPayHelpRoute
+  '/$tenant/screen-lab/$case': typeof ShellTenantScreenLabCaseRoute
   '/$tenant/store/help': typeof ShellTenantStoreHelpRoute
   '/$tenant/uac/help': typeof ShellTenantUacHelpRoute
   '/$tenant/account': typeof ShellTenantAccountIndexRoute
   '/$tenant/advanced': typeof ShellTenantAdvancedIndexRoute
+  '/$tenant/chats': typeof ShellTenantChatsIndexRoute
   '/$tenant/pay': typeof ShellTenantPayIndexRoute
+  '/$tenant/screen-lab': typeof ShellTenantScreenLabIndexRoute
   '/$tenant/store': typeof ShellTenantStoreIndexRoute
   '/$tenant/uac': typeof ShellTenantUacIndexRoute
   '/$tenant/store/settings/$storeId': typeof ShellTenantStoreSettingsStoreIdRoute
@@ -404,6 +448,7 @@ export interface FileRoutesByTo {
   '/$tenant/uac/$userId/claims': typeof ShellTenantUacUserIdClaimsRoute
   '/$tenant/uac/$userId/commission': typeof ShellTenantUacUserIdCommissionRoute
   '/$tenant/uac/$userId/details': typeof ShellTenantUacUserIdDetailsRoute
+  '/$tenant/uac/$userId/group-chats': typeof ShellTenantUacUserIdGroupChatsRoute
   '/$tenant/uac/$userId/sessions': typeof ShellTenantUacUserIdSessionsRoute
   '/$tenant/uac/$userId/stores': typeof ShellTenantUacUserIdStoresRoute
   '/$tenant/uac/requests/$id': typeof ShellTenantUacRequestsIdRoute
@@ -434,19 +479,23 @@ export interface FileRoutesById {
   '/_shell/$tenant': typeof ShellTenantRouteWithChildren
   '/_shell/': typeof ShellIndexRoute
   '/_shell/$tenant/app-info': typeof ShellTenantAppInfoRoute
-  '/_shell/$tenant/chats': typeof ShellTenantChatsRoute
   '/_shell/$tenant/more': typeof ShellTenantMoreRoute
   '/_shell/$tenant/whats-new': typeof ShellTenantWhatsNewRoute
   '/_shell/$tenant/': typeof ShellTenantIndexRoute
   '/_shell/$tenant/account/details': typeof ShellTenantAccountDetailsRoute
   '/_shell/$tenant/account/language': typeof ShellTenantAccountLanguageRoute
+  '/_shell/$tenant/account/notifications': typeof ShellTenantAccountNotificationsRoute
   '/_shell/$tenant/advanced/schedule': typeof ShellTenantAdvancedScheduleRoute
+  '/_shell/$tenant/chats/$channelId': typeof ShellTenantChatsChannelIdRoute
   '/_shell/$tenant/pay/help': typeof ShellTenantPayHelpRoute
+  '/_shell/$tenant/screen-lab/$case': typeof ShellTenantScreenLabCaseRoute
   '/_shell/$tenant/store/help': typeof ShellTenantStoreHelpRoute
   '/_shell/$tenant/uac/help': typeof ShellTenantUacHelpRoute
   '/_shell/$tenant/account/': typeof ShellTenantAccountIndexRoute
   '/_shell/$tenant/advanced/': typeof ShellTenantAdvancedIndexRoute
+  '/_shell/$tenant/chats/': typeof ShellTenantChatsIndexRoute
   '/_shell/$tenant/pay/': typeof ShellTenantPayIndexRoute
+  '/_shell/$tenant/screen-lab/': typeof ShellTenantScreenLabIndexRoute
   '/_shell/$tenant/store/': typeof ShellTenantStoreIndexRoute
   '/_shell/$tenant/uac/': typeof ShellTenantUacIndexRoute
   '/_shell/$tenant/store/settings/$storeId': typeof ShellTenantStoreSettingsStoreIdRoute
@@ -455,6 +504,7 @@ export interface FileRoutesById {
   '/_shell/$tenant/uac/$userId/claims': typeof ShellTenantUacUserIdClaimsRoute
   '/_shell/$tenant/uac/$userId/commission': typeof ShellTenantUacUserIdCommissionRoute
   '/_shell/$tenant/uac/$userId/details': typeof ShellTenantUacUserIdDetailsRoute
+  '/_shell/$tenant/uac/$userId/group-chats': typeof ShellTenantUacUserIdGroupChatsRoute
   '/_shell/$tenant/uac/$userId/sessions': typeof ShellTenantUacUserIdSessionsRoute
   '/_shell/$tenant/uac/$userId/stores': typeof ShellTenantUacUserIdStoresRoute
   '/_shell/$tenant/uac/requests/$id': typeof ShellTenantUacRequestsIdRoute
@@ -485,19 +535,23 @@ export interface FileRouteTypes {
     | '/login'
     | '/$tenant'
     | '/$tenant/app-info'
-    | '/$tenant/chats'
     | '/$tenant/more'
     | '/$tenant/whats-new'
     | '/$tenant/'
     | '/$tenant/account/details'
     | '/$tenant/account/language'
+    | '/$tenant/account/notifications'
     | '/$tenant/advanced/schedule'
+    | '/$tenant/chats/$channelId'
     | '/$tenant/pay/help'
+    | '/$tenant/screen-lab/$case'
     | '/$tenant/store/help'
     | '/$tenant/uac/help'
     | '/$tenant/account/'
     | '/$tenant/advanced/'
+    | '/$tenant/chats/'
     | '/$tenant/pay/'
+    | '/$tenant/screen-lab/'
     | '/$tenant/store/'
     | '/$tenant/uac/'
     | '/$tenant/store/settings/$storeId'
@@ -506,6 +560,7 @@ export interface FileRouteTypes {
     | '/$tenant/uac/$userId/claims'
     | '/$tenant/uac/$userId/commission'
     | '/$tenant/uac/$userId/details'
+    | '/$tenant/uac/$userId/group-chats'
     | '/$tenant/uac/$userId/sessions'
     | '/$tenant/uac/$userId/stores'
     | '/$tenant/uac/requests/$id'
@@ -533,19 +588,23 @@ export interface FileRouteTypes {
     | '/login'
     | '/'
     | '/$tenant/app-info'
-    | '/$tenant/chats'
     | '/$tenant/more'
     | '/$tenant/whats-new'
     | '/$tenant'
     | '/$tenant/account/details'
     | '/$tenant/account/language'
+    | '/$tenant/account/notifications'
     | '/$tenant/advanced/schedule'
+    | '/$tenant/chats/$channelId'
     | '/$tenant/pay/help'
+    | '/$tenant/screen-lab/$case'
     | '/$tenant/store/help'
     | '/$tenant/uac/help'
     | '/$tenant/account'
     | '/$tenant/advanced'
+    | '/$tenant/chats'
     | '/$tenant/pay'
+    | '/$tenant/screen-lab'
     | '/$tenant/store'
     | '/$tenant/uac'
     | '/$tenant/store/settings/$storeId'
@@ -554,6 +613,7 @@ export interface FileRouteTypes {
     | '/$tenant/uac/$userId/claims'
     | '/$tenant/uac/$userId/commission'
     | '/$tenant/uac/$userId/details'
+    | '/$tenant/uac/$userId/group-chats'
     | '/$tenant/uac/$userId/sessions'
     | '/$tenant/uac/$userId/stores'
     | '/$tenant/uac/requests/$id'
@@ -583,19 +643,23 @@ export interface FileRouteTypes {
     | '/_shell/$tenant'
     | '/_shell/'
     | '/_shell/$tenant/app-info'
-    | '/_shell/$tenant/chats'
     | '/_shell/$tenant/more'
     | '/_shell/$tenant/whats-new'
     | '/_shell/$tenant/'
     | '/_shell/$tenant/account/details'
     | '/_shell/$tenant/account/language'
+    | '/_shell/$tenant/account/notifications'
     | '/_shell/$tenant/advanced/schedule'
+    | '/_shell/$tenant/chats/$channelId'
     | '/_shell/$tenant/pay/help'
+    | '/_shell/$tenant/screen-lab/$case'
     | '/_shell/$tenant/store/help'
     | '/_shell/$tenant/uac/help'
     | '/_shell/$tenant/account/'
     | '/_shell/$tenant/advanced/'
+    | '/_shell/$tenant/chats/'
     | '/_shell/$tenant/pay/'
+    | '/_shell/$tenant/screen-lab/'
     | '/_shell/$tenant/store/'
     | '/_shell/$tenant/uac/'
     | '/_shell/$tenant/store/settings/$storeId'
@@ -604,6 +668,7 @@ export interface FileRouteTypes {
     | '/_shell/$tenant/uac/$userId/claims'
     | '/_shell/$tenant/uac/$userId/commission'
     | '/_shell/$tenant/uac/$userId/details'
+    | '/_shell/$tenant/uac/$userId/group-chats'
     | '/_shell/$tenant/uac/$userId/sessions'
     | '/_shell/$tenant/uac/$userId/stores'
     | '/_shell/$tenant/uac/requests/$id'
@@ -677,13 +742,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellTenantAppInfoRouteImport
       parentRoute: typeof ShellTenantRoute
     }
-    '/_shell/$tenant/chats': {
-      id: '/_shell/$tenant/chats'
-      path: '/chats'
-      fullPath: '/$tenant/chats'
-      preLoaderRoute: typeof ShellTenantChatsRouteImport
-      parentRoute: typeof ShellTenantRoute
-    }
     '/_shell/$tenant/more': {
       id: '/_shell/$tenant/more'
       path: '/more'
@@ -719,6 +777,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellTenantAccountLanguageRouteImport
       parentRoute: typeof ShellTenantRoute
     }
+    '/_shell/$tenant/account/notifications': {
+      id: '/_shell/$tenant/account/notifications'
+      path: '/account/notifications'
+      fullPath: '/$tenant/account/notifications'
+      preLoaderRoute: typeof ShellTenantAccountNotificationsRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
     '/_shell/$tenant/advanced/': {
       id: '/_shell/$tenant/advanced/'
       path: '/advanced'
@@ -733,6 +798,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellTenantAdvancedScheduleRouteImport
       parentRoute: typeof ShellTenantRoute
     }
+    '/_shell/$tenant/chats/': {
+      id: '/_shell/$tenant/chats/'
+      path: '/chats'
+      fullPath: '/$tenant/chats/'
+      preLoaderRoute: typeof ShellTenantChatsIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/chats/$channelId': {
+      id: '/_shell/$tenant/chats/$channelId'
+      path: '/chats/$channelId'
+      fullPath: '/$tenant/chats/$channelId'
+      preLoaderRoute: typeof ShellTenantChatsChannelIdRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
     '/_shell/$tenant/pay/': {
       id: '/_shell/$tenant/pay/'
       path: '/pay'
@@ -745,6 +824,20 @@ declare module '@tanstack/react-router' {
       path: '/pay/help'
       fullPath: '/$tenant/pay/help'
       preLoaderRoute: typeof ShellTenantPayHelpRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/screen-lab/': {
+      id: '/_shell/$tenant/screen-lab/'
+      path: '/screen-lab'
+      fullPath: '/$tenant/screen-lab/'
+      preLoaderRoute: typeof ShellTenantScreenLabIndexRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/screen-lab/$case': {
+      id: '/_shell/$tenant/screen-lab/$case'
+      path: '/screen-lab/$case'
+      fullPath: '/$tenant/screen-lab/$case'
+      preLoaderRoute: typeof ShellTenantScreenLabCaseRouteImport
       parentRoute: typeof ShellTenantRoute
     }
     '/_shell/$tenant/store/': {
@@ -850,6 +943,13 @@ declare module '@tanstack/react-router' {
       path: '/uac/$userId/details'
       fullPath: '/$tenant/uac/$userId/details'
       preLoaderRoute: typeof ShellTenantUacUserIdDetailsRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/uac/$userId/group-chats': {
+      id: '/_shell/$tenant/uac/$userId/group-chats'
+      path: '/uac/$userId/group-chats'
+      fullPath: '/$tenant/uac/$userId/group-chats'
+      preLoaderRoute: typeof ShellTenantUacUserIdGroupChatsRouteImport
       parentRoute: typeof ShellTenantRoute
     }
     '/_shell/$tenant/uac/$userId/sessions': {
@@ -976,19 +1076,23 @@ declare module '@tanstack/react-router' {
 
 interface ShellTenantRouteChildren {
   ShellTenantAppInfoRoute: typeof ShellTenantAppInfoRoute
-  ShellTenantChatsRoute: typeof ShellTenantChatsRoute
   ShellTenantMoreRoute: typeof ShellTenantMoreRoute
   ShellTenantWhatsNewRoute: typeof ShellTenantWhatsNewRoute
   ShellTenantIndexRoute: typeof ShellTenantIndexRoute
   ShellTenantAccountDetailsRoute: typeof ShellTenantAccountDetailsRoute
   ShellTenantAccountLanguageRoute: typeof ShellTenantAccountLanguageRoute
+  ShellTenantAccountNotificationsRoute: typeof ShellTenantAccountNotificationsRoute
   ShellTenantAdvancedScheduleRoute: typeof ShellTenantAdvancedScheduleRoute
+  ShellTenantChatsChannelIdRoute: typeof ShellTenantChatsChannelIdRoute
   ShellTenantPayHelpRoute: typeof ShellTenantPayHelpRoute
+  ShellTenantScreenLabCaseRoute: typeof ShellTenantScreenLabCaseRoute
   ShellTenantStoreHelpRoute: typeof ShellTenantStoreHelpRoute
   ShellTenantUacHelpRoute: typeof ShellTenantUacHelpRoute
   ShellTenantAccountIndexRoute: typeof ShellTenantAccountIndexRoute
   ShellTenantAdvancedIndexRoute: typeof ShellTenantAdvancedIndexRoute
+  ShellTenantChatsIndexRoute: typeof ShellTenantChatsIndexRoute
   ShellTenantPayIndexRoute: typeof ShellTenantPayIndexRoute
+  ShellTenantScreenLabIndexRoute: typeof ShellTenantScreenLabIndexRoute
   ShellTenantStoreIndexRoute: typeof ShellTenantStoreIndexRoute
   ShellTenantUacIndexRoute: typeof ShellTenantUacIndexRoute
   ShellTenantStoreSettingsStoreIdRoute: typeof ShellTenantStoreSettingsStoreIdRoute
@@ -997,6 +1101,7 @@ interface ShellTenantRouteChildren {
   ShellTenantUacUserIdClaimsRoute: typeof ShellTenantUacUserIdClaimsRoute
   ShellTenantUacUserIdCommissionRoute: typeof ShellTenantUacUserIdCommissionRoute
   ShellTenantUacUserIdDetailsRoute: typeof ShellTenantUacUserIdDetailsRoute
+  ShellTenantUacUserIdGroupChatsRoute: typeof ShellTenantUacUserIdGroupChatsRoute
   ShellTenantUacUserIdSessionsRoute: typeof ShellTenantUacUserIdSessionsRoute
   ShellTenantUacUserIdStoresRoute: typeof ShellTenantUacUserIdStoresRoute
   ShellTenantUacRequestsIdRoute: typeof ShellTenantUacRequestsIdRoute
@@ -1023,19 +1128,23 @@ interface ShellTenantRouteChildren {
 
 const ShellTenantRouteChildren: ShellTenantRouteChildren = {
   ShellTenantAppInfoRoute: ShellTenantAppInfoRoute,
-  ShellTenantChatsRoute: ShellTenantChatsRoute,
   ShellTenantMoreRoute: ShellTenantMoreRoute,
   ShellTenantWhatsNewRoute: ShellTenantWhatsNewRoute,
   ShellTenantIndexRoute: ShellTenantIndexRoute,
   ShellTenantAccountDetailsRoute: ShellTenantAccountDetailsRoute,
   ShellTenantAccountLanguageRoute: ShellTenantAccountLanguageRoute,
+  ShellTenantAccountNotificationsRoute: ShellTenantAccountNotificationsRoute,
   ShellTenantAdvancedScheduleRoute: ShellTenantAdvancedScheduleRoute,
+  ShellTenantChatsChannelIdRoute: ShellTenantChatsChannelIdRoute,
   ShellTenantPayHelpRoute: ShellTenantPayHelpRoute,
+  ShellTenantScreenLabCaseRoute: ShellTenantScreenLabCaseRoute,
   ShellTenantStoreHelpRoute: ShellTenantStoreHelpRoute,
   ShellTenantUacHelpRoute: ShellTenantUacHelpRoute,
   ShellTenantAccountIndexRoute: ShellTenantAccountIndexRoute,
   ShellTenantAdvancedIndexRoute: ShellTenantAdvancedIndexRoute,
+  ShellTenantChatsIndexRoute: ShellTenantChatsIndexRoute,
   ShellTenantPayIndexRoute: ShellTenantPayIndexRoute,
+  ShellTenantScreenLabIndexRoute: ShellTenantScreenLabIndexRoute,
   ShellTenantStoreIndexRoute: ShellTenantStoreIndexRoute,
   ShellTenantUacIndexRoute: ShellTenantUacIndexRoute,
   ShellTenantStoreSettingsStoreIdRoute: ShellTenantStoreSettingsStoreIdRoute,
@@ -1044,6 +1153,7 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
   ShellTenantUacUserIdClaimsRoute: ShellTenantUacUserIdClaimsRoute,
   ShellTenantUacUserIdCommissionRoute: ShellTenantUacUserIdCommissionRoute,
   ShellTenantUacUserIdDetailsRoute: ShellTenantUacUserIdDetailsRoute,
+  ShellTenantUacUserIdGroupChatsRoute: ShellTenantUacUserIdGroupChatsRoute,
   ShellTenantUacUserIdSessionsRoute: ShellTenantUacUserIdSessionsRoute,
   ShellTenantUacUserIdStoresRoute: ShellTenantUacUserIdStoresRoute,
   ShellTenantUacRequestsIdRoute: ShellTenantUacRequestsIdRoute,

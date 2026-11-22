@@ -3,6 +3,7 @@ import { recordFailure, failureFor } from "@tea-pos/api-client/failures";
 import { toast } from "@tea-pos/ui/toast";
 
 import { openErrorSheet } from "../frame/ErrorSheet";
+import { startFakeKeyboard } from "../frame/screen/fake";
 
 /**
  * Local only (`import.meta.env.DEV`): `?preview=<name>` in the address shows a toast, a sheet or a
@@ -44,6 +45,8 @@ export function showPreview(name: string) {
             window.dispatchEvent(new Event("online"));
             [80, 80, 80, 80, 80].forEach((ms) => noteAnswer(ms));
         },
+        keyboard: () => startFakeKeyboard("android"),
+        "keyboard-ios": () => startFakeKeyboard("ios"),
         // Offline, then back 2 s later: a fresh page was never offline, so `online` alone shows nothing.
         back: () => {
             previews.offline!();
