@@ -31,4 +31,4 @@ Fix what the owner finds using chat in production. One item per line below, buil
 
 ## Not in this task
 
-Step 71 (the sellers' move) and the store events RFC.
+Step 71 (the sellers' move) and the store events RFC. An AI agent in chat (its own RFC later): it will reuse System's BOT badge, so the badge is a small component any non-person author can use.
