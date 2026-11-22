@@ -1,5 +1,16 @@
 [
     {
+        "version": "2026.11.20",
+        "date": "2026-11-22",
+        "apps": ["backoffice"],
+        "lines": {
+            "en": ["A cleared chat is now empty on every phone, even ones that had it open."],
+            "id": [
+                "Chat yang dihapus isinya sekarang kosong di semua HP, termasuk yang sedang membukanya."
+            ]
+        }
+    },
+    {
         "version": "2026.11.19",
         "date": "2026-11-22",
         "apps": ["backoffice"],

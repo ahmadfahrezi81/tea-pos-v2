@@ -53,6 +53,8 @@ type ChatChannelOutput struct {
 		ChatChannel
 		Members  []ChatMember `json:"members" nullable:"false" doc:"Everyone in it, with how far each has read: Seen by"`
 		Messages int          `json:"messages" doc:"How many messages it has, for its info"`
+		// Cleared by the owner: a phone hides what it saved from before this (task 078).
+		ClearedAt string `json:"clearedAt,omitempty" format:"date-time"`
 	}
 }
 
