@@ -14,9 +14,14 @@ Fix what the owner finds using chat in production. One item per line below, buil
    - The info leaves its bottom sheet for its own page (`chats/$channelId/info`), opened by tapping the chat's name, as now, and by a **⋯** button at the top right of every chat.
    - Condensed: the icon, name and who it is for in one short block, then the actions as rows (rename, members, follow, archive, clear), then the members.
    - **Clear chat**: the chat becomes empty. Soft: nothing is deleted from the database; a `cleared_at` on the channel (an additive migration) hides every message before it, and they can be brought back if needed. Asks first ("Clear this chat?").
-   - Open questions:
-     - For everyone, or only for me (as WhatsApp's Clear chat, which empties it on your phone alone)? Suggested: for everyone, since the owner wants the content gone.
-     - Who may clear? Suggested: chat admins only, any chat but someone's Notifications.
+   - Decided (owner): **for everyone**, **the owner only**, after a confirmation ("Clear this chat for everyone?").
+
+3. **A shared screen is the screen itself** (owner): not a small card with a few numbers, but full width in the chat, a copy of the real screen's look and content (the same components, live), with an **Open** button at its bottom. For a store's day, a pay period and a payslip, and the app's own messages that carry one (the day summary, the pay total, a payout paid).
+4. **Weather shows its proof** (owner): a rain message shows the coming hours as the weather screen draws them (hour, icon, chance), with a sentence summing it up ("Rain likely from 14:00 to 16:00, most at 15:00, 80%"), not only "Rain likely in the next 2 hours".
+5. **A release shows its notes** (owner): the release message lists that version's What's new lines in the chat, as bullet points, not only a link.
+6. **What's new without the highlight** (owner: "ugly"): opening it from chat goes to the page at that version, with no ring around it.
+
+**How we work from here (owner):** every event or chat card is drawn in ASCII first and agreed before it is built.
 
 ## Done when
 
