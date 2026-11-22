@@ -436,6 +436,7 @@ function Message({
     if (m.event) {
         const hours = (m.data as { hours?: Parameters<typeof RainCard>[0]["hours"] } | undefined)
             ?.hours;
+        const screen = !!m.link && hasScreen(m.link);
         return (
             <div
                 data-message-id={m.id}
@@ -445,7 +446,9 @@ function Message({
                 <div className="flex items-start gap-2">
                     <span className="w-8 shrink-0">{!grouped && <SystemFace />}</span>
                     <div className="flex min-w-0 flex-1 flex-col items-start">
-                        <div className={`max-w-full ${BUBBLE} text-left`}>
+                        <div
+                            className={`${screen || hours?.length ? "w-full" : "max-w-full"} ${BUBBLE} text-left`}
+                        >
                             {!grouped && (
                                 <p className="flex items-center gap-1.5 text-[14px] font-semibold leading-5 text-brand">
                                     {t("chat.system")}
@@ -455,29 +458,22 @@ function Message({
                             <p className="text-[15px] leading-5 whitespace-pre-wrap break-words">
                                 {eventText(m, t, locale)}
                             </p>
+                            {/* The screen it is about, inside the one bubble (task 078). */}
+                            {screen && <ScreenCard link={m.link!} />}
+                            {!!hours?.length && <RainCard hours={hours} />}
                             <div className="flex justify-end pb-0.5">
                                 <span className="text-[11px] leading-none text-gray-500">
                                     {formatTime(m.at, locale)}
                                 </span>
                             </div>
                         </div>
-                        {/* The screen it is about, inside the message, as wide as its column (task 078). */}
-                        {m.link && hasScreen(m.link) && (
-                            <div className="mt-1.5 w-full">
-                                <ScreenCard link={m.link} />
-                            </div>
-                        )}
-                        {!!hours?.length && (
-                            <div className="mt-1.5 w-full">
-                                <RainCard hours={hours} />
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
         );
     }
     const time = formatTime(m.at, locale);
+    const screen = !m.deleted && !!m.link && hasScreen(m.link);
     const ticks = mine && seen !== undefined && seen > 0;
     // As WhatsApp: name, photos, text and time in one bubble; the time sits on the text's last line.
     const stamp = (
@@ -546,7 +542,7 @@ function Message({
         // The phone's own text menu stays off: holding a message opens ours.
         <div
             {...(m.deleted ? {} : hold)}
-            className={`max-w-full select-none ${BUBBLE} text-left transition-transform duration-200 [-webkit-touch-callout:none] ${pressing ? "scale-[0.97]" : ""}`}
+            className={`${screen ? "w-full" : "max-w-full"} select-none ${BUBBLE} text-left transition-transform duration-200 [-webkit-touch-callout:none] ${pressing ? "scale-[0.97]" : ""}`}
         >
             {!grouped && (
                 <p className="flex items-center gap-1.5 text-[14px] font-semibold leading-5 text-brand">
@@ -560,8 +556,21 @@ function Message({
             )}
             {!m.deleted && quote}
             {photos}
-            {!m.deleted && m.link && !hasScreen(m.link) && <LinkCard link={m.link} />}
-            {body || (!photos && <div className="flex justify-end pb-0.5">{stamp}</div>)}
+            {!m.deleted && m.link && !screen && <LinkCard link={m.link} />}
+            {screen ? (
+                // One bubble (task 078): the words, the screen, then the time at the bottom.
+                <>
+                    {m.body && (
+                        <p className="text-[15px] leading-5 whitespace-pre-wrap break-words">
+                            {withMentions(m.body, names)}
+                        </p>
+                    )}
+                    <ScreenCard link={m.link!} />
+                    <div className="flex justify-end pb-0.5">{stamp}</div>
+                </>
+            ) : (
+                body || (!photos && <div className="flex justify-end pb-0.5">{stamp}</div>)
+            )}
             {/* Reactions belong to the bubble: inside it, under the text. */}
             {!m.deleted && !!m.reactions?.length && (
                 <Reactions reactions={m.reactions} onToggle={(e) => onReact?.(e)} />
@@ -580,12 +589,6 @@ function Message({
                 </span>
                 <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
                     {bubble}
-                    {/* A shared screen, inside the message, as wide as its column (task 078). */}
-                    {!m.deleted && m.link && hasScreen(m.link) && (
-                        <div className="w-full">
-                            <ScreenCard link={m.link} />
-                        </div>
-                    )}
                     {mine && seen !== undefined && seen > 0 && (
                         <button onClick={onSeen} className="text-[11px] text-brand">
                             {t("chat.seenBy").replace("{n}", String(seen))}
