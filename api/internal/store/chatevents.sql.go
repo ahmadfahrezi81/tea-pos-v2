@@ -114,6 +114,7 @@ func (q *Queries) LastRainEvent(ctx context.Context, arg LastRainEventParams) (s
 
 const linkDays = `-- name: LinkDays :many
 SELECT d.id, d.store_id, st.name AS store_name, d.date, (d.closed_at IS NOT NULL)::bool AS closed,
+    coalesce(op.full_name, '')::text AS opened_by, (d.created_at AT TIME ZONE 'UTC')::timestamptz AS opened_at,
     d.opening_balance::bigint AS opening, COALESCE(d.actual_cash, 0)::bigint AS counted,
     COALESCE((SELECT sum(i.quantity) FROM store_orders o JOIN store_order_items i ON i.order_id = o.id
         WHERE o.daily_summary_id = d.id), 0)::bigint AS cups,
@@ -122,6 +123,7 @@ SELECT d.id, d.store_id, st.name AS store_name, d.date, (d.closed_at IS NOT NULL
     COALESCE((SELECT sum(e.amount) FROM store_expenses e WHERE e.daily_summary_id = d.id), 0)::bigint AS expenses
 FROM store_daily_summaries d
 JOIN stores st ON st.id = d.store_id
+LEFT JOIN users op ON op.id = d.opened_by
 WHERE d.id = ANY($1::uuid[]) AND d.tenant_id = $2
 `
 
@@ -136,6 +138,8 @@ type LinkDaysRow struct {
 	StoreName string
 	Date      pgtype.Date
 	Closed    bool
+	OpenedBy  string
+	OpenedAt  pgtype.Timestamptz
 	Opening   int64
 	Counted   int64
 	Cups      int64
@@ -144,8 +148,8 @@ type LinkDaysRow struct {
 	Expenses  int64
 }
 
-// Shared days, as their cards show them (Step 75): the store, the date, and the day screen's top
-// numbers, from the orders so far (a day still open has no totals written yet).
+// Shared days, as the day screen shows them (task 078): the store, who opened it and when, and its
+// numbers from the orders so far (a day still open has no totals written yet).
 func (q *Queries) LinkDays(ctx context.Context, arg LinkDaysParams) ([]LinkDaysRow, error) {
 	rows, err := q.db.Query(ctx, linkDays, arg.Ids, arg.TenantID)
 	if err != nil {
@@ -161,6 +165,8 @@ func (q *Queries) LinkDays(ctx context.Context, arg LinkDaysParams) ([]LinkDaysR
 			&i.StoreName,
 			&i.Date,
 			&i.Closed,
+			&i.OpenedBy,
+			&i.OpenedAt,
 			&i.Opening,
 			&i.Counted,
 			&i.Cups,
@@ -180,10 +186,14 @@ func (q *Queries) LinkDays(ctx context.Context, arg LinkDaysParams) ([]LinkDaysR
 
 const linkPayouts = `-- name: LinkPayouts :many
 SELECT p.id, p.user_id, u.full_name, p.start_date, p.end_date, p.status, p.paid_at,
+    coalesce(payer.full_name, '')::text AS paid_by, coalesce(p.payment_proof_url, '')::text AS receipt,
     COALESCE((SELECT sum(pc.total_commission) FROM payroll_commissions pc WHERE pc.payout_id = p.id AND pc.status = 'approved'), 0)::bigint AS commissions,
+    COALESCE((SELECT sum(pc.total_orders) FROM payroll_commissions pc WHERE pc.payout_id = p.id AND pc.status = 'approved'), 0)::bigint AS orders,
+    COALESCE((SELECT sum(pc.total_cups) FROM payroll_commissions pc WHERE pc.payout_id = p.id AND pc.status = 'approved'), 0)::bigint AS cups,
     COALESCE((SELECT sum(cl.amount) FROM payroll_claims cl WHERE cl.payout_id = p.id AND cl.status = 'approved'), 0)::bigint AS claims
 FROM payroll_payouts p
 JOIN users u ON u.id = p.user_id
+LEFT JOIN users payer ON payer.id = p.paid_by
 WHERE p.id = ANY($1::uuid[]) AND p.tenant_id = $2
 `
 
@@ -200,11 +210,15 @@ type LinkPayoutsRow struct {
 	EndDate     pgtype.Date
 	Status      string
 	PaidAt      pgtype.Timestamptz
+	PaidBy      string
+	Receipt     string
 	Commissions int64
+	Orders      int64
+	Cups        int64
 	Claims      int64
 }
 
-// Shared payouts, as their cards show them: the person, the period, what it pays and its state.
+// Shared payouts, as the payslip shows them: the person, the period, what it pays, its state.
 func (q *Queries) LinkPayouts(ctx context.Context, arg LinkPayoutsParams) ([]LinkPayoutsRow, error) {
 	rows, err := q.db.Query(ctx, linkPayouts, arg.Ids, arg.TenantID)
 	if err != nil {
@@ -222,7 +236,11 @@ func (q *Queries) LinkPayouts(ctx context.Context, arg LinkPayoutsParams) ([]Lin
 			&i.EndDate,
 			&i.Status,
 			&i.PaidAt,
+			&i.PaidBy,
+			&i.Receipt,
 			&i.Commissions,
+			&i.Orders,
+			&i.Cups,
 			&i.Claims,
 		); err != nil {
 			return nil, err
@@ -364,6 +382,52 @@ func (q *Queries) RainChance(ctx context.Context, arg RainChanceParams) (float64
 	var column_1 float64
 	err := row.Scan(&column_1)
 	return column_1, err
+}
+
+const rainHours = `-- name: RainHours :many
+SELECT hour::int AS hour, weather_code, precipitation_probability::float8 AS chance, temperature::float8 AS temperature
+FROM weather_hours
+WHERE cell = $1 AND date = $2::date AND hour = ANY($3::smallint[])
+ORDER BY hour
+`
+
+type RainHoursParams struct {
+	Cell  string
+	Date  pgtype.Date
+	Hours []int16
+}
+
+type RainHoursRow struct {
+	Hour        int32
+	WeatherCode int32
+	Chance      float64
+	Temperature float64
+}
+
+// A cell's hours for the rain card (task 078): the proof under "rain likely".
+func (q *Queries) RainHours(ctx context.Context, arg RainHoursParams) ([]RainHoursRow, error) {
+	rows, err := q.db.Query(ctx, rainHours, arg.Cell, arg.Date, arg.Hours)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []RainHoursRow
+	for rows.Next() {
+		var i RainHoursRow
+		if err := rows.Scan(
+			&i.Hour,
+			&i.WeatherCode,
+			&i.Chance,
+			&i.Temperature,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const storeDayTotals = `-- name: StoreDayTotals :many

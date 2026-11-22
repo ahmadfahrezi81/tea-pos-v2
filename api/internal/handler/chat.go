@@ -57,6 +57,7 @@ var chatAccess = auth.App(auth.Chat, auth.Member)
 func registerChat(api huma.API, d Deps) {
 	registerChatTyping(api, d)
 	registerChatGroups(api, d)
+	registerChatInfo(api, d)
 	op := func(id, method, path, summary string) huma.Operation {
 		return huma.Operation{OperationID: id, Method: method, Path: "/tenants/{tenant}/chat" + path, Summary: summary, Tags: []string{"chat"}}
 	}

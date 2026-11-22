@@ -249,7 +249,8 @@
         "bad_hours": "Jam buka harus sebelum jam tutup.",
         "too_far_back": "Tanggal itu terlalu jauh ke belakang.",
         "blank_group_name": "Beri nama grup.",
-        "link_not_found": "Layar itu tidak ditemukan"
+        "link_not_found": "Layar itu tidak ditemukan",
+        "owner_only": "Hanya pemilik yang bisa melakukan ini"
     },
     "store": {
         "week": "Week",

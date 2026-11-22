@@ -26,6 +26,20 @@ const RainThreshold = 20
 //go:embed whats-new.json
 var whatsNew []byte
 
+// ReleaseEntry is one entry of What's new: a version's lines for some apps.
+type ReleaseEntry struct {
+	Version string              `json:"version"`
+	Apps    []string            `json:"apps"`
+	Lines   map[string][]string `json:"lines"`
+}
+
+// WhatsNew is Go's copy of What's new, newest first; nil if it cannot be read.
+func WhatsNew() []ReleaseEntry {
+	var entries []ReleaseEntry
+	_ = json.Unmarshal(whatsNew, &entries)
+	return entries
+}
+
 // Poster posts the worker's events, each in its own transaction.
 type Poster struct {
 	Pool *pgxpool.Pool
@@ -188,24 +202,62 @@ func (p Poster) Rain(ctx context.Context, now time.Time) error {
 		if event == "" {
 			continue
 		}
-		if _, err := p.post(ctx, Event{Tenant: s.TenantID, Where: Store(s.ID), Type: event, Data: map[string]any{"chance": chance}}); err != nil {
+		data, err := rainData(ctx, q, cell, now, chance)
+		if err != nil {
+			return err
+		}
+		if _, err := p.post(ctx, Event{Tenant: s.TenantID, Where: Store(s.ID), Type: event, Data: data}); err != nil {
 			return fmt.Errorf("rain %s: %w", s.ID, err)
 		}
 	}
 	return nil
 }
 
+// rainHoursShown: the card shows now and the next few hours, as the weather sheet does.
+const rainHoursShown = 5
+
+// rainData is the rain message's proof (task 078): the coming hours as the weather sheet draws
+// them, and when rain starts, ends and peaks, so the sentence above them says so.
+func rainData(ctx context.Context, q *store.Queries, cell string, now time.Time, chance float64) (map[string]any, error) {
+	var want []int16
+	for h := now.Hour(); h < now.Hour()+rainHoursShown && h <= 23; h++ {
+		want = append(want, int16(h))
+	}
+	rows, err := q.RainHours(ctx, store.RainHoursParams{Cell: cell, Date: date(now), Hours: want})
+	if err != nil {
+		return nil, err
+	}
+	hours := make([]map[string]any, len(rows))
+	from, to, peak, most := -1, -1, -1, -1.0
+	for i, r := range rows {
+		hours[i] = map[string]any{"hour": r.Hour, "code": r.WeatherCode, "chance": r.Chance, "temp": r.Temperature}
+		if r.Chance >= RainThreshold {
+			if from < 0 {
+				from = int(r.Hour)
+			}
+			if to < 0 || int(r.Hour) == to {
+				to = int(r.Hour) + 1 // rain runs until the end of this hour
+			}
+		}
+		if r.Chance > most {
+			most, peak = r.Chance, int(r.Hour)
+		}
+	}
+	data := map[string]any{"chance": chance, "hours": hours}
+	if from >= 0 {
+		data["from"], data["to"], data["peak"], data["peakChance"] = from, to, peak, most
+	}
+	return data, nil
+}
+
 // Releases posts the newest What's new version to General in every tenant that uses chat,
 // once: the worker runs it as it starts, so after each release's deploy.
 func (p Poster) Releases(ctx context.Context) error {
-	var entries []struct {
-		Version string   `json:"version"`
-		Apps    []string `json:"apps"`
-	}
 	notes := whatsNew
 	if p.WhatsNew != nil {
 		notes = p.WhatsNew
 	}
+	var entries []ReleaseEntry
 	if err := json.Unmarshal(notes, &entries); err != nil {
 		return err
 	}

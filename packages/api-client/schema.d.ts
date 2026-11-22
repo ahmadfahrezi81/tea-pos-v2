@@ -243,6 +243,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tenants/{tenant}/chat/channels/{id}/clear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Empty a chat for everyone (the owner only); nothing is deleted, only hidden */
+        post: operations["clearChat"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tenants/{tenant}/chat/channels/{id}/follow": {
         parameters: {
             query?: never;
@@ -256,6 +273,23 @@ export interface paths {
         post?: never;
         /** Stop following a channel */
         delete: operations["unfollowChatChannel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tenants/{tenant}/chat/channels/{id}/media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A chat's photos and shared screens, newest first, for its info */
+        get: operations["listChatMedia"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1550,17 +1584,20 @@ export interface components {
             cups?: number;
             /** Format: date */
             date?: string;
+            day?: components["schemas"]["DayPreview"];
             /** Format: date */
             end?: string;
             /** @description A day's or a payout's id, a pay period's first day, a version */
             id: string;
             /** @enum {string} */
             kind: "day" | "pay_period" | "payout" | "whats_new";
+            notes?: components["schemas"]["ReleaseNote"][] | null;
             open?: boolean;
+            payslip?: components["schemas"]["PayslipPreview"];
             /** Format: int64 */
             people?: number;
+            period?: components["schemas"]["PeriodPreview"];
             person?: string;
-            preview?: components["schemas"]["LinkPreview"];
             /** Format: date */
             start?: string;
             store?: string;
@@ -1575,6 +1612,12 @@ export interface components {
             id: string;
             /** @enum {string} */
             kind: "day" | "pay_period" | "payout";
+        };
+        ChatMediaOutputBody: {
+            /** @description Newest first */
+            photos: components["schemas"]["ChatPhoto"][];
+            /** @description Messages carrying a screen, newest first */
+            shared: components["schemas"]["ChatMessage"][];
         };
         ChatMember: {
             /** @description A chat admin (the owner, or chat level admin): deletes anyone's message */
@@ -1879,6 +1922,34 @@ export interface components {
             /** @description A signed address, for a few minutes; empty when it could not be signed */
             url: string;
         };
+        DayPreview: {
+            closed: boolean;
+            /**
+             * Format: int64
+             * @description Closed days only
+             */
+            counted?: number;
+            /** Format: int64 */
+            cups: number;
+            /** Format: date */
+            date: string;
+            /**
+             * Format: int64
+             * @description Opening + sales - expenses
+             */
+            expected: number;
+            /** Format: int64 */
+            expenses: number;
+            /** Format: date-time */
+            openedAt?: string;
+            openedBy?: string;
+            /** Format: int64 */
+            orders: number;
+            /** Format: int64 */
+            sales: number;
+            sellers: components["schemas"]["PreviewPerson"][];
+            store: string;
+        };
         DayProduct: {
             name: string;
             /** Format: int64 */
@@ -1970,7 +2041,7 @@ export interface components {
              * @example day_already_closed
              * @enum {string}
              */
-            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_claim_code" | "bad_cursor" | "bad_hours" | "bad_level" | "bad_photo" | "bad_proof" | "bad_range" | "bad_receipt" | "bad_request" | "blank_group_name" | "blank_message" | "blank_name" | "channel_not_found" | "channel_read_only" | "chat_too_fast" | "claim_done" | "claim_not_eligible" | "claim_not_found" | "claim_too_old" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_closed" | "day_not_found" | "day_not_in_payout" | "edit_closed" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "link_not_found" | "maintenance" | "message_not_found" | "no_session" | "no_work_that_day" | "not_allowed" | "not_author" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_your_message" | "not_your_store" | "not_yourself" | "old_day_open" | "owner_kept" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_closed" | "period_not_found" | "person_not_found" | "product_changed" | "proof_required" | "request_not_found" | "route_not_found" | "session_not_found" | "session_taken" | "staff_not_found" | "store_already_opened" | "store_not_found" | "store_not_open" | "store_required" | "too_far_back" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
+            code: "account_inactive" | "app_too_old" | "auto_needs_hours" | "bad_claim_code" | "bad_cursor" | "bad_hours" | "bad_level" | "bad_photo" | "bad_proof" | "bad_range" | "bad_receipt" | "bad_request" | "blank_group_name" | "blank_message" | "blank_name" | "channel_not_found" | "channel_read_only" | "chat_too_fast" | "claim_done" | "claim_not_eligible" | "claim_not_found" | "claim_too_old" | "claim_type_not_found" | "commission_not_found" | "commission_type_not_found" | "conflict" | "day_closed" | "day_not_found" | "day_not_in_payout" | "edit_closed" | "error" | "files_unavailable" | "forbidden" | "idempotency_key_required" | "idempotency_key_reused" | "internal" | "link_not_found" | "maintenance" | "message_not_found" | "no_session" | "no_work_that_day" | "not_allowed" | "not_author" | "not_found" | "not_in_tenant" | "not_signed_in" | "not_your_message" | "not_your_store" | "not_yourself" | "old_day_open" | "owner_kept" | "owner_only" | "payout_not_due" | "payout_not_found" | "payout_pending_review" | "payout_settled" | "period_closed" | "period_not_found" | "person_not_found" | "product_changed" | "proof_required" | "request_not_found" | "route_not_found" | "session_not_found" | "session_taken" | "staff_not_found" | "store_already_opened" | "store_not_found" | "store_not_open" | "store_required" | "too_far_back" | "too_large" | "too_many_requests" | "unauthorized" | "unknown_app";
             details?: string[] | null;
             /** @example The day is already closed */
             message: string;
@@ -2004,17 +2075,6 @@ export interface components {
              * @description As the phone showed it: a changed price is refused, never charged silently
              */
             unitPrice: number;
-        };
-        LinkPreview: {
-            /**
-             * Format: int64
-             * @description Rows left out of the list
-             */
-            more?: number;
-            rows?: components["schemas"]["PreviewRow"][] | null;
-            stats: components["schemas"]["PreviewStat"][];
-            /** @enum {string} */
-            status?: "open" | "closed" | "paid" | "pending" | "skipped";
         };
         Me: {
             /** @description Slugs of the tenants the user asked to join, still waiting */
@@ -2404,6 +2464,44 @@ export interface components {
             status: "pending" | "approved" | "rejected";
             storeName?: string;
         };
+        PayslipPreview: {
+            /** Format: int64 */
+            cups: number;
+            /** Format: date */
+            end: string;
+            /** Format: int64 */
+            orders: number;
+            /** Format: date-time */
+            paidAt?: string;
+            paidBy?: string;
+            person: string;
+            /** @description The transfer screenshot */
+            receipt?: string;
+            /** Format: date */
+            start: string;
+            /** @enum {string} */
+            status: "paid" | "pending" | "skipped";
+            /** Format: int64 */
+            total: number;
+        };
+        PeriodPreview: {
+            /** Format: date */
+            end: string;
+            /**
+             * Format: int64
+             * @description People left out of the list
+             */
+            more?: number;
+            /** Format: int64 */
+            paid: number;
+            people: components["schemas"]["PreviewPerson"][];
+            /** Format: date */
+            start: string;
+            /** Format: int64 */
+            toPay: number;
+            /** Format: int64 */
+            toReview: number;
+        };
         PostChatMessageInputBody: {
             /** @description May be empty with photos */
             body: string;
@@ -2416,22 +2514,15 @@ export interface components {
              */
             replyTo?: string;
         };
-        PreviewRow: {
+        PreviewPerson: {
             avatar?: string;
             name: string;
             /** @enum {string} */
             status?: "paid" | "pending" | "skipped";
-            /** @enum {string} */
-            unit: "money" | "cups";
-            /** Format: int64 */
-            value: number;
-        };
-        PreviewStat: {
-            /** @enum {string} */
-            label: "sales" | "cups" | "orders" | "expenses" | "expected" | "counted" | "total" | "paid" | "toPay" | "people" | "commissions" | "claims";
-            /** @enum {string} */
-            unit: "money" | "count";
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Cups on a day, money on a pay period
+             */
             value: number;
         };
         Product: {
@@ -2472,6 +2563,12 @@ export interface components {
         RejectRequestInputBody: {
             /** @description Also drop this person's later asks, quietly */
             block: boolean;
+        };
+        ReleaseNote: {
+            apps: string[];
+            lines: {
+                [key: string]: string[] | null;
+            };
         };
         ReviewDayInputBody: {
             /** @enum {string} */
@@ -3383,6 +3480,36 @@ export interface operations {
             };
         };
     };
+    clearChat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     followChatChannel: {
         parameters: {
             query?: never;
@@ -3431,6 +3558,38 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listChatMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatMediaOutputBody"];
+                };
             };
             /** @description Error */
             default: {

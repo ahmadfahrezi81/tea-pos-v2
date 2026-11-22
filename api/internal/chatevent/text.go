@@ -39,8 +39,15 @@ func Text(event string, d map[string]any, lang string) string {
 		}
 		return s
 	case RainStarted:
+		if _, ok := d["from"]; ok {
+			return fmt.Sprintf(pick("🌧 Rain likely from %s to %s, most at %s (%s%%)", "🌧 Kemungkinan hujan dari %s sampai %s, paling deras %s (%s%%)"),
+				clock(d["from"]), clock(d["to"]), clock(d["peak"]), count(num(d["peakChance"])))
+		}
 		return pick("🌧 Rain likely in the next 2 hours (", "🌧 Kemungkinan hujan dalam 2 jam ke depan (") + count(num(d["chance"])) + "%)"
 	case RainStopped:
+		if _, ok := d["hours"]; ok {
+			return fmt.Sprintf(pick("☀️ No more rain expected for the next 3 hours (%s%%)", "☀️ Tidak ada hujan untuk 3 jam ke depan (%s%%)"), count(num(d["chance"])))
+		}
 		return pick("☀️ Rain chance down to ", "☀️ Peluang hujan turun ke ") + count(num(d["chance"])) + "%"
 	case PayoutPaid:
 		period := Period(str(d["start"]), str(d["end"]), lang)
@@ -57,6 +64,9 @@ func Text(event string, d map[string]any, lang string) string {
 	}
 	return ""
 }
+
+// clock is an hour of the day, 14:00.
+func clock(v any) string { return fmt.Sprintf("%02d:00", int(num(v))%24) }
 
 var monthsID = [...]string{"Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"}
 
