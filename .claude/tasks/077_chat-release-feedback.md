@@ -30,6 +30,10 @@ Fix what the owner finds once chat is in production. One item per line below, ea
 4. **Faces under a chat's name** (owner, "as Slack's threads"): on the Chats list, each row's second line shows the faces of the last 3–4 people who wrote there, overlapping, before "2 members · 19 Nov". Go returns them with each channel (the last distinct authors, one read for the whole list).
 5. **How many messages a chat has** (owner: "only if it's worth it"). Suggestion: not on the list, where unread already says what matters, but in a chat's info ("1.234 messages"), counted when the info opens. The owner may strike it out.
 
+6. **One action at the top right of a root page** (owner: Share beside the account photo on the Pay tab looks awkward). The rule for every app: a tab's root page shows one thing at the top right.
+   - Suggested: Share leaves the Pay tab's header and becomes a small share icon in the week's card (beside ‹ Week 46 ›), so the header keeps only the account photo. The day and payslip screens are not roots: their Share stays in the header.
+   - The owner's other way: on a root page, Share takes the account photo's place. The shell enforces either one (`HeaderActions` on a root route).
+
 ## Done when
 
 - Each item above is fixed, or moved to a later step with the owner's OK.
