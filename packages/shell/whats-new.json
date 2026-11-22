@@ -1,5 +1,20 @@
 [
     {
+        "version": "2026.11.19",
+        "date": "2026-11-22",
+        "apps": ["backoffice"],
+        "lines": {
+            "en": [
+                "A shared screen now sits in one bubble with its message and time.",
+                "A chat's info lists what you can change at the bottom, below its members."
+            ],
+            "id": [
+                "Layar yang dibagikan sekarang ada dalam satu gelembung bersama pesan dan waktunya.",
+                "Info chat menunjukkan yang bisa kamu ubah di bagian bawah, di bawah anggotanya."
+            ]
+        }
+    },
+    {
         "version": "2026.11.18",
         "date": "2026-11-22",
         "apps": ["backoffice"],

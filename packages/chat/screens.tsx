@@ -31,7 +31,8 @@ function Frame({
 }) {
     const t = useT();
     return (
-        <div className="w-full overflow-hidden rounded-2xl bg-white ring-1 ring-black/5">
+        // Inside the message's bubble (task 078: one bubble, a large one): a light panel, not a second bubble.
+        <div className="my-1.5 w-full overflow-hidden rounded-xl bg-slate-50">
             <div className="space-y-3 p-3">{children}</div>
             {open && (
                 <button
@@ -40,7 +41,7 @@ function Frame({
                         e.stopPropagation();
                         open();
                     }}
-                    className="flex w-full items-center justify-center gap-1 border-t border-slate-100 py-3 text-[15px] font-semibold text-brand active:bg-slate-50"
+                    className="flex w-full items-center justify-center gap-1 border-t border-slate-200 py-3 text-[15px] font-semibold text-brand active:bg-slate-100"
                 >
                     {t(openLabel)}
                     <ChevronRight size={18} />
@@ -363,7 +364,7 @@ export function RainCard({ hours }: { hours: Hour[] }) {
                     return (
                         <div
                             key={h.hour}
-                            className={`flex items-center justify-between rounded-xl py-2 pr-3 pl-2.5 ${i === 0 ? "bg-blue-50" : "bg-gray-50"}`}
+                            className={`flex items-center justify-between rounded-xl py-2 pr-3 pl-2.5 ${i === 0 ? "bg-blue-50" : "bg-white"}`}
                         >
                             <span
                                 className={`w-16 font-semibold ${i === 0 ? "text-blue-500" : "text-sm text-gray-800"}`}
