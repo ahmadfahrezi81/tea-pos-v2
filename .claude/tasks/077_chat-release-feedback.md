@@ -35,6 +35,25 @@ Fix what the owner finds once chat is in production. One item per line below, ea
    - Suggested: Share leaves the Pay tab's header and becomes a small share icon in the week's card (beside ‹ Week 46 ›), so the header keeps only the account photo. The day and payslip screens are not roots: their Share stays in the header.
    - The owner's other way: on a root page, Share takes the account photo's place. The shell enforces either one (`HeaderActions` on a root route).
 
+7. **The M11's real switch was Chrome's own** (owner, testing production): the app's notification setting leads to Chrome's page for this site, but notifications were off for Chrome as a whole. The help sheet's Android steps now start there: Chrome → Settings → Notifications → Show notifications, then the site's settings.
+8. **A tapped notification showed "This site can't be reached" (ERR_FAILED)** while the app opened. With the app open, the worker reloaded its page (`navigate`), and on the M11 that load failed. Now:
+   - the worker asks the open app to change screen (`OPEN` message), and the shell's `startApp` listens (it never did, so the old fallback did nothing);
+   - a screen the saved copy cannot answer falls back to the network, never the browser's error page.
+9. **Faces even before anyone writes** (owner: in production nobody had written, so no faces): who wrote last first, then the other members, up to 4.
+
+10. **Robustness review of items 1–9** (owner: "any device, older Android, iPhone; and a backup where it can't"). Found and fixed:
+    - An iPhone asks only within the tap itself: Turn on awaited the service worker first. Now the question comes before any wait.
+    - Nothing can hang the button: the worker's readiness (15 s) and subscribing (20 s) have limits, as the question has.
+    - A subscription the server did not keep was shown as On: saving now fails loudly, and Turn on says so.
+    - A subscription made with another key is never delivered: Turn on and every start make a new one.
+    - Every start heals a lost subscription (iPhones drop them), only for a phone that turned them on in the app (its choice kept on the phone, or a subscription already there): allowing notifications in the phone alone never subscribes anyone, and Account's Off stays off.
+    - A screen with no saved copy and no network shows "No connection, Try again" instead of Chrome's error page.
+    - Open in Chrome falls back to the phone's own browser when Chrome is missing; an app installed from Samsung Internet gets its own steps and no Chrome button.
+    - The steps add the phone's own settings for Chrome (Apps → Chrome → Notifications / Camera) where Chrome's menu has none.
+    - The Chats card: a blocked phone gets "Show me how"; an iPhone in Safari is told to add the app to the Home Screen first.
+    - Cleanup: Turn on and the start's healing share one `subscribe`; one place says which phone this is (`isIPhone`, which now counts iPads that call themselves Macs, `isSamsungInternet`, `isInstalled`); the help sheet's steps are a table per phone and permission.
+    - Not changed: the build already needs Chrome 107 / Safari 16 (Vite's default); Chrome updates itself on old Android, so nothing new is required.
+
 ## Done when
 
 - Each item above is fixed, or moved to a later step with the owner's OK.

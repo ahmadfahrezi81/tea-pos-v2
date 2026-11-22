@@ -60,6 +60,14 @@ export async function startApp(router: ReturnType<typeof createAppRouter>, app: 
     });
     whenIdle(() => void import("../lib/events").then((m) => m.startEvents(router, APP_TAG)));
     if (screenCheckWanted()) void import("../lib/screen-check").then((m) => m.startScreenCheck());
+    // A notification tapped while the app is open: the worker asks for the chat here, so the
+    // screen changes in place instead of the whole page loading again (task 077).
+    navigator.serviceWorker?.addEventListener("message", (event) => {
+        const data = event.data as { type?: string; url?: string } | null;
+        if (data?.type !== "OPEN" || !data.url) return;
+        const to = new URL(data.url, location.origin);
+        if (to.origin === location.origin) void router.navigate({ href: to.pathname + to.search });
+    });
     whenIdle(
         () =>
             void import("@tea-pos/api-client/live").then((m) =>

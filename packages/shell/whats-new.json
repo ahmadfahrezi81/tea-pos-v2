@@ -1,5 +1,33 @@
 [
     {
+        "version": "2026.11.17",
+        "date": "2026-11-22",
+        "apps": ["backoffice"],
+        "lines": {
+            "en": [
+                "Tapping a notification now opens its chat.",
+                "The steps to allow notifications now start with Chrome's own switch.",
+                "Notifications turn back on by themselves if your phone loses them.",
+                "The chat list shows who is in each chat, even before anyone writes."
+            ],
+            "id": [
+                "Mengetuk notifikasi sekarang membuka chat-nya.",
+                "Langkah untuk mengizinkan notifikasi sekarang dimulai dari pengaturan Chrome sendiri.",
+                "Notifikasi menyala lagi dengan sendirinya kalau HP kamu kehilangannya.",
+                "Daftar chat menunjukkan siapa saja di tiap chat, walau belum ada yang menulis."
+            ]
+        }
+    },
+    {
+        "version": "2026.11.17",
+        "date": "2026-11-22",
+        "apps": ["seller"],
+        "lines": {
+            "en": ["The steps to allow the camera now cover more phones."],
+            "id": ["Langkah untuk mengizinkan kamera sekarang mencakup lebih banyak HP."]
+        }
+    },
+    {
         "version": "2026.11.16",
         "date": "2026-11-22",
         "apps": ["backoffice"],

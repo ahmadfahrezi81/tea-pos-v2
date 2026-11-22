@@ -131,6 +131,8 @@
         "andMore": "dan {n} lainnya",
         "oneMessage": "1 pesan",
         "messageCount": "{n} pesan",
-        "system": "Sistem"
+        "system": "Sistem",
+        "pushInstall": "Di iPhone, notifikasi baru bisa setelah aplikasinya ada di Layar Utama: ketuk Bagikan, lalu Tambah ke Layar Utama.",
+        "pushHow": "Lihat caranya"
     }
 }

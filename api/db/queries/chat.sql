@@ -73,15 +73,36 @@ SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name,
             ELSE false
           END
     )::int AS members,
-    -- The faces of the last people who wrote (owner: as Slack's threads), from the newest 50 messages.
-    coalesce((SELECT jsonb_agg(jsonb_build_object('name', fu.full_name, 'avatar', coalesce(fu.avatar_url, '')) ORDER BY f.at DESC)
+    -- Faces (owner, task 077): who wrote last first, then the other members, up to 4; so a chat
+    -- nobody wrote in yet still shows who is in it.
+    coalesce((SELECT jsonb_agg(jsonb_build_object('name', fu.full_name, 'avatar', coalesce(fu.avatar_url, '')) ORDER BY f.at DESC NULLS LAST, fu.full_name)
         FROM (
-            SELECT w.author_id, max(w.created_at) AS at
-            FROM (SELECT x.author_id, x.created_at FROM chat_messages x
-                WHERE x.channel_id = c.id AND x.author_type = 'user' AND x.deleted_at IS NULL
-                ORDER BY x.created_at DESC LIMIT 50) w
-            GROUP BY w.author_id ORDER BY at DESC LIMIT 4
-        ) f JOIN users fu ON fu.id = f.author_id), '[]')::jsonb AS faces
+            SELECT p.user_id, max(w.created_at) AS at
+            FROM (
+                SELECT ma.user_id FROM user_tenant_assignments ma
+                LEFT JOIN user_app_access mx ON mx.tenant_id = ma.tenant_id AND mx.user_id = ma.user_id AND mx.app = 'chat'
+                WHERE ma.tenant_id = c.tenant_id AND ma.status = 'active'
+                  AND (t.owner_id = ma.user_id OR mx.access IS NOT NULL)
+                  AND CASE c.kind
+                    WHEN 'general' THEN true
+                    WHEN 'admin' THEN t.owner_id = ma.user_id OR mx.access IN ('vip', 'admin')
+                    WHEN 'personal' THEN ma.user_id = c.user_id
+                    WHEN 'store' THEN EXISTS (SELECT 1 FROM user_store_assignments sa WHERE sa.store_id = c.store_id AND sa.user_id = ma.user_id)
+                    WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = ma.user_id)
+                    ELSE false
+                  END
+                UNION
+                SELECT x.author_id FROM (SELECT author_id FROM chat_messages
+                    WHERE channel_id = c.id AND author_type = 'user' AND deleted_at IS NULL
+                    ORDER BY created_at DESC LIMIT 50) x
+            ) p
+            LEFT JOIN (SELECT author_id, created_at FROM chat_messages
+                WHERE channel_id = c.id AND author_type = 'user' AND deleted_at IS NULL
+                ORDER BY created_at DESC LIMIT 50) w ON w.author_id = p.user_id
+            GROUP BY p.user_id
+            ORDER BY at DESC NULLS LAST
+            LIMIT 4
+        ) f JOIN users fu ON fu.id = f.user_id), '[]')::jsonb AS faces
 FROM chat_channels c
 JOIN tenants t ON t.id = c.tenant_id
 LEFT JOIN stores s ON s.id = c.store_id

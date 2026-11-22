@@ -131,6 +131,8 @@
         "andMore": "and {n} more",
         "oneMessage": "1 message",
         "messageCount": "{n} messages",
-        "system": "System"
+        "system": "System",
+        "pushInstall": "On iPhone, notifications work once the app is on your Home Screen: tap Share, then Add to Home Screen.",
+        "pushHow": "Show me how"
     }
 }
