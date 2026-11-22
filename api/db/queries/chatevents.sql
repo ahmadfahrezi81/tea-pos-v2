@@ -79,9 +79,10 @@ SELECT COALESCE((
 SELECT full_name FROM users WHERE id = @id;
 
 -- name: LinkDays :many
--- Shared days, as their cards show them (Step 75): the store, the date, and the day screen's top
--- numbers, from the orders so far (a day still open has no totals written yet).
+-- Shared days, as the day screen shows them (task 078): the store, who opened it and when, and its
+-- numbers from the orders so far (a day still open has no totals written yet).
 SELECT d.id, d.store_id, st.name AS store_name, d.date, (d.closed_at IS NOT NULL)::bool AS closed,
+    coalesce(op.full_name, '')::text AS opened_by, (d.created_at AT TIME ZONE 'UTC')::timestamptz AS opened_at,
     d.opening_balance::bigint AS opening, COALESCE(d.actual_cash, 0)::bigint AS counted,
     COALESCE((SELECT sum(i.quantity) FROM store_orders o JOIN store_order_items i ON i.order_id = o.id
         WHERE o.daily_summary_id = d.id), 0)::bigint AS cups,
@@ -90,13 +91,25 @@ SELECT d.id, d.store_id, st.name AS store_name, d.date, (d.closed_at IS NOT NULL
     COALESCE((SELECT sum(e.amount) FROM store_expenses e WHERE e.daily_summary_id = d.id), 0)::bigint AS expenses
 FROM store_daily_summaries d
 JOIN stores st ON st.id = d.store_id
+LEFT JOIN users op ON op.id = d.opened_by
 WHERE d.id = ANY(@ids::uuid[]) AND d.tenant_id = @tenant_id;
 
 -- name: LinkPayouts :many
--- Shared payouts, as their cards show them: the person, the period, what it pays and its state.
+-- Shared payouts, as the payslip shows them: the person, the period, what it pays, its state.
 SELECT p.id, p.user_id, u.full_name, p.start_date, p.end_date, p.status, p.paid_at,
+    coalesce(payer.full_name, '')::text AS paid_by, coalesce(p.payment_proof_url, '')::text AS receipt,
     COALESCE((SELECT sum(pc.total_commission) FROM payroll_commissions pc WHERE pc.payout_id = p.id AND pc.status = 'approved'), 0)::bigint AS commissions,
+    COALESCE((SELECT sum(pc.total_orders) FROM payroll_commissions pc WHERE pc.payout_id = p.id AND pc.status = 'approved'), 0)::bigint AS orders,
+    COALESCE((SELECT sum(pc.total_cups) FROM payroll_commissions pc WHERE pc.payout_id = p.id AND pc.status = 'approved'), 0)::bigint AS cups,
     COALESCE((SELECT sum(cl.amount) FROM payroll_claims cl WHERE cl.payout_id = p.id AND cl.status = 'approved'), 0)::bigint AS claims
 FROM payroll_payouts p
 JOIN users u ON u.id = p.user_id
+LEFT JOIN users payer ON payer.id = p.paid_by
 WHERE p.id = ANY(@ids::uuid[]) AND p.tenant_id = @tenant_id;
+
+-- name: RainHours :many
+-- A cell's hours for the rain card (task 078): the proof under "rain likely".
+SELECT hour::int AS hour, weather_code, precipitation_probability::float8 AS chance, temperature::float8 AS temperature
+FROM weather_hours
+WHERE cell = @cell AND date = @date::date AND hour = ANY(@hours::smallint[])
+ORDER BY hour;

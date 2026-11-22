@@ -33,7 +33,7 @@ export function WhatsNewScreen() {
                 <div
                     key={e.version}
                     id={`v-${e.version}`}
-                    className={`scroll-mt-4 rounded-2xl bg-white p-4 ${e.version === version ? "ring-2 ring-brand" : ""}`}
+                    className="scroll-mt-4 rounded-2xl bg-white p-4"
                 >
                     <p className="font-bold text-gray-900">{e.version}</p>
                     <p className="text-xs text-gray-600 mb-2">{e.date}</p>

@@ -6,6 +6,7 @@ type Data = Record<string, unknown> | undefined;
 
 const num = (v: unknown) => (typeof v === "number" ? v : 0);
 const str = (v: unknown) => (typeof v === "string" ? v : "");
+const clock = (h: number) => `${String(h % 24).padStart(2, "0")}:00`;
 
 /** `17–23 Nov`, or `28 Oct–3 Nov` across a month. */
 export function period(start: string, end: string, locale: Locale): string {
@@ -52,8 +53,18 @@ export function eventText(
             return parts.join(" · ");
         }
         case "rain_started":
+            // With its hours (task 078): when it starts, ends and peaks.
+            if (typeof d?.from === "number")
+                return fill("chat.evRainFrom", {
+                    from: clock(d.from),
+                    to: clock(num(d.to)),
+                    peak: clock(num(d.peak)),
+                    n: formatCount(num(d.peakChance)),
+                });
             return fill("chat.evRainStarted", { n: formatCount(num(d?.chance)) });
         case "rain_stopped":
+            if (Array.isArray(d?.hours))
+                return fill("chat.evRainNone", { n: formatCount(num(d?.chance)) });
             return fill("chat.evRainStopped", { n: formatCount(num(d?.chance)) });
         case "payout_paid": {
             const vars = {

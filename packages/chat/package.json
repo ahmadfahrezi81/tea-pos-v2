@@ -5,6 +5,7 @@
     "exports": {
         "./ChatsScreen": "./ChatsScreen.tsx",
         "./ChannelScreen": "./ChannelScreen.tsx",
+        "./ChannelInfoScreen": "./ChannelInfo.tsx",
         "./ShareAction": "./ShareAction.tsx"
     },
     "scripts": {

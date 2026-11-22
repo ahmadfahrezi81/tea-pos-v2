@@ -55,7 +55,7 @@ SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name,
     (m.deleted_at IS NOT NULL)::bool AS last_deleted,
     (SELECT count(*) FROM (
         SELECT 1 FROM chat_messages x
-        WHERE x.channel_id = c.id AND x.created_at > coalesce(r.last_read_at, '-infinity')
+        WHERE x.channel_id = c.id AND x.created_at > greatest(coalesce(r.last_read_at, '-infinity'), coalesce(c.cleared_at, '-infinity'))
           AND x.deleted_at IS NULL AND x.author_id IS DISTINCT FROM @user_id
         LIMIT 100
     ) unread)::int AS unread,
@@ -94,10 +94,12 @@ SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name,
                 UNION
                 SELECT x.author_id FROM (SELECT author_id FROM chat_messages
                     WHERE channel_id = c.id AND author_type = 'user' AND deleted_at IS NULL
+                      AND created_at > coalesce(c.cleared_at, '-infinity')
                     ORDER BY created_at DESC LIMIT 50) x
             ) p
             LEFT JOIN (SELECT author_id, created_at FROM chat_messages
                 WHERE channel_id = c.id AND author_type = 'user' AND deleted_at IS NULL
+                  AND created_at > coalesce(c.cleared_at, '-infinity')
                 ORDER BY created_at DESC LIMIT 50) w ON w.author_id = p.user_id
             GROUP BY p.user_id
             ORDER BY at DESC NULLS LAST
@@ -190,6 +192,7 @@ LEFT JOIN users u ON u.id = m.author_id
 LEFT JOIN chat_messages r ON r.id = m.thread_root_id
 LEFT JOIN users ru ON ru.id = r.author_id
 WHERE m.channel_id = @channel_id AND (m.created_at, m.id) < (@cursor_at::timestamptz, @cursor_id::uuid)
+  AND m.created_at > coalesce((SELECT cc.cleared_at FROM chat_channels cc WHERE cc.id = @channel_id), '-infinity')
 ORDER BY m.created_at DESC, m.id DESC
 LIMIT @lim;
 
@@ -207,6 +210,7 @@ LEFT JOIN users u ON u.id = m.author_id
 LEFT JOIN chat_messages r ON r.id = m.thread_root_id
 LEFT JOIN users ru ON ru.id = r.author_id
 WHERE m.channel_id = @channel_id AND (m.created_at > @since::timestamptz OR m.changed_at > @since::timestamptz)
+  AND m.created_at > coalesce((SELECT cc.cleared_at FROM chat_channels cc WHERE cc.id = @channel_id), '-infinity')
 ORDER BY m.created_at, m.id
 LIMIT 200;
 
@@ -278,6 +282,7 @@ LEFT JOIN users u ON u.id = m.author_id
 LEFT JOIN chat_messages rt ON rt.id = m.thread_root_id
 LEFT JOIN chat_reads cr ON cr.channel_id = c.id AND cr.user_id = @user_id
 WHERE c.tenant_id = @tenant_id AND m.deleted_at IS NULL
+  AND m.created_at > coalesce(c.cleared_at, '-infinity')
   AND m.author_id IS DISTINCT FROM @user_id
   AND (CASE c.kind
     WHEN 'general' THEN true
@@ -299,6 +304,7 @@ SELECT count(*)::int FROM (
     JOIN chat_channels c ON c.id = m.channel_id
     LEFT JOIN chat_reads cr ON cr.channel_id = c.id AND cr.user_id = @user_id
     WHERE c.tenant_id = @tenant_id AND m.deleted_at IS NULL
+      AND m.created_at > coalesce(c.cleared_at, '-infinity')
       AND m.author_id IS DISTINCT FROM @user_id
       AND m.created_at > coalesce(cr.last_read_at, '-infinity')
       AND (CASE c.kind
@@ -410,4 +416,30 @@ ON CONFLICT DO NOTHING;
 
 -- name: CountChatMessages :one
 -- How many messages a chat has, for its info (task 077).
-SELECT count(*)::int FROM chat_messages WHERE channel_id = @channel_id AND deleted_at IS NULL;
+SELECT count(*)::int FROM chat_messages WHERE channel_id = @channel_id AND deleted_at IS NULL
+    AND created_at > coalesce((SELECT cc.cleared_at FROM chat_channels cc WHERE cc.id = @channel_id), '-infinity');
+
+-- name: ClearChatChannel :exec
+-- Clear chat (task 078): everything before now is hidden for everyone; nothing is deleted.
+UPDATE chat_channels SET cleared_at = now(), last_message_id = NULL, last_message_at = NULL WHERE id = @id;
+
+-- name: ListChannelPhotos :many
+-- A chat's photos for its info, newest first.
+SELECT p.message_id, p.position, p.path, p.preview_path, p.width, p.height
+FROM chat_message_photos p
+JOIN chat_messages m ON m.id = p.message_id
+WHERE m.channel_id = @channel_id AND m.deleted_at IS NULL
+  AND m.created_at > coalesce((SELECT cc.cleared_at FROM chat_channels cc WHERE cc.id = @channel_id), '-infinity')
+ORDER BY m.created_at DESC, p.position
+LIMIT @lim;
+
+-- name: ListChannelShared :many
+-- What was shared in a chat (a day, a pay period, a payslip), newest first, for its info.
+SELECT m.id, m.metadata, m.created_at, coalesce(u.full_name, '')::text AS author_name
+FROM chat_messages m
+LEFT JOIN users u ON u.id = m.author_id
+WHERE m.channel_id = @channel_id AND m.deleted_at IS NULL AND m.metadata ? 'link'
+  AND m.metadata->'link'->>'kind' <> 'whats_new'
+  AND m.created_at > coalesce((SELECT cc.cleared_at FROM chat_channels cc WHERE cc.id = @channel_id), '-infinity')
+ORDER BY m.created_at DESC
+LIMIT @lim;

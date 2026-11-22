@@ -33,7 +33,8 @@ import { Fragment, useEffect, useRef, useState, useSyncExternalStore, type React
 
 import { ChannelHeader } from "./ChannelInfo";
 import { eventText } from "./events";
-import { SystemFace } from "./SystemFace";
+import { hasScreen, RainCard, ScreenCard } from "./screens";
+import { BotBadge, SystemFace } from "./SystemFace";
 import { channelName } from "./labels";
 import { LinkCard } from "./links";
 import { doneTyping, sayTyping, stoppedTyping, useTyping } from "./typing";
@@ -430,35 +431,51 @@ function Message({
     const t = useT();
     const locale = useLocale();
     const { handlers: hold, pressing } = useHold(onHold);
-    // The app's own message, as anyone's (owner, task 077): from System, a robot for its photo.
-    if (m.event)
+    // The app's own message, as anyone's (task 077): from System, with its BOT badge (task 078),
+    // and the screen it is about under it, as wide as the chat.
+    if (m.event) {
+        const hours = (m.data as { hours?: Parameters<typeof RainCard>[0]["hours"] } | undefined)
+            ?.hours;
         return (
             <div
                 data-message-id={m.id}
                 data-at={m.at}
-                className={`-mx-4 flex items-start gap-2 px-4 ${grouped ? "" : "pt-2"}`}
+                className={`-mx-4 px-4 ${grouped ? "" : "pt-2"}`}
             >
-                <span className="w-8 shrink-0">{!grouped && <SystemFace />}</span>
-                <div className="flex min-w-0 flex-1 flex-col items-start">
-                    <div className={`max-w-full ${BUBBLE} text-left`}>
-                        {!grouped && (
-                            <p className="text-[14px] font-semibold leading-5 text-brand">
-                                {t("chat.system")}
+                <div className="flex items-start gap-2">
+                    <span className="w-8 shrink-0">{!grouped && <SystemFace />}</span>
+                    <div className="flex min-w-0 flex-1 flex-col items-start">
+                        <div className={`max-w-full ${BUBBLE} text-left`}>
+                            {!grouped && (
+                                <p className="flex items-center gap-1.5 text-[14px] font-semibold leading-5 text-brand">
+                                    {t("chat.system")}
+                                    <BotBadge />
+                                </p>
+                            )}
+                            <p className="text-[15px] leading-5 whitespace-pre-wrap break-words">
+                                {eventText(m, t, locale)}
                             </p>
-                        )}
-                        <p className="text-[15px] leading-5 whitespace-pre-wrap break-words">
-                            {eventText(m, t, locale)}
-                        </p>
-                        {m.link && <LinkCard link={m.link} />}
-                        <div className="flex justify-end pb-0.5">
-                            <span className="text-[11px] leading-none text-gray-500">
-                                {formatTime(m.at, locale)}
-                            </span>
+                            <div className="flex justify-end pb-0.5">
+                                <span className="text-[11px] leading-none text-gray-500">
+                                    {formatTime(m.at, locale)}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
+                {m.link && hasScreen(m.link) && (
+                    <div className="mt-1.5">
+                        <ScreenCard link={m.link} />
+                    </div>
+                )}
+                {!!hours?.length && (
+                    <div className="mt-1.5">
+                        <RainCard hours={hours} />
+                    </div>
+                )}
             </div>
         );
+    }
     const time = formatTime(m.at, locale);
     const ticks = mine && seen !== undefined && seen > 0;
     // As WhatsApp: name, photos, text and time in one bubble; the time sits on the text's last line.
@@ -542,7 +559,7 @@ function Message({
             )}
             {!m.deleted && quote}
             {photos}
-            {!m.deleted && m.link && <LinkCard link={m.link} />}
+            {!m.deleted && m.link && !hasScreen(m.link) && <LinkCard link={m.link} />}
             {body || (!photos && <div className="flex justify-end pb-0.5">{stamp}</div>)}
             {/* Reactions belong to the bubble: inside it, under the text. */}
             {!m.deleted && !!m.reactions?.length && (
@@ -554,17 +571,27 @@ function Message({
         <div
             data-message-id={m.id}
             data-at={m.at}
-            className={`-mx-4 flex items-start gap-2 px-4 transition-colors duration-200 ${grouped ? "" : "pt-2"} ${pressing || active ? "bg-brand/10" : ""}`}
+            className={`-mx-4 px-4 transition-colors duration-200 ${grouped ? "" : "pt-2"} ${pressing || active ? "bg-brand/10" : ""}`}
         >
-            <span className="w-8 shrink-0">{!grouped && <Avatar url={m.avatar} size={32} />}</span>
-            <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
-                {bubble}
-                {mine && seen !== undefined && seen > 0 && (
-                    <button onClick={onSeen} className="text-[11px] text-brand">
-                        {t("chat.seenBy").replace("{n}", String(seen))}
-                    </button>
-                )}
+            <div className="flex items-start gap-2">
+                <span className="w-8 shrink-0">
+                    {!grouped && <Avatar url={m.avatar} size={32} />}
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+                    {bubble}
+                    {mine && seen !== undefined && seen > 0 && (
+                        <button onClick={onSeen} className="text-[11px] text-brand">
+                            {t("chat.seenBy").replace("{n}", String(seen))}
+                        </button>
+                    )}
+                </div>
             </div>
+            {/* A shared screen, as wide as the chat (task 078). */}
+            {!m.deleted && m.link && hasScreen(m.link) && (
+                <div className="mt-1.5">
+                    <ScreenCard link={m.link} />
+                </div>
+            )}
         </div>
     );
 }

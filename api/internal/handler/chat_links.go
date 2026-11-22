@@ -86,8 +86,8 @@ func sharedLink(ctx context.Context, q *store.Queries, caller auth.Caller, in *c
 	return link, nil
 }
 
-// resolveLinks fills each link's card for a reader who may open it, a page at a time: one read
-// per kind.
+// resolveLinks fills each link's screen for a reader who may open it, a page at a time: one read
+// per kind. What's new carries its lines for everyone.
 func resolveLinks(ctx context.Context, q *store.Queries, caller auth.Caller, items []contract.ChatMessage) error {
 	var days, payouts []pgtype.UUID
 	periods := map[string]bool{}
@@ -97,6 +97,7 @@ func resolveLinks(ctx context.Context, q *store.Queries, caller auth.Caller, ite
 		}
 		if m.Link.Kind == chatevent.LinkWhatsNew {
 			m.Link.Open = true
+			m.Link.Notes = releaseNotes(m.Link.ID)
 			continue
 		}
 		if !canOpenLinks(caller) {
@@ -116,74 +117,17 @@ func resolveLinks(ctx context.Context, q *store.Queries, caller auth.Caller, ite
 			periods[m.Link.ID] = true
 		}
 	}
-	dayRows := map[string]store.LinkDaysRow{}
-	daySellers := map[string][]contract.PreviewRow{}
-	if len(days) > 0 {
-		rows, err := q.LinkDays(ctx, store.LinkDaysParams{Ids: days, TenantID: caller.TenantID})
-		if err != nil {
-			return err
-		}
-		for _, r := range rows {
-			dayRows[r.ID.String()] = r
-		}
-		sellers, err := q.ListDaySellers(ctx, days)
-		if err != nil {
-			return err
-		}
-		for _, r := range sellers {
-			k := r.DailySummaryID.String()
-			daySellers[k] = append(daySellers[k], contract.PreviewRow{Name: r.FullName, Avatar: r.AvatarUrl.String, Value: r.Cups, Unit: "cups"})
-		}
+	dayScreens, err := dayPreviews(ctx, q, caller, days)
+	if err != nil {
+		return err
 	}
-	payoutRows := map[string]store.LinkPayoutsRow{}
-	if len(payouts) > 0 {
-		rows, err := q.LinkPayouts(ctx, store.LinkPayoutsParams{Ids: payouts, TenantID: caller.TenantID})
-		if err != nil {
-			return err
-		}
-		for _, r := range rows {
-			payoutRows[r.ID.String()] = r
-		}
+	payslips, err := payslipPreviews(ctx, q, caller, payouts)
+	if err != nil {
+		return err
 	}
-	type period struct {
-		end                 string
-		total, people, paid int64
-		rows                []contract.PreviewRow
-	}
-	periodRows := map[string]period{}
-	if len(periods) > 0 {
-		frequency, err := q.GetPayFrequency(ctx, caller.TenantID)
-		if err != nil {
-			return err
-		}
-		for s := range periods {
-			day, err := time.Parse(time.DateOnly, s)
-			if err != nil {
-				continue
-			}
-			start, end, err := domain.PayWindow(day, frequency)
-			if err != nil || start.Format(time.DateOnly) != s {
-				continue // the schedule changed since: no longer a period's first day
-			}
-			rows, err := q.ListPayouts(ctx, store.ListPayoutsParams{TenantID: caller.TenantID, FromDate: date(start), ToDate: date(end)})
-			if err != nil {
-				return err
-			}
-			p := period{end: end.Format(time.DateOnly)}
-			for _, r := range rows {
-				t := r.Commissions + r.Claims
-				if t == 0 {
-					continue
-				}
-				p.total += t
-				p.people++
-				if r.Status == "paid" {
-					p.paid += t
-				}
-				p.rows = append(p.rows, contract.PreviewRow{Name: r.FullName, Avatar: r.AvatarUrl.String, Value: t, Unit: "money", Status: r.Status})
-			}
-			periodRows[s] = p
-		}
+	periodScreens, err := periodPreviews(ctx, q, caller, periods)
+	if err != nil {
+		return err
 	}
 	for _, m := range items {
 		l := m.Link
@@ -192,63 +136,158 @@ func resolveLinks(ctx context.Context, q *store.Queries, caller auth.Caller, ite
 		}
 		switch l.Kind {
 		case chatevent.LinkDay:
-			if r, ok := dayRows[l.ID]; ok {
-				l.Open, l.Store, l.StoreID, l.Date, l.Cups = true, r.StoreName, r.StoreID.String(), day0(r.Date), &r.Cups
-				l.Preview = dayPreview(r, daySellers[l.ID])
+			if d, ok := dayScreens[l.ID]; ok {
+				l.Open, l.Store, l.StoreID, l.Date, l.Cups, l.Day = true, d.screen.Store, d.storeID, d.screen.Date, &d.screen.Cups, d.screen
 			}
 		case chatevent.LinkPayout:
-			if r, ok := payoutRows[l.ID]; ok {
-				total := r.Commissions + r.Claims
-				l.Open, l.Person, l.UserID, l.Start, l.End, l.Total = true, r.FullName, r.UserID.String(), day0(r.StartDate), day0(r.EndDate), &total
-				l.Preview = &contract.LinkPreview{Status: r.Status, Stats: []contract.PreviewStat{
-					{Label: "commissions", Value: r.Commissions, Unit: "money"},
-					{Label: "claims", Value: r.Claims, Unit: "money"},
-					{Label: "total", Value: total, Unit: "money"},
-				}}
+			if p, ok := payslips[l.ID]; ok {
+				l.Open, l.Person, l.UserID, l.Start, l.End, l.Total = true, p.screen.Person, p.userID, p.screen.Start, p.screen.End, &p.screen.Total
+				l.Payslip = p.screen
 			}
 		case chatevent.LinkPayPeriod:
-			if p, ok := periodRows[l.ID]; ok {
-				l.Open, l.Start, l.End, l.Total, l.People = true, l.ID, p.end, &p.total, &p.people
-				l.Preview = &contract.LinkPreview{Stats: []contract.PreviewStat{
-					{Label: "total", Value: p.total, Unit: "money"},
-					{Label: "paid", Value: p.paid, Unit: "money"},
-					{Label: "toPay", Value: p.total - p.paid, Unit: "money"},
-				}}
-				l.Preview.Rows, l.Preview.More = shortList(p.rows)
+			if p, ok := periodScreens[l.ID]; ok {
+				total, people := p.ToPay+p.Paid, int64(len(p.People)+p.More)
+				l.Open, l.Start, l.End, l.Total, l.People, l.Period = true, l.ID, p.End, &total, &people, p
 			}
 		}
 	}
 	return nil
 }
 
-// previewRows: a card lists this many people at most, then "and N more".
-const previewRows = 5
+// previewPeople: a screen in chat lists this many people at most, then "and N more".
+const previewPeople = 5
 
-func shortList(rows []contract.PreviewRow) ([]contract.PreviewRow, int) {
-	if len(rows) <= previewRows {
+func shortList(rows []contract.PreviewPerson) ([]contract.PreviewPerson, int) {
+	if len(rows) <= previewPeople {
 		return rows, 0
 	}
-	return rows[:previewRows], len(rows) - previewRows
+	return rows[:previewPeople], len(rows) - previewPeople
 }
 
-// dayPreview is the top of a day's screen: sales, cups, orders, expenses, the cash, who worked.
-func dayPreview(r store.LinkDaysRow, sellers []contract.PreviewRow) *contract.LinkPreview {
-	status := "open"
-	if r.Closed {
-		status = "closed"
+type dayScreen struct {
+	screen  *contract.DayPreview
+	storeID string
+}
+
+// dayPreviews is the top of each day's screen: who opened it, its numbers, who worked.
+func dayPreviews(ctx context.Context, q *store.Queries, caller auth.Caller, ids []pgtype.UUID) (map[string]dayScreen, error) {
+	out := map[string]dayScreen{}
+	if len(ids) == 0 {
+		return out, nil
 	}
-	p := &contract.LinkPreview{Status: status, Stats: []contract.PreviewStat{
-		{Label: "sales", Value: r.Sales, Unit: "money"},
-		{Label: "cups", Value: r.Cups, Unit: "count"},
-		{Label: "orders", Value: r.Orders, Unit: "count"},
-		{Label: "expenses", Value: r.Expenses, Unit: "money"},
-		{Label: "expected", Value: r.Opening + r.Sales - r.Expenses, Unit: "money"},
-	}}
-	if r.Closed {
-		p.Stats = append(p.Stats, contract.PreviewStat{Label: "counted", Value: r.Counted, Unit: "money"})
+	rows, err := q.LinkDays(ctx, store.LinkDaysParams{Ids: ids, TenantID: caller.TenantID})
+	if err != nil {
+		return nil, err
 	}
-	p.Rows, p.More = shortList(sellers)
-	return p
+	sellers, err := q.ListDaySellers(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	people := map[string][]contract.PreviewPerson{}
+	for _, r := range sellers {
+		k := r.DailySummaryID.String()
+		people[k] = append(people[k], contract.PreviewPerson{Name: r.FullName, Avatar: r.AvatarUrl.String, Value: r.Cups})
+	}
+	for _, r := range rows {
+		d := &contract.DayPreview{
+			Date: day0(r.Date), Store: r.StoreName, Closed: r.Closed, OpenedBy: r.OpenedBy, OpenedAt: tsz(r.OpenedAt),
+			Sales: r.Sales, Orders: r.Orders, Cups: r.Cups, Expenses: r.Expenses, Expected: r.Opening + r.Sales - r.Expenses,
+			Sellers: people[r.ID.String()],
+		}
+		if d.Sellers == nil {
+			d.Sellers = []contract.PreviewPerson{}
+		}
+		if r.Closed {
+			d.Counted = &r.Counted
+		}
+		out[r.ID.String()] = dayScreen{screen: d, storeID: r.StoreID.String()}
+	}
+	return out, nil
+}
+
+type payslipScreen struct {
+	screen *contract.PayslipPreview
+	userID string
+}
+
+// payslipPreviews is the top of each payslip: its week, numbers, and how it was paid.
+func payslipPreviews(ctx context.Context, q *store.Queries, caller auth.Caller, ids []pgtype.UUID) (map[string]payslipScreen, error) {
+	out := map[string]payslipScreen{}
+	if len(ids) == 0 {
+		return out, nil
+	}
+	rows, err := q.LinkPayouts(ctx, store.LinkPayoutsParams{Ids: ids, TenantID: caller.TenantID})
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range rows {
+		out[r.ID.String()] = payslipScreen{userID: r.UserID.String(), screen: &contract.PayslipPreview{
+			Person: r.FullName, Start: day0(r.StartDate), End: day0(r.EndDate), Status: r.Status,
+			Orders: r.Orders, Cups: r.Cups, Total: r.Commissions + r.Claims,
+			PaidAt: tsz(r.PaidAt), PaidBy: r.PaidBy, Receipt: r.Receipt,
+		}}
+	}
+	return out, nil
+}
+
+// periodPreviews is the Pay tab at each period: what is owed and paid, and each person.
+func periodPreviews(ctx context.Context, q *store.Queries, caller auth.Caller, starts map[string]bool) (map[string]*contract.PeriodPreview, error) {
+	out := map[string]*contract.PeriodPreview{}
+	if len(starts) == 0 {
+		return out, nil
+	}
+	frequency, err := q.GetPayFrequency(ctx, caller.TenantID)
+	if err != nil {
+		return nil, err
+	}
+	for s := range starts {
+		day, err := time.Parse(time.DateOnly, s)
+		if err != nil {
+			continue
+		}
+		start, end, err := domain.PayWindow(day, frequency)
+		if err != nil || start.Format(time.DateOnly) != s {
+			continue // the schedule changed since: no longer a period's first day
+		}
+		rows, err := q.ListPayouts(ctx, store.ListPayoutsParams{TenantID: caller.TenantID, FromDate: date(start), ToDate: date(end)})
+		if err != nil {
+			return nil, err
+		}
+		p := &contract.PeriodPreview{Start: s, End: end.Format(time.DateOnly)}
+		var people []contract.PreviewPerson
+		for _, r := range rows {
+			t := r.Commissions + r.Claims
+			if t == 0 && r.Pending == 0 {
+				continue // as the Pay tab: nothing owed and nothing waiting is noise
+			}
+			if r.Status == "paid" {
+				p.Paid += t
+			} else if r.Status == "pending" {
+				p.ToPay += t
+			}
+			if r.Pending > 0 {
+				p.ToReview++
+			}
+			people = append(people, contract.PreviewPerson{Name: r.FullName, Avatar: r.AvatarUrl.String, Value: t, Status: r.Status})
+		}
+		p.People, p.More = shortList(people)
+		if p.People == nil {
+			p.People = []contract.PreviewPerson{}
+		}
+		out[s] = p
+	}
+	return out, nil
+}
+
+// releaseNotes is a What's new version's lines, per app, from Go's copy of the file.
+func releaseNotes(version string) []contract.ReleaseNote {
+	var out []contract.ReleaseNote
+	for _, e := range chatevent.WhatsNew() {
+		if e.Version == version {
+			out = append(out, contract.ReleaseNote{Apps: e.Apps, Lines: e.Lines})
+		}
+	}
+	return out
 }
 
 // linkMetadata is a user message's metadata: its link, or nothing.

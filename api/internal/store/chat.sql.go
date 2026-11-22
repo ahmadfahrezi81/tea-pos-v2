@@ -66,6 +66,16 @@ func (q *Queries) ChatAuthorsBetween(ctx context.Context, arg ChatAuthorsBetween
 	return items, nil
 }
 
+const clearChatChannel = `-- name: ClearChatChannel :exec
+UPDATE chat_channels SET cleared_at = now(), last_message_id = NULL, last_message_at = NULL WHERE id = $1
+`
+
+// Clear chat (task 078): everything before now is hidden for everyone; nothing is deleted.
+func (q *Queries) ClearChatChannel(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, clearChatChannel, id)
+	return err
+}
+
 const countChatActivityUnread = `-- name: CountChatActivityUnread :one
 SELECT count(*)::int FROM (
     SELECT 1
@@ -73,6 +83,7 @@ SELECT count(*)::int FROM (
     JOIN chat_channels c ON c.id = m.channel_id
     LEFT JOIN chat_reads cr ON cr.channel_id = c.id AND cr.user_id = $1
     WHERE c.tenant_id = $2 AND m.deleted_at IS NULL
+      AND m.created_at > coalesce(c.cleared_at, '-infinity')
       AND m.author_id IS DISTINCT FROM $1
       AND m.created_at > coalesce(cr.last_read_at, '-infinity')
       AND (CASE c.kind
@@ -109,6 +120,7 @@ func (q *Queries) CountChatActivityUnread(ctx context.Context, arg CountChatActi
 
 const countChatMessages = `-- name: CountChatMessages :one
 SELECT count(*)::int FROM chat_messages WHERE channel_id = $1 AND deleted_at IS NULL
+    AND created_at > coalesce((SELECT cc.cleared_at FROM chat_channels cc WHERE cc.id = $1), '-infinity')
 `
 
 // How many messages a chat has, for its info (task 077).
@@ -380,6 +392,98 @@ func (q *Queries) InsertChatPhoto(ctx context.Context, arg InsertChatPhotoParams
 	return err
 }
 
+const listChannelPhotos = `-- name: ListChannelPhotos :many
+SELECT p.message_id, p.position, p.path, p.preview_path, p.width, p.height
+FROM chat_message_photos p
+JOIN chat_messages m ON m.id = p.message_id
+WHERE m.channel_id = $1 AND m.deleted_at IS NULL
+  AND m.created_at > coalesce((SELECT cc.cleared_at FROM chat_channels cc WHERE cc.id = $1), '-infinity')
+ORDER BY m.created_at DESC, p.position
+LIMIT $2
+`
+
+type ListChannelPhotosParams struct {
+	ChannelID pgtype.UUID
+	Lim       int32
+}
+
+// A chat's photos for its info, newest first.
+func (q *Queries) ListChannelPhotos(ctx context.Context, arg ListChannelPhotosParams) ([]ChatMessagePhoto, error) {
+	rows, err := q.db.Query(ctx, listChannelPhotos, arg.ChannelID, arg.Lim)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ChatMessagePhoto
+	for rows.Next() {
+		var i ChatMessagePhoto
+		if err := rows.Scan(
+			&i.MessageID,
+			&i.Position,
+			&i.Path,
+			&i.PreviewPath,
+			&i.Width,
+			&i.Height,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listChannelShared = `-- name: ListChannelShared :many
+SELECT m.id, m.metadata, m.created_at, coalesce(u.full_name, '')::text AS author_name
+FROM chat_messages m
+LEFT JOIN users u ON u.id = m.author_id
+WHERE m.channel_id = $1 AND m.deleted_at IS NULL AND m.metadata ? 'link'
+  AND m.metadata->'link'->>'kind' <> 'whats_new'
+  AND m.created_at > coalesce((SELECT cc.cleared_at FROM chat_channels cc WHERE cc.id = $1), '-infinity')
+ORDER BY m.created_at DESC
+LIMIT $2
+`
+
+type ListChannelSharedParams struct {
+	ChannelID pgtype.UUID
+	Lim       int32
+}
+
+type ListChannelSharedRow struct {
+	ID         pgtype.UUID
+	Metadata   []byte
+	CreatedAt  pgtype.Timestamptz
+	AuthorName string
+}
+
+// What was shared in a chat (a day, a pay period, a payslip), newest first, for its info.
+func (q *Queries) ListChannelShared(ctx context.Context, arg ListChannelSharedParams) ([]ListChannelSharedRow, error) {
+	rows, err := q.db.Query(ctx, listChannelShared, arg.ChannelID, arg.Lim)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListChannelSharedRow
+	for rows.Next() {
+		var i ListChannelSharedRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Metadata,
+			&i.CreatedAt,
+			&i.AuthorName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listChatActivity = `-- name: ListChatActivity :many
 SELECT m.id, m.author_type, m.author_id, coalesce(u.full_name, '')::text AS author_name,
     coalesce(u.avatar_url, '')::text AS author_avatar, m.event_type, m.body, m.metadata, m.client_key,
@@ -396,6 +500,7 @@ LEFT JOIN users u ON u.id = m.author_id
 LEFT JOIN chat_messages rt ON rt.id = m.thread_root_id
 LEFT JOIN chat_reads cr ON cr.channel_id = c.id AND cr.user_id = $1
 WHERE c.tenant_id = $2 AND m.deleted_at IS NULL
+  AND m.created_at > coalesce(c.cleared_at, '-infinity')
   AND m.author_id IS DISTINCT FROM $1
   AND (CASE c.kind
     WHEN 'general' THEN true
@@ -513,7 +618,7 @@ SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name,
     (m.deleted_at IS NOT NULL)::bool AS last_deleted,
     (SELECT count(*) FROM (
         SELECT 1 FROM chat_messages x
-        WHERE x.channel_id = c.id AND x.created_at > coalesce(r.last_read_at, '-infinity')
+        WHERE x.channel_id = c.id AND x.created_at > greatest(coalesce(r.last_read_at, '-infinity'), coalesce(c.cleared_at, '-infinity'))
           AND x.deleted_at IS NULL AND x.author_id IS DISTINCT FROM $2
         LIMIT 100
     ) unread)::int AS unread,
@@ -552,10 +657,12 @@ SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name,
                 UNION
                 SELECT x.author_id FROM (SELECT author_id FROM chat_messages
                     WHERE channel_id = c.id AND author_type = 'user' AND deleted_at IS NULL
+                      AND created_at > coalesce(c.cleared_at, '-infinity')
                     ORDER BY created_at DESC LIMIT 50) x
             ) p
             LEFT JOIN (SELECT author_id, created_at FROM chat_messages
                 WHERE channel_id = c.id AND author_type = 'user' AND deleted_at IS NULL
+                  AND created_at > coalesce(c.cleared_at, '-infinity')
                 ORDER BY created_at DESC LIMIT 50) w ON w.author_id = p.user_id
             GROUP BY p.user_id
             ORDER BY at DESC NULLS LAST
@@ -761,6 +868,7 @@ LEFT JOIN users u ON u.id = m.author_id
 LEFT JOIN chat_messages r ON r.id = m.thread_root_id
 LEFT JOIN users ru ON ru.id = r.author_id
 WHERE m.channel_id = $1 AND (m.created_at, m.id) < ($2::timestamptz, $3::uuid)
+  AND m.created_at > coalesce((SELECT cc.cleared_at FROM chat_channels cc WHERE cc.id = $1), '-infinity')
 ORDER BY m.created_at DESC, m.id DESC
 LIMIT $4
 `
@@ -848,6 +956,7 @@ LEFT JOIN users u ON u.id = m.author_id
 LEFT JOIN chat_messages r ON r.id = m.thread_root_id
 LEFT JOIN users ru ON ru.id = r.author_id
 WHERE m.channel_id = $1 AND (m.created_at > $2::timestamptz OR m.changed_at > $2::timestamptz)
+  AND m.created_at > coalesce((SELECT cc.cleared_at FROM chat_channels cc WHERE cc.id = $1), '-infinity')
 ORDER BY m.created_at, m.id
 LIMIT 200
 `

@@ -278,12 +278,13 @@ function ChannelRow({ channel: c }: { channel: ChatChannel }) {
                             )
                         )}
                     </span>
+                    {/* Two lines, as WhatsApp (task 078). */}
                     <span
-                        className={`truncate text-sm ${typing ? "font-normal text-brand" : unread ? "font-semibold text-gray-900" : "font-normal text-gray-600"}`}
+                        className={`line-clamp-2 self-start text-sm leading-5 break-words ${typing ? "font-normal text-brand" : unread ? "font-semibold text-gray-900" : "font-normal text-gray-600"}`}
                     >
                         {typing ? t("chat.typing") : lastLine(c, t, locale)}
                     </span>
-                    <span className="flex h-5 justify-end">
+                    <span className="flex h-5 justify-end self-start">
                         {unread && (
                             <span className="min-w-6 h-5 px-1.5 rounded-full bg-brand text-white text-xs font-bold leading-5 text-center">
                                 {c.unread > 99 ? "99+" : c.unread}
@@ -292,11 +293,10 @@ function ChannelRow({ channel: c }: { channel: ChatChannel }) {
                     </span>
                     <span className="flex min-w-0 items-center gap-1.5 pt-0.5 text-sm font-normal text-gray-600">
                         {!!c.faces?.length && (
-                            <span className="flex shrink-0 -space-x-1.5">
+                            // Side by side with a thin gap, as Slack now (task 078).
+                            <span className="flex shrink-0 gap-0.5">
                                 {c.faces.map((f, i) => (
-                                    <span key={i} className="rounded-[28.6%] ring-2 ring-white">
-                                        <Avatar url={f.avatar} size={22} />
-                                    </span>
+                                    <Avatar key={i} url={f.avatar} size={22} />
                                 ))}
                             </span>
                         )}

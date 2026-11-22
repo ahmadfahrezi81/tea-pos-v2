@@ -1,15 +1,32 @@
+import { $api, api, type components } from "@tea-pos/api-client";
+import { STALE } from "@tea-pos/api-client/query";
 import { formatCount } from "@tea-pos/format";
-import type { components } from "@tea-pos/api-client";
 import type { MessageKey } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
-import { HeaderTitle } from "@tea-pos/shell/HeaderActions";
+import { ConfirmSheet } from "@tea-pos/shell/FormFooter";
+import { HeaderActions, HeaderTitle } from "@tea-pos/shell/HeaderActions";
+import { useAccess, useSlug } from "@tea-pos/shell/tenant";
+import { useApiMutation } from "@tea-pos/shell/useApiMutation";
+import { ActionButton } from "@tea-pos/ui/ActionButton";
 import { Avatar } from "@tea-pos/ui/Avatar";
 import { Badge } from "@tea-pos/ui/Badge";
+import { TextInput } from "@tea-pos/ui/form/TextInput";
+import { ImagePreview } from "@tea-pos/ui/ImagePreview";
+import { SearchBox } from "@tea-pos/ui/SearchBox";
 import { SectionLabel } from "@tea-pos/ui/SectionLabel";
 import { Sheet } from "@tea-pos/ui/Sheet";
-import { ActionButton } from "@tea-pos/ui/ActionButton";
-import { TextInput } from "@tea-pos/ui/form/TextInput";
-import { Archive, ArchiveRestore, BellOff, BellRing, Pencil, UserPlus } from "lucide-react";
+import { Skeleton } from "@tea-pos/ui/Skeleton";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import {
+    Archive,
+    ArchiveRestore,
+    BellOff,
+    Eraser,
+    Pencil,
+    UserPlus,
+    type LucideIcon,
+} from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import {
@@ -20,6 +37,8 @@ import {
     useUpdateGroup,
 } from "./groups";
 import { channelName, KIND_ICON } from "./labels";
+import { LinkCard } from "./links";
+import { useChannel } from "./queries";
 
 type Channel = components["schemas"]["ChatChannelOutputBody"];
 type Member = Channel["members"][number];
@@ -39,11 +58,15 @@ function sorted(members: Member[], me: string, locale: string): Member[] {
         .sort((a, b) => +(b.id === me) - +(a.id === me) || a.name.localeCompare(b.name, locale));
 }
 
-/** The channel in the header, as WhatsApp: its icon, its name, how many are in it; a tap opens its info. */
+/**
+ * The channel in the header, as WhatsApp: its icon, its name, how many are in it. Its name and
+ * the ⋯ at the top right open its info page (task 078).
+ */
 export function ChannelHeader({ channel, me }: { channel: Channel; me: string }) {
     const t = useT();
     const locale = useLocale();
-    const [open, setOpen] = useState(false);
+    const slug = useSlug();
+    const navigate = useNavigate();
     const Icon = KIND_ICON[channel.kind];
     const members = sorted(channel.members, me, locale);
     const who =
@@ -52,9 +75,10 @@ export function ChannelHeader({ channel, me }: { channel: Channel; me: string })
             : members.length === 1
               ? t("chat.oneMember")
               : t("chat.memberCount").replace("{n}", String(members.length));
+    const info = `/${slug}/chats/${channel.id}/info`;
     return (
         <>
-            <HeaderTitle onClick={() => setOpen(true)}>
+            <HeaderTitle onClick={() => void navigate({ to: info })}>
                 <span className="flex min-w-0 items-center gap-2.5">
                     <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-slate-200">
                         <Icon size={18} className="text-gray-900" />
@@ -63,60 +87,325 @@ export function ChannelHeader({ channel, me }: { channel: Channel; me: string })
                         <span className="block truncate text-lg font-bold leading-tight">
                             {channelName(channel, t)}
                         </span>
-                        <span className="block truncate text-xs font-normal tracking-normal text-gray-500">
+                        <span className="block truncate text-xs font-normal tracking-normal text-gray-600">
                             {who}
                         </span>
                     </span>
                 </span>
             </HeaderTitle>
-            {open && (
-                <ChannelInfo
-                    channel={channel}
-                    members={members}
-                    me={me}
-                    onClose={() => setOpen(false)}
-                />
-            )}
+            <HeaderActions actions={[{ kind: "more", to: info }]} />
         </>
     );
 }
 
+/** A chat's photos and shared screens, read when its info opens. */
+function useMedia(id: string) {
+    const tenant = useSlug();
+    return $api.useQuery(
+        "get",
+        "/tenants/{tenant}/chat/channels/{id}/media",
+        { params: { path: { tenant, id } } },
+        { enabled: !!tenant, staleTime: STALE.QUICK, meta: { live: ["chat"] } },
+    );
+}
+
+const FEW_MEMBERS = 5;
+const FEW_PHOTOS = 8;
+const FEW_SHARED = 3;
+
 /**
- * A channel's details (RFC screen 5, without settings: chat is the company's, nobody leaves). A
- * chat admin also renames, archives and picks a group's people, and follows what is not theirs.
+ * A chat's info, a page of its own (task 078): who it is for and how much was said, its photos,
+ * what was shared, its people; the ⋯ menu changes it, each action only for who may.
  */
-function ChannelInfo({
+export default function ChannelInfoScreen({ channelId }: { channelId: string }) {
+    const t = useT();
+    const locale = useLocale();
+    const slug = useSlug();
+    const { data: channel } = useChannel(slug, channelId);
+    const { data: media } = useMedia(channelId);
+    const [menu, setMenu] = useState(false);
+    const [allMembers, setAllMembers] = useState(false);
+    const [allPhotos, setAllPhotos] = useState(false);
+    const [allShared, setAllShared] = useState(false);
+    const [q, setQ] = useState("");
+    const [photo, setPhoto] = useState<string | null>(null);
+    if (!channel)
+        return (
+            <div className="space-y-3">
+                <Skeleton className="h-28 rounded-2xl" />
+                <Skeleton className="h-48 rounded-2xl" />
+            </div>
+        );
+    const Icon = KIND_ICON[channel.kind];
+    const members = sorted(channel.members, "", locale);
+    const needle = q.trim().toLocaleLowerCase(locale);
+    const shownMembers = allMembers
+        ? members.filter((m) => !needle || m.name.toLocaleLowerCase(locale).includes(needle))
+        : members.slice(0, FEW_MEMBERS);
+    const photos = media?.photos ?? [];
+    const shared = media?.shared ?? [];
+    return (
+        <div className="chat space-y-5 pb-6">
+            <HeaderActions actions={[{ kind: "more", onClick: () => setMenu(true) }]} />
+            <div className="flex items-center gap-3 rounded-2xl bg-white p-4">
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-slate-100">
+                    <Icon size={24} className="text-gray-900" />
+                </span>
+                <span className="min-w-0 flex-1">
+                    <span className="block truncate text-lg font-bold text-gray-900">
+                        {channelName(channel, t)}
+                    </span>
+                    <span className="block text-sm text-gray-600">
+                        {channel.archived ? t("chat.archivedGroup") : t(WHO[channel.kind])}
+                    </span>
+                    <span className="block text-sm text-gray-600">
+                        {t(
+                            channel.messages === 1 ? "chat.oneMessage" : "chat.messageCount",
+                        ).replace("{n}", formatCount(channel.messages ?? 0))}
+                    </span>
+                </span>
+            </div>
+
+            {photos.length > 0 && (
+                <Section
+                    title={t("chat.photos")}
+                    more={photos.length > FEW_PHOTOS && !allPhotos}
+                    onMore={() => setAllPhotos(true)}
+                >
+                    <div className="grid grid-cols-4 gap-1.5">
+                        {(allPhotos ? photos : photos.slice(0, FEW_PHOTOS)).map((p, i) => (
+                            <button
+                                key={i}
+                                type="button"
+                                onClick={() => setPhoto(p.url)}
+                                className="aspect-square overflow-hidden rounded-lg bg-slate-200"
+                            >
+                                {p.previewUrl && (
+                                    <img
+                                        src={p.previewUrl}
+                                        alt=""
+                                        className="size-full object-cover"
+                                    />
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                </Section>
+            )}
+
+            {shared.length > 0 && (
+                <Section
+                    title={t("chat.shared")}
+                    more={shared.length > FEW_SHARED && !allShared}
+                    onMore={() => setAllShared(true)}
+                >
+                    <div className="space-y-1">
+                        {(allShared ? shared : shared.slice(0, FEW_SHARED)).map(
+                            (m) => m.link && <LinkCard key={m.id} link={m.link} />,
+                        )}
+                    </div>
+                </Section>
+            )}
+
+            {channel.kind !== "personal" && (
+                <Section
+                    title={`${t("chat.members")} · ${members.length}`}
+                    more={members.length > FEW_MEMBERS && !allMembers}
+                    onMore={() => setAllMembers(true)}
+                >
+                    {allMembers && (
+                        <div className="mb-2">
+                            <SearchBox
+                                value={q}
+                                onChange={setQ}
+                                placeholder={t("chat.searchPeople")}
+                                clearLabel={t("common.close")}
+                            />
+                        </div>
+                    )}
+                    <div className="rounded-2xl bg-white px-4">
+                        {shownMembers.map((m) => (
+                            <div
+                                key={m.id}
+                                className="flex items-center gap-3 border-b border-slate-100 py-2.5 last:border-b-0"
+                            >
+                                <Avatar url={m.avatar} size={32} />
+                                <span className="min-w-0 flex-1 truncate text-[16px] text-gray-900">
+                                    {m.name}
+                                </span>
+                                {m.vip && (
+                                    <Badge tone="brand" size="sm">
+                                        {t("chat.vip")}
+                                    </Badge>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </Section>
+            )}
+
+            {photo && <ImagePreview open onClose={() => setPhoto(null)} src={photo} title="" />}
+            <InfoMenu channel={channel} open={menu} onClose={() => setMenu(false)} />
+        </div>
+    );
+}
+
+function Section({
+    title,
+    more,
+    onMore,
+    children,
+}: {
+    title: string;
+    more: boolean;
+    onMore: () => void;
+    children: ReactNode;
+}) {
+    const t = useT();
+    return (
+        <section className="space-y-1.5">
+            <div className="flex items-center justify-between pr-1">
+                <SectionLabel>{title}</SectionLabel>
+                {more && (
+                    <button
+                        type="button"
+                        onClick={onMore}
+                        className="text-sm font-semibold text-brand"
+                    >
+                        {t("chat.seeAll")}
+                    </button>
+                )}
+            </div>
+            {children}
+        </section>
+    );
+}
+
+/** Empties the chat for everyone (the owner only); nothing is deleted, only hidden. */
+function useClearChat(id: string) {
+    const tenant = useSlug();
+    const queryClient = useQueryClient();
+    return useApiMutation(
+        async (_: object, headers) => {
+            const { error } = await api.POST("/tenants/{tenant}/chat/channels/{id}/clear", {
+                params: { path: { tenant, id } },
+                headers,
+            });
+            if (error) throw error;
+        },
+        {
+            onSuccess: () =>
+                void queryClient.invalidateQueries({
+                    predicate: (q) =>
+                        String(q.queryKey[1] ?? "").includes("/chat/") ||
+                        q.queryKey[0] === "chat-messages",
+                }),
+        },
+    );
+}
+
+/**
+ * The ⋯ menu: what changes the chat, each only for who may. Rename, members and archive: a chat
+ * admin, on a group. Unfollow: a chat admin following a chat they are not in. Clear: the owner.
+ */
+function InfoMenu({
     channel,
-    members,
-    me,
+    open,
     onClose,
 }: {
     channel: Channel;
-    members: Member[];
-    me: string;
+    open: boolean;
     onClose: () => void;
 }) {
     const t = useT();
     const admin = useChatAdmin();
-    const [view, setView] = useState<"info" | "rename" | "members">("info");
+    const { owner } = useAccess();
+    const [view, setView] = useState<"menu" | "rename" | "members" | "clear">("menu");
     const update = useUpdateGroup(channel.id);
     const setMembers = useSetGroupMembers(channel.id);
     const follow = useFollow(channel.id);
+    const clear = useClearChat(channel.id);
     const [name, setName] = useState(channel.name ?? "");
     const [picked, setPicked] = useState<string[] | null>(null);
-    const Icon = KIND_ICON[channel.kind];
     const group = admin && channel.kind === "group";
-    const back = () => setView("info");
+    const close = () => {
+        setView("menu");
+        onClose();
+    };
+    const back = () => setView("menu");
+    const rows: { icon: LucideIcon; label: MessageKey; onClick: () => void; danger?: boolean }[] = [
+        ...(group
+            ? [
+                  {
+                      icon: Pencil,
+                      label: "chat.rename" as MessageKey,
+                      onClick: () => setView("rename"),
+                  },
+                  {
+                      icon: UserPlus,
+                      label: "chat.editMembers" as MessageKey,
+                      onClick: () => setView("members"),
+                  },
+                  {
+                      icon: channel.archived ? ArchiveRestore : Archive,
+                      label: (channel.archived ? "chat.unarchive" : "chat.archive") as MessageKey,
+                      onClick: () => {
+                          update.mutate({ archived: !channel.archived });
+                          close();
+                      },
+                  },
+              ]
+            : []),
+        ...(admin && channel.following
+            ? [
+                  {
+                      icon: BellOff,
+                      label: "chat.unfollow" as MessageKey,
+                      onClick: () => {
+                          follow.mutate({ on: false });
+                          close();
+                      },
+                  },
+              ]
+            : []),
+        ...(owner && channel.kind !== "personal"
+            ? [
+                  {
+                      icon: Eraser,
+                      label: "chat.clear" as MessageKey,
+                      onClick: () => setView("clear"),
+                      danger: true,
+                  },
+              ]
+            : []),
+    ];
+    if (!open) return null;
+    if (view === "clear")
+        return (
+            <ConfirmSheet
+                title={t("chat.clearConfirm")}
+                message={t("chat.clearSub")}
+                label={t("chat.clear")}
+                tone="gray"
+                emoji="sparkles"
+                onConfirm={async () => {
+                    await clear.mutateAsync({});
+                    close();
+                }}
+                onError={back}
+                onCancel={back}
+            />
+        );
     if (view === "rename")
         return (
-            <Sheet open onClose={onClose} onBack={back} title={t("chat.rename")}>
+            <Sheet open onClose={close} onBack={back} title={t("chat.rename")}>
                 <div className="chat space-y-4 pb-2">
                     <TextInput value={name} onChange={setName} placeholder={t("chat.groupName")} />
                     <SaveButton
                         disabled={!name.trim() || name.trim() === channel.name}
                         action={async () => {
                             await update.mutateAsync({ name: name.trim() });
-                            back();
+                            close();
                         }}
                     >
                         {t("chat.save")}
@@ -126,14 +415,14 @@ function ChannelInfo({
         );
     if (view === "members")
         return (
-            <Sheet open onClose={onClose} onBack={back} title={t("chat.editMembers")}>
+            <Sheet open onClose={close} onBack={back} title={t("chat.editMembers")}>
                 <div className="chat space-y-4 pb-2">
                     <PeoplePicker group={channel.id} picked={picked} onChange={setPicked} />
                     <SaveButton
                         disabled={picked === null}
                         action={async () => {
                             await setMembers.mutateAsync({ members: picked ?? [] });
-                            back();
+                            close();
                         }}
                     >
                         {t("chat.save")}
@@ -142,122 +431,32 @@ function ChannelInfo({
             </Sheet>
         );
     return (
-        <Sheet open onClose={onClose} title={t("chat.info")}>
-            <div className="chat space-y-5 pb-4">
-                <div className="flex flex-col items-center gap-1.5 text-center">
-                    <span className="flex size-16 items-center justify-center rounded-2xl bg-slate-100">
-                        <Icon size={28} className="text-gray-900" />
-                    </span>
-                    <p className="pt-1 text-xl font-bold text-gray-900">
-                        {channelName(channel, t)}
+        <Sheet open onClose={close} title={channelName(channel, t)}>
+            <div className="chat pb-2">
+                {rows.length === 0 ? (
+                    <p className="py-4 text-center text-[15px] text-gray-600">
+                        {t("chat.nothingToChange")}
                     </p>
-                    <p className="text-sm text-gray-600">
-                        {channel.archived ? t("chat.archivedGroup") : t(WHO[channel.kind])}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                        {t(
-                            channel.messages === 1 ? "chat.oneMessage" : "chat.messageCount",
-                        ).replace("{n}", formatCount(channel.messages ?? 0))}
-                    </p>
-                </div>
-                {(group ||
-                    (admin &&
-                        channel.kind !== "personal" &&
-                        (!channel.mine || channel.following))) && (
+                ) : (
                     <div className="overflow-hidden rounded-2xl bg-slate-100">
-                        {group && (
-                            <>
-                                <InfoAction
-                                    icon={<Pencil size={20} />}
-                                    onClick={() => setView("rename")}
-                                >
-                                    {t("chat.rename")}
-                                </InfoAction>
-                                <InfoAction
-                                    icon={<UserPlus size={20} />}
-                                    onClick={() => setView("members")}
-                                >
-                                    {t("chat.editMembers")}
-                                </InfoAction>
-                                <InfoAction
-                                    icon={
-                                        channel.archived ? (
-                                            <ArchiveRestore size={20} />
-                                        ) : (
-                                            <Archive size={20} />
-                                        )
-                                    }
-                                    onClick={() => update.mutate({ archived: !channel.archived })}
-                                >
-                                    {t(channel.archived ? "chat.unarchive" : "chat.archive")}
-                                </InfoAction>
-                            </>
-                        )}
-                        {admin &&
-                            channel.kind !== "personal" &&
-                            (!channel.mine || channel.following) && (
-                                <InfoAction
-                                    icon={
-                                        channel.following ? (
-                                            <BellOff size={20} />
-                                        ) : (
-                                            <BellRing size={20} />
-                                        )
-                                    }
-                                    onClick={() => follow.mutate({ on: !channel.following })}
-                                >
-                                    {t(channel.following ? "chat.unfollow" : "chat.follow")}
-                                </InfoAction>
-                            )}
-                    </div>
-                )}
-                {channel.kind !== "personal" && (
-                    <section className="space-y-1">
-                        <SectionLabel>{`${t("chat.members")} (${members.length})`}</SectionLabel>
-                        {members.map((m) => (
-                            <div
-                                key={m.id}
-                                className="flex items-center gap-3 border-b border-slate-100 py-2.5 last:border-b-0"
+                        {rows.map(({ icon: Icon, label, onClick, danger }) => (
+                            <button
+                                key={label}
+                                type="button"
+                                onClick={onClick}
+                                className={`flex w-full items-center gap-3 border-b border-white px-4 py-3.5 text-left text-[16px] font-medium last:border-b-0 active:opacity-70 ${danger ? "text-red-600" : "text-gray-900"}`}
                             >
-                                <Avatar url={m.avatar} size={32} />
-                                <span className="flex min-w-0 flex-1 items-center gap-2">
-                                    <span className="truncate text-[16px] text-gray-900">
-                                        {m.id === me ? `${m.name} (${t("chat.you")})` : m.name}
-                                    </span>
-                                    {m.vip && (
-                                        <Badge tone="brand" size="sm">
-                                            {t("chat.vip")}
-                                        </Badge>
-                                    )}
-                                </span>
-                            </div>
+                                <Icon
+                                    size={20}
+                                    className={danger ? "text-red-600" : "text-gray-700"}
+                                />
+                                {t(label)}
+                            </button>
                         ))}
-                    </section>
+                    </div>
                 )}
             </div>
         </Sheet>
-    );
-}
-
-/** One of a chat admin's actions in a channel's info. */
-function InfoAction({
-    icon,
-    onClick,
-    children,
-}: {
-    icon: ReactNode;
-    onClick: () => void;
-    children: ReactNode;
-}) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className="flex w-full items-center gap-3 border-b border-white px-4 py-3 text-left text-[16px] font-medium text-gray-900 last:border-b-0 active:opacity-70"
-        >
-            <span className="text-gray-700">{icon}</span>
-            {children}
-        </button>
     );
 }
 

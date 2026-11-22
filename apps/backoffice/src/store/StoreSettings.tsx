@@ -32,6 +32,13 @@ const LABEL = Object.fromEntries(STATUSES.map((s) => [s.value, s.label])) as Rec
     MessageKey
 >;
 
+// Each status its own colour (task 078): active green, demo amber, inactive grey.
+const TONE: Record<Status, "green" | "amber" | "slate"> = {
+    active: "green",
+    fake: "amber",
+    inactive: "slate",
+};
+
 const listPath = "/tenants/{tenant}/store-settings";
 const onePath = "/tenants/{tenant}/store-settings/{storeId}";
 
@@ -82,7 +89,7 @@ export function StoreSettingsList() {
                           title={s.name}
                           subtitle={`${s.openTime} – ${s.closeTime}${s.address ? ` · ${s.address}` : ""}`}
                           onClick={() => void navigate({ to: `/${slug}/store/settings/${s.id}` })}
-                          trailing={<Badge>{t(LABEL[s.status])}</Badge>}
+                          trailing={<Badge tone={TONE[s.status]}>{t(LABEL[s.status])}</Badge>}
                       />
                   ))}
         </ListCard>

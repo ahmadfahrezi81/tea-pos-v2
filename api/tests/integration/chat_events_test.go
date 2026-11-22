@@ -178,6 +178,13 @@ func TestChatRain(t *testing.T) {
 	if len(said) != 2 || said[0] != chatevent.RainStarted || said[1] != chatevent.RainStopped {
 		t.Errorf("Central: %v, want started then stopped", said)
 	}
+	var body string
+	if err := pool.QueryRow(ctx, `SELECT body FROM chat_messages WHERE event_type = 'rain_started'`).Scan(&body); err != nil {
+		t.Fatal(err)
+	}
+	if body != "🌧 Rain likely from 10:00 to 14:00, most at 10:00 (70%)" {
+		t.Errorf("rain started says %q", body)
+	}
 	if n := count(t, pool, `SELECT count(*) FROM chat_messages m JOIN chat_channels c ON c.id = m.channel_id WHERE c.store_id = $1`, storeANorth); n != 0 {
 		t.Errorf("North (not open): %d messages", n)
 	}
@@ -233,15 +240,18 @@ func TestChatShareLink(t *testing.T) {
 	if len(got) != 2 || got[1].Link == nil || !got[1].Link.Open || got[1].Link.Store != "A Central" || got[1].Link.Cups == nil || *got[1].Link.Cups != 4 {
 		t.Fatalf("in the backoffice: %+v", got)
 	}
-	if p := got[1].Link.Preview; p == nil || p.Status != "closed" || p.Stats[0].Label != "sales" || p.Stats[0].Value != 34000 || len(p.Rows) != 2 {
-		t.Errorf("day preview: %+v", got[1].Link.Preview)
+	if d := got[1].Link.Day; d == nil || !d.Closed || d.Sales != 34000 || d.Orders != 3 || len(d.Sellers) != 2 || d.Counted == nil || d.OpenedBy != "Seller A" {
+		t.Errorf("day screen: %+v", got[1].Link.Day)
+	}
+	if p := got[0].Link.Period; p == nil || p.Start != "2026-09-28" {
+		t.Errorf("period screen: %+v", got[0].Link.Period)
 	}
 	// A period by any of its days is stored by its first.
 	if got[0].Link == nil || got[0].Link.ID != "2026-09-28" || got[0].Link.End != "2026-10-11" {
 		t.Errorf("period: %+v", got[0].Link)
 	}
 	seller := messages(t, a, testkit.SellerA, "seller", general, "")
-	if len(seller) != 2 || seller[1].Link == nil || seller[1].Link.Open || seller[1].Link.Store != "" || seller[1].Link.Preview != nil {
+	if len(seller) != 2 || seller[1].Link == nil || seller[1].Link.Open || seller[1].Link.Store != "" || seller[1].Link.Day != nil {
 		t.Errorf("in the seller app: %+v", seller[1].Link)
 	}
 }
@@ -277,5 +287,38 @@ func TestChatFacesAndCount(t *testing.T) {
 	}
 	if out.Body.Messages != 3 {
 		t.Errorf("messages: %d, want 3", out.Body.Messages)
+	}
+}
+
+// TestChatClear: only the owner clears a chat, for everyone; what came after stays.
+func TestChatClear(t *testing.T) {
+	pool := testkit.DB(t)
+	execT(t, pool, `UPDATE tenants SET owner_id = $1 WHERE id = $2`, testkit.AdminA, tenantA)
+	giveChat(t, pool, testkit.SellerA, "member")
+	a := testkit.NewAPI(t, pool, "")
+	general := channelOf(t, a, testkit.SellerA, "seller", "general", "")
+	if resp, _ := post(t, a, testkit.SellerA, "seller", general, "before", "clear-key-before-0"); resp.StatusCode != http.StatusOK {
+		t.Fatal(resp.StatusCode)
+	}
+	clear := func(user, app string) *http.Response {
+		return send(t, a, user, app, http.MethodPost, "/tenants/tenant-a/chat/channels/"+general+"/clear", "")
+	}
+	if resp := clear(testkit.SellerA, "seller"); code(t, resp) != "owner_only" {
+		t.Errorf("a member cleared it: %d", resp.StatusCode)
+	}
+	if resp := clear(testkit.AdminA, "backoffice"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("owner: %d %q", resp.StatusCode, code(t, resp))
+	}
+	if got := messages(t, a, testkit.SellerA, "seller", general, ""); len(got) != 0 {
+		t.Fatalf("after clearing: %d messages", len(got))
+	}
+	if resp, _ := post(t, a, testkit.SellerA, "seller", general, "after", "clear-key-after-00"); resp.StatusCode != http.StatusOK {
+		t.Fatal(resp.StatusCode)
+	}
+	if got := messages(t, a, testkit.SellerA, "seller", general, ""); len(got) != 1 || got[0].Body != "after" {
+		t.Errorf("after a new message: %+v", got)
+	}
+	if n := count(t, pool, `SELECT count(*) FROM chat_messages WHERE channel_id = $1`, general); n != 2 {
+		t.Errorf("rows kept: %d, want 2 (nothing deleted)", n)
 	}
 }
