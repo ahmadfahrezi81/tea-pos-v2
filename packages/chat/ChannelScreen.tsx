@@ -461,18 +461,19 @@ function Message({
                                 </span>
                             </div>
                         </div>
+                        {/* The screen it is about, inside the message, as wide as its column (task 078). */}
+                        {m.link && hasScreen(m.link) && (
+                            <div className="mt-1.5 w-full">
+                                <ScreenCard link={m.link} />
+                            </div>
+                        )}
+                        {!!hours?.length && (
+                            <div className="mt-1.5 w-full">
+                                <RainCard hours={hours} />
+                            </div>
+                        )}
                     </div>
                 </div>
-                {m.link && hasScreen(m.link) && (
-                    <div className="mt-1.5">
-                        <ScreenCard link={m.link} />
-                    </div>
-                )}
-                {!!hours?.length && (
-                    <div className="mt-1.5">
-                        <RainCard hours={hours} />
-                    </div>
-                )}
             </div>
         );
     }
@@ -579,6 +580,12 @@ function Message({
                 </span>
                 <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
                     {bubble}
+                    {/* A shared screen, inside the message, as wide as its column (task 078). */}
+                    {!m.deleted && m.link && hasScreen(m.link) && (
+                        <div className="w-full">
+                            <ScreenCard link={m.link} />
+                        </div>
+                    )}
                     {mine && seen !== undefined && seen > 0 && (
                         <button onClick={onSeen} className="text-[11px] text-brand">
                             {t("chat.seenBy").replace("{n}", String(seen))}
@@ -586,12 +593,6 @@ function Message({
                     )}
                 </div>
             </div>
-            {/* A shared screen, as wide as the chat (task 078). */}
-            {!m.deleted && m.link && hasScreen(m.link) && (
-                <div className="mt-1.5">
-                    <ScreenCard link={m.link} />
-                </div>
-            )}
         </div>
     );
 }

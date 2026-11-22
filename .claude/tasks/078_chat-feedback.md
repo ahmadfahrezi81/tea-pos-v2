@@ -31,6 +31,8 @@ Fix what the owner finds using chat in production. One item per line below, buil
 
 10. ~~Notifications in the app's language~~: not an issue (owner). The language is the account's (`PATCH /me` saves `preferred_language`; every app reads it back from `/me`), and notifications use the same one.
 
+11. **"Full width" means the message's own column** (owner, after 2026.11.18): a screen in chat sits inside the message, under the name and beside the photo column, stretched to the right edge, not breaking out under the photo. Drawn in ASCII and fixed: the card moved into the message's column (`w-full`).
+
 **How we work from here (owner):** every event or chat card is drawn in ASCII first and agreed before it is built.
 
 ## Done when
