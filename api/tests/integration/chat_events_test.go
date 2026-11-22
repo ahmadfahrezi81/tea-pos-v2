@@ -312,6 +312,12 @@ func TestChatClear(t *testing.T) {
 	if got := messages(t, a, testkit.SellerA, "seller", general, ""); len(got) != 0 {
 		t.Fatalf("after clearing: %d messages", len(got))
 	}
+	// Phones hide what they saved from before it: the channel says when.
+	resp := a.Request(t, http.MethodGet, "/tenants/tenant-a/chat/channels/"+general, "seller", testkit.Session(a.SignIn(t, testkit.SellerA, "seller")))
+	var ch contract.ChatChannelOutput
+	if err := json.NewDecoder(resp.Body).Decode(&ch.Body); err != nil || ch.Body.ClearedAt == "" {
+		t.Errorf("clearedAt: %q %v", ch.Body.ClearedAt, err)
+	}
 	if resp, _ := post(t, a, testkit.SellerA, "seller", general, "after", "clear-key-after-00"); resp.StatusCode != http.StatusOK {
 		t.Fatal(resp.StatusCode)
 	}

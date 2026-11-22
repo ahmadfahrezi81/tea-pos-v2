@@ -134,7 +134,8 @@ SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name, coalesce(s.stat
         WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = @user_id)
         ELSE false
     END)::bool AS member,
-    coalesce((SELECT r.followed_at IS NOT NULL FROM chat_reads r WHERE r.channel_id = c.id AND r.user_id = @user_id), false)::bool AS following
+    coalesce((SELECT r.followed_at IS NOT NULL FROM chat_reads r WHERE r.channel_id = c.id AND r.user_id = @user_id), false)::bool AS following,
+    c.cleared_at
 FROM chat_channels c
 LEFT JOIN stores s ON s.id = c.store_id
 WHERE c.id = @id AND c.tenant_id = @tenant_id AND (CASE c.kind

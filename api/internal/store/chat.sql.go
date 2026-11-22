@@ -236,7 +236,8 @@ SELECT c.id, c.kind, coalesce(s.name, c.name, '')::text AS name, coalesce(s.stat
         WHEN 'group' THEN EXISTS (SELECT 1 FROM chat_channel_members gm WHERE gm.channel_id = c.id AND gm.user_id = $2)
         ELSE false
     END)::bool AS member,
-    coalesce((SELECT r.followed_at IS NOT NULL FROM chat_reads r WHERE r.channel_id = c.id AND r.user_id = $2), false)::bool AS following
+    coalesce((SELECT r.followed_at IS NOT NULL FROM chat_reads r WHERE r.channel_id = c.id AND r.user_id = $2), false)::bool AS following,
+    c.cleared_at
 FROM chat_channels c
 LEFT JOIN stores s ON s.id = c.store_id
 WHERE c.id = $3 AND c.tenant_id = $4 AND (CASE c.kind
@@ -266,6 +267,7 @@ type GetChatChannelRow struct {
 	Archived    bool
 	Member      bool
 	Following   bool
+	ClearedAt   pgtype.Timestamptz
 }
 
 // One channel, only if the caller is in it or a chat admin (the same rule as ListChatChannels).
@@ -286,6 +288,7 @@ func (q *Queries) GetChatChannel(ctx context.Context, arg GetChatChannelParams) 
 		&i.Archived,
 		&i.Member,
 		&i.Following,
+		&i.ClearedAt,
 	)
 	return i, err
 }

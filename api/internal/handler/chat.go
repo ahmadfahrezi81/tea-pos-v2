@@ -121,6 +121,7 @@ func registerChat(api huma.API, d Deps) {
 			}
 			out := &contract.ChatChannelOutput{}
 			out.Body.Messages = int(count)
+			out.Body.ClearedAt = nano(ch.ClearedAt)
 			out.Body.ChatChannel = contract.ChatChannel{
 				ID: ch.ID.String(), Kind: ch.Kind, Name: ch.Name, ReadOnly: readOnly(ch.Kind, ch.StoreStatus, ch.Archived),
 				Mine: ch.Member || ch.Following, Following: ch.Following && !ch.Member, Archived: ch.Archived,

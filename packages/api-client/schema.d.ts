@@ -1534,6 +1534,8 @@ export interface components {
         ChatChannelOutputBody: {
             /** @description An archived group: read only, its history kept */
             archived?: boolean;
+            /** Format: date-time */
+            clearedAt?: string;
             faces?: components["schemas"]["ChatFace"][] | null;
             /** @description A chat admin following a channel they are not in */
             following?: boolean;
