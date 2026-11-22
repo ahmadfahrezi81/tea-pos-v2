@@ -7,6 +7,7 @@ import {
 import type { Locale } from "@tea-pos/i18n";
 import { useLocale, useT } from "@tea-pos/i18n/react";
 import { useTurnPushOn } from "@tea-pos/shell/push";
+import { showPermissionHelp } from "@tea-pos/ui/permissions";
 import { useSlug, useTenant } from "@tea-pos/shell/tenant";
 import { useSearchParam, useSearchText } from "@tea-pos/shell/searchParam";
 import { Avatar } from "@tea-pos/ui/Avatar";
@@ -196,7 +197,12 @@ function PushCard() {
     useEffect(() => {
         void pushState().then(setState);
     }, []);
-    if (state !== "off" && state !== "blocked") return null;
+    // An iPhone in Safari: notifications come only once the app is on the Home Screen.
+    const iphoneTab =
+        state === "unsupported" &&
+        /iPhone|iPad|iPod/.test(navigator.userAgent) &&
+        !matchMedia("(display-mode: standalone)").matches;
+    if (state !== "off" && state !== "blocked" && !iphoneTab) return null;
     return (
         <div className="mt-3 flex items-start gap-3 rounded-2xl bg-white p-4">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
@@ -207,8 +213,22 @@ function PushCard() {
                     {t("chat.pushTitle")}
                 </span>
                 <span className="block text-sm text-gray-600">
-                    {t(state === "blocked" ? "chat.pushBlocked" : "chat.pushBody")}
+                    {t(
+                        iphoneTab
+                            ? "chat.pushInstall"
+                            : state === "blocked"
+                              ? "chat.pushBlocked"
+                              : "chat.pushBody",
+                    )}
                 </span>
+                {state === "blocked" && (
+                    <button
+                        onClick={() => showPermissionHelp("notifications", "blocked")}
+                        className="mt-3 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white active:opacity-80"
+                    >
+                        {t("chat.pushHow")}
+                    </button>
+                )}
                 {state === "off" && (
                     <button
                         disabled={busy}

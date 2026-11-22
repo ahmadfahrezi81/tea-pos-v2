@@ -337,15 +337,16 @@
         "blocked": "Your phone has said no for this app. Allow it once, then try again.",
         "notAsked": "Your phone didn't show the question. Allow it once, then try again.",
         "failed": "Your phone couldn't turn it on just now. Try again in a moment; if it keeps failing, restart the phone.",
-        "androidNotifications1": "Open Chrome, tap ⋮, then Settings → Notifications, and turn on Show notifications.",
+        "androidNotifications1": "Open Chrome, tap ⋮, then Settings → Notifications, and turn on Show notifications. (Not there? Phone Settings → Apps → Chrome → Notifications → on.)",
         "androidNotifications2": "Then Settings → Site settings → Notifications: turn off Use quieter messaging, and set {site} to Allow if it's listed.",
-        "androidCamera1": "Open Chrome, tap ⋮, then Settings → Site settings → Camera.",
+        "androidCamera1": "Open Chrome, tap ⋮, then Settings → Site settings → Camera. (Phone Settings → Apps → Chrome → Permissions → Camera must allow it too.)",
         "androidCamera2": "Set {site} to Allow if it's listed as blocked.",
         "iphoneNotifications": "Open Settings → Notifications, find the app, and turn on Allow Notifications.",
         "iphoneCamera": "Open Settings → Safari → Camera, and choose Ask or Allow.",
         "again": "Come back to the app and try again.",
         "openInChrome": "Open in Chrome",
         "openInChromeSub": "Chrome can ask there. Allowing it there allows the app too.",
-        "gotIt": "Got it"
+        "gotIt": "Got it",
+        "samsung": "Open Samsung Internet, tap ≡, then Settings → Sites and downloads → Site permissions, and allow {site}."
     }
 }

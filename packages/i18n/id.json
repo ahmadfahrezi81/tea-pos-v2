@@ -337,15 +337,16 @@
         "blocked": "HP kamu menolaknya untuk aplikasi ini. Izinkan sekali, lalu coba lagi.",
         "notAsked": "HP kamu tidak menampilkan pertanyaannya. Izinkan sekali, lalu coba lagi.",
         "failed": "HP kamu belum bisa menyalakannya. Coba lagi sebentar lagi; kalau terus gagal, restart HP-nya.",
-        "androidNotifications1": "Buka Chrome, ketuk ⋮, lalu Setelan → Notifikasi, dan nyalakan Tampilkan notifikasi.",
+        "androidNotifications1": "Buka Chrome, ketuk ⋮, lalu Setelan → Notifikasi, dan nyalakan Tampilkan notifikasi. (Tidak ada? Setelan HP → Aplikasi → Chrome → Notifikasi → nyalakan.)",
         "androidNotifications2": "Lalu Setelan → Setelan situs → Notifikasi: matikan Gunakan pesan yang lebih senyap, dan atur {site} ke Izinkan kalau ada di daftar.",
-        "androidCamera1": "Buka Chrome, ketuk ⋮, lalu Setelan → Setelan situs → Kamera.",
+        "androidCamera1": "Buka Chrome, ketuk ⋮, lalu Setelan → Setelan situs → Kamera. (Setelan HP → Aplikasi → Chrome → Izin → Kamera juga harus diizinkan.)",
         "androidCamera2": "Atur {site} ke Izinkan kalau tertulis diblokir.",
         "iphoneNotifications": "Buka Pengaturan → Notifikasi, cari aplikasinya, dan nyalakan Izinkan Notifikasi.",
         "iphoneCamera": "Buka Pengaturan → Safari → Kamera, lalu pilih Tanya atau Izinkan.",
         "again": "Kembali ke aplikasi dan coba lagi.",
         "openInChrome": "Buka di Chrome",
         "openInChromeSub": "Chrome bisa menanyakannya di sana. Mengizinkannya di sana juga mengizinkan aplikasinya.",
-        "gotIt": "Oke"
+        "gotIt": "Oke",
+        "samsung": "Buka Samsung Internet, ketuk ≡, lalu Pengaturan → Situs dan unduhan → Izin situs, dan izinkan {site}."
     }
 }

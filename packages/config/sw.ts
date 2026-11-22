@@ -61,6 +61,12 @@ self.addEventListener("message", (event) => {
 });
 
 registerRoute(new PrecacheRoute(precache));
+/** The last resort, with no saved copy and no network: a page that says so and tries again. */
+function offline() {
+    const html = `<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><body style="font:16px system-ui;margin:0;display:grid;place-items:center;height:100vh;text-align:center;padding:0 24px"><div><p>No connection right now.<br>Tidak ada koneksi.</p><p><a href="" onclick="location.reload();return false" style="display:inline-block;padding:12px 24px;border-radius:12px;background:#111;color:#fff;text-decoration:none">Try again · Coba lagi</a></p></div>`;
+    return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+}
+
 // Every screen is index.html, saved; if the saved copy cannot answer (an update half done), the
 // network does, never the browser's error page (task 077: a tapped notification showed ERR_FAILED).
 const appShell = precache.createHandlerBoundToURL("/index.html");
@@ -70,7 +76,11 @@ registerRoute(
             try {
                 return await appShell(options);
             } catch {
-                return fetch(options.request);
+                try {
+                    return await fetch(options.request);
+                } catch {
+                    return offline();
+                }
             }
         },
         { denylist: [/^\/api\//] },

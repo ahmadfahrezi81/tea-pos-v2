@@ -11,9 +11,13 @@ const installed = () => matchMedia("(display-mode: standalone)").matches;
  * app too. An intent address, so Android opens Chrome and not the app again.
  */
 function openInChrome() {
-    const { host, pathname, search } = location;
-    location.href = `intent://${host}${pathname}${search}#Intent;scheme=https;package=com.android.chrome;end`;
+    const { host, pathname, search, href } = location;
+    // Without Chrome, Android opens the address in the phone's own browser instead.
+    location.href = `intent://${host}${pathname}${search}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(href)};end`;
 }
+
+/** Installed from Samsung Internet: its own menus, and no Chrome to send them to. */
+const samsung = () => /SamsungBrowser/.test(navigator.userAgent);
 
 /** Mounted once by the shell: what happened, the steps for this phone, and the backup. */
 export function PermissionHelpHost() {
@@ -22,19 +26,20 @@ export function PermissionHelpHost() {
     if (!help) return null;
     const camera = help.kind === "camera";
     const iphone = isIPhone();
-    const steps: string[] = iphone
-        ? [
-              t(camera ? "permission.iphoneCamera" : "permission.iphoneNotifications"),
-              t("permission.again"),
-          ]
-        : [
-              t(camera ? "permission.androidCamera1" : "permission.androidNotifications1"),
-              t(camera ? "permission.androidCamera2" : "permission.androidNotifications2").replace(
-                  "{site}",
-                  location.host,
-              ),
-              t("permission.again"),
-          ];
+    const steps: string[] = samsung()
+        ? [t("permission.samsung").replace("{site}", location.host), t("permission.again")]
+        : iphone
+          ? [
+                t(camera ? "permission.iphoneCamera" : "permission.iphoneNotifications"),
+                t("permission.again"),
+            ]
+          : [
+                t(camera ? "permission.androidCamera1" : "permission.androidNotifications1"),
+                t(
+                    camera ? "permission.androidCamera2" : "permission.androidNotifications2",
+                ).replace("{site}", location.host),
+                t("permission.again"),
+            ];
     const said: Record<typeof help.problem, MessageKey> = {
         blocked: "permission.blocked",
         notAsked: "permission.notAsked",
@@ -55,7 +60,7 @@ export function PermissionHelpHost() {
                         ))}
                     </ol>
                 )}
-                {!iphone && installed() && help.problem !== "failed" && (
+                {!iphone && !samsung() && installed() && help.problem !== "failed" && (
                     <div className="space-y-1.5">
                         <button
                             type="button"
