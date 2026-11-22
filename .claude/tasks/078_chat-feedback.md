@@ -23,6 +23,8 @@ Fix what the owner finds using chat in production. One item per line below, buil
 
 7. **System looks like the system** (owner, decided): its photo becomes Lucide's `BotMessageSquare` (a robot as a chat bubble; Lucide's `Bot` did not read as a robot), its name stays **System** (Sistem), and a small **BOT** badge beside the name, as Slack's APP, so it is never taken for a person. Everywhere it shows: the chat, Activity, a reply's quote.
 
+8. **Faces side by side, not overlapping** (owner, as Slack now): on the Chats list the last writers' faces sit next to each other with a thin gap (2 px), no white ring, instead of overlapping.
+
 **How we work from here (owner):** every event or chat card is drawn in ASCII first and agreed before it is built.
 
 ## Done when
