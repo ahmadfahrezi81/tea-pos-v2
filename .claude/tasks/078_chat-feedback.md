@@ -15,7 +15,7 @@ Fix what the owner finds using chat in production. One item per line below, buil
    - **Photos**: the last ones sent, See all opens a grid.
    - **Shared**: days, pay periods and payslips shared there (a small Go query), See all.
    - **Members**: the first 5, See all opens the full list with search.
-   - **The ⋯ menu** holds what changes the chat, each only for who may: Rename and Edit members, Archive (groups, chat admins); Unfollow (a chat admin following a chat they are not in); **Clear chat** (the owner only, for everyone, soft: a `cleared_at` hides what came before, nothing deleted; asks "Clear this chat for everyone?").
+   - **At the bottom, below the members** (owner, after trying it: a ⋯ with only Clear chat is useless) is what changes the chat, each only for who may: Rename and Edit members, Archive (groups, chat admins); Unfollow (a chat admin following a chat they are not in); **Clear chat** (the owner only, for everyone, soft: a `cleared_at` hides what came before, nothing deleted; asks "Clear this chat for everyone?").
    - Left out (owner): Open store page; Follow there (it stays on the Other channels list); Mute (chat is the company's); pinned messages and search in a chat (their own steps later).
 
 3. **A shared screen is the screen itself** (owner): what a screenshot of that part of the screen would show, except we own the component. The same components and content as the real screen, live, only a little smaller for the chat's padding, and **as wide as the chat allows** (not inside a narrow bubble); an **Open** button at its bottom to go deeper. For a store's day, a pay period and a payslip, and the app's own messages that carry one (the day summary, the pay total, a payout paid).
