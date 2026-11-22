@@ -12,7 +12,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
 
 import { eventText } from "./events";
-import { SystemFace } from "./SystemFace";
+import { BotBadge, SystemFace } from "./SystemFace";
 import { channelName, KIND_ICON, listTime } from "./labels";
 import { linkLabel } from "./links";
 
@@ -122,7 +122,14 @@ function ActivityRow({ a }: { a: Activity }) {
                     <span
                         className={`min-w-0 flex-1 truncate text-[14px] leading-5 text-gray-900 ${a.unread ? "font-bold" : "font-semibold"}`}
                     >
-                        {system ? t("chat.system") : a.author}
+                        {system ? (
+                            <span className="inline-flex items-center gap-1.5">
+                                {t("chat.system")}
+                                <BotBadge />
+                            </span>
+                        ) : (
+                            a.author
+                        )}
                     </span>
                     <span className="shrink-0 text-[12px] leading-4 text-gray-600 tabular-nums">
                         {listTime(a.at, locale)}

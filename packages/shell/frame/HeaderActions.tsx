@@ -43,7 +43,12 @@ const KINDS = {
     add: { icon: CirclePlus, labelKey: "shell.add", writes: true },
     edit: { icon: Pencil, labelKey: "shell.edit", writes: true },
     share: { icon: Share2, labelKey: "shell.share", writes: false },
-} satisfies Record<string, { icon: LucideIcon; labelKey: MessageKey; writes: boolean }>;
+    // An icon, not a word: a screen's own menu or details (a chat's info).
+    more: { icon: MoreHorizontal, labelKey: "shell.moreActions", writes: false, iconOnly: true },
+} satisfies Record<
+    string,
+    { icon: LucideIcon; labelKey: MessageKey; writes: boolean; iconOnly?: boolean }
+>;
 
 export type HeaderAction = {
     kind: keyof typeof KINDS;
@@ -90,7 +95,20 @@ export function HeaderActions({ actions: all }: { actions: HeaderAction[] }) {
 function Action({ action }: { action: HeaderAction }) {
     const t = useT();
     const href = useHref(action.to);
-    const label = t(KINDS[action.kind].labelKey);
+    const kind = KINDS[action.kind];
+    const label = t(kind.labelKey);
+    if ("iconOnly" in kind && kind.iconOnly) {
+        const Icon = kind.icon;
+        return href !== undefined ? (
+            <Link to={href} className={button} aria-label={label}>
+                <Icon size={26} strokeWidth={2.25} />
+            </Link>
+        ) : (
+            <button onClick={action.onClick} className={button} aria-label={label}>
+                <Icon size={26} strokeWidth={2.25} />
+            </button>
+        );
+    }
     if (href !== undefined)
         return (
             <Link to={href} className={labelButton}>

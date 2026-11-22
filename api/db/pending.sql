@@ -165,3 +165,8 @@ ALTER TABLE public.chat_reads ADD COLUMN IF NOT EXISTS followed_at timestamptz;
 -- An event's key (a day, a payout, a release) is posted once per channel, however often its job runs.
 ALTER TABLE public.chat_messages ADD COLUMN event_key text;
 CREATE UNIQUE INDEX chat_messages_event_key ON public.chat_messages (channel_id, event_key) WHERE event_key IS NOT NULL;
+
+-- 20261122144055_chat_clear.sql
+-- Clear chat (task 078): the owner empties a chat for everyone. Soft: every message before it is
+-- hidden, nothing deleted. Additive only: one nullable column.
+ALTER TABLE public.chat_channels ADD COLUMN cleared_at timestamptz;

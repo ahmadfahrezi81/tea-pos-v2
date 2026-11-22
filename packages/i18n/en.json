@@ -249,7 +249,8 @@
         "bad_hours": "A store has to open before it closes.",
         "too_far_back": "That date is too far back.",
         "blank_group_name": "Give the group a name.",
-        "link_not_found": "That screen was not found"
+        "link_not_found": "That screen was not found",
+        "owner_only": "Only the owner can do this"
     },
     "store": {
         "week": "Week",

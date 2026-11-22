@@ -7,6 +7,9 @@ const TONE = {
     orange: "bg-orange-100 text-orange-800",
     // The screen's brand colour, solid (chat's VIP: its violet).
     brand: "bg-brand text-slate-100",
+    // A state: green is on, amber a warning or a stand-in (a demo store).
+    green: "bg-green-100 text-green-800",
+    amber: "bg-amber-100 text-amber-800",
 } as const;
 
 /** A small square-cornered tag on a row: an app and its level, a state. */

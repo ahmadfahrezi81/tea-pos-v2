@@ -56,6 +56,14 @@ type ChatChannelOutput struct {
 	}
 }
 
+// ChatMediaOutput is a chat's info below its members: its photos and what was shared there.
+type ChatMediaOutput struct {
+	Body struct {
+		Photos []ChatPhoto   `json:"photos" nullable:"false" doc:"Newest first"`
+		Shared []ChatMessage `json:"shared" nullable:"false" doc:"Messages carrying a screen, newest first"`
+	}
+}
+
 type ChatMember struct {
 	ID     string `json:"id" format:"uuid"`
 	Name   string `json:"name"`
@@ -113,31 +121,68 @@ type ChatLink struct {
 	End     string `json:"end,omitempty" format:"date"`
 	Total   *int64 `json:"total,omitempty"`
 	People  *int64 `json:"people,omitempty"`
-	// What the screen shows at the top, so the chat reads it without opening it.
-	Preview *LinkPreview `json:"preview,omitempty"`
+	// The screen itself, in short (task 078: "a copy of the real screen"): only the kind's own
+	// one is set, and only for a reader who may open it.
+	Day     *DayPreview     `json:"day,omitempty"`
+	Period  *PeriodPreview  `json:"period,omitempty"`
+	Payslip *PayslipPreview `json:"payslip,omitempty"`
+	// What's new: that version's lines, per app (each app shows its own).
+	Notes []ReleaseNote `json:"notes,omitempty"`
 }
 
-// LinkPreview is a shared screen in small: a few numbers, then a short list. One shape for every
-// kind, so the phone draws any of them with one card; labels are words the phone translates.
-type LinkPreview struct {
-	Status string        `json:"status,omitempty" enum:"open,closed,paid,pending,skipped"`
-	Stats  []PreviewStat `json:"stats" nullable:"false"`
-	Rows   []PreviewRow  `json:"rows,omitempty"`
-	More   int           `json:"more,omitempty" doc:"Rows left out of the list"`
+// DayPreview is the top of a store's day screen.
+type DayPreview struct {
+	Date     string          `json:"date" format:"date"`
+	Store    string          `json:"store"`
+	Closed   bool            `json:"closed"`
+	OpenedBy string          `json:"openedBy,omitempty"`
+	OpenedAt string          `json:"openedAt,omitempty" format:"date-time"`
+	Sales    int64           `json:"sales"`
+	Orders   int64           `json:"orders"`
+	Cups     int64           `json:"cups"`
+	Expenses int64           `json:"expenses"`
+	Expected int64           `json:"expected" doc:"Opening + sales - expenses"`
+	Counted  *int64          `json:"counted,omitempty" doc:"Closed days only"`
+	Sellers  []PreviewPerson `json:"sellers" nullable:"false"`
 }
 
-type PreviewStat struct {
-	Label string `json:"label" enum:"sales,cups,orders,expenses,expected,counted,total,paid,toPay,people,commissions,claims"`
-	Value int64  `json:"value"`
-	Unit  string `json:"unit" enum:"money,count"`
-}
-
-type PreviewRow struct {
+// PreviewPerson is one line of a preview's list: who, and their number.
+type PreviewPerson struct {
 	Name   string `json:"name"`
 	Avatar string `json:"avatar,omitempty"`
-	Value  int64  `json:"value"`
-	Unit   string `json:"unit" enum:"money,cups"`
+	Value  int64  `json:"value" doc:"Cups on a day, money on a pay period"`
 	Status string `json:"status,omitempty" enum:"paid,pending,skipped"`
+}
+
+// PeriodPreview is the Pay tab at a period.
+type PeriodPreview struct {
+	Start    string          `json:"start" format:"date"`
+	End      string          `json:"end" format:"date"`
+	ToPay    int64           `json:"toPay"`
+	Paid     int64           `json:"paid"`
+	ToReview int             `json:"toReview"`
+	People   []PreviewPerson `json:"people" nullable:"false"`
+	More     int             `json:"more,omitempty" doc:"People left out of the list"`
+}
+
+// PayslipPreview is the top of a payslip.
+type PayslipPreview struct {
+	Person  string `json:"person"`
+	Start   string `json:"start" format:"date"`
+	End     string `json:"end" format:"date"`
+	Status  string `json:"status" enum:"paid,pending,skipped"`
+	Orders  int64  `json:"orders"`
+	Cups    int64  `json:"cups"`
+	Total   int64  `json:"total"`
+	PaidAt  string `json:"paidAt,omitempty" format:"date-time"`
+	PaidBy  string `json:"paidBy,omitempty"`
+	Receipt string `json:"receipt,omitempty" doc:"The transfer screenshot"`
+}
+
+// ReleaseNote is one app's lines of a What's new version.
+type ReleaseNote struct {
+	Apps  []string            `json:"apps" nullable:"false"`
+	Lines map[string][]string `json:"lines"`
 }
 
 // ChatLinkInput is a screen shared into a chat.

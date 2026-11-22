@@ -33,6 +33,7 @@ import { Route as ShellTenantStoreIndexRouteImport } from './routes/_shell/$tena
 import { Route as ShellTenantStoreHelpRouteImport } from './routes/_shell/$tenant/store/help'
 import { Route as ShellTenantUacIndexRouteImport } from './routes/_shell/$tenant/uac/index'
 import { Route as ShellTenantUacHelpRouteImport } from './routes/_shell/$tenant/uac/help'
+import { Route as ShellTenantChatsChannelIdInfoRouteImport } from './routes/_shell/$tenant/chats/$channelId_.info'
 import { Route as ShellTenantPayStartIndexRouteImport } from './routes/_shell/$tenant/pay/$start/index'
 import { Route as ShellTenantPaySettingsIndexRouteImport } from './routes/_shell/$tenant/pay/settings/index'
 import { Route as ShellTenantStoreStoreIdIndexRouteImport } from './routes/_shell/$tenant/store/$storeId/index'
@@ -190,6 +191,12 @@ const ShellTenantUacHelpRoute = ShellTenantUacHelpRouteImport.update({
   path: '/uac/help',
   getParentRoute: () => ShellTenantRoute,
 } as any)
+const ShellTenantChatsChannelIdInfoRoute =
+  ShellTenantChatsChannelIdInfoRouteImport.update({
+    id: '/chats/$channelId_/info',
+    path: '/chats/$channelId/info',
+    getParentRoute: () => ShellTenantRoute,
+  } as any)
 const ShellTenantPayStartIndexRoute =
   ShellTenantPayStartIndexRouteImport.update({
     id: '/pay/$start/',
@@ -389,6 +396,7 @@ export interface FileRoutesByFullPath {
   '/$tenant/screen-lab/': typeof ShellTenantScreenLabIndexRoute
   '/$tenant/store/': typeof ShellTenantStoreIndexRoute
   '/$tenant/uac/': typeof ShellTenantUacIndexRoute
+  '/$tenant/chats/$channelId/info': typeof ShellTenantChatsChannelIdInfoRoute
   '/$tenant/store/settings/$storeId': typeof ShellTenantStoreSettingsStoreIdRoute
   '/$tenant/store/settings/add': typeof ShellTenantStoreSettingsAddRoute
   '/$tenant/uac/$userId/apps': typeof ShellTenantUacUserIdAppsRoute
@@ -442,6 +450,7 @@ export interface FileRoutesByTo {
   '/$tenant/screen-lab': typeof ShellTenantScreenLabIndexRoute
   '/$tenant/store': typeof ShellTenantStoreIndexRoute
   '/$tenant/uac': typeof ShellTenantUacIndexRoute
+  '/$tenant/chats/$channelId/info': typeof ShellTenantChatsChannelIdInfoRoute
   '/$tenant/store/settings/$storeId': typeof ShellTenantStoreSettingsStoreIdRoute
   '/$tenant/store/settings/add': typeof ShellTenantStoreSettingsAddRoute
   '/$tenant/uac/$userId/apps': typeof ShellTenantUacUserIdAppsRoute
@@ -498,6 +507,7 @@ export interface FileRoutesById {
   '/_shell/$tenant/screen-lab/': typeof ShellTenantScreenLabIndexRoute
   '/_shell/$tenant/store/': typeof ShellTenantStoreIndexRoute
   '/_shell/$tenant/uac/': typeof ShellTenantUacIndexRoute
+  '/_shell/$tenant/chats/$channelId_/info': typeof ShellTenantChatsChannelIdInfoRoute
   '/_shell/$tenant/store/settings/$storeId': typeof ShellTenantStoreSettingsStoreIdRoute
   '/_shell/$tenant/store/settings/add': typeof ShellTenantStoreSettingsAddRoute
   '/_shell/$tenant/uac/$userId/apps': typeof ShellTenantUacUserIdAppsRoute
@@ -554,6 +564,7 @@ export interface FileRouteTypes {
     | '/$tenant/screen-lab/'
     | '/$tenant/store/'
     | '/$tenant/uac/'
+    | '/$tenant/chats/$channelId/info'
     | '/$tenant/store/settings/$storeId'
     | '/$tenant/store/settings/add'
     | '/$tenant/uac/$userId/apps'
@@ -607,6 +618,7 @@ export interface FileRouteTypes {
     | '/$tenant/screen-lab'
     | '/$tenant/store'
     | '/$tenant/uac'
+    | '/$tenant/chats/$channelId/info'
     | '/$tenant/store/settings/$storeId'
     | '/$tenant/store/settings/add'
     | '/$tenant/uac/$userId/apps'
@@ -662,6 +674,7 @@ export interface FileRouteTypes {
     | '/_shell/$tenant/screen-lab/'
     | '/_shell/$tenant/store/'
     | '/_shell/$tenant/uac/'
+    | '/_shell/$tenant/chats/$channelId_/info'
     | '/_shell/$tenant/store/settings/$storeId'
     | '/_shell/$tenant/store/settings/add'
     | '/_shell/$tenant/uac/$userId/apps'
@@ -866,6 +879,13 @@ declare module '@tanstack/react-router' {
       path: '/uac/help'
       fullPath: '/$tenant/uac/help'
       preLoaderRoute: typeof ShellTenantUacHelpRouteImport
+      parentRoute: typeof ShellTenantRoute
+    }
+    '/_shell/$tenant/chats/$channelId_/info': {
+      id: '/_shell/$tenant/chats/$channelId_/info'
+      path: '/chats/$channelId/info'
+      fullPath: '/$tenant/chats/$channelId/info'
+      preLoaderRoute: typeof ShellTenantChatsChannelIdInfoRouteImport
       parentRoute: typeof ShellTenantRoute
     }
     '/_shell/$tenant/pay/$start/': {
@@ -1095,6 +1115,7 @@ interface ShellTenantRouteChildren {
   ShellTenantScreenLabIndexRoute: typeof ShellTenantScreenLabIndexRoute
   ShellTenantStoreIndexRoute: typeof ShellTenantStoreIndexRoute
   ShellTenantUacIndexRoute: typeof ShellTenantUacIndexRoute
+  ShellTenantChatsChannelIdInfoRoute: typeof ShellTenantChatsChannelIdInfoRoute
   ShellTenantStoreSettingsStoreIdRoute: typeof ShellTenantStoreSettingsStoreIdRoute
   ShellTenantStoreSettingsAddRoute: typeof ShellTenantStoreSettingsAddRoute
   ShellTenantUacUserIdAppsRoute: typeof ShellTenantUacUserIdAppsRoute
@@ -1147,6 +1168,7 @@ const ShellTenantRouteChildren: ShellTenantRouteChildren = {
   ShellTenantScreenLabIndexRoute: ShellTenantScreenLabIndexRoute,
   ShellTenantStoreIndexRoute: ShellTenantStoreIndexRoute,
   ShellTenantUacIndexRoute: ShellTenantUacIndexRoute,
+  ShellTenantChatsChannelIdInfoRoute: ShellTenantChatsChannelIdInfoRoute,
   ShellTenantStoreSettingsStoreIdRoute: ShellTenantStoreSettingsStoreIdRoute,
   ShellTenantStoreSettingsAddRoute: ShellTenantStoreSettingsAddRoute,
   ShellTenantUacUserIdAppsRoute: ShellTenantUacUserIdAppsRoute,

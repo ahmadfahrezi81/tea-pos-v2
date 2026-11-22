@@ -77,6 +77,7 @@ type ChatChannel struct {
 	CreatedAt           pgtype.Timestamptz
 	LastPushedMessageID pgtype.UUID
 	ArchivedAt          pgtype.Timestamptz
+	ClearedAt           pgtype.Timestamptz
 }
 
 type ChatChannelMember struct {
