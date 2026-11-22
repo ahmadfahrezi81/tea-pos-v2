@@ -10,11 +10,13 @@ Fix what the owner finds using chat in production. One item per line below, buil
 
 1. **The last message on two lines** (owner, as WhatsApp): on the Chats list, a row's message wraps to two lines before it is cut, instead of one. The row grows, and reads more like a group chat. Same in Other channels.
 
-2. **A chat's info as a full page, with Clear chat** (owner):
-   - The info leaves its bottom sheet for its own page (`chats/$channelId/info`), opened by tapping the chat's name, as now, and by a **⋯** button at the top right of every chat.
-   - Condensed: the icon, name and who it is for in one short block, then the actions as rows (rename, members, follow, archive, clear), then the members.
-   - **Clear chat**: the chat becomes empty. Soft: nothing is deleted from the database; a `cleared_at` on the channel (an additive migration) hides every message before it, and they can be brought back if needed. Asks first ("Clear this chat?").
-   - Decided (owner): **for everyone**, **the owner only**, after a confirmation ("Clear this chat for everyone?").
+2. **A chat's info as a full page** (owner), opened by tapping the chat's name and by a **⋯** button at the top right of every chat (`chats/$channelId/info`):
+   - The top: icon, name, who it is for, "1.234 messages · since 15 Nov".
+   - **Photos**: the last ones sent, See all opens a grid.
+   - **Shared**: days, pay periods and payslips shared there (a small Go query), See all.
+   - **Members**: the first 5, See all opens the full list with search.
+   - **The ⋯ menu** holds what changes the chat, each only for who may: Rename and Edit members, Archive (groups, chat admins); Unfollow (a chat admin following a chat they are not in); **Clear chat** (the owner only, for everyone, soft: a `cleared_at` hides what came before, nothing deleted; asks "Clear this chat for everyone?").
+   - Left out (owner): Open store page; Follow there (it stays on the Other channels list); Mute (chat is the company's); pinned messages and search in a chat (their own steps later).
 
 3. **A shared screen is the screen itself** (owner): what a screenshot of that part of the screen would show, except we own the component. The same components and content as the real screen, live, only a little smaller for the chat's padding, and **as wide as the chat allows** (not inside a narrow bubble); an **Open** button at its bottom to go deeper. For a store's day, a pay period and a payslip, and the app's own messages that carry one (the day summary, the pay total, a payout paid).
 4. **Weather shows its proof** (owner): a rain message shows the coming hours as the weather screen draws them (hour, icon, chance), with a sentence summing it up ("Rain likely from 14:00 to 16:00, most at 15:00, 80%"), not only "Rain likely in the next 2 hours".
